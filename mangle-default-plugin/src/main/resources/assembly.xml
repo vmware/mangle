@@ -1,0 +1,55 @@
+<!--
+   Copyright (c) 2016-2019 VMware, Inc. All Rights Reserved.
+
+   This product is licensed to you under the Apache License, Version 2.0 (the "License").
+   You may not use this product except in compliance with the License.
+
+   This product may include a number of subcomponents with separate copyright notices
+   and license terms. Your use of these subcomponents is subject to the terms and
+   conditions of the subcomponent's license, as noted in the LICENSE file.
+-->
+<!-- Describes the plugin archive @author kumargautam @version 1.0 -->
+<assembly>
+	<id>plugin</id>
+	<formats>
+		<format>zip</format>
+	</formats>
+	<includeBaseDirectory>false</includeBaseDirectory>
+	<dependencySets>
+		<dependencySet>
+			<useProjectArtifact>false</useProjectArtifact>
+			<scope>runtime</scope>
+			<outputDirectory>lib</outputDirectory>
+			<includes>
+				<include>org.pf4j:*</include>
+			</includes>
+			<excludes>
+				<exclude>org.springframework:*</exclude>
+				<exclude>org.slf4j:*</exclude>
+			</excludes>
+		</dependencySet>
+	</dependencySets>
+	<fileSets>
+		<fileSet>
+			<directory>target/plugin-classes</directory>
+			<outputDirectory>classes</outputDirectory>
+		</fileSet>
+		<fileSet>
+			<directory>src/main/resources</directory>
+			<outputDirectory />
+			<includes>
+				<include>plugin.properties</include>
+			</includes>
+		</fileSet>
+
+		<fileSet>
+			<directory>src/main/resources/InjectionScripts</directory>
+			<includes>
+				<include>**</include>
+			</includes>
+			<fileMode>0755</fileMode>
+			<lineEnding>unix</lineEnding>
+		</fileSet>
+
+	</fileSets>
+</assembly>

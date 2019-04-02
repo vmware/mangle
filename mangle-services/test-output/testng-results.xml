@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testng-results skipped="0" failed="0" ignored="0" total="7" passed="7">
+  <reporter-output>
+  </reporter-output>
+  <suite name="Default suite" duration-ms="8957" started-at="2019-03-27T09:08:21Z" finished-at="2019-03-27T09:08:30Z">
+    <groups>
+    </groups>
+    <test name="Default test" duration-ms="8957" started-at="2019-03-27T09:08:21Z" finished-at="2019-03-27T09:08:30Z">
+      <class name="com.vmware.mangle.unittest.services.config.ADAuthProviderTest">
+        <test-method status="PASS" signature="beforePowerMockTestClass()[pri:0, instance:com.vmware.mangle.unittest.services.config.ADAuthProviderTest@4eb386df]" name="beforePowerMockTestClass" is-config="true" duration-ms="13" started-at="2019-03-27T14:38:21Z" finished-at="2019-03-27T14:38:21Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- beforePowerMockTestClass -->
+        <test-method status="PASS" signature="initAuthProvider()[pri:0, instance:com.vmware.mangle.unittest.services.config.ADAuthProviderTest@4eb386df]" name="initAuthProvider" is-config="true" duration-ms="188" started-at="2019-03-27T14:38:21Z" finished-at="2019-03-27T14:38:22Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- initAuthProvider -->
+        <test-method status="PASS" signature="beforePowerMockTestMethod()[pri:0, instance:com.vmware.mangle.unittest.services.config.ADAuthProviderTest@4eb386df]" name="beforePowerMockTestMethod" is-config="true" duration-ms="20" started-at="2019-03-27T14:38:22Z" finished-at="2019-03-27T14:38:22Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- beforePowerMockTestMethod -->
+        <test-method status="PASS" signature="initTest()[pri:1, instance:com.vmware.mangle.unittest.services.config.ADAuthProviderTest@4eb386df]" name="initTest" duration-ms="42" started-at="2019-03-27T14:38:22Z" finished-at="2019-03-27T14:38:22Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- initTest -->
+        <test-method status="PASS" signature="afterPowerMockTestMethod()[pri:0, instance:com.vmware.mangle.unittest.services.config.ADAuthProviderTest@4eb386df]" name="afterPowerMockTestMethod" is-config="true" duration-ms="1" started-at="2019-03-27T14:38:22Z" finished-at="2019-03-27T14:38:22Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- afterPowerMockTestMethod -->
+        <test-method status="PASS" signature="authenticateTest()[pri:2, instance:com.vmware.mangle.unittest.services.config.ADAuthProviderTest@4eb386df]" name="authenticateTest" duration-ms="8622" started-at="2019-03-27T14:38:22Z" finished-at="2019-03-27T14:38:30Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- authenticateTest -->
+        <test-method status="PASS" signature="beforePowerMockTestMethod()[pri:0, instance:com.vmware.mangle.unittest.services.config.ADAuthProviderTest@4eb386df]" name="beforePowerMockTestMethod" is-config="true" duration-ms="0" started-at="2019-03-27T14:38:22Z" finished-at="2019-03-27T14:38:22Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- beforePowerMockTestMethod -->
+        <test-method status="PASS" signature="afterPowerMockTestMethod()[pri:0, instance:com.vmware.mangle.unittest.services.config.ADAuthProviderTest@4eb386df]" name="afterPowerMockTestMethod" is-config="true" duration-ms="1" started-at="2019-03-27T14:38:30Z" finished-at="2019-03-27T14:38:30Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- afterPowerMockTestMethod -->
+        <test-method status="PASS" signature="beforePowerMockTestMethod()[pri:0, instance:com.vmware.mangle.unittest.services.config.ADAuthProviderTest@4eb386df]" name="beforePowerMockTestMethod" is-config="true" duration-ms="1" started-at="2019-03-27T14:38:30Z" finished-at="2019-03-27T14:38:30Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- beforePowerMockTestMethod -->
+        <test-method status="PASS" signature="supportTestTrue()[pri:3, instance:com.vmware.mangle.unittest.services.config.ADAuthProviderTest@4eb386df]" name="supportTestTrue" duration-ms="15" started-at="2019-03-27T14:38:30Z" finished-at="2019-03-27T14:38:30Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- supportTestTrue -->
+        <test-method status="PASS" signature="beforePowerMockTestMethod()[pri:0, instance:com.vmware.mangle.unittest.services.config.ADAuthProviderTest@4eb386df]" name="beforePowerMockTestMethod" is-config="true" duration-ms="1" started-at="2019-03-27T14:38:30Z" finished-at="2019-03-27T14:38:30Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- beforePowerMockTestMethod -->
+        <test-method status="PASS" signature="afterPowerMockTestMethod()[pri:0, instance:com.vmware.mangle.unittest.services.config.ADAuthProviderTest@4eb386df]" name="afterPowerMockTestMethod" is-config="true" duration-ms="0" started-at="2019-03-27T14:38:30Z" finished-at="2019-03-27T14:38:30Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- afterPowerMockTestMethod -->
+        <test-method status="PASS" signature="supportTestFalse()[pri:4, instance:com.vmware.mangle.unittest.services.config.ADAuthProviderTest@4eb386df]" name="supportTestFalse" duration-ms="1" started-at="2019-03-27T14:38:30Z" finished-at="2019-03-27T14:38:30Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- supportTestFalse -->
+        <test-method status="PASS" signature="afterPowerMockTestMethod()[pri:0, instance:com.vmware.mangle.unittest.services.config.ADAuthProviderTest@4eb386df]" name="afterPowerMockTestMethod" is-config="true" duration-ms="0" started-at="2019-03-27T14:38:30Z" finished-at="2019-03-27T14:38:30Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- afterPowerMockTestMethod -->
+        <test-method status="PASS" signature="beforePowerMockTestMethod()[pri:0, instance:com.vmware.mangle.unittest.services.config.ADAuthProviderTest@4eb386df]" name="beforePowerMockTestMethod" is-config="true" duration-ms="1" started-at="2019-03-27T14:38:30Z" finished-at="2019-03-27T14:38:30Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- beforePowerMockTestMethod -->
+        <test-method status="PASS" signature="setAdAuthProviderTestFailure()[pri:5, instance:com.vmware.mangle.unittest.services.config.ADAuthProviderTest@4eb386df]" name="setAdAuthProviderTestFailure" duration-ms="19" started-at="2019-03-27T14:38:30Z" finished-at="2019-03-27T14:38:30Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setAdAuthProviderTestFailure -->
+        <test-method status="PASS" signature="afterPowerMockTestMethod()[pri:0, instance:com.vmware.mangle.unittest.services.config.ADAuthProviderTest@4eb386df]" name="afterPowerMockTestMethod" is-config="true" duration-ms="2" started-at="2019-03-27T14:38:30Z" finished-at="2019-03-27T14:38:30Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- afterPowerMockTestMethod -->
+        <test-method status="PASS" signature="beforePowerMockTestMethod()[pri:0, instance:com.vmware.mangle.unittest.services.config.ADAuthProviderTest@4eb386df]" name="beforePowerMockTestMethod" is-config="true" duration-ms="1" started-at="2019-03-27T14:38:30Z" finished-at="2019-03-27T14:38:30Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- beforePowerMockTestMethod -->
+        <test-method status="PASS" signature="setAdAuthProviderTestSuccessful()[pri:6, instance:com.vmware.mangle.unittest.services.config.ADAuthProviderTest@4eb386df]" name="setAdAuthProviderTestSuccessful" duration-ms="2" started-at="2019-03-27T14:38:30Z" finished-at="2019-03-27T14:38:30Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setAdAuthProviderTestSuccessful -->
+        <test-method status="PASS" signature="beforePowerMockTestMethod()[pri:0, instance:com.vmware.mangle.unittest.services.config.ADAuthProviderTest@4eb386df]" name="beforePowerMockTestMethod" is-config="true" duration-ms="1" started-at="2019-03-27T14:38:30Z" finished-at="2019-03-27T14:38:30Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- beforePowerMockTestMethod -->
+        <test-method status="PASS" signature="afterPowerMockTestMethod()[pri:0, instance:com.vmware.mangle.unittest.services.config.ADAuthProviderTest@4eb386df]" name="afterPowerMockTestMethod" is-config="true" duration-ms="0" started-at="2019-03-27T14:38:30Z" finished-at="2019-03-27T14:38:30Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- afterPowerMockTestMethod -->
+        <test-method status="PASS" signature="removeAdAuthProviderTest()[pri:7, instance:com.vmware.mangle.unittest.services.config.ADAuthProviderTest@4eb386df]" name="removeAdAuthProviderTest" duration-ms="1" started-at="2019-03-27T14:38:30Z" finished-at="2019-03-27T14:38:30Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- removeAdAuthProviderTest -->
+        <test-method status="PASS" signature="afterPowerMockTestMethod()[pri:0, instance:com.vmware.mangle.unittest.services.config.ADAuthProviderTest@4eb386df]" name="afterPowerMockTestMethod" is-config="true" duration-ms="0" started-at="2019-03-27T14:38:30Z" finished-at="2019-03-27T14:38:30Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- afterPowerMockTestMethod -->
+        <test-method status="PASS" signature="afterPowerMockTestClass()[pri:0, instance:com.vmware.mangle.unittest.services.config.ADAuthProviderTest@4eb386df]" name="afterPowerMockTestClass" is-config="true" duration-ms="0" started-at="2019-03-27T14:38:30Z" finished-at="2019-03-27T14:38:30Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- afterPowerMockTestClass -->
+      </class> <!-- com.vmware.mangle.unittest.services.config.ADAuthProviderTest -->
+    </test> <!-- Default test -->
+  </suite> <!-- Default suite -->
+</testng-results>

@@ -1,0 +1,37 @@
+Byteman README
+--------------
+
+Byteman supports injection of side effects into Java programs for the
+purpose of tracing and testing application behaviour.
+
+Installation
+------------
+
+When you unzip the downloaded release it will explode to a single
+target install directory containing everything you need to
+use byteman. You should set environment variable BYTEMAN_HOME so
+that it points to this target install directory.
+
+The install directory for the binary release contains the following
+subdirectories
+
+  bin -- contains Unix scripts to simplify: using Byteman (bmjava.sh);
+      typechecking Byteman rule scripts (bytemancheck.sh);
+      communicating with the Byteman agent listener (bmsubmit.sh);
+      and installing the agent into a running JVM (bminstall.sh).
+      You will need to change the permissions of these files
+      in order to execute them directly from the command line.
+
+  lib -- contains the Byteman agent and rule engine (byteman.jar);
+      the subset of this code needed to compile/run the submit
+      client (byteman-submit.jar); the subset of this code needed
+      to compile/run the install client (byteman-install.jar).
+
+Copyright
+---------
+See the copyright file in the docs directory for details of the open
+source license under which this code is released. Note that this code
+employs the ObjectWeb ASM package to do bytecode manipulation and the
+JFlex and JavaCUP tokeniser and parser generators to generate and
+provide runtime support for the rule parser which are also released
+under open source licenses.

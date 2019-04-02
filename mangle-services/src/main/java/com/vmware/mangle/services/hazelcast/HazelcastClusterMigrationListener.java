@@ -1,0 +1,161 @@
+/*
+ * Copyright (c) 2016-2019 VMware, Inc. All Rights Reserved.
+ *
+ * This product is licensed to you under the Apache License, Version 2.0 (the "License").
+ * You may not use this product except in compliance with the License.
+ *
+ * This product may include a number of subcomponents with separate copyright notices
+ * and license terms. Your use of these subcomponents is subject to the terms and
+ * conditions of the subcomponent's license, as noted in the LICENSE file.
+ */
+
+package com.vmware.mangle.services.hazelcast;
+
+import java.util.Set;
+
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.HazelcastInstanceAware;
+import com.hazelcast.core.IMap;
+import com.hazelcast.core.MigrationEvent;
+import com.hazelcast.core.MigrationListener;
+import com.hazelcast.core.PartitionService;
+import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
+
+import com.vmware.mangle.utils.constants.URLConstants;
+import com.vmware.mangle.utils.exceptions.MangleException;
+
+/**
+ *
+ * i) Fault when injected will follow the following steps of execution 1. Construct the task object
+ * 2. Store in the DB 3. Trigger TaskCreatedEvent 4. TaskCreatedListener will add the task to the
+ * hazelcast cluster cache 5. Hazelcast will put this task into its distributed-map 6. Depending on
+ * which partition this task was added into, it will trigger an entryAdded event in its respective
+ * node 7. Listener to this event will trigger the execution of the task on that particular node
+ *
+ * ii) When new member joins the cluster 1. The partition ownership of some of the partitions are
+ * moved to new cluster member 2. No re-triggering of the tasks will be carried out 3. Task that
+ * were being executed by the old owner of the partition will remain to be executed on the old owner
+ * Summary: only partition ownership will be transferred
+ *
+ * iii) When an existing cluster member leaves the cluster 1. Membership event is generated - Tasks
+ * that were still running on the old owner, but whose ownership were assigned to the new owner will
+ * be re-triggered 2. Migration event is generated - Partitions owned by the dead node will be
+ * distributed across the existing cluster nodes - Tasks that are part of dead cluster member will
+ * be re-triggered, on the new owner of the respective partitions
+ *
+ *
+ * @author chetanc
+ *
+ */
+@Component
+@Log4j2
+public class HazelcastClusterMigrationListener implements MigrationListener, HazelcastInstanceAware {
+
+
+    private HazelcastInstance hz;
+
+    @Autowired
+    private HazelcastTaskService hazelcastTaskService;
+
+    private PartitionService partitionService;
+
+
+    @Override
+    public void migrationStarted(MigrationEvent migrationEvent) {
+        log.debug("Migration has started for the partition {}", migrationEvent.getPartitionId());
+    }
+
+    /**
+     * This method is triggered when the node leaves the cluster, and the partition ownership
+     * migration from the old node to the new node is completed.
+     *
+     * As part of this event processing, the tasks that are part of the migrated partitions will be
+     * re-triggered on the node that takes over the ownership of that partition.
+     *
+     * @param migrationEvent
+     */
+    @Override
+    public void migrationCompleted(MigrationEvent migrationEvent) {
+        if (!isNodeRemovedMigration(migrationEvent)) {
+            return;
+        } else {
+            IMap<Object, Object> map = hz.getMap(URLConstants.HAZELCAST_TASKS_MAP);
+            IMap<String, Set<String>> nodeToTaskMapping = hz.getMap(URLConstants.HAZELCAST_NODE_TASKS_MAP);
+            Set<String> currentNodeTasks = nodeToTaskMapping.get(hz.getCluster().getLocalMember().getUuid());
+
+            Set<Object> keys = map.localKeySet();
+            synchronized (hazelcastTaskService) {
+                for (Object key : keys) {
+                    String taskId = String.valueOf(key);
+                    if (isTaskInCurrentMigratedPartition(migrationEvent, taskId)) {
+                        if (!isTaskAlreadyTriggered(currentNodeTasks, taskId)) {
+                            log.info("Task with the id {} is migrated to new owner {}", taskId,
+                                    migrationEvent.getNewOwner().getAddress());
+                            try {
+                                log.debug("Triggering execution of the task {} on the new node {}", taskId,
+                                        migrationEvent.getNewOwner().getAddress().getHost());
+                                log.info("Triggering the task {}", taskId);
+                                hazelcastTaskService.triggerTask(taskId);
+                            } catch (MangleException e) {
+                                log.error("Triggering of the task {} failed with the exception: {}", taskId,
+                                        e.getStackTrace());
+                            }
+                        } else {
+                            log.debug("Task {} to be migrated is already re-triggered on the node {}", taskId,
+                                    migrationEvent.getNewOwner());
+                        }
+                    }
+                }
+            }
+        }
+        log.debug("Migration event is completed on the instance {} for the partition with the id {}",
+                migrationEvent.getNewOwner(), migrationEvent.getPartitionId());
+    }
+
+    private boolean isTaskInCurrentMigratedPartition(MigrationEvent migrationEvent, String taskId) {
+        return partitionService.getPartition(taskId).getPartitionId() == migrationEvent.getPartitionId();
+    }
+
+    /**
+     * The task has to be triggered if the node hasn't already triggered it
+     *
+     * @param tasks
+     *            Tasks executing in the local node
+     * @param taskId
+     *            Task that needs to be verified if it is already triggered in the current node
+     * @return true if task has to be triggered on the node
+     */
+    private boolean isTaskAlreadyTriggered(Set<String> tasks, String taskId) {
+        return !(CollectionUtils.isEmpty(tasks) || !tasks.contains(taskId));
+    }
+
+    /**
+     * Migration event triggered because node left the cluster
+     *
+     * @param event
+     *            Migration event
+     * @return true if the migration is triggered because a node left the cluster, false if it is
+     *         because a new node joined the cluster
+     */
+    private boolean isNodeRemovedMigration(MigrationEvent event) {
+        return event.getNewOwner().getAddress().equals(hz.getCluster().getLocalMember().getAddress())
+                && event.getOldOwner() == null;
+    }
+
+    @Override
+    public void migrationFailed(MigrationEvent migrationEvent) {
+        log.error("Migration of the partition {} failed from node {} to  node {}", migrationEvent.getPartitionId(),
+                migrationEvent.getOldOwner(), migrationEvent.getNewOwner());
+    }
+
+    @Override
+    public void setHazelcastInstance(HazelcastInstance hazelcastInstance) {
+        hz = hazelcastInstance;
+        hazelcastTaskService.setHazelcastInstance(hz);
+        partitionService = hz.getPartitionService();
+    }
+}
+

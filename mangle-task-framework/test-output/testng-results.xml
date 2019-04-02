@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testng-results skipped="0" failed="0" ignored="1" total="10" passed="9">
+  <reporter-output>
+  </reporter-output>
+  <suite name="Default suite" duration-ms="4222" started-at="2019-03-21T16:26:57Z" finished-at="2019-03-21T16:27:02Z">
+    <groups>
+    </groups>
+    <test name="Default test" duration-ms="4222" started-at="2019-03-21T16:26:57Z" finished-at="2019-03-21T16:27:02Z">
+      <class name="com.vmware.mangle.unittest.task.framework.helpers.AbstractCommandExecutionTaskTest">
+        <test-method status="PASS" signature="initMocks()[pri:0, instance:com.vmware.mangle.unittest.task.framework.helpers.AbstractCommandExecutionTaskTest@76b10754]" name="initMocks" is-config="true" duration-ms="279" started-at="2019-03-21T21:56:57Z" finished-at="2019-03-21T21:56:58Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- initMocks -->
+        <test-method status="PASS" signature="testInitOfInjection()[pri:0, instance:com.vmware.mangle.unittest.task.framework.helpers.AbstractCommandExecutionTaskTest@76b10754]" name="testInitOfInjection" duration-ms="24" started-at="2019-03-21T21:56:58Z" finished-at="2019-03-21T21:56:58Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testInitOfInjection -->
+        <test-method status="PASS" signature="testInitOfRemediation()[pri:1, instance:com.vmware.mangle.unittest.task.framework.helpers.AbstractCommandExecutionTaskTest@76b10754]" name="testInitOfRemediation" duration-ms="2" started-at="2019-03-21T21:56:58Z" finished-at="2019-03-21T21:56:58Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testInitOfRemediation -->
+        <test-method status="PASS" signature="testInitOfRemediationWithEmptyInjectionId()[pri:2, instance:com.vmware.mangle.unittest.task.framework.helpers.AbstractCommandExecutionTaskTest@76b10754]" name="testInitOfRemediationWithEmptyInjectionId" duration-ms="2" started-at="2019-03-21T21:56:58Z" finished-at="2019-03-21T21:56:58Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testInitOfRemediationWithEmptyInjectionId -->
+        <test-method status="PASS" signature="testExecuteInjectionTask()[pri:3, instance:com.vmware.mangle.unittest.task.framework.helpers.AbstractCommandExecutionTaskTest@76b10754]" name="testExecuteInjectionTask" duration-ms="1042" started-at="2019-03-21T21:56:58Z" finished-at="2019-03-21T21:56:59Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testExecuteInjectionTask -->
+        <test-method status="PASS" signature="testPrerequisiteCheckStageOfInjectionTask()[pri:5, instance:com.vmware.mangle.unittest.task.framework.helpers.AbstractCommandExecutionTaskTest@76b10754]" name="testPrerequisiteCheckStageOfInjectionTask" duration-ms="982" started-at="2019-03-21T21:56:59Z" finished-at="2019-03-21T21:57:00Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testPrerequisiteCheckStageOfInjectionTask -->
+        <test-method status="PASS" signature="testPrepareTestmachineStageOfInjectionTask()[pri:6, instance:com.vmware.mangle.unittest.task.framework.helpers.AbstractCommandExecutionTaskTest@76b10754]" name="testPrepareTestmachineStageOfInjectionTask" duration-ms="899" started-at="2019-03-21T21:57:00Z" finished-at="2019-03-21T21:57:01Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testPrepareTestmachineStageOfInjectionTask -->
+        <test-method status="PASS" signature="testPrerequisitesCheckStageOfRemediationTask()[pri:7, instance:com.vmware.mangle.unittest.task.framework.helpers.AbstractCommandExecutionTaskTest@76b10754]" name="testPrerequisitesCheckStageOfRemediationTask" duration-ms="1" started-at="2019-03-21T21:57:01Z" finished-at="2019-03-21T21:57:01Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testPrerequisitesCheckStageOfRemediationTask -->
+        <test-method status="PASS" signature="testTriggerRemediationStageOfRemediationTask()[pri:8, instance:com.vmware.mangle.unittest.task.framework.helpers.AbstractCommandExecutionTaskTest@76b10754]" name="testTriggerRemediationStageOfRemediationTask" duration-ms="2" started-at="2019-03-21T21:57:01Z" finished-at="2019-03-21T21:57:01Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTriggerRemediationStageOfRemediationTask -->
+        <test-method status="PASS" signature="testExecuteInjectionTaskWithNullTaskTroubleShootingInfo()[pri:9, instance:com.vmware.mangle.unittest.task.framework.helpers.AbstractCommandExecutionTaskTest@76b10754]" name="testExecuteInjectionTaskWithNullTaskTroubleShootingInfo" duration-ms="948" started-at="2019-03-21T21:57:01Z" finished-at="2019-03-21T21:57:02Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testExecuteInjectionTaskWithNullTaskTroubleShootingInfo -->
+      </class> <!-- com.vmware.mangle.unittest.task.framework.helpers.AbstractCommandExecutionTaskTest -->
+    </test> <!-- Default test -->
+  </suite> <!-- Default suite -->
+</testng-results>
