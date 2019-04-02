@@ -1,0 +1,43 @@
+<div class="main-container">
+    <header class="header header-7">
+        <div class="branding">
+			<a href="#" class="nav-link" [routerLink]="['home']">
+				<clr-icon shape="vm-bug"></clr-icon>
+				<span class="title">Mangle</span>
+			</a>
+		</div>
+		<div class="header-actions">
+			<clr-dropdown>
+				<button class="nav-text" *ngIf="user" clrDropdownTrigger>
+					{{ user }}<clr-icon shape="caret down"></clr-icon>
+				</button>
+				<clr-dropdown-menu *clrIfOpen clrPosition="bottom-right">
+					<a href="#" [routerLink]="['password']" clrDropdownItem *ngIf="domain == 'mangle.local'">Change Password</a>
+					<button class="btn btn-link" (click)="logout();">Log out</button>
+				</clr-dropdown-menu>
+			</clr-dropdown>
+			<a class="nav-link nav-icon" href="#" [routerLink]="['setting']" routerLinkActive="active" *ngIf="isAdminUser"><clr-icon shape="cog"></clr-icon></a>
+		</div>
+    </header>
+    <nav class="subnav">
+		<ul class="nav">
+			<li class="nav-item">
+				<a class="nav-link" href="#" [routerLink]="['home']" routerLinkActive="active"><span class="nav-text">Home</span></a>
+			</li>
+			<li class="nav-item">
+				<a class="nav-link" href="#" [routerLink]="['endpoint']" routerLinkActive="active"><span class="nav-text">Endpoint</span></a>
+			</li>
+			<li class="nav-item">
+				<a class="nav-link" href="#" [routerLink]="['fault']" routerLinkActive="active"><span class="nav-text">Fault Execution</span></a>
+			</li>
+			<li class="nav-item">
+				<a class="nav-link" href="#" [routerLink]="['requests']" routerLinkActive="active"><span class="nav-text">Requests & Reports</span></a>
+			</li>
+		</ul>
+	</nav>
+    <div class="content-container">
+        <div class="content-area">
+            <router-outlet></router-outlet>
+        </div>
+    </div>
+</div>

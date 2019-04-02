@@ -1,0 +1,123 @@
+import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { KubernetesComponent } from './kubernetes.component';
+import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { HttpClientModule } from '@angular/common/http';
+import { RouterTestingModule } from '@angular/router/testing';
+import { EndpointService } from '../endpoint.service';
+import { ClarityModule } from '@clr/angular';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { BrowserModule } from '@angular/platform-browser';
+import { CommonModule } from '@angular/common';
+import { of } from 'rxjs';
+import { CoreService } from '../../core.service';
+import { CoreComponent } from '../../core.component';
+import { LoginComponent } from 'src/app/auth/login/login.component';
+
+describe('KubernetesComponent', () => {
+  let component: KubernetesComponent;
+  let endpointService: EndpointService;
+  let coreService: CoreService;
+  let fixture: ComponentFixture<KubernetesComponent>;
+
+  let ep_data: any = { "id": null, "name": "k8s_ep", "endPointType": "K8S_CLUSTER", "credentialsName": "k8s_cred", "k8sConnectionProperties": { "namespace": "default" } };
+  let ep_data_id: any = { "id": "with_id", "name": "k8s_ep", "endPointType": "K8S_CLUSTER", "credentialsName": "k8s_cred", "k8sConnectionProperties": { "namespace": "default" } };
+  let cred_data: any = { "name": "k8s_cred", "kubeConfig": null };
+
+  beforeEach(async(() => {
+    TestBed.configureTestingModule({
+      imports: [
+        BrowserAnimationsModule,
+        BrowserModule,
+        FormsModule,
+        HttpClientModule,
+        CommonModule,
+        ClarityModule,
+        RouterTestingModule.withRoutes([{ path: 'kubernetes', component: KubernetesComponent }, { path: 'login', component: LoginComponent }])
+      ],
+      declarations: [KubernetesComponent, CoreComponent, LoginComponent],
+      providers: [
+        EndpointService,
+        CoreService
+      ],
+      schemas: [NO_ERRORS_SCHEMA]
+    })
+      .compileComponents();
+  }));
+
+  beforeEach(() => {
+    endpointService = TestBed.get(EndpointService);
+    spyOn(endpointService, 'getEndpoints').and.returnValue(of([ep_data]));
+    spyOn(endpointService, 'getCredentials').and.returnValue(of([cred_data]));
+    coreService = TestBed.get(CoreService);
+    spyOn(coreService, 'getMyDetails').and.returnValue(of({ "name": "user@mangle.local" }));
+    fixture = TestBed.createComponent(KubernetesComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+
+  it('should populate endpoint form', () => {
+    component.populateEndpointForm({});
+    expect(component.disableSubmit).toBe(true);
+  });
+
+  it('should get endpoints', () => {
+    component.getEndpoints();
+    expect(component.endpoints[0].name).toBe("k8s_ep");
+    expect(endpointService.getEndpoints).toHaveBeenCalled();
+  });
+
+  it('should get credentials', () => {
+    component.getCredentials();
+    expect(component.credentials[0].name).toBe("k8s_cred");
+    expect(endpointService.getCredentials).toHaveBeenCalled();
+  });
+
+  it('should add or update endpoint', () => {
+    //add endpoint
+    spyOn(endpointService, 'addEndpoint').and.returnValue(of(ep_data_id));
+    component.addOrUpdateEndpoint(ep_data);
+    expect(component.successFlag).toBe(true);
+    expect(component.endpoints[0].name).toBe("k8s_ep");
+    expect(endpointService.addEndpoint).toHaveBeenCalled();
+    expect(endpointService.getEndpoints).toHaveBeenCalled();
+    //update endpoint
+    spyOn(endpointService, 'updateEndpoint').and.returnValue(of(ep_data_id));
+    component.addOrUpdateEndpoint(ep_data_id);
+    expect(component.successFlag).toBe(true);
+    expect(component.endpoints[0].name).toBe("k8s_ep");
+    expect(endpointService.updateEndpoint).toHaveBeenCalled();
+    expect(endpointService.getEndpoints).toHaveBeenCalled();
+  });
+
+  it('should delete endpoint', () => {
+    spyOn(endpointService, 'deleteEndpoint').and.returnValue(of({}));
+    spyOn(window, 'confirm').and.callFake(function () { return true; });
+    component.deleteEndpoint(ep_data.name);
+    expect(component.successFlag).toBe(true);
+    expect(endpointService.deleteEndpoint).toHaveBeenCalled();
+  });
+
+  it('should add kubernetes credential', () => {
+    spyOn(endpointService, 'addk8sCredential').and.returnValue(of(cred_data));
+    component.addKubernetesCredential(cred_data);
+    expect(component.successFlag).toBe(true);
+    expect(endpointService.addk8sCredential).toHaveBeenCalled();
+    expect(component.credentials[0].name).toBe("k8s_cred");
+    expect(endpointService.getCredentials).toHaveBeenCalled();
+  });
+
+  it('should test endpoint connection', () => {
+    spyOn(endpointService, 'testEndpointConnection').and.returnValue(of(ep_data));
+    component.testEndpointConnection(ep_data);
+    expect(component.successFlag).toBe(true);
+    expect(component.disableSubmit).toBe(false);
+    expect(endpointService.testEndpointConnection).toHaveBeenCalled();
+  });
+
+});

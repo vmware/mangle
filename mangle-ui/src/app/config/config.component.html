@@ -1,0 +1,31 @@
+<div style="float:left;height:100%;width:100%">
+	<div style="float:left;width:30%;">&nbsp;</div>
+	<div style="float:left;width:40%;">
+		<clr-alert *ngIf="errorFlag" [clrAlertType]="'danger'">
+			<div class="alert-item">{{alertMessage}}</div>
+		</clr-alert>
+		<h3>Change Password</h3>
+		<form #userForm="ngForm" (ngSubmit)="updatePassword(userForm.value);" *ngIf="userFormData" ngNativeValidate>
+			<section class="form-block">
+				<div class="form-group">
+					<label for="username">User Name</label>
+					<input type="text" name="username" [(ngModel)]="userFormData.username" required readonly>
+				</div>
+				<div class="form-group">
+					<label for="oldPassword">Old Password</label>
+					<input type="password" name="oldPassword" [(ngModel)]="userFormData.oldPassword" required>
+				</div>
+				<div class="form-group">
+					<label for="password">New Password</label>
+					<input type="password" name="password" [(ngModel)]="userFormData.password" required>
+				</div>
+				<div class="form-group">
+					<label for="rePassword">Retype New Password</label>
+					<input type="password" name="rePassword" [(ngModel)]="userFormData.rePassword" required>
+				</div>
+			</section>
+			<button [clrLoading]="submitBtnState" type="submit" class="btn btn-primary">UPDATE</button>
+		</form>
+	</div>
+	<div style="float:right;width:30%;">&nbsp;</div> 
+</div>

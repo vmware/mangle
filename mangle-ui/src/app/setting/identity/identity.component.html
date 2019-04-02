@@ -1,0 +1,51 @@
+<clr-alert *ngIf="errorFlag" [clrAlertType]="'danger'">
+    <div class="alert-item">{{alertMessage}}</div>
+</clr-alert>
+<clr-alert *ngIf="successFlag" [clrAlertType]="'success'">
+    <div class="alert-item">{{alertMessage}}</div>
+</clr-alert>
+<clr-dg-action-bar>
+    <div class="btn-group">
+        <button type="button" class="btn btn-sm btn-secondary" (click)="populateIdentityForm({'id':null,'adUrl':null,'adDomain':null}); identitySource=true;addEdit='Add';"><clr-icon shape="plus"></clr-icon> Auth Source</button>
+    </div>
+</clr-dg-action-bar>
+<clr-datagrid [clrDgLoading]="isLoading">
+	<clr-dg-column>AD URL</clr-dg-column>
+    <clr-dg-column>AD DOMAIN</clr-dg-column>
+    <clr-dg-row *clrDgItems="let identity of identities" [clrDgItem]="identity">
+        <clr-dg-action-overflow>
+            <button class="action-item" (click)="populateIdentityForm(identity);identitySource=true;addEdit='Edit';">Edit</button>
+            <button class="action-item" (click)="deleteIdentity(identity)">Delete</button>
+        </clr-dg-action-overflow>
+		<clr-dg-cell>{{identity.adUrl}}</clr-dg-cell>
+		<clr-dg-cell>{{identity.adDomain}}</clr-dg-cell>
+    </clr-dg-row>
+	<clr-dg-footer>
+		<clr-dg-pagination #pagination [clrDgPageSize]="10">
+			<clr-dg-page-size [clrPageSizeOptions]="[10,20,50,100]">Identities per page</clr-dg-page-size>
+			{{pagination.firstItem + 1}} - {{pagination.lastItem + 1}} of {{pagination.totalItems}} identities
+		</clr-dg-pagination>
+	</clr-dg-footer>
+</clr-datagrid>
+<clr-modal [(clrModalOpen)]="identitySource">
+    <h3 class="modal-title">{{addEdit}} Identity Source</h3>
+    <div class="modal-body">
+        <form #identitySourceForm="ngForm" (ngSubmit)="addOrUpdateIdentitySource(identitySourceForm.value);identitySource = false;" *ngIf="identityFormData" ngNativeValidate>
+            <section class="form-block">
+                <div class="form-group">
+                    <input type="text" name="id" [(ngModel)]="identityFormData.id" [hidden]="true">
+                </div>
+				<div class="form-group">
+                    <label for="adUrl">AD Url</label>
+					<input type="text" name="adUrl" [(ngModel)]="identityFormData.adUrl" required>
+                </div>
+                <div class="form-group">
+                    <label for="adDomain">AD Domain</label>
+					<input type="text" name="adDomain" [(ngModel)]="identityFormData.adDomain" [required]="addEdit == 'Add'" [readonly]="addEdit == 'Edit'">
+                </div>
+            </section>
+            <button type="button" class="btn btn-outline" (click)="identitySource=false">CANCEL</button>
+            <button type="submit" class="btn btn-primary">SUBMIT</button>
+        </form>
+    </div>
+</clr-modal>
