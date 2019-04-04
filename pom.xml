@@ -27,13 +27,6 @@
 		<version>2.1.3.RELEASE</version>
 	</parent>
 
-	<repositories>
-		<repository>
-			<id>build-artifactory.eng.vmware.com</id>
-			<url>https://build-artifactory.eng.vmware.com/artifactory/fiaasco-release</url>
-		</repository>
-	</repositories>
-
 	<licenses>
 		<license>
 			<name>License</name>
@@ -134,7 +127,6 @@
 		<module>mangle-default-plugin</module>
 		<module>mangle-ui</module>
 		<module>mangle-services</module>
-		<module>mangle-integration-tests</module>
 	</modules>
 
 	<!-- Plugin for OSSTP -->
