@@ -1,0 +1,30 @@
+<div class="main-container">
+    <div class="content-container">
+        <div class="content-area">
+            <router-outlet></router-outlet>
+        </div>
+		<clr-vertical-nav [clrVerticalNavCollapsible]="settingCollapsible">
+			<clr-vertical-nav-group routerLinkActive="active">
+				<clr-icon shape="user" clrVerticalNavIcon></clr-icon>Auth Management
+				<clr-vertical-nav-group-children *clrIfExpanded="true">
+					<a clrVerticalNavLink [routerLink]="['local']" routerLinkActive="active">Local User</a>
+					<a clrVerticalNavLink [routerLink]="['identity']" routerLinkActive="active">Auth Source</a>
+					<a clrVerticalNavLink [routerLink]="['users']" routerLinkActive="active">Assign Role</a>
+					<a clrVerticalNavLink [routerLink]="['roles']" routerLinkActive="active">Custom Role</a>
+				</clr-vertical-nav-group-children>
+			</clr-vertical-nav-group>
+			<clr-vertical-nav-group routerLinkActive="active">
+				<clr-icon shape="filter-grid-circle" clrVerticalNavIcon></clr-icon>Loggers
+				<clr-vertical-nav-group-children *clrIfExpanded="false">
+					<a clrVerticalNavLink [routerLink]="['log-levels']" routerLinkActive="active">Log Levels</a>
+				</clr-vertical-nav-group-children>
+				</clr-vertical-nav-group>
+			<clr-vertical-nav-group routerLinkActive="active">
+				<clr-icon shape="line-chart" clrVerticalNavIcon></clr-icon>Integrations
+				<clr-vertical-nav-group-children *clrIfExpanded="false">
+					<a clrVerticalNavLink [routerLink]="['integration']" routerLinkActive="active">Metric Providers</a>
+				</clr-vertical-nav-group-children>
+			</clr-vertical-nav-group>
+		</clr-vertical-nav>
+    </div>
+</div>

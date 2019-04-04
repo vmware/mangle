@@ -1,0 +1,8 @@
+{
+	"/mangle-services": {
+		"target": "https://localhost:8443/",
+		"secure": false,
+		"loglevel": "debug",
+		"changeOrigin": true
+	}
+}

@@ -1,0 +1,166 @@
+<clr-alert *ngIf="errorFlag" [clrAlertType]="'danger'">
+    <div class="alert-item">{{alertMessage}}</div>
+</clr-alert>
+<clr-alert *ngIf="successFlag" [clrAlertType]="'success'">
+    <div class="alert-item">{{alertMessage}}</div>
+</clr-alert>
+<div>
+    <h3 class="modal-title">Execute/Schedule K8S Resource Not Ready Fault</h3>
+    <form #k8sResourceNotReadyForm="ngForm" (ngSubmit)="executeK8SResourceNotReadyFault(k8sResourceNotReadyForm.value);" ngNativeValidate>
+        <section class="form-block">
+            <div class="form-group">
+                <label for="endpointName">Endpoint</label>
+                <div class="select">
+                    <select name="endpointName" [(ngModel)]="faultFormData.endpointName" required>
+                        <ng-container *ngFor="let endpoint of endpoints">
+                            <option [value]="endpoint.name" *ngIf="endpoint.endPointType == 'K8S_CLUSTER'">{{endpoint.name}}</option>
+                        </ng-container>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="resourceType">Resource Type</label>
+                <div class="select">
+                    <select name="resourceType" [(ngModel)]="faultFormData.resourceType" required>
+                        <ng-container *ngFor="let k8sResourceVal of k8sResourceTypes">
+                            <option [value]="k8sResourceVal">{{k8sResourceVal}}</option>
+                        </ng-container>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="resource">Resource</label>
+                <input type="text" name="resource" [(ngModel)]="faultFormData.resource" required>
+                <a role="tooltip" aria-haspopup="true" class="tooltip tooltip-lg tooltip-top-right">
+                    <clr-icon shape="info-circle" style="width:21px;height:39px;color:red;"></clr-icon>
+                    <span class="tooltip-content">Input can be Resource Name or Resource Labels. Resource Name is of string type and Resource Labels must be in JSON format as key and value pairs. example: &#123;&quot;app&quot;&#58;&quot;mangle&quot;,&quot;build&quot;&#58;&quot;1234&quot;&#125;</span>
+                </a>
+            </div>
+            <div class="form-group">
+                <label for="appContainerName">App Container Name</label>
+                <input type="text" name="appContainerName" [(ngModel)]="faultFormData.appContainerName" required>
+            </div>
+            <div class="form-group">
+                <label for="randomInjection">Random Injection</label>
+                <div class="select">
+                    <select name="randomInjection" [(ngModel)]="faultFormData.randomInjection" required>
+                        <option [ngValue]="true">true</option>
+                        <option [ngValue]="false">false</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label><b>Schedule</b></label>
+            </div>
+            <br />
+            <fieldset ngModelGroup="schedule">
+                <div class="form-group">
+                    <label for="cronExpression">Cron Expression</label>
+                    <input type="text" name="cronExpression" [(ngModel)]="faultFormData.schedule.cronExpression"
+                        (input)="setSubmitButton();">
+                    <clr-icon shape="calendar" style="width:21px;height:39px;" (click)="scheduleModal=true;"></clr-icon>
+                </div>
+            </fieldset>
+        </section>
+        <button type="submit" class="btn btn-primary" [disabled]="disableSchedule">SCHEDULE FAULT</button>
+        <button type="submit" class="btn btn-primary" [disabled]="disableRun">RUN FAULT</button>
+    </form>
+</div>
+<clr-modal [(clrModalOpen)]="scheduleModal" [clrModalSize]="'lg'">
+        <h3 class="modal-title">Compose Schedule Cron</h3>
+        <div class="modal-body">
+            <clr-tabs>
+                <clr-tab>
+                    <button (click)="cronType='Minutes';" clrTabLink>Minutes</button>
+                    <clr-tab-content *clrIfActive>
+                        <form #minutesForm="ngForm" (ngSubmit)="composeSchedule(minutesForm.value);scheduleModal=false;" ngNativeValidate>
+                            <section class="form-block">Start at&nbsp;
+                                <select name="startat" ngModel required>
+                                    <option *ngFor="let clockRange of clockRanges">{{clockRange}}</option>
+                                </select>&nbsp;minute(s). On every&nbsp;
+                                <select name="minute" ngModel required>
+                                    <option *ngFor="let clockRange of clockRanges">{{clockRange}}</option>
+                                </select>&nbsp;minute(s) at&nbsp;
+                                <select name="second" ngModel required>
+                                    <option *ngFor="let clockRange of clockRanges">{{clockRange}}</option>
+                                </select>&nbsp;second(s)
+                            </section>
+                            <button type="button" class="btn btn-outline" (click)="scheduleModal=false;">CANCEL</button>
+                            <button type="submit" class="btn btn-primary">ADD</button>
+                        </form>
+                    </clr-tab-content>
+                </clr-tab>
+                <clr-tab>
+                    <button (click)="cronType='Hourly';" clrTabLink>Hourly</button>
+                    <clr-tab-content *clrIfActive>
+                        <form #hourlyForm="ngForm" (ngSubmit)="composeSchedule(hourlyForm.value);scheduleModal=false;" ngNativeValidate>
+                            <section class="form-block">Start at&nbsp;
+                                <select name="startat" ngModel required>
+                                    <option *ngFor="let hourRange of hourRanges">{{hourRange}}</option>
+                                </select>&nbsp;hour(s). On every&nbsp;
+                                <select name="hour" ngModel required>
+                                    <option *ngFor="let hourRange of hourRanges">{{hourRange}}</option>
+                                </select>&nbsp;hour(s) at&nbsp;
+                                 <select name="minute" ngModel required>
+                                    <option *ngFor="let clockRange of clockRanges">{{clockRange}}</option>
+                                </select>&nbsp;minute(s)
+                            </section>
+                            <button type="button" class="btn btn-outline" (click)="scheduleModal=false;">CANCEL</button>
+                            <button type="submit" class="btn btn-primary">ADD</button>
+                        </form>
+                    </clr-tab-content>
+                </clr-tab>
+                <clr-tab>
+                    <button (click)="cronType='Daily';" clrTabLink>Daily</button>
+                    <clr-tab-content *clrIfActive>
+                        <form #dailyForm="ngForm" (ngSubmit)="composeSchedule(dailyForm.value);scheduleModal=false;" ngNativeValidate>
+                            <section class="form-block">Daily at&nbsp;
+                                <select name="hour" ngModel required>
+                                    <option *ngFor="let hourRange of hourRanges">{{hourRange}}</option>
+                                </select>&nbsp;hour(s)&nbsp;
+                                 <select name="minute" ngModel required>
+                                    <option *ngFor="let clockRange of clockRanges">{{clockRange}}</option>
+                                </select>&nbsp;minute(s)
+                            </section>
+                            <button type="button" class="btn btn-outline" (click)="scheduleModal=false;">CANCEL</button>
+                            <button type="submit" class="btn btn-primary">ADD</button>
+                        </form>
+                    </clr-tab-content>
+                </clr-tab>
+                <clr-tab>
+                    <button (click)="cronType='Weekly';" clrTabLink>Weekly</button>
+                    <clr-tab-content *clrIfActive>
+                        <form #weeklyForm="ngForm" (ngSubmit)="composeSchedule(weeklyForm.value);scheduleModal=false;" ngNativeValidate>
+                            <section class="form-block">Weekly on day&nbsp;
+                                <select name="day" ngModel required>
+                                    <option *ngFor="let dayRange of dayRanges">{{dayRange}}</option>
+                                </select>&nbsp;at&nbsp;
+                                 <select name="hour" ngModel required>
+                                    <option *ngFor="let hourRange of hourRanges">{{hourRange}}</option>
+                                </select>&nbsp;hour(s)
+                            </section>
+                            <button type="button" class="btn btn-outline" (click)="scheduleModal=false;">CANCEL</button>
+                            <button type="submit" class="btn btn-primary">ADD</button>
+                        </form>
+                    </clr-tab-content>
+                </clr-tab>
+                <clr-tab>
+                    <button (click)="cronType='Monthly';" clrTabLink>Monthly</button>
+                    <clr-tab-content *clrIfActive>
+                        <form #monthlyForm="ngForm" (ngSubmit)="composeSchedule(monthlyForm.value);scheduleModal=false;" ngNativeValidate>
+                            <section class="form-block">Monthly on date&nbsp;
+                                <select name="date" ngModel required>
+                                    <option *ngFor="let dateRage of dateRages">{{dateRage}}</option>
+                                </select>&nbsp;at&nbsp;
+                                  <select name="hour" ngModel required>
+                                    <option *ngFor="let hourRange of hourRanges">{{hourRange}}</option>
+                                </select>&nbsp;hour(s)
+                            </section>
+                            <button type="button" class="btn btn-outline" (click)="scheduleModal=false;">CANCEL</button>
+                            <button type="submit" class="btn btn-primary">ADD</button>
+                        </form>
+                    </clr-tab-content>
+                </clr-tab>
+            </clr-tabs>
+        </div>
+    </clr-modal>

@@ -1,0 +1,2 @@
+--Changeset kumargautam:Default user authentication
+INSERT INTO userauthentication JSON '{"username":"admin@mangle.local","password":"$2a$10$93B/8pkk.Dl0z8Cfh6EW0uQnUkpjMCjS7sUtB9R0TA2ZthFd6jdtC","id":"default-admin-user"}';

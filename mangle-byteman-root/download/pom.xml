@@ -1,0 +1,69 @@
+<!--
+   Copyright (c) 2016-2019 VMware, Inc. All Rights Reserved.
+
+   This product is licensed to you under the Apache License, Version 2.0 (the "License").
+   You may not use this product except in compliance with the License.
+
+   This product may include a number of subcomponents with separate copyright notices
+   and license terms. Your use of these subcomponents is subject to the terms and
+   conditions of the subcomponent's license, as noted in the LICENSE file.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<artifactId>mangle-java-agent</artifactId>
+	<packaging>pom</packaging>
+	<parent>
+		<groupId>org.jboss.byteman</groupId>
+		<artifactId>mangle-byteman-root</artifactId>
+		<version>3.0.10</version>
+	</parent>
+	<description>
+        The Byteman download includes the byteman agent, submit and install jars. the contributed
+        tool jars, the binary scripts used to drive byteman, the Byteman user guide plus the
+        sample jar and scripts which provide some simple examples of how to use Byteman.
+    </description>
+	<name>byteman-download</name>
+	<url>http://www.jboss.org/byteman</url>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>create-mangle-agent-archive</id>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+						<configuration>
+							<attach>true</attach>
+							<descriptors>
+								<descriptor>assembly-mangle.xml</descriptor>
+							</descriptors>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+	<dependencies>
+		<dependency>
+			<groupId>org.jboss.byteman</groupId>
+			<artifactId>mangle-byteman-agent</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.jboss.byteman</groupId>
+			<artifactId>byteman-submit</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.jboss.byteman</groupId>
+			<artifactId>byteman-install</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+	</dependencies>
+</project>

@@ -1,0 +1,24 @@
+<div class="main-container">
+    <div class="content-container">
+        <div class="content-area">
+            <router-outlet></router-outlet>
+        </div>
+		<clr-vertical-nav [clrVerticalNavCollapsible]="settingCollapsible">
+			<clr-vertical-nav-group routerLinkActive="active">
+				<clr-icon shape="cloud" clrVerticalNavIcon></clr-icon>Endpoints
+				<clr-vertical-nav-group-children *clrIfExpanded="true">
+					<a clrVerticalNavLink [routerLink]="['machine']" routerLinkActive="active">Remote Machine</a>
+					<a clrVerticalNavLink [routerLink]="['kubernetes']" routerLinkActive="active">Kubernetes Cluster</a>
+					<a clrVerticalNavLink [routerLink]="['docker']" routerLinkActive="active">Docker</a>
+					<a clrVerticalNavLink [routerLink]="['vcenter']" routerLinkActive="active">VMware vCenter</a>
+				</clr-vertical-nav-group-children>
+			</clr-vertical-nav-group>
+			<clr-vertical-nav-group routerLinkActive="active">
+				<clr-icon shape="lock" clrVerticalNavIcon></clr-icon>Credentials
+				<clr-vertical-nav-group-children *clrIfExpanded="false">
+					<a clrVerticalNavLink [routerLink]="['endpoint-credentials']" routerLinkActive="active">Endpoint Credentials</a>
+				</clr-vertical-nav-group-children>
+			</clr-vertical-nav-group>
+		</clr-vertical-nav>
+    </div>
+</div>

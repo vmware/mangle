@@ -1,0 +1,142 @@
+<?xml version="1.0"?>
+<!-- Copyright (c) 2016-2019 VMware, Inc. All Rights Reserved. This product 
+	is licensed to you under the Apache License, Version 2.0 (the "License"). 
+	You may not use this product except in compliance with the License. This 
+	product may include a number of subcomponents with separate copyright notices 
+	and license terms. Your use of these subcomponents is subject to the terms 
+	and conditions of the subcomponent's license, as noted in the LICENSE file. -->
+<project
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+	xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>com.vmware.mangle</groupId>
+		<artifactId>mangle-root</artifactId>
+		<version>0.0.1</version>
+		<relativePath>../pom.xml</relativePath>
+	</parent>
+
+	<artifactId>mangle-test-plugin</artifactId>
+	<name>mangle-test-plugin</name>
+	<description>Mangle Test Plugin</description>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<plugin.id>${project.artifactId}</plugin.id>
+		<plugin.version>${project.version}</plugin.version>
+		<plugin.provider>kumargautam</plugin.provider>
+		<plugin.dependencies>,</plugin.dependencies>
+		<plugin.class>com.vmware.mangle.test.plugin.MangleTestPlugin</plugin.class>
+		<parent.project.basedir>${project.basedir}/..</parent.project.basedir>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>com.vmware.mangle</groupId>
+			<artifactId>mangle-task-framework</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>${java.version}</source>
+					<target>${java.version}</target>
+					<compilerArgument>-Xlint:unchecked</compilerArgument>
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>unzip jar file</id>
+						<phase>package</phase>
+						<configuration>
+							<target>
+								<unzip
+									src="target/${project.artifactId}-${project.version}.${project.packaging}"
+									dest="target/plugin-classes" />
+							</target>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>generate-report</id>
+						<configuration>
+							<skip>true</skip>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<configuration>
+					<descriptors>
+						<descriptor>
+							src/main/resources/assembly.xml
+						</descriptor>
+					</descriptors>
+					<appendAssemblyId>false</appendAssemblyId>
+				</configuration>
+				<executions>
+					<execution>
+						<id>make-assembly</id>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<configuration>
+					<archive>
+						<manifestEntries>
+							<Plugin-Id>${plugin.id}</Plugin-Id>
+							<Plugin-Class>${plugin.class}</Plugin-Class>
+							<Plugin-Version>${plugin.version}</Plugin-Version>
+							<Plugin-Provider>${plugin.provider}</Plugin-Provider>
+							<Plugin-Dependencies>${plugin.dependencies}</Plugin-Dependencies>
+						</manifestEntries>
+					</archive>
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>merge-test-data</id>
+						<configuration>
+							<skip>true</skip>
+						</configuration>
+					</execution>
+					<execution>
+						<id>check</id>
+						<configuration>
+							<skip>true</skip>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+</project>

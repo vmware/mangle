@@ -1,0 +1,31 @@
+<div class="login-wrapper">
+    <form class="login" #loginForm="ngForm" (ngSubmit)="login(loginForm.value);" ngNativeValidate>
+        <label class="title">
+            <h3 class="welcome">Welcome to Mangle</h3>
+            <h5 class="hint">
+                Use your login ID to sign in
+                <a href="#" role="tooltip" aria-haspopup="true" class="tooltip tooltip-xs">
+                    <clr-icon shape="error-standard"></clr-icon>
+                    <span class="tooltip-content">Legal Notice: ....</span>
+                </a>
+            </h5>
+        </label>
+        <div class="login-group">
+            <div class="auth-source select">
+                <select name="authSource" [(ngModel)]="authSource" required>
+                    <ng-container *ngFor="let sourceAuth of authSources">
+                        <option [value]="sourceAuth">{{sourceAuth}}</option>
+                    </ng-container>
+                </select>
+            </div>
+            <input class="username" type="text" id="username" name="username" [(ngModel)]="username" required>
+            <input class="password" type="password" id="password" name="password" [(ngModel)]="password" required>
+            <div>
+                <clr-alert *ngIf="errorFlag" [clrAlertType]="'danger'">
+                    <div class="alert-item">{{alertMessage}}</div>
+                </clr-alert>
+            </div>
+            <button [clrLoading]="submitBtnState" type="submit" class="btn btn-primary">LOGIN</button>
+        </div>
+    </form>
+</div>

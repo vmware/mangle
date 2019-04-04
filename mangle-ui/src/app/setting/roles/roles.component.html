@@ -1,0 +1,53 @@
+<clr-alert *ngIf="errorFlag" [clrAlertType]="'danger'">
+    <div class="alert-item">{{alertMessage}}</div>
+</clr-alert>
+<clr-alert *ngIf="successFlag" [clrAlertType]="'success'">
+    <div class="alert-item">{{alertMessage}}</div>
+</clr-alert>
+<clr-dg-action-bar>
+    <div class="btn-group">
+        <button type="button" class="btn btn-sm btn-secondary" (click)="populateRoleForm({'id':null,'name':null,'privilegeNames':[]});roleModal=true;addEdit='Add'"><clr-icon shape="plus"></clr-icon> Custom Role</button>
+    </div>
+</clr-dg-action-bar>
+<clr-datagrid [clrDgLoading]="isLoading">
+	<clr-dg-column>Roles</clr-dg-column>
+    <clr-dg-column>Privileges</clr-dg-column>
+    <clr-dg-row *clrDgItems="let role of roleList" [clrDgItem]="role">
+        <clr-dg-action-overflow *ngIf="role.name != 'ROLE_READONLY' && role.name != 'ROLE_ADMIN' && role.name != 'ROLE_USER'">
+            <button class="action-item" (click)="populateRoleForm(role);roleModal=true;addEdit='Edit'">Edit</button>
+            <button class="action-item" (click)="deleteRole(role)">Delete</button>
+        </clr-dg-action-overflow>
+		<clr-dg-cell>{{role.name}}</clr-dg-cell>
+		<clr-dg-cell><span class="label label-light-blue" *ngFor="let privilege of role.privilegeNames">{{privilege}}</span></clr-dg-cell>
+    </clr-dg-row>
+	<clr-dg-footer>
+		<clr-dg-pagination #pagination [clrDgPageSize]="10">
+			<clr-dg-page-size [clrPageSizeOptions]="[10,20,50,100]">Roles per page</clr-dg-page-size>
+			{{pagination.firstItem + 1}} - {{pagination.lastItem + 1}} of {{pagination.totalItems}} roles
+		</clr-dg-pagination>
+	</clr-dg-footer>
+</clr-datagrid>
+<clr-modal [(clrModalOpen)]="roleModal">
+    <h3 class="modal-title">{{addEdit}} Role</h3>
+    <div class="modal-body">
+        <form #roleForm="ngForm" (ngSubmit)="addOrUpdateRole(roleForm.value);roleModal=false;" *ngIf="roleFormData" ngNativeValidate>
+            <section class="form-block">
+                <div class="form-group">
+                    <input type="text" name="id" [(ngModel)]="roleFormData.id" [hidden]="true">
+                </div>
+				<div class="form-group">
+                    <label for="name">Role Name</label>
+					<input type="text" name="name" [(ngModel)]="roleFormData.name" [required]="addEdit == 'Add'" [readonly]="addEdit == 'Edit'">
+                </div>
+                <div class="form-group">
+                    <label for="privilegeNames">Privileges</label>
+					<ng-container *ngFor="let privilege of privilegeList">
+						<input type="checkbox" (change)="updateRoleFormData($event,privilege);" />{{privilege.name}}&nbsp;&nbsp;
+					</ng-container>
+                </div>
+            </section>
+            <button type="button" class="btn btn-outline" (click)="roleModal=false">CANCEL</button>
+            <button type="submit" class="btn btn-primary">SUBMIT</button>
+        </form>
+    </div>
+</clr-modal>

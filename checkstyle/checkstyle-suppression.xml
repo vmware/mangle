@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC
+        "-//Puppy Crawl//DTD Suppressions 1.1//EN"
+        "suppressions_1_1.dtd">
+
+<suppressions>
+    <suppress files="MangleApplication.java|Constants\.java|KubernetesTemplates\.java|EndpointClientFactory\.java|WavefrontMetricHelper\.java|MetricsHelper.java|EndpointClientFactory.java|EventListener\.java|CommandResultUtils\.java" checks="HideUtilityClassConstructorCheck"/>
+</suppressions>

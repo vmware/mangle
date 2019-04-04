@@ -1,0 +1,17 @@
+<div class="main-container">
+    <div class="content-container">
+        <div class="content-area">
+            <router-outlet></router-outlet>
+        </div>
+        <clr-vertical-nav [clrVerticalNavCollapsible]="requestsCollapsible">
+            <clr-vertical-nav-group routerLinkActive="active">
+                <clr-icon shape="align-bottom" clrVerticalNavIcon></clr-icon>Requests
+                <clr-vertical-nav-group-children *clrIfExpanded="true">
+                    <a clrVerticalNavLink [routerLink]="['processed']" routerLinkActive="active">Processed Requests</a>
+                    <a clrVerticalNavLink [routerLink]="['scheduled']" routerLinkActive="active">Scheduled Jobs</a>
+                    <a clrVerticalNavLink href="application/logfile" target="_blank">Request Logs</a>
+                </clr-vertical-nav-group-children>
+            </clr-vertical-nav-group>
+        </clr-vertical-nav>
+    </div>
+</div>

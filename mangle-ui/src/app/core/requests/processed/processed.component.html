@@ -1,0 +1,53 @@
+<clr-alert *ngIf="errorFlag" [clrAlertType]="'danger'">
+    <div class="alert-item">{{alertMessage}}</div>
+</clr-alert>
+<clr-alert *ngIf="successFlag" [clrAlertType]="'success'">
+    <div class="alert-item">{{alertMessage}}</div>
+</clr-alert>
+<h1>Processed Requests</h1><clr-icon shape="refresh" (click)="getAllProcessedTasks();"></clr-icon><br />
+<clr-datagrid [clrDgLoading]="isLoading">
+    <clr-dg-column>Task Name</clr-dg-column>
+    <clr-dg-column style="min-width:144px;" [clrDgField]="'triggerui.taskStatus'">Status</clr-dg-column>
+    <clr-dg-column [clrDgField]="'taskData.endpointName'">Endpoint Name</clr-dg-column>
+    <clr-dg-column [clrDgField]="'taskType'">Task Type</clr-dg-column>
+    <clr-dg-column [clrDgField]="'taskDescription'">Task Description</clr-dg-column>
+    <clr-dg-column [clrDgField]="'triggerui.startTime'" [clrDgSortOrder]="startTimeDesc">Start Time</clr-dg-column>
+    <clr-dg-column [clrDgField]="'triggerui.endTime'">End Time</clr-dg-column>
+    <clr-dg-row *clrDgItems="let processedRequest of processedRequests" [clrDgItem]="processedRequest">
+        <clr-dg-action-overflow>
+            <button class="action-item" (click)="deleteTask(processedRequest);" *ngIf="processedRequest.triggerui.taskStatus == 'COMPLETED' || processedRequest.triggerui.taskStatus == 'FAILED' || processedRequest.triggerui.taskStatus == 'CANCELLED'">Delete</button>
+            <button class="action-item" (click)="remediateFault(processedRequest);" *ngIf="processedRequest.remediated==false && processedRequest.scheduledTask==false && processedRequest.taskType=='INJECTION'">Remediate Fault</button>
+            <button class="action-item" (click)="viewReport(processedRequest);viewReportFlage=true;">Report</button>
+        </clr-dg-action-overflow>
+        <clr-dg-cell style="overflow:hidden;">{{processedRequest.taskName}}</clr-dg-cell>
+        <clr-dg-cell style="min-width:144px;">
+            <a href="javascript://" role="tooltip" aria-haspopup="true" class="tooltip tooltip-lg tooltip-right">
+                <span class="spinner spinner-sm" *ngIf="processedRequest.triggerui.taskStatus == 'IN_PROGRESS' || processedRequest.triggerui.taskStatus == 'INITIALIZING'"></span>
+                <clr-icon shape="check-circle" class="is-success" size="24" *ngIf="processedRequest.triggerui.taskStatus == 'COMPLETED'"></clr-icon>
+                <clr-icon shape="exclamation-circle" class="is-error" size="24" *ngIf="processedRequest.triggerui.taskStatus == 'FAILED'"></clr-icon>
+                <clr-icon shape="ban" class="is-warning" size="18" *ngIf="processedRequest.triggerui.taskStatus == 'CANCELLED'"></clr-icon>
+                <span class="tooltip-content">{{processedRequest.triggerui.taskFailureReason}}</span>
+            </a>{{processedRequest.triggerui.taskStatus}}
+        </clr-dg-cell>
+        <clr-dg-cell style="overflow:hidden;">{{processedRequest.taskData.endpointName}}</clr-dg-cell>
+        <clr-dg-cell style="overflow:hidden;">{{processedRequest.taskType}}</clr-dg-cell>
+        <clr-dg-cell style="overflow:hidden;">{{processedRequest.taskDescription}}</clr-dg-cell>
+        <clr-dg-cell style="overflow:hidden;">{{processedRequest.triggerui.startTime | date:'EEE MMM dd HH:mm:ss z yyyy'}}</clr-dg-cell>
+        <clr-dg-cell style="overflow:hidden;">{{processedRequest.triggerui.endTime | date:'EEE MMM dd HH:mm:ss z yyyy'}}</clr-dg-cell>
+    </clr-dg-row>
+    <clr-dg-footer>
+        <clr-dg-pagination #pagination [clrDgPageSize]="30">
+            <clr-dg-page-size [clrPageSizeOptions]="[30,50,100]">Requests per page</clr-dg-page-size>
+            {{pagination.firstItem + 1}} - {{pagination.lastItem + 1}} of {{pagination.totalItems}} requests
+        </clr-dg-pagination>
+    </clr-dg-footer>
+</clr-datagrid>
+<clr-modal [(clrModalOpen)]="viewReportFlage" [clrModalSize]="'lg'">
+    <h3 class="modal-title">Task Details</h3>
+    <div class="modal-body">
+        <code>
+            <pre>{{processedRequestView |json}}</pre>
+        </code>
+        <button type="button" class="btn btn-outline" (click)="viewReportFlage=false;">OK</button>
+    </div>
+</clr-modal>
