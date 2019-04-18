@@ -1,32 +1,26 @@
+# Introduction
 
+## Mangle Documentation
 
-# mangle
+The Mangle Documentation provides information about how to install, configure, and use Mangle™.
 
-## Overview
+**Product version: 1.0**
 
-## Try it out
+### Intended Audiences
 
-### Prerequisites
+This information is intended for the following audiences:
 
-* Prereq 1
-* Prereq 2
-* Prereq 3
+| **Audience** | **Description of Role** | **Relevant Documentation** |
+| :--- | :--- | :--- |
+| All Users | Understand Mangle | [Overview of Mangle](mangle_overview/README.md) |
+| Mangle administrators | Install Mangle. Deploy and maintain the Mangle containers or ova. | [Mangle for Mangle Administrators](mangle_admin/README.md) |
+| SRE, developers, viewers | Use Mangle to run chaos experiments and monitor progress. | [Using Mangle as a SRE, Developer, or Viewer](mangle_users/README.md) |
 
-### Build & Run
+Copyright \(c\) 2019 VMware, Inc. All rights reserved. [Copyright and trademark information](http://pubs.vmware.com/copyright-trademark.html). Any feedback you provide to VMware is subject to the terms at [www.vmware.com/community\_terms.html](http://www.vmware.com/community_terms.html).
 
-1. Step 1
-2. Step 2
-3. Step 3
+**VMware, Inc.**  
+ 3401 Hillview Ave.  
+ Palo Alto, CA 94304
 
-## Documentation
+[www.vmware.com](http://www.vmware.com)
 
-## Releases & Major Branches
-
-## Contributing
-
-The mangle project team welcomes contributions from the community. If you wish to contribute code and you have not
-signed our contributor license agreement (CLA), our bot will update the issue when you open a Pull Request. For any
-questions about the CLA process, please refer to our [FAQ](https://cla.vmware.com/faq). For more detailed information,
-refer to [CONTRIBUTING.md](CONTRIBUTING.md).
-
-## License
