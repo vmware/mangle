@@ -4,6 +4,8 @@
 
 ### Deploying the Mangle Virtual Appliance
 
+For a quick POC we recommend that you deploy a single node instance of Mangle using the OVA file that we have made available [here](https://dl.bintray.com/vmware/photon/3.0/GA/ova/photon-hw11-3.0-26156e2.ova).
+
 Using the OVA is a fast and easy way to create a Mangle VM on VMware vSphere.
 
 After you have downloaded the OVA, log in to your vSphere environment and perform the following steps:
@@ -96,4 +98,6 @@ To deploy the Mangle container run the docker command below on the docker host.
 ```text
 docker run --name mangle -d -e DB_OPTIONS="-DcassandraContactPoints=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' mangle-cassandra) -DcassandraUsername= -DcassandraSslEnabled=false" -e CLUSTER_OPTIONS="-DhazelcastValidationToken=mangle" -p 8080:8080 -p 8443:8443 https://vmware.bintray.com/mangle:$MANGLE_BUILD
 ```
+
+
 
