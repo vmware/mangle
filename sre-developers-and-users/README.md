@@ -1,2 +1,0 @@
-# SRE, Developers and Users
-
