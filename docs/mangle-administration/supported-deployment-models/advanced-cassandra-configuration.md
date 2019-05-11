@@ -79,11 +79,23 @@ validate = false
 # usercert = /cassandra/certs/fiaascocassandra_CLIENT.cer.pem
 ```
 
-* Exit from the running container and restart the container.
-* Login : **cqlsh --ssl -u cassandra -p cassandra** .
-* See logs : **/var/log/cassandra** .
-* Attaching the required file which help to enable the authentication and ssl in Cassandra base image.
-* [![](https://confluence.eng.vmware.com/s/en_GB/7502/03f55dd28656fecb49cdf79d0ae052058a20a5d2/3.0.1/_/download/resources/com.atlassian.confluence.plugins.confluence-view-file-macro:view-file-macro-resources/images/placeholder-medium-file.png)docker-entrypoint.sh](https://confluence.eng.vmware.com/download/attachments/376298391/docker-entrypoint.sh?version=1&modificationDate=1548139119000&api=v2)[![](https://confluence.eng.vmware.com/s/en_GB/7502/03f55dd28656fecb49cdf79d0ae052058a20a5d2/3.0.1/_/download/resources/com.atlassian.confluence.plugins.confluence-view-file-macro:view-file-macro-resources/images/placeholder-medium-file.png)cqlshrc](https://confluence.eng.vmware.com/download/attachments/376298391/cqlshrc?version=1&modificationDate=1548139118000&api=v2)[![](https://confluence.eng.vmware.com/s/en_GB/7502/03f55dd28656fecb49cdf79d0ae052058a20a5d2/3.0.1/_/download/resources/com.atlassian.confluence.plugins.confluence-view-file-macro:view-file-macro-resources/images/placeholder-medium-file.png)init-query.cql](https://confluence.eng.vmware.com/download/attachments/376298391/init-query.cql?version=1&modificationDate=1548139117000&api=v2)[![](https://confluence.eng.vmware.com/s/en_GB/7502/03f55dd28656fecb49cdf79d0ae052058a20a5d2/3.0.1/_/download/resources/com.atlassian.confluence.plugins.confluence-view-file-macro:view-file-macro-resources/images/placeholder-medium-file.png)cassandra.yaml](https://confluence.eng.vmware.com/download/attachments/376298391/cassandra.yaml?version=1&modificationDate=1548139117000&api=v2)[![](https://confluence.eng.vmware.com/s/en_GB/7502/03f55dd28656fecb49cdf79d0ae052058a20a5d2/3.0.1/_/download/resources/com.atlassian.confluence.plugins.confluence-view-file-macro:view-file-macro-resources/images/placeholder-medium-file.png)generateDbCert.sh](https://confluence.eng.vmware.com/download/attachments/376298391/generateDbCert.sh?version=1&modificationDate=1548139116000&api=v2) 
+Exit from the running container and restart the container.
+
+ Login : **cqlsh --ssl -u cassandra -p cassandra** .
+
+See logs : **/var/log/cassandra** .
+
+Attaching the required files which help to enable the authentication and ssl in Cassandra base image.
+
+{% file src="../../.gitbook/assets/docker-entrypoint.sh" caption="Docker Entry Point Script" %}
+
+{% file src="../../.gitbook/assets/cqlshrc.txt" caption="cqlshrc Config File" %}
+
+{% file src="../../.gitbook/assets/init-query.cql" caption="Init Query cql File" %}
+
+{% file src="../../.gitbook/assets/cassandra.yaml" caption="Cassandra YAML File" %}
+
+{% file src="../../.gitbook/assets/generatedbcert.sh" caption="Certificate Generation Script" %}
 
 To download the Cassandra client as DevCenter form [DevCenter](https://academy.datastax.com/downloads).
 
