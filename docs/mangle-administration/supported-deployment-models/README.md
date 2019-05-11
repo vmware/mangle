@@ -12,55 +12,59 @@ After you have downloaded the OVA, log in to your vSphere environment and perfor
 
 1. Start the Import Process
 
-   From the Actions pull-down menu, choose **Create/Register VM**.
+   From the Actions pull-down menu for a datacenter, choose **Deploy OVF Template**.
 
-   ![Create/Register VM](../.gitbook/assets/ova-new-vm.png)
+   ![Create/Register VM](../../.gitbook/assets/step1_deploy-ovf-template.png)
 
-   In the Select creation type window, choose **Deploy a virtual machine from an OVF or OVA file**.
-
-   \(images/vs-ova-new-vm-ova.png\)
+   Provide the location of the downloaded ova file.
 
    Choose **Next**.
 
-2. Select the OVA File
+2. Specify the name and location of virtual machine                      Enter a name for the virtual machine and select a location for the virtual machine.
 
-   Enter a name for the virtual machine, and select the OVA file.
-
-   ![OVA file](../.gitbook/assets/ova-name-selected.png)
+   ![OVA file](../../.gitbook/assets/step2_select-name.png)
 
    Choose **Next**.
 
-3. Specify the Target Datastore
+3. Specify the compute resource
 
-   From the Select storage screen, select the target datastore for your VM.
+   Select a cluster, host or resource pool where the virtual machine needs to be deployed.
 
-   ![Target datastore](../.gitbook/assets/ova-storage.png)
-
-   Choose **Next**.
-
-4. Accept the License Agreement
-
-   Read through the Mangle License Agreement, and then choose **I Agree**.
-
-   ![License](../.gitbook/assets/ova-license.png)
+   ![Target datastore](../../.gitbook/assets/step3_select-compute-resource.png)
 
    Choose **Next**.
 
-5. Select Deployment Options
+4. Review details
+
+   ![](../../.gitbook/assets/step4_review-details.png) 
+
+   Choose **Next**.
+
+5. Accept License Agreement
+
+   Read through the Mangle License Agreement, and then choose **I accept all license agreements**.
+
+   ![License](../../.gitbook/assets/step5_accept-license.png)
+
+   Choose **Next**.
+
+6. Select Storage
 
    Mangle is provisioned with a maximum disk size. By default, Mangle uses only the portion of disk space that it needs, usually much less that the entire disk size \( **Thin** client\). If you want to pre-allocate the entire disk size \(reserving it entirely for Mangle instead\), select **Thick** instead.
 
-   ![Deployment Options](../.gitbook/assets/ova-deployment-options.png)
+   ![Deployment Options](../../.gitbook/assets/step6_select-storage.png)
 
    Choose **Next**.
 
-6. Verify Deployment Settings
+7. Select Network
 
-```text
-Click **Finish**. vSphere uploads and validates your OVA. Depending on bandwidth, this operation might take a while.
+   Provide a static or dhcp IP for Mangle after choosing an appropriate destination network. ![](../../.gitbook/assets/step7_select-network.png) 
 
-When finished, vSphere powers up a new VM based on your selections.
-```
+   ![](../../.gitbook/assets/step8_customize-template.png) 
+
+   Choose **Next**.
+
+8. Verify Deployment Settings and click **Finish** to start creating the virtual machine. Depending on bandwidth, this operation might take a while. When finished, vSphere powers up the Mangle VM based on your selections.
 
 After the VM is booted, open the command window. vSphere prompts you to log in.
 
@@ -74,6 +78,11 @@ After the VM is booted, open the command window. vSphere prompts you to log in.
   **Note:** For security, Mangle forbids common dictionary words for the root password.
 
   Once logged in, you will see the shell prompt.
+
+* The Mangle application should be available at the following URL: _https://&lt;IP or Hostname provided&gt;/mangle-services_
+* You will be prompted to change the admin password to continue.
+  * Default Mangle Username: `admin@mangle.local`
+  * Password: `admin`
 
 Export the VM as a Template \(Optional\)
 
@@ -91,7 +100,7 @@ To deploy a Cassandra DB container without enabling authentication or ssl run th
 docker run --name mangle-cassandra -v /cassandra/storage/:/var/lib/cassandra -p 9042:9042 -d -e CASSANDRA_CLUSTER_NAME="manglecassandracluster" -e CASSANDRA_DC="DC1" -e CASSANDRA_RACK="rack1" -e CASSANDRA_ENDPOINT_SNITCH="GossipingPropertyFileSnitch"  cassandra:3.11
 ```
 
-To enable authentication or clustering on Cassandra refer to the Cassandra Advanced Configuration.
+To enable authentication or clustering on Cassandra refer to the [Cassandra Advanced Configuration](advanced-cassandra-configuration.md).
 
 To deploy the Mangle container run the docker command below on the docker host.
 
