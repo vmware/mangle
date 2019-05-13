@@ -188,7 +188,6 @@
 		<module>agent</module>
 		<module>install</module>
 		<module>download</module>
-		<module>agent-integration-tests</module>
 	</modules>
 
 	<profiles>

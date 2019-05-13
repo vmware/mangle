@@ -801,7 +801,6 @@
 				<module>mangle-default-plugin</module>
 				<module>mangle-ui</module>
 				<module>mangle-services</module>
-				<module>mangle-integration-tests</module>
                 <module>mangle-vcenter-adapter</module>
 			</modules>
 		</profile>
