@@ -11,48 +11,63 @@
 
 package com.vmware.mangle.services.config;
 
+import java.util.List;
+
 import javax.validation.constraints.NotEmpty;
 
 import io.micrometer.datadog.DatadogConfig;
-import lombok.Data;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+
+import com.vmware.mangle.cassandra.model.metricprovider.DatadogConnectionProperties;
+import com.vmware.mangle.cassandra.model.metricprovider.MetricProviderSpec;
+import com.vmware.mangle.model.enums.MetricProviderType;
+import com.vmware.mangle.services.repository.MetricProviderRepository;
 
 
 /**
  * Configuration class for Mangle Datadog
+ *
  * @author ashrimali
  *
  */
 @Configuration
-@Data
 @NotEmpty
 public class MangleDatadogConfig implements DatadogConfig {
 
-    private String apiKey = "";
-
-    private String applicationKey = "";
-
-    private String uri = "";
-
+    @Autowired
+    private MetricProviderRepository metricProviderRepository;
 
     @Override
     public String get(String key) {
-        //There is no significance of this value here hence passing null.
+        List<MetricProviderSpec> dd =
+                this.metricProviderRepository.findByMetricProviderType(MetricProviderType.DATADOG);
+        if (!dd.isEmpty()) {
+            DatadogConnectionProperties datadogConnectionProperties = dd.get(0).getDatadogConnectionProperties();
+
+            switch (key) {
+            case "datadog.apiKey":
+                return datadogConnectionProperties.getApiKey();
+            case "datadog.applicationKey":
+                return datadogConnectionProperties.getApplicationKey();
+            case "datadog.uri":
+                return datadogConnectionProperties.getUri();
+            default:
+                break;
+            }
+        } else {
+            switch (key) {
+            case "datadog.apiKey":
+                return String.valueOf("");
+            case "datadog.applicationKey":
+                return String.valueOf("");
+            case "datadog.uri":
+                return String.valueOf("");
+            default:
+                break;
+            }
+        }
+
         return null;
-    }
-
-    @Override
-    public String apiKey() {
-        return getApiKey();
-    }
-
-    @Override
-    public String applicationKey() {
-        return getApplicationKey();
-    }
-
-    @Override
-    public String uri() {
-        return getUri();
     }
 }

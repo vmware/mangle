@@ -18,6 +18,9 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import static com.vmware.mangle.services.constants.CommonConstants.DEFAULT_BLOCK_SIZE;
+import static com.vmware.mangle.services.constants.CommonConstants.IO_SIZE_ARG;
+
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -34,7 +37,7 @@ import com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.CpuFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.DiskIOFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.DockerFaultSpec;
-import com.vmware.mangle.cassandra.model.faults.specs.K8SFaultSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.K8SDeleteResourceFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.K8SResourceNotReadyFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.KillProcessFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.MemoryFaultSpec;
@@ -110,7 +113,7 @@ public class FaultInjectionControllerTest {
 
     @Test
     public void testk8SDeleteResourceFault() throws MangleException {
-        K8SFaultSpec faultSpec = faultsMockData.getDeleteK8SResourceFaultSpec();
+        K8SDeleteResourceFaultSpec faultSpec = faultsMockData.getDeleteK8SResourceFaultSpec();
         TasksMockData tasksMockData = new TasksMockData(faultSpec);
         Task taskObj = tasksMockData.getDummyTask();
         EndpointSpec endpointSpec = endpointMockData.k8sEndpointMockData();
@@ -393,6 +396,9 @@ public class FaultInjectionControllerTest {
         Assert.assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
         Assert.assertEquals(((CommandExecutionFaultSpec) responseEntity.getBody().getTaskData()).getFaultName(),
                 AgentFaultName.INJECT_DISK_IO_FAULT.toString());
+        Assert.assertEquals(
+                ((CommandExecutionFaultSpec) responseEntity.getBody().getTaskData()).getArgs().get(IO_SIZE_ARG),
+                DEFAULT_BLOCK_SIZE);
         verify(faultInjectionHelper, times(1)).getTask(any());
 
     }

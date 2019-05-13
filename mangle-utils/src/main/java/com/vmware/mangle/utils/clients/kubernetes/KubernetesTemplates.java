@@ -13,12 +13,11 @@ package com.vmware.mangle.utils.clients.kubernetes;
 
 /**
  * @author bkaranam
- *
- *
  */
 public class KubernetesTemplates {
 
-    private KubernetesTemplates() {}
+    private KubernetesTemplates() {
+    }
 
     //kubectl get command json templates
     public static final String TEMPLATE_ERROR_MESSAGE = "Error executing template";
@@ -33,6 +32,7 @@ public class KubernetesTemplates {
     public static final String POD = "pod ";
     public static final String NODE = "node ";
     public static final String NODES = "nodes ";
+    public static final String NAMESPACE = "namespace ";
     public static final String SERVICES = "services ";
     public static final String OUTPUT_JSONPATH = "-o=jsonpath=";
     public static final String GET_NODES_JSONPATH = GET + NODES + OUTPUT_JSONPATH;
@@ -80,4 +80,8 @@ public class KubernetesTemplates {
             PATCH + POD + " %s -p '{\"spec\":{\"containers\":[{\"name\":\"%s\",\"image\":\"%s\"}]}}' ";
     public static final String GET_CONTAINER_IMAGE = GET + POD + "%s " + TEMPLATE_OUTPUT
             + "\"{{range .spec.containers}}{{if eq .name \\\"%s\\\"}}{{.image}}{{end}}{{end}}\"";
+    public static final String IS_CONTAINER_HAS_READINESS_PROBE = GET + POD + "%s " + TEMPLATE_OUTPUT
+            + "\"{{range .spec.containers}}{{if eq .name \\\"%s\\\"}}{{if .readinessProbe}}ReadinessProbe Configured{{else}}ReadinessProbe not Configured for container %s {{end}}{{end}}{{end}}\"";
+    public static final String IS_CONTAINER_READY = GET + POD + "%s " + TEMPLATE_OUTPUT
+            + "\"{{range .status.containerStatuses}}{{if eq .name \\\"%s\\\"}}{{.ready}}{{end}}{{end}}\"";
 }

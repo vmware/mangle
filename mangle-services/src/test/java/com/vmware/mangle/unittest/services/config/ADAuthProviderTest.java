@@ -32,6 +32,7 @@ import org.testng.annotations.Test;
 
 import com.vmware.mangle.cassandra.model.security.ADAuthProviderDto;
 import com.vmware.mangle.services.ADAuthProviderService;
+import com.vmware.mangle.services.PrivilegeService;
 import com.vmware.mangle.services.UserService;
 import com.vmware.mangle.services.config.ADAuthProvider;
 import com.vmware.mangle.services.config.CustomActiveDirectoryLdapAuthenticationProvider;
@@ -47,6 +48,7 @@ import com.vmware.mangle.services.mockdata.AuthProviderMockData;
 public class ADAuthProviderTest extends PowerMockTestCase {
     private ADAuthProvider adAuthProvider;
     private UserService userService;
+    private PrivilegeService privilegeService;
     private ADAuthProviderService adAuthProviderService;
     private CustomActiveDirectoryLdapAuthenticationProvider provider;
 
@@ -58,7 +60,7 @@ public class ADAuthProviderTest extends PowerMockTestCase {
         adAuthProviderService = mock(ADAuthProviderService.class);
         userService = mock(UserService.class);
         log.info("initializing ADAuthProvider instance");
-        adAuthProvider = spy(new ADAuthProvider(adAuthProviderService, userService));
+        adAuthProvider = spy(new ADAuthProvider(adAuthProviderService, userService, privilegeService));
     }
 
     /**
@@ -124,7 +126,7 @@ public class ADAuthProviderTest extends PowerMockTestCase {
                 "Executing setAdAuthProviderTestFailure on method: ADAuthProvider#setAdAuthProvider(String, String, String)");
         when(provider.testConnection()).thenReturn(false);
         PowerMockito.whenNew(CustomActiveDirectoryLdapAuthenticationProvider.class)
-                .withArguments(any(), anyString(), anyString()).thenReturn(provider);
+                .withArguments(any(), any(), anyString(), anyString()).thenReturn(provider);
         ADAuthProviderDto auth = dataProvider.getNewADAuthProviderDto();
         boolean result = adAuthProvider.setAdAuthProvider(auth.getAdUrl(), auth.getAdDomain());
         Assert.assertFalse(result);
@@ -139,7 +141,7 @@ public class ADAuthProviderTest extends PowerMockTestCase {
                 "Executing setAdAuthProviderTestSuccessful on method: ADAuthProvider#setAdAuthProvider(String, String, String)");
         when(provider.testConnection()).thenReturn(true);
         PowerMockito.whenNew(CustomActiveDirectoryLdapAuthenticationProvider.class)
-                .withArguments(any(), anyString(), anyString()).thenReturn(provider);
+                .withArguments(any(), any(), anyString(), anyString()).thenReturn(provider);
         ADAuthProviderDto auth = dataProvider.getNewADAuthProviderDto();
         boolean result = adAuthProvider.setAdAuthProvider(auth.getAdUrl(), auth.getAdDomain());
         log.info("result from the method setAdAuthProviderTestSuccessful is: " + result);

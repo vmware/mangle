@@ -10,8 +10,8 @@
     </div>
 </clr-dg-action-bar>
 <clr-datagrid [clrDgLoading]="isLoading">
-	<clr-dg-column>AD URL</clr-dg-column>
-    <clr-dg-column>AD DOMAIN</clr-dg-column>
+	<clr-dg-column [clrDgField]="'adUrl'">AD URL</clr-dg-column>
+    <clr-dg-column [clrDgField]="'adDomain'">AD DOMAIN</clr-dg-column>
     <clr-dg-row *clrDgItems="let identity of identities" [clrDgItem]="identity">
         <clr-dg-action-overflow>
             <button class="action-item" (click)="populateIdentityForm(identity);identitySource=true;addEdit='Edit';">Edit</button>
@@ -27,7 +27,7 @@
 		</clr-dg-pagination>
 	</clr-dg-footer>
 </clr-datagrid>
-<clr-modal [(clrModalOpen)]="identitySource">
+<clr-modal [(clrModalOpen)]="identitySource" [clrModalClosable]="false">
     <h3 class="modal-title">{{addEdit}} Identity Source</h3>
     <div class="modal-body">
         <form #identitySourceForm="ngForm" (ngSubmit)="addOrUpdateIdentitySource(identitySourceForm.value);identitySource = false;" *ngIf="identityFormData" ngNativeValidate>
@@ -37,14 +37,14 @@
                 </div>
 				<div class="form-group">
                     <label for="adUrl">AD Url</label>
-					<input type="text" name="adUrl" [(ngModel)]="identityFormData.adUrl" required>
+					<input type="text" name="adUrl" placeholder="ldap://host-address:389" [(ngModel)]="identityFormData.adUrl" required>
                 </div>
                 <div class="form-group">
                     <label for="adDomain">AD Domain</label>
 					<input type="text" name="adDomain" [(ngModel)]="identityFormData.adDomain" [required]="addEdit == 'Add'" [readonly]="addEdit == 'Edit'">
                 </div>
             </section>
-            <button type="button" class="btn btn-outline" (click)="identitySource=false">CANCEL</button>
+            <button type="button" class="btn btn-outline" (click)="identitySource=false;ngOnInit();">CANCEL</button>
             <button type="submit" class="btn btn-primary">SUBMIT</button>
         </form>
     </div>

@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
@@ -22,7 +23,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
+import com.vmware.mangle.cassandra.model.faults.specs.TaskSpec;
 import com.vmware.mangle.cassandra.model.scheduler.SchedulerSpec;
+import com.vmware.mangle.cassandra.model.tasks.Task;
 import com.vmware.mangle.model.response.DeleteOperationResponse;
 import com.vmware.mangle.services.SchedulerService;
 import com.vmware.mangle.services.repository.TaskRepository;
@@ -62,7 +65,14 @@ public class TaskDeletionService {
 
             deleteResponse.setAssociations(associations);
             if (CollectionUtils.isEmpty(deleteResponse.getAssociations())) {
-                taskRepository.deleteByIdIn(taskIds);
+                List<Task<TaskSpec>> persistedTasks = taskRepository.findByIds(taskIds);
+                List<String> persistedTaskIds = persistedTasks.stream().map(Task::getId).collect(Collectors.toList());
+                taskIds.removeAll(persistedTaskIds);
+                if (!taskIds.isEmpty()) {
+                    throw new MangleException(ErrorCode.NO_RECORD_FOUND, ErrorConstants.TASK, taskIds.toString());
+                }
+
+                taskRepository.deleteByIdIn(persistedTaskIds);
             } else {
                 deleteResponse.setResponseMessage(ErrorConstants.TASK_DELETION_PRECHECK_FAIL);
             }

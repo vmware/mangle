@@ -30,10 +30,14 @@ import org.testng.annotations.Test;
 
 import com.vmware.mangle.cassandra.model.endpoint.EndpointSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.CpuFaultSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.JVMProperties;
 import com.vmware.mangle.cassandra.model.faults.specs.K8SFaultTriggerSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.MemoryFaultSpec;
 import com.vmware.mangle.cassandra.model.tasks.Task;
 import com.vmware.mangle.cassandra.model.tasks.TaskStatus;
 import com.vmware.mangle.cassandra.model.tasks.TaskTrigger;
+import com.vmware.mangle.cassandra.model.tasks.TaskType;
 import com.vmware.mangle.services.dto.FaultEventSpec;
 import com.vmware.mangle.utils.PopulateFaultEventData;
 import com.vmware.mangle.utils.helpers.notifiers.Notifier;
@@ -66,6 +70,12 @@ public class PopulateFaultEventDataTest extends PowerMockTestCase {
 
     @Mock
     K8SFaultTriggerSpec k8sFaultTriggerSpec;
+    @Mock
+    CpuFaultSpec cpuSpec;
+    @Mock
+    MemoryFaultSpec memorySpec;
+    @Mock
+    JVMProperties jvmProps;
 
     @Mock
     EndpointSpec endpoint;
@@ -96,14 +106,14 @@ public class PopulateFaultEventDataTest extends PowerMockTestCase {
         populateBaseData();
         when(commandExecutionFaultSpec.getEndpoint()).thenReturn(endpoint);
         when(trigger.getTaskStatus()).thenReturn(TaskStatus.COMPLETED);
+        when(task.getTaskType()).thenReturn(TaskType.INJECTION);
         getFaultData();
 
         PopulateFaultEventData populateTaskData = new PopulateFaultEventData(task);
         FaultEventSpec eventData = populateTaskData.getFaultEventSpec();
 
-        Assert.assertEquals(faultName, eventData.getFaultName());
+        Assert.assertEquals(faultName + "-" + TaskType.INJECTION, eventData.getFaultName());
         Assert.assertEquals(faultStartTime, eventData.getFaultStartTime());
-        Assert.assertEquals(faultEndTime, eventData.getFaultEndTime());
         Assert.assertEquals(taskID, eventData.getTaskId());
         Assert.assertEquals(TaskStatus.COMPLETED.name(), eventData.getFaultStatus());
     }
@@ -112,6 +122,7 @@ public class PopulateFaultEventDataTest extends PowerMockTestCase {
     public void validateFaultSpecDataWhenTaskFailed() {
         log.info("Validating the fault event data when all valid data are populated");
         populateBaseData();
+        when(task.getTaskType()).thenReturn(TaskType.INJECTION);
         when(commandExecutionFaultSpec.getEndpoint()).thenReturn(endpoint);
         when(trigger.getTaskStatus()).thenReturn(TaskStatus.FAILED);
         getFaultData();
@@ -119,9 +130,8 @@ public class PopulateFaultEventDataTest extends PowerMockTestCase {
         PopulateFaultEventData populateTaskData = new PopulateFaultEventData(task);
         FaultEventSpec eventData = populateTaskData.getFaultEventSpec();
 
-        Assert.assertEquals(faultName, eventData.getFaultName());
+        Assert.assertEquals(faultName + "-" + TaskType.INJECTION, eventData.getFaultName());
         Assert.assertEquals(faultStartTime, eventData.getFaultStartTime());
-        Assert.assertEquals(faultEndTime, eventData.getFaultEndTime());
         Assert.assertEquals(taskID, eventData.getTaskId());
         Assert.assertEquals(TaskStatus.FAILED.name(), eventData.getFaultStatus());
     }
@@ -131,12 +141,16 @@ public class PopulateFaultEventDataTest extends PowerMockTestCase {
 
         when(commandExecutionFaultSpec.getFaultName()).thenReturn(faultName);
         when(commandExecutionFaultSpec.getTags()).thenReturn(faultTags);
-        when(commandExecutionFaultSpec.getTimeoutInMilliseconds()).thenReturn("60000");
+        when(commandExecutionFaultSpec.getTimeoutInMilliseconds()).thenReturn(60000);
         when(endpoint.getTags()).thenReturn(endpointTags);
         when(trigger.getStartTime()).thenReturn(faultStartTime);
         when(trigger.getEndTime()).thenReturn(faultEndTime);
         when(task.getId()).thenReturn(taskID);
         when(commandExecutionFaultSpec.getEndpointName()).thenReturn("dummyEndpointName");
+        when(cpuSpec.getCpuLoad()).thenReturn(40);
+        when(cpuSpec.getJvmProperties()).thenReturn(jvmProps);
+        when(jvmProps.getJvmprocess()).thenReturn("dummyProcess");
+        when(memorySpec.getMemoryLoad()).thenReturn(80);
     }
 
     private void populateTags() {

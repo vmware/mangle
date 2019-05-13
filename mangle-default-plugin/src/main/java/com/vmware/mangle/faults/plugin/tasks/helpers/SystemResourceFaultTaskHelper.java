@@ -11,8 +11,9 @@
 
 package com.vmware.mangle.faults.plugin.tasks.helpers;
 
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.FAULT_NAME_ARG;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.TIMEOUT_IN_MILLI_SEC_ARG;
+import static com.vmware.mangle.utils.constants.FaultConstants.FAULT_NAME_ARG;
+import static com.vmware.mangle.utils.constants.FaultConstants.INJECTION_SCRIPTS_FOLDER;
+import static com.vmware.mangle.utils.constants.FaultConstants.TIMEOUT_IN_MILLI_SEC_ARG;
 
 import java.io.File;
 import java.util.HashMap;
@@ -29,11 +30,11 @@ import com.vmware.mangle.cassandra.model.tasks.FaultTask;
 import com.vmware.mangle.cassandra.model.tasks.SupportScriptInfo;
 import com.vmware.mangle.cassandra.model.tasks.Task;
 import com.vmware.mangle.cassandra.model.tasks.TaskType;
-import com.vmware.mangle.faults.plugin.helpers.FaultConstants;
 import com.vmware.mangle.faults.plugin.helpers.systemresource.SystemResourceFaultHelper;
 import com.vmware.mangle.faults.plugin.helpers.systemresource.SystemResourceFaultHelperFactory;
 import com.vmware.mangle.faults.plugin.helpers.systemresource.SystemResourceFaultUtils;
 import com.vmware.mangle.faults.plugin.utils.PluginUtils;
+import com.vmware.mangle.faults.plugin.utils.TaskDescriptionUtils;
 import com.vmware.mangle.model.enums.EndpointType;
 import com.vmware.mangle.services.enums.FaultName;
 import com.vmware.mangle.task.framework.endpoint.EndpointClientFactory;
@@ -57,14 +58,31 @@ public class SystemResourceFaultTaskHelper<T extends CommandExecutionFaultSpec>
 
     private SystemResourceFaultHelper systemResourceFaultHelper;
     private ICommandExecutor commandExecutor = null;
-    @Autowired
     private EndpointClientFactory endpointClientFactory;
-    @Autowired
     private SystemResourceFaultHelperFactory systemResourceFaultHelperFactory;
-    @Autowired
     private SystemResourceFaultUtils systemResourceFaultUtils;
-    @Autowired
     private PluginUtils pluginUtils;
+
+
+    @Autowired
+    public void setPluginUtils(PluginUtils pluginUtils) {
+        this.pluginUtils = pluginUtils;
+    }
+
+    @Autowired
+    public void setSystemResourceFaultUtils(SystemResourceFaultUtils systemResourceFaultUtils) {
+        this.systemResourceFaultUtils = systemResourceFaultUtils;
+    }
+
+    @Autowired
+    public void setSystemResourceFaultHelperFactory(SystemResourceFaultHelperFactory systemResourceFaultHelperFactory) {
+        this.systemResourceFaultHelperFactory = systemResourceFaultHelperFactory;
+    }
+
+    @Autowired(required = true)
+    private void setEndpointClientFactory(EndpointClientFactory endpointClientFactory) {
+        this.endpointClientFactory = endpointClientFactory;
+    }
 
     @Override
     public Task<T> init(T faultSpec) throws MangleException {
@@ -103,7 +121,7 @@ public class SystemResourceFaultTaskHelper<T extends CommandExecutionFaultSpec>
         String scriptName = systemResourceFaultUtils
                 .getScriptNameforFault(FaultName.valueOf(task.getTaskData().getFaultName().toUpperCase()));
         String filePath = ConstantsUtils.getMangleSupportScriptDirectory() + scriptName;
-        pluginUtils.copyFileFromJarToDestination("/" + FaultConstants.INJECTION_SCRIPTS_FOLDER + scriptName, filePath);
+        pluginUtils.copyFileFromJarToDestination("/" + INJECTION_SCRIPTS_FOLDER + scriptName, filePath);
     }
 
     @Override
@@ -148,8 +166,7 @@ public class SystemResourceFaultTaskHelper<T extends CommandExecutionFaultSpec>
 
     @Override
     public String getDescription(Task<T> task) {
-        return "Executing Fault: " + task.getTaskData().getFaultName() + " on endpoint: "
-                + task.getTaskData().getEndpointName();
+        return TaskDescriptionUtils.getDescription(task);
     }
 
     @Override
@@ -161,11 +178,10 @@ public class SystemResourceFaultTaskHelper<T extends CommandExecutionFaultSpec>
     private void setMandatorySystemResourceCommandArgs(Task<T> task) {
         if (task.getTaskType().equals(TaskType.INJECTION)) {
             Map<String, String> commandInfo = new HashMap<>();
-            task.getTaskData()
-                    .setInjectionHomeDir(task.getTaskData().getInjectionHomeDir() + FaultConstants.FORWARD_SLASH);
+            task.getTaskData().setInjectionHomeDir(task.getTaskData().getInjectionHomeDir());
             String faultName = task.getTaskData().getFaultName();
             commandInfo.put(FAULT_NAME_ARG, faultName);
-            commandInfo.put(TIMEOUT_IN_MILLI_SEC_ARG, task.getTaskData().getTimeoutInMilliseconds());
+            commandInfo.put(TIMEOUT_IN_MILLI_SEC_ARG, String.valueOf(task.getTaskData().getTimeoutInMilliseconds()));
             commandInfo.put("id", task.getId());
             getArgs(task).putAll(commandInfo);
         }

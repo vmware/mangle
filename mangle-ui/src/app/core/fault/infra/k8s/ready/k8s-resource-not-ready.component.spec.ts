@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -9,24 +9,28 @@ import { BrowserModule } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
 import { ClarityModule } from '@clr/angular';
 import { of } from 'rxjs';
-import { LoginComponent } from 'src/app/auth/login/login.component';
-import { CoreComponent } from 'src/app/core/core.component';
-import { CoreService } from 'src/app/core/core.service';
 import { EndpointService } from 'src/app/core/endpoint/endpoint.service';
-import { RequestsService } from 'src/app/core/requests/requests.service';
-import { ProcessedComponent } from 'src/app/core/requests/processed/processed.component';
 import { FaultService } from '../../../fault.service';
 import { K8SResourceNotReadyComponent } from './k8s-resource-not-ready.component';
+import { Router } from '@angular/router';
 
 describe('K8SResourceNotReadyComponent', () => {
     let component: K8SResourceNotReadyComponent;
     let faultService: FaultService;
     let endpointService: EndpointService;
-    let coreService: CoreService;
-    let requestsService: RequestsService;
     let fixture: ComponentFixture<K8SResourceNotReadyComponent>;
+    let router: Router;
 
-    beforeEach(async(() => {
+    let k8s_data: any = {
+        "endpointName": "endpointName",
+        "resourceName": "resourceName",
+        "resourceLabels": { "resource1": "resource1" },
+        "appContainerName": "appContainerName",
+        "injectionHomeDir": null,
+        "randomInjection": true
+    };
+
+    beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [
                 BrowserAnimationsModule,
@@ -35,30 +39,24 @@ describe('K8SResourceNotReadyComponent', () => {
                 HttpClientModule,
                 CommonModule,
                 ClarityModule,
-                RouterTestingModule.withRoutes([{ path: 'k8s-resource-not-ready', component: K8SResourceNotReadyComponent }, { path: 'core/requests', component: ProcessedComponent }, { path: 'login', component: LoginComponent }])
+                RouterTestingModule.withRoutes([{ path: 'k8s-resource-not-ready', component: K8SResourceNotReadyComponent }])
             ],
-            declarations: [K8SResourceNotReadyComponent, CoreComponent, LoginComponent, ProcessedComponent],
+            declarations: [K8SResourceNotReadyComponent],
             providers: [
                 FaultService,
-                CoreService,
-                RequestsService
+                EndpointService
             ],
             schemas: [NO_ERRORS_SCHEMA]
         }).compileComponents();
-    }));
-
-    beforeEach(() => {
-        coreService = TestBed.get(CoreService);
-        spyOn(coreService, 'getMyDetails').and.returnValue(of({ "name": "user@mangle.local" }));
-        endpointService = TestBed.get(EndpointService);
-        spyOn(endpointService, 'getAllEndpoints').and.returnValue(of([]));
-        requestsService = TestBed.get(RequestsService);
-        spyOn(requestsService, 'getAllTasks').and.returnValue(of([]));
         fixture = TestBed.createComponent(K8SResourceNotReadyComponent);
         component = fixture.componentInstance;
-        faultService = TestBed.get(FaultService);
-        spyOn(faultService, 'executeK8SResourceNotReadyFault').and.returnValue(of([component.faultFormData]));
         fixture.detectChanges();
+        endpointService = TestBed.get(EndpointService);
+        spyOn(endpointService, 'getAllEndpoints').and.returnValue(of([]));
+        faultService = TestBed.get(FaultService);
+        spyOn(faultService, 'executeK8SResourceNotReadyFault').and.returnValue(of([k8s_data]));
+        router = TestBed.get(Router);
+        spyOn(router, 'navigateByUrl');
     });
 
     it('should create', () => {
@@ -66,7 +64,8 @@ describe('K8SResourceNotReadyComponent', () => {
     });
 
     it('should execute K8S resource not ready fault', () => {
-        component.executeK8SResourceNotReadyFault(component.faultFormData);
+        component.resourceLabelsData = { "resource1": "resource1" };
+        component.executeK8SResourceNotReadyFault(k8s_data);
         expect(faultService.executeK8SResourceNotReadyFault).toHaveBeenCalled();
     });
 

@@ -40,6 +40,7 @@ import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
+import com.vmware.mangle.services.cassandra.converters.CertificatesSpecReadingConverter;
 import com.vmware.mangle.services.cassandra.converters.CredentialsSpecReadingConverter;
 import com.vmware.mangle.services.cassandra.converters.FaultSpecReadingConverter;
 import com.vmware.mangle.services.cassandra.converters.TaskReadingConverter;
@@ -174,6 +175,7 @@ public abstract class AbstractCassandraConfiguration extends AbstractClusterConf
     public CustomConversions cassandraCustomConversions() {
         List<Converter<?, ?>> converters = new ArrayList<>();
         converters.add(new CredentialsSpecReadingConverter());
+        converters.add(new CertificatesSpecReadingConverter());
         converters.add(new TaskSpecWritingConverter());
         converters.add(new TaskSpecReadingConverter());
         converters.add(getTaskReadingCoverter(converters));

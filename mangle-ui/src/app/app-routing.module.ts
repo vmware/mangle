@@ -16,7 +16,6 @@ import { MachineComponent } from './core/endpoint/machine/machine.component';
 import { KubernetesComponent } from './core/endpoint/kubernetes/kubernetes.component';
 import { DockerComponent } from './core/endpoint/docker/docker.component';
 import { VcenterComponent } from './core/endpoint/vcenter/vcenter.component';
-import { LocalComponent } from './setting/local/local.component';
 import { FaultComponent } from './core/fault/fault.component';
 import { RequestsComponent } from './core/requests/requests.component';
 import { ProcessedComponent } from './core/requests/processed/processed.component';
@@ -34,20 +33,24 @@ import { VcenterDiskComponent } from './core/fault/infra/vcenter/disk/vcenter-di
 import { VcenterNicComponent } from './core/fault/infra/vcenter/nic/vcenter-nic.component';
 import { VcenterStateComponent } from './core/fault/infra/vcenter/state/vcenter-state.component';
 import { EndpointCredentialsComponent } from './core/endpoint/credentials/endpoint-credentials.component';
+import { EndpointCertificatesComponent } from './core/endpoint/certificates/endpoint-certificates.component';
 import { LogLevelComponent } from './setting/loggers/log-level.component';
 import { IntegrationComponent } from './setting/integration/integration.component';
+import { UnavailableComponent } from './pages/unavailable.component';
+import { AuthGuardService } from './auth-guard.service';
 
 const routes: Routes = [
-	{ path: '', redirectTo: 'login', pathMatch: 'full' },
-	{ path: 'login', component: LoginComponent, canActivate: [ ConfigGuardService ] },
+	{ path: '', redirectTo: 'core/home', pathMatch: 'full' },
+	{ path: 'login', component: LoginComponent, canActivate: [ConfigGuardService] },
 	{ path: 'config', component: ConfigComponent },
+	{ path: 'unavailable', component: UnavailableComponent },
 	{
-    path: 'core',
+		path: 'core',
 		component: CoreComponent,
 		children: [
 			{ path: '', redirectTo: 'home', pathMatch: 'full' },
-			{ path: 'home', component: HomeComponent },
-			{ 
+			{ path: 'home', component: HomeComponent, canActivate: [AuthGuardService] },
+			{
 				path: 'endpoint',
 				component: EndpointComponent,
 				children: [
@@ -56,14 +59,14 @@ const routes: Routes = [
 					{ path: 'kubernetes', component: KubernetesComponent },
 					{ path: 'docker', component: DockerComponent },
 					{ path: 'vcenter', component: VcenterComponent },
-					{ path: 'endpoint-credentials', component: EndpointCredentialsComponent }
+					{ path: 'endpoint-credentials', component: EndpointCredentialsComponent },
+					{ path: 'endpoint-certificates', component: EndpointCertificatesComponent }
 				]
 			},
-			{ 
+			{
 				path: 'fault',
 				component: FaultComponent,
 				children: [
-					{ path: '', redirectTo: 'cpu', pathMatch: 'full' },
 					{ path: 'cpu', component: CpuComponent },
 					{ path: 'cpu-infra', component: CpuInfraComponent },
 					{ path: 'memory', component: MemoryComponent },
@@ -78,7 +81,7 @@ const routes: Routes = [
 					{ path: 'vcenter-state', component: VcenterStateComponent }
 				]
 			},
-			{ 
+			{
 				path: 'requests',
 				component: RequestsComponent,
 				children: [
@@ -91,23 +94,22 @@ const routes: Routes = [
 				path: 'setting',
 				component: SettingComponent,
 				children: [
-					{ path: '', redirectTo: 'local', pathMatch: 'full' },
+					{ path: '', redirectTo: 'identity', pathMatch: 'full' },
 					{ path: 'identity', component: IdentityComponent },
 					{ path: 'roles', component: RolesComponent },
 					{ path: 'users', component: UsersComponent },
-					{ path: 'local', component: LocalComponent },
 					{ path: 'log-levels', component: LogLevelComponent },
-					{ path: 'integration', component: IntegrationComponent}
+					{ path: 'integration', component: IntegrationComponent }
 				]
 			},
 			{ path: 'password', component: PasswordComponent }
 		]
-    }
+	}
 ];
 
 @NgModule({
-  imports: [RouterModule.forRoot(routes, { preloadingStrategy: PreloadAllModules })],
-  exports: [RouterModule],
-  providers: []
+	imports: [RouterModule.forRoot(routes, { preloadingStrategy: PreloadAllModules })],
+	exports: [RouterModule],
+	providers: []
 })
 export class AppRoutingModule { }

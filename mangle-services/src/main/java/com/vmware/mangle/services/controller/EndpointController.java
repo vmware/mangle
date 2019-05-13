@@ -12,7 +12,10 @@
 package com.vmware.mangle.services.controller;
 
 import java.io.IOException;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -37,21 +40,24 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.vmware.mangle.cassandra.model.endpoint.AWSCredentials;
+import com.vmware.mangle.cassandra.model.endpoint.CertificatesSpec;
 import com.vmware.mangle.cassandra.model.endpoint.CredentialsSpec;
+import com.vmware.mangle.cassandra.model.endpoint.DockerCertificates;
 import com.vmware.mangle.cassandra.model.endpoint.EndpointSpec;
 import com.vmware.mangle.cassandra.model.endpoint.K8SCredentials;
 import com.vmware.mangle.cassandra.model.endpoint.RemoteMachineCredentials;
 import com.vmware.mangle.cassandra.model.endpoint.VCenterCredentials;
 import com.vmware.mangle.model.enums.EndpointType;
-import com.vmware.mangle.model.enums.OperationStatus;
 import com.vmware.mangle.model.response.DeleteOperationResponse;
+import com.vmware.mangle.model.response.ErrorDetails;
 import com.vmware.mangle.services.CredentialService;
+import com.vmware.mangle.services.EndpointCertificatesService;
 import com.vmware.mangle.services.EndpointService;
 import com.vmware.mangle.services.cassandra.model.events.basic.EntityCreatedEvent;
 import com.vmware.mangle.services.cassandra.model.events.basic.EntityUpdatedEvent;
 import com.vmware.mangle.services.constants.CommonConstants;
 import com.vmware.mangle.services.deletionutils.CredentialDeletionService;
+import com.vmware.mangle.services.deletionutils.EndpointCertificatesDeletionService;
 import com.vmware.mangle.services.deletionutils.EndpointDeletionService;
 import com.vmware.mangle.services.events.web.CustomEventPublisher;
 import com.vmware.mangle.utils.constants.ErrorConstants;
@@ -76,17 +82,21 @@ public class EndpointController {
     private CustomEventPublisher publisher;
     private EndpointDeletionService endpointDeletionService;
     private CredentialDeletionService credentialDeletionService;
-
+    private EndpointCertificatesService certificatesService;
+    private EndpointCertificatesDeletionService certificatesDeletionService;
 
     @Autowired
     public EndpointController(EndpointService endpointService, CredentialService credentialService,
             CustomEventPublisher publisher, EndpointDeletionService endpointDeletionService,
-            CredentialDeletionService credentialDeletionService) {
+            CredentialDeletionService credentialDeletionService, EndpointCertificatesService certificatesService,
+            EndpointCertificatesDeletionService certificatesDeletionService) {
         this.credentialService = credentialService;
         this.endpointService = endpointService;
         this.publisher = publisher;
         this.endpointDeletionService = endpointDeletionService;
         this.credentialDeletionService = credentialDeletionService;
+        this.certificatesService = certificatesService;
+        this.certificatesDeletionService = certificatesDeletionService;
     }
 
     @ApiOperation(value = "API to get all the endpoints or filter the endpoints by credentials", nickname = "getEndPoints")
@@ -138,7 +148,8 @@ public class EndpointController {
         if (!endpointService.testEndpointConnection(endpointSpec)) {
             throw new MangleException(ErrorCode.TEST_CONNECTION_FAILED, endpointSpec.getName());
         }
-        EndpointSpec resEndpointSpec = endpointService.updateEndpointByEndpointName(endpointSpec.getName(), endpointSpec);
+        EndpointSpec resEndpointSpec =
+                endpointService.updateEndpointByEndpointName(endpointSpec.getName(), endpointSpec);
         HttpHeaders headers = new HttpHeaders();
         headers.add(CommonConstants.MESSAGE_HEADER, CommonConstants.ENDPOINTS_UPDATED);
         publisher.publishAnEvent(
@@ -174,13 +185,17 @@ public class EndpointController {
     }
 
     @ApiOperation(value = "API to add RemoteMachine endpoint credentials", nickname = "addRemoteMachineCredentials")
-    @PostMapping(value = "/credentials/remotemachine", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/credentials/remotemachine", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<CredentialsSpec> addCredentials(@RequestParam(name = "id", required = false) String id,
             @RequestParam("name") String name, @RequestParam("username") String username,
             @RequestParam(name = "password", required = false) String password,
             @RequestParam(name = "privateKey", required = false) MultipartFile privateKey) throws MangleException {
-        log.info("Start execution of addCredentials() method for RemoteMachine");
+        log.info("Start execution of addCredentials(remoteMachineCredentials) method for RemoteMachine");
+        credentialService.validatePasswordOrPrivateKeyNotNull(password, privateKey);
         credentialService.validateMultipartFileSize(privateKey, MAX_PRIVATEKEY_FILE_SIZE);
+        if (null != privateKey) {
+            certificatesService.validateRemoteMachinePrivateKey(privateKey);
+        }
         try {
             RemoteMachineCredentials remoteMachineCredentials =
                     credentialService.generateRemoteMachineCredentialsSpec(id, name, username, password, privateKey);
@@ -197,12 +212,13 @@ public class EndpointController {
     }
 
     @ApiOperation(value = "API to add a K8S_CLUSTER endpoint credentials", nickname = "addK8SCredentials")
-    @PostMapping(value = "/credentials/k8s", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/credentials/k8s", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<CredentialsSpec> addCredentials(@RequestParam(name = "id", required = false) String id,
-            @RequestParam(name = "kubeConfig", required = false) MultipartFile kubeConfig,
+            @ApiParam(value = "Mandatory: Only if mangle is not deployed in same k8s cluster") @RequestParam(name = "kubeConfig", required = false) MultipartFile kubeConfig,
             @RequestParam("name") String name) throws MangleException {
-        log.info("Start execution of addCredentials() method for K8S_CLUSTER");
+        log.info("Start execution of addCredentials(k8sCredentials) method for K8S_CLUSTER");
         credentialService.validateMultipartFileSize(kubeConfig, MAX_KUBECONFIG_FILE_SIZE);
+        credentialService.validateK8SConfigFile(kubeConfig);
         try {
             K8SCredentials k8sCredentials = credentialService.generateK8SCredentialsSpec(id, name, kubeConfig);
             log.info("kubeConfig : " + kubeConfig);
@@ -217,7 +233,9 @@ public class EndpointController {
         }
     }
 
-    @ApiOperation(value = "API to add a AWS endpoint credentials", nickname = "addAWSCredentials")
+    //Will be uncommented when we started supporting AWS endpoint
+
+    /* @ApiOperation(value = "API to add a AWS endpoint credentials", nickname = "addAWSCredentials")
     @PostMapping(value = "/credentials/aws", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<CredentialsSpec> addCredentials(@RequestBody AWSCredentials awsCredentials)
             throws MangleException {
@@ -228,14 +246,13 @@ public class EndpointController {
         publisher.publishAnEvent(
                 new EntityCreatedEvent(credentialsSpec.getPrimaryKey(), credentialsSpec.getClass().getName()));
         return new ResponseEntity<>(credentialsSpec, headers, HttpStatus.OK);
-    }
+    }*/
 
     @ApiOperation(value = "API to add a Vcenter endpoint credentials", nickname = "addVCenterCredentials")
     @PostMapping(value = "/credentials/vcenter", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<CredentialsSpec> addCredentials(@Validated @RequestBody VCenterCredentials vcenterCredentials)
             throws MangleException {
-        log.info("Start execution of addCredentials() method for Vcenter");
-        vcenterCredentials.setType(EndpointType.VCENTER);
+        log.info("Start execution of addCredentials(vcenterCredentials) method for Vcenter");
         CredentialsSpec credentialsSpec = credentialService.addOrUpdateCredentials(vcenterCredentials);
         HttpHeaders headers = new HttpHeaders();
         headers.add(CommonConstants.MESSAGE_HEADER, CommonConstants.CREDENTIALS_CREATED);
@@ -246,22 +263,23 @@ public class EndpointController {
 
     @ApiOperation(value = "API to delete the endpoints by names", nickname = "deleteEndPoints")
     @DeleteMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<DeleteOperationResponse> deleteEndpointsByNames(@RequestParam List<String> endpointNames)
+    public ResponseEntity<ErrorDetails> deleteEndpointsByNames(@RequestParam List<String> endpointNames)
             throws MangleException {
         log.info("Start execution of deleteEndpointsByNames() method");
-        DeleteOperationResponse deleteOperationResponse = endpointDeletionService.deleteEndpointByNames(endpointNames);
-        HttpStatus responseStatus = HttpStatus.OK;
-        HttpHeaders headers = new HttpHeaders();
-        if (deleteOperationResponse.getAssociations().size() == 0) {
-            deleteOperationResponse.setResult(OperationStatus.SUCCESS);
-            headers.add(CommonConstants.MESSAGE_HEADER, CommonConstants.ENDPOINTS_DELETED);
+        DeleteOperationResponse response = endpointDeletionService.deleteEndpointByNames(endpointNames);
+        ErrorDetails errorDetails = new ErrorDetails();
+        if (response.getAssociations().size() == 0) {
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         } else {
-            responseStatus = HttpStatus.PRECONDITION_FAILED;
-            deleteOperationResponse.setResult(OperationStatus.FAILED);
-            deleteOperationResponse.setResponseMessage(ErrorConstants.ENDPOINTS_DELETION_PRECHECK_FAIL);
+            Map<String, Map<String, List<String>>> associations = new HashMap<>();
+            associations.put("associations", response.getAssociations());
+            errorDetails.setTimestamp(new Date());
+            errorDetails.setDescription(ErrorConstants.ENDPOINTS_DELETION_PRECHECK_FAIL);
+            errorDetails.setCode(ErrorCode.DELETE_OPERATION_FAILED.getCode());
+            errorDetails.setDetails(associations);
         }
 
-        return new ResponseEntity<>(deleteOperationResponse, headers, responseStatus);
+        return new ResponseEntity<>(errorDetails, HttpStatus.PRECONDITION_FAILED);
     }
 
     /**
@@ -278,21 +296,25 @@ public class EndpointController {
      */
     @ApiOperation(value = "API to delete an endpoint credentials", nickname = "deleteCredentials")
     @DeleteMapping(value = "/credentials", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<DeleteOperationResponse> deleteCredentials(@RequestParam List<String> credentialNames)
+    public ResponseEntity<ErrorDetails> deleteCredentials(@RequestParam List<String> credentialNames)
             throws MangleException {
         log.info("Start execution of deleteCredentials() method");
-        DeleteOperationResponse model = credentialDeletionService.deleteCredentialsByNames(credentialNames);
-        HttpStatus responseStatus = HttpStatus.OK;
-        HttpHeaders headers = new HttpHeaders();
-        if (model.getAssociations().size() == 0) {
-            model.setResult(OperationStatus.SUCCESS);
-            headers.add(CommonConstants.MESSAGE_HEADER, CommonConstants.CREDENTIALS_DELETED);
+        DeleteOperationResponse response = credentialDeletionService.deleteCredentialsByNames(credentialNames);
+        ErrorDetails errorDetails = new ErrorDetails();
+        if (response.getAssociations().size() == 0) {
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         } else {
-            responseStatus = HttpStatus.PRECONDITION_FAILED;
-            model.setResult(OperationStatus.FAILED);
-            model.setResponseMessage(ErrorConstants.CREDENTIALS_DELETION_PRECHECK_FAIL);
+            Map<String, Map<String, List<String>>> associations = new HashMap<>();
+            associations.put("associations", response.getAssociations());
+            errorDetails.setTimestamp(new Date());
+            errorDetails.setDescription(ErrorConstants.CREDENTIALS_DELETION_PRECHECK_FAIL);
+            errorDetails.setCode(ErrorCode.DELETE_OPERATION_FAILED.getCode());
+            errorDetails.setDetails(associations);
+
+
         }
-        return new ResponseEntity<>(model, headers, responseStatus);
+
+        return new ResponseEntity<>(errorDetails, HttpStatus.PRECONDITION_FAILED);
     }
 
     @ApiOperation(value = "API to get all the endpoints based on page", nickname = "getEndpointsBasedOnPage")
@@ -337,7 +359,7 @@ public class EndpointController {
 
     @ApiOperation(value = "API to test the endpoint connection", nickname = "testEndPointConnection", hidden = true)
     @PostMapping(value = "/testEndpoint", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<EndpointSpec> endpointTestConnection(@RequestBody EndpointSpec endpointSpec)
+    public ResponseEntity<EndpointSpec> endpointTestConnection(@Validated @RequestBody EndpointSpec endpointSpec)
             throws MangleException {
         log.info("Start execution of endpointTestConnection() method");
         if (!endpointService.testEndpointConnection(endpointSpec)) {
@@ -347,5 +369,151 @@ public class EndpointController {
         HttpHeaders headers = new HttpHeaders();
         headers.add(CommonConstants.MESSAGE_HEADER, CommonConstants.TEST_CONNECTION_SUCCESS);
         return new ResponseEntity<>(endpointSpec, headers, HttpStatus.OK);
+    }
+
+    @ApiOperation(value = "API to update RemoteMachine endpoint credentials", nickname = "updateRemoteMachineCredentials")
+    @PutMapping(value = "/credentials/remotemachine", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<CredentialsSpec> updateCredentials(@RequestParam(name = "id", required = false) String id,
+            @RequestParam("name") String name, @RequestParam("username") String username,
+            @RequestParam(name = "password", required = false) String password,
+            @RequestParam(name = "privateKey", required = false) MultipartFile privateKey) throws MangleException {
+        log.info("Start execution of addCredentials() method for RemoteMachine");
+        credentialService.validatePasswordOrPrivateKeyNotNull(password, privateKey);
+        credentialService.validateMultipartFileSize(privateKey, MAX_PRIVATEKEY_FILE_SIZE);
+        try {
+            RemoteMachineCredentials remoteMachineCredentials =
+                    credentialService.generateRemoteMachineCredentialsSpec(id, name, username, password, privateKey);
+            CredentialsSpec credentialsSpec = credentialService.updateCredential(remoteMachineCredentials);
+            publisher.publishAnEvent(
+                    new EntityUpdatedEvent(credentialsSpec.getPrimaryKey(), credentialsSpec.getClass().getName()));
+            return new ResponseEntity<>(credentialsSpec, HttpStatus.OK);
+        } catch (IOException e) {
+            throw new MangleException(e, ErrorCode.FILE_SIZE_EXCEEDED, privateKey.getOriginalFilename());
+
+        }
+    }
+
+    @ApiOperation(value = "API to update a K8S_CLUSTER endpoint credentials", nickname = "updateK8SCredentials")
+    @PutMapping(value = "/credentials/k8s", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<CredentialsSpec> updateCredentials(@RequestParam(name = "id", required = false) String id,
+            @RequestParam(name = "kubeConfig", required = false) MultipartFile kubeConfig,
+            @RequestParam("name") String name) throws MangleException {
+        log.info("Start execution of updateCredentials(k8sCredentials) method for K8S_CLUSTER");
+        credentialService.validateMultipartFileSize(kubeConfig, MAX_KUBECONFIG_FILE_SIZE);
+        credentialService.validateK8SConfigFile(kubeConfig);
+        try {
+            K8SCredentials k8sCredentials = credentialService.generateK8SCredentialsSpec(id, name, kubeConfig);
+            log.info("kubeConfig : " + kubeConfig);
+            CredentialsSpec credentialsSpec = credentialService.updateCredential(k8sCredentials);
+            publisher.publishAnEvent(
+                    new EntityUpdatedEvent(credentialsSpec.getPrimaryKey(), credentialsSpec.getClass().getName()));
+            return new ResponseEntity<>(credentialsSpec, HttpStatus.OK);
+        } catch (IOException e) {
+            throw new MangleException(e, ErrorCode.FILE_SIZE_EXCEEDED, kubeConfig.getOriginalFilename());
+        }
+    }
+
+    @ApiOperation(value = "API to update a Vcenter endpoint credentials", nickname = "updateVCenterCredentials")
+    @PutMapping(value = "/credentials/vcenter", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<CredentialsSpec> updateCredentials(
+            @Validated @RequestBody VCenterCredentials vcenterCredentials) throws MangleException {
+        log.info("Start execution of updateCredentials(vcenterCredentials) method for Vcenter");
+        CredentialsSpec credentialsSpec = credentialService.updateCredential(vcenterCredentials);
+        publisher.publishAnEvent(
+                new EntityUpdatedEvent(credentialsSpec.getPrimaryKey(), credentialsSpec.getClass().getName()));
+        return new ResponseEntity<>(credentialsSpec, HttpStatus.OK);
+    }
+
+    @ApiOperation(value = "API to get an endpoint certificates", nickname = "getAllEndpointCertificates")
+    @GetMapping(value = "/certificates", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<CertificatesSpec>> getAllEndpointCertificates() {
+        log.info("Start execution of getAllEndpointCertificates() method");
+        List<CertificatesSpec> certificatesSpec = certificatesService.getAllCerficates();
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(CommonConstants.MESSAGE_HEADER, CommonConstants.CERTIFICATES_RESULT_FOUND);
+        return new ResponseEntity<>(certificatesSpec, headers, HttpStatus.OK);
+    }
+
+    /**
+     * The certificates deletion operation expects that there exists no endpoints to credentials
+     * associations for any of the certificates that are part of the list given that are to be
+     * deleted
+     *
+     * @param certificatesNames
+     *            list of the certificates that are to be deleted
+     *
+     * @return DeleteOperationResponse with the result as success, if no active association exists
+     *         else failed with the list of the certificates to endpoint mapping
+     *
+     * @throws MangleException
+     */
+    @ApiOperation(value = "API to delete an endpoint certificates", nickname = "deleteCertificates")
+    @DeleteMapping(value = "/certificates", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ErrorDetails> deleteCertificates(@RequestParam List<String> certificatesNames)
+            throws MangleException {
+        log.info("Start execution of deleteCertificates() method");
+        DeleteOperationResponse response = certificatesDeletionService.deleteCertificatesByNames(certificatesNames);
+        ErrorDetails errorDetails = new ErrorDetails();
+        if (response.getAssociations().size() == 0) {
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        } else {
+            Map<String, Map<String, List<String>>> associations = new HashMap<>();
+            associations.put("associations", response.getAssociations());
+            errorDetails.setTimestamp(new Date());
+            errorDetails.setDescription(ErrorConstants.CREDENTIALS_DELETION_PRECHECK_FAIL);
+            errorDetails.setCode(ErrorCode.DELETE_OPERATION_FAILED.getCode());
+            errorDetails.setDetails(associations);
+        }
+        return new ResponseEntity<>(errorDetails, HttpStatus.PRECONDITION_FAILED);
+    }
+
+    @ApiOperation(value = "API to add docker endpoint certificates", nickname = "addDockerEndpointCertificates")
+    @PostMapping(value = "/certificates/docker", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<CertificatesSpec> addDockerEndpointCertificates(
+            @RequestParam(name = "id", required = false) String id, @RequestParam("name") String name,
+            @RequestParam(name = "caCert", required = false) MultipartFile caCert,
+            @RequestParam(name = "serverCert", required = false) MultipartFile serverCert,
+            @RequestParam(name = "privateKey", required = false) MultipartFile privateKey) throws MangleException {
+        log.info("Start execution of addDockerEndpointCertificates() method for Docker");
+        try {
+            certificatesService.validateDockerCertificates(caCert.getBytes(), serverCert.getBytes(),
+                    privateKey.getBytes());
+            DockerCertificates dockerCertificates =
+                    certificatesService.generateDockerCertificatesSpec(id, name, caCert, serverCert, privateKey);
+            CertificatesSpec certificatesSpec = certificatesService.addOrUpdateCertificates(dockerCertificates);
+            HttpHeaders headers = new HttpHeaders();
+            headers.add(CommonConstants.MESSAGE_HEADER, CommonConstants.CERTIFICATES_CREATED);
+            publisher.publishAnEvent(
+                    new EntityCreatedEvent(certificatesSpec.getPrimaryKey(), certificatesSpec.getClass().getName()));
+            return new ResponseEntity<>(certificatesSpec, headers, HttpStatus.OK);
+        } catch (IOException e) {
+            throw new MangleException(e, ErrorCode.IO_EXCEPTION, e.getMessage());
+
+        }
+    }
+
+    @ApiOperation(value = "API to update docker endpoint certificates", nickname = "updateDockerEndpointCertificates")
+    @PutMapping(value = "/certificates/docker", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<CertificatesSpec> updateDockerEndpointCertificates(
+            @RequestParam(name = "id", required = false) String id, @RequestParam("name") String name,
+            @RequestParam(name = "caCert", required = false) MultipartFile caCert,
+            @RequestParam(name = "serverCert", required = false) MultipartFile serverCert,
+            @RequestParam(name = "privateKey", required = false) MultipartFile privateKey) throws MangleException {
+        log.info("Start execution of updateDockerEndpointCertificates() method for Docker");
+        try {
+            certificatesService.validateDockerCertificates(caCert.getBytes(), serverCert.getBytes(),
+                    privateKey.getBytes());
+            DockerCertificates dockerCertificates =
+                    certificatesService.generateDockerCertificatesSpec(id, name, caCert, serverCert, privateKey);
+            CertificatesSpec certificatesSpec = certificatesService.updateCertificates(dockerCertificates);
+            HttpHeaders headers = new HttpHeaders();
+            headers.add(CommonConstants.MESSAGE_HEADER, CommonConstants.CERTIFICATES_CREATED);
+            publisher.publishAnEvent(
+                    new EntityCreatedEvent(certificatesSpec.getPrimaryKey(), certificatesSpec.getClass().getName()));
+            return new ResponseEntity<>(certificatesSpec, headers, HttpStatus.OK);
+        } catch (IOException e) {
+            throw new MangleException(e, ErrorCode.IO_EXCEPTION, e.getMessage());
+
+        }
     }
 }

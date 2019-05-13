@@ -33,4 +33,11 @@ public class CommandResultUtils {
         commandExecutionResult.setExitCode(0);
         return commandExecutionResult;
     }
+
+    public static CommandExecutionResult getFailureErrorCodeCommandResult(String output) {
+        CommandExecutionResult commandExecutionResult = new CommandExecutionResult();
+        commandExecutionResult.setCommandOutput(output);
+        commandExecutionResult.setExitCode(1);
+        return commandExecutionResult;
+    }
 }

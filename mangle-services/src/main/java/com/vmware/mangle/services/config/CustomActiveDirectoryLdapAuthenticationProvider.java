@@ -32,6 +32,7 @@ import javax.naming.directory.DirContext;
 import javax.naming.directory.SearchControls;
 import javax.naming.ldap.InitialLdapContext;
 
+import lombok.extern.log4j.Log4j2;
 import org.springframework.core.annotation.Order;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.ldap.CommunicationException;
@@ -101,6 +102,7 @@ import com.vmware.mangle.utils.exceptions.MangleException;
  * @since 3.1
  */
 @Order
+@Log4j2
 public class CustomActiveDirectoryLdapAuthenticationProvider extends AbstractLdapAuthenticationProvider {
     private static final Pattern SUB_ERROR_CODE = Pattern.compile(".*data\\s([0-9a-f]{3,4}).*");
 
@@ -134,31 +136,17 @@ public class CustomActiveDirectoryLdapAuthenticationProvider extends AbstractLda
      *            the domain name (may be null or empty)
      * @param url
      *            an LDAP url (or multiple URLs)
-     * @param rootDn
+     * @param privilegeService
      *            the root DN (may be null or empty)
      */
     public CustomActiveDirectoryLdapAuthenticationProvider(UserService userService, PrivilegeService privilegeService,
-            String domain, String url, String rootDn) {
+            String domain, String url) {
         Assert.isTrue(StringUtils.hasText(url), "Url cannot be empty");
         this.userService = userService;
         this.privilegeService = privilegeService;
         this.domain = StringUtils.hasText(domain) ? domain.toLowerCase() : null;
         this.url = url;
-        this.rootDn = StringUtils.hasText(rootDn) ? rootDn.toLowerCase() : null;
-    }
-
-    /**
-     * @param domain
-     *            the domain name (may be null or empty)
-     * @param url
-     *            an LDAP url (or multiple URLs)
-     */
-    public CustomActiveDirectoryLdapAuthenticationProvider(UserService userService, String domain, String url) {
-        Assert.isTrue(StringUtils.hasText(url), "Url cannot be empty");
-        this.userService = userService;
-        this.domain = StringUtils.hasText(domain) ? domain.toLowerCase() : null;
-        this.url = url;
-        rootDn = this.domain == null ? null : rootDnFromDomain(this.domain);
+        this.rootDn = this.domain == null ? null : rootDnFromDomain(this.domain);
     }
 
     @Override
@@ -167,11 +155,10 @@ public class CustomActiveDirectoryLdapAuthenticationProvider extends AbstractLda
         String password = (String) auth.getCredentials();
 
         DirContext ctx = bindAsUser(username, password);
-
         try {
             return searchForUser(ctx, username);
         } catch (NamingException e) {
-            logger.error("Failed to locate directory entry for authenticated user: " + username, e);
+            log.error("Failed to locate directory entry for authenticated user: " + username, e);
             throw badCredentials(e);
         } finally {
             LdapUtils.closeContext(ctx);
@@ -197,13 +184,13 @@ public class CustomActiveDirectoryLdapAuthenticationProvider extends AbstractLda
             }
 
             if (privileges.isEmpty()) {
-                logger.debug("No values for 'memberOf' attribute.");
+                log.debug("No values for 'memberOf' attribute.");
 
                 return AuthorityUtils.NO_AUTHORITIES;
             }
 
-            if (logger.isDebugEnabled()) {
-                logger.debug("'memberOf' attribute values: " + Arrays.asList(roles));
+            if (log.isDebugEnabled()) {
+                log.debug("'memberOf' attribute values: " + Arrays.asList(roles));
             }
             for (Privilege privilege : privileges) {
                 authorities.add(new SimpleGrantedAuthority(privilege.getName()));
@@ -221,7 +208,7 @@ public class CustomActiveDirectoryLdapAuthenticationProvider extends AbstractLda
             try {
                 userService.createUser(user);
             } catch (MangleException e) {
-                logger.info(String.format("New local user creation failed for username %s", username));
+                log.info(String.format("New local user creation failed for username %s", username));
             }
             for (Privilege privilege : defaultRole.getPrivileges()) {
                 authorities.add(new SimpleGrantedAuthority(privilege.getName()));
@@ -257,8 +244,8 @@ public class CustomActiveDirectoryLdapAuthenticationProvider extends AbstractLda
     }
 
     private void handleBindException(String bindPrincipal, NamingException exception) {
-        if (logger.isDebugEnabled()) {
-            logger.debug("Authentication for " + bindPrincipal + " failed:" + exception);
+        if (log.isDebugEnabled()) {
+            log.debug("Authentication for " + bindPrincipal + " failed:" + exception);
         }
 
         handleResolveObj(exception);
@@ -270,7 +257,7 @@ public class CustomActiveDirectoryLdapAuthenticationProvider extends AbstractLda
             return;
         }
 
-        logger.info("Active Directory authentication failed: " + subCodeToLogMessage(subErrorCode));
+        log.info("Active Directory authentication failed: " + subCodeToLogMessage(subErrorCode));
 
         if (convertSubErrorCodesToExceptions) {
             raiseExceptionForErrorCode(subErrorCode, exception);
@@ -376,7 +363,7 @@ public class CustomActiveDirectoryLdapAuthenticationProvider extends AbstractLda
         int atChar = bindPrincipal.lastIndexOf('@');
 
         if (atChar < 0) {
-            logger.debug("User principal '" + bindPrincipal
+            log.debug("User principal '" + bindPrincipal
                     + "' does not contain the domain, and no domain has been configured");
             throw badCredentials();
         }

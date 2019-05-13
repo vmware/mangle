@@ -33,19 +33,30 @@ import com.vmware.mangle.cassandra.model.tasks.Task;
 @Repository
 public interface TaskRepository extends CassandraRepository<Task<TaskSpec>, String> {
 
+    @Override
     @AllowFiltering
     Optional<Task<TaskSpec>> findById(String id);
 
+    @Query("select * from task WHERE id IN ?0")
+    List<Task<TaskSpec>> findByIds(Collection<String> taskIds);
+
+    @AllowFiltering
+    Task<TaskSpec> findByTaskName(String taskName);
+
+    @Override
     List<Task<TaskSpec>> findAll();
 
+    @Override
     @SuppressWarnings({ "unchecked", "rawtypes" })
     Task save(Task taskSpec);
 
     @Query("DELETE from task WHERE id IN ?0")
     void deleteByIdIn(Collection<String> taskIds);
 
+    @Override
     void deleteById(String taskId);
 
+    @Override
     Slice<Task<TaskSpec>> findAll(Pageable pageable);
 
     @Query(value = "Select * from task where isScheduledTask = ?0", allowFiltering = true)

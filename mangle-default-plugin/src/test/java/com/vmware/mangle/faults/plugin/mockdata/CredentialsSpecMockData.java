@@ -106,7 +106,7 @@ public class CredentialsSpecMockData {
     public RemoteMachineCredentials getRMCredentialsData() {
         RemoteMachineCredentials rmCredentials = new RemoteMachineCredentials();
         rmCredentials.setName(rmName);
-        rmCredentials.setUserName(rmUserName);
+        rmCredentials.setUsername(rmUserName);
         rmCredentials.setPassword(rmPassword);
         MultipartFile multipartFile;
         try {

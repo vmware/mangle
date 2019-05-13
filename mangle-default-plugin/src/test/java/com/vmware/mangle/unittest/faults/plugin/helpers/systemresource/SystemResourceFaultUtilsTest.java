@@ -14,15 +14,15 @@ package com.vmware.mangle.unittest.faults.plugin.helpers.systemresource;
 
 import static org.testng.Assert.assertEquals;
 
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.BLOCK_SIZE_ARG;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.DEFAULT_TEMP_DIR;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.FAULT_NAME_ARG;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.FORWARD_SLASH;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.KILL_PROCESS_REMEDIATION_COMMAND_ARG;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.LOAD_ARG;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.PROCESS_IDENTIFIER_UNDERSCORE;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.TARGET_DIRECTORY_ARG;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.TIMEOUT_IN_MILLI_SEC_ARG;
+import static com.vmware.mangle.utils.constants.FaultConstants.DEFAULT_TEMP_DIR;
+import static com.vmware.mangle.utils.constants.FaultConstants.FAULT_NAME_ARG;
+import static com.vmware.mangle.utils.constants.FaultConstants.FORWARD_SLASH;
+import static com.vmware.mangle.utils.constants.FaultConstants.IO_SIZE_ARG;
+import static com.vmware.mangle.utils.constants.FaultConstants.KILL_PROCESS_REMEDIATION_COMMAND_ARG;
+import static com.vmware.mangle.utils.constants.FaultConstants.LOAD_ARG;
+import static com.vmware.mangle.utils.constants.FaultConstants.PROCESS_IDENTIFIER_UNDERSCORE;
+import static com.vmware.mangle.utils.constants.FaultConstants.TARGET_DIRECTORY_ARG;
+import static com.vmware.mangle.utils.constants.FaultConstants.TIMEOUT_IN_MILLI_SEC_ARG;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -62,9 +62,8 @@ public class SystemResourceFaultUtilsTest {
         args.put(LOAD_ARG, load);
         args.put(TIMEOUT_IN_MILLI_SEC_ARG, timeoutInMilliSec);
         String command = systemResourceFaultUtils.buildInjectionCommand(args, scriptBasePath);
-        Assert.assertEquals(command,
-                String.format("%s/cpuburn.sh --operation=inject --load=%s --timeout=%s",
-                        DEFAULT_TEMP_DIR, load, timeoutInMilliSec, DEFAULT_TEMP_DIR));
+        Assert.assertEquals(command, String.format("%s/cpuburn.sh --operation=inject --load=%s --timeout=%s",
+                DEFAULT_TEMP_DIR, load, timeoutInMilliSec, DEFAULT_TEMP_DIR));
 
 
     }
@@ -76,9 +75,8 @@ public class SystemResourceFaultUtilsTest {
         args.put(LOAD_ARG, load);
         args.put(TIMEOUT_IN_MILLI_SEC_ARG, timeoutInMilliSec);
         String command = systemResourceFaultUtils.buildInjectionCommand(args, scriptBasePath);
-        Assert.assertEquals(command,
-                String.format("%s/memoryspike.sh --operation=inject --load=%s --timeout=%s",
-                        DEFAULT_TEMP_DIR, load, timeoutInMilliSec, DEFAULT_TEMP_DIR));
+        Assert.assertEquals(command, String.format("%s/memoryspike.sh --operation=inject --load=%s --timeout=%s",
+                DEFAULT_TEMP_DIR, load, timeoutInMilliSec, DEFAULT_TEMP_DIR));
 
     }
 
@@ -111,13 +109,13 @@ public class SystemResourceFaultUtilsTest {
     public void testBuildInjectionCommandDiskIOFault() {
         Map<String, String> args = new HashMap<>();
         args.put(FAULT_NAME_ARG, FaultName.DISKFAULT.getValue());
-        args.put(BLOCK_SIZE_ARG, "1");
+        args.put(IO_SIZE_ARG, "1");
         args.put(TARGET_DIRECTORY_ARG, DEFAULT_TEMP_DIR);
         args.put(TIMEOUT_IN_MILLI_SEC_ARG, timeoutInMilliSec);
         String command = systemResourceFaultUtils.buildInjectionCommand(args, scriptBasePath);
-        Assert.assertEquals(command, String.format(
-                "%s/ioburn.sh --operation=inject --targetDir=%s --blockSize=1 --timeout=%s",
-                DEFAULT_TEMP_DIR, DEFAULT_TEMP_DIR, timeoutInMilliSec, DEFAULT_TEMP_DIR));
+        Assert.assertEquals(command,
+                String.format("%s/ioburn.sh --operation=inject --targetDir=%s --blockSize=1 --timeout=%s",
+                        DEFAULT_TEMP_DIR, DEFAULT_TEMP_DIR, timeoutInMilliSec, DEFAULT_TEMP_DIR));
     }
 
     @Test

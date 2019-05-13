@@ -1,22 +1,38 @@
-<!-- ~ JBoss, Home of Professional Open Source ~ Copyright 2011, Red Hat 
-	and individual contributors as identified ~ by the @authors tag. See the 
-	copyright.txt in the distribution for a ~ full listing of individual contributors. 
-	~ ~ This is free software; you can redistribute it and/or modify it ~ under 
-	the terms of the GNU Lesser General Public License as ~ published by the 
-	Free Software Foundation; either version 2.1 of ~ the License, or (at your 
-	option) any later version. ~ ~ This software is distributed in the hope that 
-	it will be useful, ~ but WITHOUT ANY WARRANTY; without even the implied warranty 
-	of ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU ~ Lesser 
-	General Public License for more details. ~ ~ You should have received a copy 
-	of the GNU Lesser General Public ~ License along with this software; if not, 
-	write to the Free ~ Software Foundation, Inc., 51 Franklin St, Fifth Floor, 
-	Boston, MA ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org. ~ ~ 
+<!-- ~ JBoss, Home of Professional Open Source ~ Copyright 2011, Red Hat
+	and individual contributors as identified ~ by the @authors tag. See the
+	copyright.txt in the distribution for a ~ full listing of individual contributors.
+	~ ~ This is free software; you can redistribute it and/or modify it ~ under
+	the terms of the GNU Lesser General Public License as ~ published by the
+	Free Software Foundation; either version 2.1 of ~ the License, or (at your
+	option) any later version. ~ ~ This software is distributed in the hope that
+	it will be useful, ~ but WITHOUT ANY WARRANTY; without even the implied warranty
+	of ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU ~ Lesser
+	General Public License for more details. ~ ~ You should have received a copy
+	of the GNU Lesser General Public ~ License along with this software; if not,
+	write to the Free ~ Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+	Boston, MA ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org. ~ ~
 	@authors Andrew Dinn -->
+<!--
+   Copyright (c) 2016-2019 VMware, Inc. All Rights Reserved.
+
+   This product is licensed to you under the Apache License, Version 2.0 (the "License").
+   You may not use this product except in compliance with the License.
+
+   This product may include a number of subcomponents with separate copyright notices
+   and license terms. Your use of these subcomponents is subject to the terms and
+   conditions of the subcomponent's license, as noted in the LICENSE file.
+-->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>org.jboss.byteman</groupId>
+	<parent>
+		<groupId>com.vmware.mangle</groupId>
+		<artifactId>mangle-root</artifactId>
+		<version>1.0.0</version>
+		<relativePath>../pom.xml</relativePath>
+	</parent>
+
 	<artifactId>mangle-byteman-root</artifactId>
 	<packaging>pom</packaging>
 	<description>
@@ -24,7 +40,6 @@
         into Java application and JVM runtime methods. Its primary purpose is to support execution tracing and fault
         injection testing.
     </description>
-	<version>3.0.10</version>
 	<name>mangle-byteman-root</name>
 	<properties>
 		<!-- actual path to tools.jar is defined in the profiles below -->
@@ -45,18 +60,18 @@
 
 			<!-- Internal dependencies -->
 			<dependency>
-				<groupId>org.jboss.byteman</groupId>
-				<artifactId>mangle-byteman-agent</artifactId>
+				<groupId>com.vmware.mangle</groupId>
+				<artifactId>mangle-byteman</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>org.jboss.byteman</groupId>
-				<artifactId>byteman-submit</artifactId>
+				<groupId>com.vmware.mangle</groupId>
+				<artifactId>mangle-byteman-submit</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>org.jboss.byteman</groupId>
-				<artifactId>byteman-install</artifactId>
+				<groupId>com.vmware.mangle</groupId>
+				<artifactId>mangle-byteman-install</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 			<dependency>
@@ -145,10 +160,6 @@
 					</dependencies>
 				</plugin>
 				<plugin>
-					<artifactId>maven-antrun-plugin</artifactId>
-					<version>1.6</version>
-				</plugin>
-				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-release-plugin</artifactId>
 					<version>2.1</version>
@@ -169,33 +180,6 @@
 					<target>1.8</target>
 				</configuration>
 			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-source-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>attach-sources</id>
-						<goals>
-							<goal>jar</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-javadoc-plugin</artifactId>
-				<configuration>
-					<attach>true</attach>
-				</configuration>
-				<executions>
-					<execution>
-						<id>javadoc-jar</id>
-						<goals>
-							<goal>jar</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
 		</plugins>
 	</build>
 
@@ -204,6 +188,7 @@
 		<module>agent</module>
 		<module>install</module>
 		<module>download</module>
+		<module>agent-integration-tests</module>
 	</modules>
 
 	<profiles>
@@ -263,47 +248,6 @@
 								<goals>
 									<goal>sign</goal>
 								</goals>
-							</execution>
-						</executions>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-		<profile>
-			<!-- Build with IntegrationTestcoverage => instrument classes with cobertura 
-				before integrationtests starts. -->
-			<id>buildWithIntegrationTestCoverage</id>
-			<activation>
-				<property>
-					<name>buildWithIntegrationTestCoverage</name>
-					<value>true</value>
-				</property>
-			</activation>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.codehaus.mojo</groupId>
-						<artifactId>cobertura-maven-plugin</artifactId>
-						<version>2.7</version>
-						<configuration>
-							<aggregate>true</aggregate>
-						</configuration>
-						<executions>
-							<execution>
-								<phase>package</phase>
-								<id>instrument</id>
-								<goals>
-									<goal>cobertura</goal>
-								</goals>
-								<configuration>
-									<configuration>
-										<attach>true</attach>
-									</configuration>
-									<formats>
-										<format>xml</format>
-										<format>html</format>
-									</formats>
-								</configuration>
 							</execution>
 						</executions>
 					</plugin>

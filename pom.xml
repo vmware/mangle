@@ -15,7 +15,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.vmware.mangle</groupId>
 	<artifactId>mangle-root</artifactId>
-	<version>0.0.1</version>
+	<version>1.0.0</version>
 	<packaging>pom</packaging>
 	<name>mangle</name>
 	<description>Mangle</description>
@@ -26,6 +26,13 @@
 		<artifactId>spring-boot-starter-parent</artifactId>
 		<version>2.1.3.RELEASE</version>
 	</parent>
+
+	<repositories>
+		<repository>
+			<id>build-artifactory.eng.vmware.com</id>
+			<url>https://build-artifactory.eng.vmware.com/artifactory/fiaasco-release</url>
+		</repository>
+	</repositories>
 
 	<licenses>
 		<license>
@@ -56,8 +63,6 @@
 		<jacoco.ant.version>0.7.8</jacoco.ant.version>
 		<com.thoughtworks.xstream.version>1.4.8</com.thoughtworks.xstream.version>
 		<junit.jupiter.version>5.3.1</junit.jupiter.version>
-		<mangle-utils.version>6.0.0.118</mangle-utils.version>
-		<log4j.version>1.2.17</log4j.version>
 		<docker-java.version>3.0.12</docker-java.version>
 		<com.jcraft.jsch.version>0.1.54</com.jcraft.jsch.version>
 		<org.testng.version>6.8.8</org.testng.version>
@@ -90,7 +95,9 @@
 		<hazelcast.version>3.11</hazelcast.version>
 		<org.json.version>20180130</org.json.version>
 		<net.jpountz.lz4.version>1.3.0</net.jpountz.lz4.version>
-
+        <log4j.version>1.2.17</log4j.version>
+        <tomcat.version>9.0.19</tomcat.version>
+        
 		<mangle.services.build.directory>mangle-services/target</mangle.services.build.directory>
 		<mangle.models.build.directory>mangle-models/target</mangle.models.build.directory>
 		<mangle.utils.build.directory>mangle-utils/target</mangle.utils.build.directory>
@@ -118,16 +125,6 @@
 		<sonar.jacoco.reportPath>target/jacoco-final.exec</sonar.jacoco.reportPath>
 		<sonar.coverage.exclusions>**/com/vmware/mangle/model/**/*,**/com/vmware/mangle/constants/**/*</sonar.coverage.exclusions>
 	</properties>
-	<modules>
-		<module>mangle-models</module>
-		<module>mangle-metric-reporter</module>
-		<module>mangle-utils</module>
-		<module>mangle-task-framework</module>
-		<module>mangle-test-plugin</module>
-		<module>mangle-default-plugin</module>
-		<module>mangle-ui</module>
-		<module>mangle-services</module>
-	</modules>
 
 	<!-- Plugin for OSSTP -->
 	<pluginRepositories>
@@ -471,6 +468,22 @@
 				<artifactId>json</artifactId>
 				<version>${org.json.version}</version>
 			</dependency>
+            <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>${log4j.version}</version>
+            <scope>compile</scope>
+            <exclusions>
+            <exclusion>
+            <artifactId>tomcat-annotations-api</artifactId>
+            <groupId>org.apache.tomcat</groupId>
+            </exclusion>
+            <exclusion>
+            <artifactId>commons-logging</artifactId>
+            <groupId>commons-logging</groupId>
+            </exclusion>
+            </exclusions>
+            </dependency>
 		</dependencies>
 	</dependencyManagement>
 	<build>
@@ -661,8 +674,7 @@
 										<structure name="Mangle Code Coverage Report">
 											<group name="coverage">
 												<classfiles>
-													<fileset
-														dir="${mangle.services.classes.directory}" />
+													<fileset dir="${mangle.services.classes.directory}" />
 													<fileset dir="${mangle.utils.classes.directory}" />
 													<fileset
 														dir="${mangle.metricreporter.classes.directory}" />
@@ -716,6 +728,11 @@
 					<artifactId>maven-failsafe-plugin</artifactId>
 					<version>2.18.1</version>
 				</plugin>
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                    <version>${spring.boot.version}</version>
+                </plugin>
 			</plugins>
 		</pluginManagement>
 
@@ -745,6 +762,50 @@
 
 	<profiles>
 		<profile>
+			<id>default</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<modules>
+				<module>mangle-models</module>
+				<module>mangle-metric-reporter</module>
+				<module>mangle-utils</module>
+				<module>mangle-task-framework</module>
+				<module>mangle-test-plugin</module>
+				<module>mangle-default-plugin</module>
+				<module>mangle-ui</module>
+				<module>mangle-services</module>
+			</modules>
+		</profile>
+		<profile>
+			<id>byteman</id>
+			<modules>
+				<module>mangle-byteman-root</module>
+			</modules>
+		</profile>
+		<profile>
+			<id>vcenter-adapter</id>
+			<modules>
+				<module>mangle-vcenter-adapter</module>
+			</modules>
+		</profile>
+		<profile>
+			<id>build-all</id>
+			<modules>
+				<module>mangle-byteman-root</module>
+				<module>mangle-models</module>
+				<module>mangle-metric-reporter</module>
+				<module>mangle-utils</module>
+				<module>mangle-task-framework</module>
+				<module>mangle-test-plugin</module>
+				<module>mangle-default-plugin</module>
+				<module>mangle-ui</module>
+				<module>mangle-services</module>
+				<module>mangle-integration-tests</module>
+                <module>mangle-vcenter-adapter</module>
+			</modules>
+		</profile>
+		<profile>
 			<id>osstp</id>
 			<build>
 				<plugins>
@@ -770,6 +831,38 @@
 		</profile>
 		<profile>
 			<id>integration-test</id>
+			<modules>
+				<module>mangle-integration-tests</module>
+			</modules>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-failsafe-plugin</artifactId>
+						<configuration>
+							<includes>
+								<include>**/com/vmware/mangle/integrationtest/**</include>
+							</includes>
+						</configuration>
+						<executions>
+							<execution>
+								<id>integration-test</id>
+								<phase>integration-test</phase>
+								<goals>
+									<goal>integration-test</goal>
+									<goal>verify</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<id>vc-integration-test</id>
+			<modules>
+				<module>mangle-vcenter-adapter</module>
+			</modules>
 			<build>
 				<plugins>
 					<plugin>

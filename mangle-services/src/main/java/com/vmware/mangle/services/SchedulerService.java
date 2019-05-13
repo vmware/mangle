@@ -115,4 +115,8 @@ public class SchedulerService {
                 .collect(Collectors.toList());
     }
 
+    public Set<SchedulerSpec> getSchedulesForIds(List<String> scheduleIds) {
+        return schedulerRepository.findByIds(scheduleIds);
+    }
+
 }

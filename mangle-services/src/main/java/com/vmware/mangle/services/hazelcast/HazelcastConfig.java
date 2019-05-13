@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.google.common.net.InetAddresses;
 import com.hazelcast.config.Config;
 import com.hazelcast.config.ListenerConfig;
 import com.hazelcast.config.MemberAttributeConfig;
@@ -35,6 +36,7 @@ import com.vmware.mangle.services.ClusterConfigService;
 import com.vmware.mangle.services.application.listener.CustomApplicationListener;
 import com.vmware.mangle.utils.HazelcastUtils;
 import com.vmware.mangle.utils.constants.ErrorConstants;
+import com.vmware.mangle.utils.constants.MetricProviderConstants;
 import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
@@ -56,13 +58,13 @@ public class HazelcastConfig {
     private ClusterConfigService clusterConfigService;
 
     @Value("${hazelcast.config.public}")
-    private String hazelcastPublicAddress;
+    private String publicAddress;
 
     @Value("${hazelcast.config.members}")
-    private String hazelcastMembers;
+    private String clusterMembers;
 
     @Value("${hazelcast.config.validationToken}")
-    private String hazelcastValidationToken;
+    private String clusterValidationToken;
 
     @Value("${hazelcast.config.cluster.name}")
     private String clusterName;
@@ -127,8 +129,25 @@ public class HazelcastConfig {
     @Bean(name = "hazelcastInstance")
     public HazelcastInstance createHazelcastCluster() throws MangleException {
 
+        if (StringUtils.isEmpty(clusterValidationToken)) {
+            throw new MangleException(ErrorConstants.CLUSTER_VALIDATION_TOKEN_MISSING,
+                    ErrorCode.CLUSTER_MANDATORY_PARAMETER_NOT_PROVIDED);
+        }
+
+        if (StringUtils.isEmpty(publicAddress)) {
+            throw new MangleException(ErrorConstants.PUBLIC_ADDRESS_MISSING,
+                    ErrorCode.CLUSTER_MANDATORY_PARAMETER_NOT_PROVIDED);
+        }
+
+        if (!InetAddresses.isInetAddress(publicAddress)) {
+            throw new MangleException(ErrorConstants.PUBLIC_ADDRESS_WRONG_FORMAT,
+                    ErrorCode.CLUSTER_MANDATORY_PARAMETER_ERROR);
+        }
+
         HazelcastInstance hz = Hazelcast.newHazelcastInstance(getClusterConfig());
 
+        System.setProperty(MetricProviderConstants.NODE_ADDRESS,
+                hz.getCluster().getLocalMember().getAddress().getHost());
         migrationListener.setHazelcastInstance(hz);
         membershipListener.setHazelcastInstance(hz);
         hazelcastTaskService.setHazelcastInstance(hz);
@@ -136,8 +155,6 @@ public class HazelcastConfig {
         applicationListener.setHazelcastInstance(hz);
         clusterConfigService.setHazelcastInstance(hz);
 
-        hz.getPartitionService().addMigrationListener(migrationListener);
-        hz.getCluster().addMembershipListener(membershipListener);
         return hz;
     }
 
@@ -145,12 +162,13 @@ public class HazelcastConfig {
         Config config = new Config();
         MemberAttributeConfig mangleMaintenanceModeConfig = new MemberAttributeConfig();
         mangleMaintenanceModeConfig.setBooleanAttribute("MANGLE_IN_MAINTENANCE_MODE", false);
-        String validationToken = HazelcastUtils.getApplicationValidationToken(hazelcastValidationToken);
+        String validationToken = HazelcastUtils.getApplicationValidationToken(clusterValidationToken);
         config.setProperty(GroupProperty.APPLICATION_VALIDATION_TOKEN.getName(), validationToken);
         config.setMemberAttributeConfig(mangleMaintenanceModeConfig);
         config.addListenerConfig(new ListenerConfig(membershipListener));
+        config.addListenerConfig(new ListenerConfig(migrationListener));
         HazelcastClusterConfig clusterConfig = clusterConfigService.getClusterConfiguration();
-        List<String> members = HazelcastUtils.getHazelcastMemberslist(hazelcastMembers);
+        List<String> members = HazelcastUtils.getMembersList(clusterMembers);
 
         /**
          * if the cluster configuration is not setup already, it will initialize and save it in DB,
@@ -182,14 +200,13 @@ public class HazelcastConfig {
                 log.error(
                         "Mangle failed to start up, mis-matching validation token with the one configured in db, provided: {}",
                         validationToken);
-                throw new MangleException(String.format(ErrorConstants.CLUSTER_CONFIG_MISMATCH, validationToken),
-                        ErrorCode.CLUSTER_CONFIG_MISMATCH, validationToken);
+                throw new MangleException(ErrorConstants.CLUSTER_CONFIG_MISMATCH, ErrorCode.CLUSTER_CONFIG_MISMATCH);
             }
 
             /**
              * if there already exists a cluster configuration in the persistence layer of the
-             * application, it maintains the list of active members in the cluster
-             * This list of active members will be added to current hazelcast cluster member
+             * application, it maintains the list of active members in the cluster This list of
+             * active members will be added to current hazelcast cluster member
              * initialization configuration, so that it can try to reach any of the active member to
              * join that cluster
              */
@@ -199,13 +216,12 @@ public class HazelcastConfig {
         }
 
         /**
-         * Public address with which the mangle instance can be accessed by another cluster
-         * members.
+         * Public address with which the mangle instance can be accessed by another cluster members.
          *
          * https://docs.hazelcast.org/docs/latest/manual/html-single/#public-address
          */
-        if (!StringUtils.isEmpty(hazelcastPublicAddress)) {
-            config.getNetworkConfig().setPublicAddress(hazelcastPublicAddress);
+        if (!StringUtils.isEmpty(publicAddress)) {
+            config.getNetworkConfig().setPublicAddress(publicAddress);
         }
 
         /* Setting up tcp/ip discovery for the hazelcast cluster */

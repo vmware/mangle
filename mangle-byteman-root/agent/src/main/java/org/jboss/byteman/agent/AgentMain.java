@@ -28,15 +28,14 @@ import java.util.jar.JarFile;
 /**
  * agent class supplied at JVM startup to install byteman package bytecode transformer
  *
- * @author hkilari
  * @author Andrew Dinn
- *
+ * @author hkilari
  */
 public class AgentMain {
     public static boolean firstTime = false;
-    public final static String BYTEMAN_PREFIX = "org.jboss.byteman.";
-    public final static String BYTEMAN_AGENT_LOADED = "org.jboss.byteman.agent.loaded";
-    public final static String BYTEMAN_LISTENER_LOADED = "org.jboss.byteman.listener.loaded";
+    public static final String BYTEMAN_PREFIX = "org.jboss.byteman.";
+    public static final String BYTEMAN_AGENT_LOADED = "org.jboss.byteman.agent.loaded";
+    public static final String BYTEMAN_LISTENER_LOADED = "org.jboss.byteman.listener.loaded";
 
     public static void premain(String args, Instrumentation inst) throws Exception {
         // guard against the agent being loaded twice
@@ -194,8 +193,9 @@ public class AgentMain {
                 System.err.println("org.jboss.byteman.agent.Main: unable to read rule script file : " + scriptPath);
                 throw ioe;
             } finally {
-                if (fis != null)
+                if (fis != null) {
                     fis.close();
+                }
             }
         }
 

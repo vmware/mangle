@@ -17,17 +17,18 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import java.util.Stack;
 import java.util.stream.Collectors;
 
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceAware;
 import com.hazelcast.core.Member;
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
 import com.vmware.mangle.cassandra.model.faults.specs.TaskSpec;
 import com.vmware.mangle.cassandra.model.hazelcast.HazelcastClusterConfig;
@@ -42,6 +43,7 @@ import com.vmware.mangle.services.TaskService;
 import com.vmware.mangle.services.hazelcast.HazelcastTaskCache;
 import com.vmware.mangle.utils.constants.Constants;
 import com.vmware.mangle.utils.constants.URLConstants;
+import com.vmware.mangle.utils.exceptions.MangleException;
 
 /**
  * @author ashrimali
@@ -99,25 +101,32 @@ public class CustomApplicationListener implements ApplicationListener<ContextRef
         List<Task<TaskSpec>> inprogressTasks = taskService.getInProgressTasks();
         for (Task<TaskSpec> task : inprogressTasks) {
             try {
-                if (!task.isScheduledTask()) {
 
+                if (CollectionUtils.isEmpty(task.getTriggers())) {
+                    task.setTriggers(new Stack<>());
+                    task.getTriggers().add(new TaskTrigger());
+                    updateTaskFailed(task);
+                } else if (!task.isScheduledTask()) {
                     TaskTrigger trigger = task.getTriggers().peek();
                     SimpleDateFormat sdf = new SimpleDateFormat(Constants.DEFAULT_DATE_FORMAT);
                     Date startTime = sdf.parse(trigger.getStartTime());
                     if ((System.currentTimeMillis() - startTime.getTime())
                             / ONE_MINUTE_IN_MILLIS < URLConstants.RETRIGGER_THRESHOLD_TIME_IN_MINS) {
                         mapService.addTaskToCache(task.getId(), task.getTaskStatus().name());
+                    } else {
+                        updateTaskFailed(task);
                     }
-
-                } else {
-                    task.getTriggers().peek().setTaskStatus(TaskStatus.FAILED);
-                    task.getTriggers().peek().setTaskFailureReason("Cluster failure");
-                    taskService.addOrUpdateTask(task);
                 }
             } catch (Exception e) {
                 log.error("Re-Triggering of the in-progress faults failed with an exception: " + e);
             }
         }
+    }
+
+    private void updateTaskFailed(Task<TaskSpec> task) throws MangleException {
+        task.getTriggers().peek().setTaskStatus(TaskStatus.FAILED);
+        task.getTriggers().peek().setTaskFailureReason("Cluster failure");
+        taskService.addOrUpdateTask(task);
     }
 
     private void updateClusterConfigObject() {

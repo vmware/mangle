@@ -36,6 +36,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -74,6 +75,9 @@ public class UserServiceTest extends PowerMockTestCase {
     private UserRepository userRepository;
 
     @Mock
+    private PasswordEncoder passwordEncoder;
+
+    @Mock
     private ADAuthProviderService authProviderService;
 
     private UserMockData dataProvider = new UserMockData();
@@ -84,7 +88,7 @@ public class UserServiceTest extends PowerMockTestCase {
     @BeforeMethod
     public void initMocks() {
         MockitoAnnotations.initMocks(this);
-        userService = spy(new UserService(userRepository, privilegeService, authProviderService));
+        userService = spy(new UserService(userRepository, privilegeService, authProviderService, passwordEncoder));
         userService.setRoleService(roleService);
     }
 
@@ -174,7 +178,7 @@ public class UserServiceTest extends PowerMockTestCase {
 
         Assert.assertEquals(persisted, user);
         verify(userRepository, times(1)).save(any());
-        verify(roleService, times(1)).getRoleByName(any());
+        verify(roleService, times(2)).getRoleByName(any());
     }
 
     /**
@@ -225,7 +229,6 @@ public class UserServiceTest extends PowerMockTestCase {
         User user = dataProvider.getMockUser();
         Set<String> domains = new HashSet<>(Collections.singletonList(Constants.LOCAL_DOMAIN_NAME));
 
-
         when(userRepository.save(any())).thenReturn(user);
         when(roleService.getRoleByName(any())).thenReturn(dataProvider.getDummyRole());
         when(authProviderService.getAllDomains()).thenReturn(domains);
@@ -234,7 +237,7 @@ public class UserServiceTest extends PowerMockTestCase {
 
         Assert.assertEquals(persisted, user);
         verify(userRepository, times(1)).save(any());
-        verify(roleService, times(1)).getRoleByName(any());
+        verify(roleService, times(2)).getRoleByName(any());
     }
 
     /**
@@ -257,6 +260,62 @@ public class UserServiceTest extends PowerMockTestCase {
     }
 
     /**
+     * Test method for {@link UserService#updateUser(User)}
+     */
+    @Test(expectedExceptions = MangleException.class)
+    public void updatePasswordTest() throws MangleException {
+        log.info("Executing test: updateUserTestFailure on UserService#updateUser(User)");
+
+        User user = dataProvider.getMockUser();
+        when(userRepository.findByName(anyString())).thenReturn(dataProvider.getMockUser2());
+        when(userRepository.save(any())).thenReturn(user);
+
+        userService.updatePassword(user.getName(), user.getPassword(), UUID.randomUUID().toString());
+
+        verify(userRepository, times(1)).findByName(anyString());
+        verify(userRepository, times(1)).save(any());
+    }
+
+    /**
+     * Test method for {@link UserService#updatePassword(String, String, String)}
+     */
+    @Test(expectedExceptions = MangleException.class)
+    public void updatePasswordTestFailureNoUserFound() throws MangleException {
+        log.info("Executing test: updateUserTestFailure on UserService#updateUser(User)");
+
+        User user = dataProvider.getMockUser();
+        when(userService.getUserByName(any())).thenReturn(null);
+
+        try {
+            userService.updatePassword(user.getName(), user.getPassword(), UUID.randomUUID().toString());
+        } catch (MangleException e) {
+            Assert.assertEquals(e.getErrorCode(), ErrorCode.USER_NOT_FOUND);
+            verify(userRepository, times(1)).findByName(any());
+            throw e;
+        }
+    }
+
+    /**
+     * Test method for {@link UserService#updatePassword(String, String, String)}
+     */
+    @Test(expectedExceptions = MangleException.class)
+    public void updatePasswordTestFailurePasswordMismatch() throws MangleException {
+        log.info("Executing test: updateUserTestFailure on UserService#updateUser(User)");
+
+        User user = dataProvider.getMockUser();
+        when(passwordEncoder.matches(anyString(), anyString())).thenReturn(false);
+        when(userRepository.findByName(anyString())).thenReturn(dataProvider.getMockUser2());
+
+        try {
+            userService.updatePassword(user.getName(), user.getPassword(), UUID.randomUUID().toString());
+        } catch (MangleException e) {
+            Assert.assertEquals(e.getErrorCode(), ErrorCode.CURRENT_PASSWORD_MISMATCH);
+            verify(userRepository, times(1)).findByName(any());
+            throw e;
+        }
+    }
+
+    /**
      * Test method for {@link UserService#deleteUsersByNames(List)}
      */
     @Test
@@ -268,13 +327,76 @@ public class UserServiceTest extends PowerMockTestCase {
         list.add(user.getName());
         list.add(userNew.getName());
 
-        when(userRepository.findByName(user.getName())).thenReturn(user);
-        when(userRepository.findByName(userNew.getName())).thenReturn(userNew);
+        List<User> users = new ArrayList<>();
+        users.add(user);
+        users.add(userNew);
+
+        when(userRepository.findByNameIn(list)).thenReturn(users);
         doNothing().when(userRepository).delete(any());
+        doNothing().when(userService).terminateUserSession(anyString());
         userService.deleteUsersByNames(list);
 
         verify(userRepository, times(1)).deleteByNameIn(any());
         verify(userRepository, times(1)).findByNameIn(any());
+    }
+
+    /**
+     * Test method for {@link UserService#deleteUsersByNames(List)}
+     */
+    @Test(expectedExceptions = MangleException.class)
+    public void deleteUsersByNamesTestFailureAdminUserDelete() throws MangleException {
+        log.info("Executing test: deleteUsersByNamesTest on UserService#deleteUsersByNames(List)");
+        User user = dataProvider.getMockUser();
+        User userNew = dataProvider.getUpdateMockUser();
+        List<String> list = new ArrayList<>();
+        user.setName(Constants.MANGLE_DEFAULT_USER);
+        list.add(user.getName());
+        list.add(userNew.getName());
+
+        List<User> users = new ArrayList<>();
+        users.add(user);
+        users.add(userNew);
+
+        when(userRepository.findByNameIn(list)).thenReturn(users);
+        doNothing().when(userService).terminateUserSession(anyString());
+        doNothing().when(userRepository).delete(any());
+        try {
+            userService.deleteUsersByNames(list);
+        } catch (MangleException e) {
+            Assert.assertEquals(e.getErrorCode(), ErrorCode.DEFAULT_MANGLE_USER_DELETE_FAIL);
+            verify(userRepository, times(0)).deleteByNameIn(any());
+            verify(userRepository, times(1)).findByNameIn(any());
+            throw e;
+        }
+    }
+
+    /**
+     * Test method for {@link UserService#deleteUsersByNames(List)}
+     */
+    @Test(expectedExceptions = MangleException.class)
+    public void deleteUsersByNamesTestFailureUserDoesnotExist() throws MangleException {
+        log.info("Executing test: deleteUsersByNamesTest on UserService#deleteUsersByNames(List)");
+        User user = dataProvider.getMockUser();
+        User userNew = dataProvider.getUpdateMockUser();
+        List<String> list = new ArrayList<>();
+        list.add(user.getName());
+        list.add(userNew.getName());
+        list.add(UUID.randomUUID().toString());
+
+        List<User> users = new ArrayList<>();
+        users.add(user);
+        users.add(userNew);
+
+        when(userRepository.findByNameIn(list)).thenReturn(users);
+        doNothing().when(userRepository).delete(any());
+        try {
+            userService.deleteUsersByNames(list);
+        } catch (MangleException e) {
+            Assert.assertEquals(e.getErrorCode(), ErrorCode.NO_RECORD_FOUND);
+            verify(userRepository, times(0)).deleteByNameIn(any());
+            verify(userRepository, times(1)).findByNameIn(any());
+            throw e;
+        }
     }
 
     /**
@@ -292,45 +414,11 @@ public class UserServiceTest extends PowerMockTestCase {
 
         when(userRepository.findByNameIn(any())).thenReturn(users);
         doNothing().when(userRepository).deleteByNameIn(any());
+        doNothing().when(userService).terminateUserSession(anyString());
 
-        Set<String> result = userService.deleteUsersByNames(list);
-        Assert.assertEquals(result.size(), 0);
-
-    }
-
-    /**
-     * Test method for {@link UserService#deleteUserByName(String)}
-     */
-    @Test
-    public void deleteUserByNameTest() throws MangleException {
-        log.info("Executing test: deleteUsersByNamesTest on UserService#deleteUserByName(String)");
-        User user = dataProvider.getMockUser();
-
-        when(userRepository.findByName(user.getName())).thenReturn(user);
-        doNothing().when(userRepository).delete(any());
-        userService.deleteUserByName(user.getName());
-
-        verify(userRepository, times(1)).delete(any());
-        verify(userRepository, times(1)).findByName(any());
-    }
-
-    /**
-     * Test method for {@link UserService#deleteUserByName(String)}
-     */
-    @Test(expectedExceptions = MangleException.class)
-    public void deleteUserByNameTestFailure() throws MangleException {
-        log.info("Executing test: deleteUserByNameTestFailure on UserService#deleteUserByName(String)");
-        User user = dataProvider.getMockUser();
-
-        when(userRepository.findByName(user.getName())).thenReturn(null);
-        doNothing().when(userRepository).delete(any());
-        try {
-            userService.deleteUserByName(user.getName());
-        } catch (MangleException e) {
-            Assert.assertEquals(e.getErrorCode(), ErrorCode.NO_RECORD_FOUND);
-            verify(userRepository, times(1)).findByName(any());
-            throw e;
-        }
+        userService.deleteUsersByNames(list);
+        verify(userRepository, times(1)).deleteByNameIn(any());
+        verify(userRepository, times(1)).findByNameIn(any());
     }
 
     @Test
@@ -372,23 +460,8 @@ public class UserServiceTest extends PowerMockTestCase {
     }
 
     @Test
-    public void testGetMultipleUsers() {
-        User user1 = dataProvider.getMockUser();
-        User user2 = dataProvider.getMockUser2();
-        List<User> users = new ArrayList<>(Arrays.asList(user1, user2));
-        List<String> usernames = new ArrayList<>(Arrays.asList(user1.getName(), user2.getName()));
-
-        when(userRepository.findByNameIn(any())).thenReturn(users);
-
-        Set<String> persistedUsers = userService.getMultipleUsers(usernames);
-        Assert.assertEquals(persistedUsers.size(), 2);
-        verify(userRepository, times(1)).findByNameIn(any());
-    }
-
-    @Test
     public void testGetPrivilegeForUser() {
         User user = dataProvider.getMockUser3();
-
 
         when(userRepository.findByName(anyString())).thenReturn(user);
         when(roleService.getRolesByNames(any())).thenReturn(new ArrayList<>(user.getRoles()));

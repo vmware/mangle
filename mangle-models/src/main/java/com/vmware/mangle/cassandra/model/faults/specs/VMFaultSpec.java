@@ -14,10 +14,10 @@ package com.vmware.mangle.cassandra.model.faults.specs;
 import java.io.Serializable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import com.vmware.mangle.cassandra.model.scheduler.SchedulerInfo;
 import com.vmware.mangle.cassandra.model.tasks.DockerSpecificArguments;
 import com.vmware.mangle.cassandra.model.tasks.K8SSpecificArguments;
 
@@ -30,8 +30,6 @@ import com.vmware.mangle.cassandra.model.tasks.K8SSpecificArguments;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-@JsonIgnoreProperties({ "timeoutinMilliseconds", "k8sArguments", "dockerArguments" })
-@SuppressWarnings("squid:MaximumInheritanceDepth")
 public class VMFaultSpec extends CommandExecutionFaultSpec implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -40,7 +38,7 @@ public class VMFaultSpec extends CommandExecutionFaultSpec implements Serializab
 
     @JsonIgnore
     @Override
-    public void setTimeoutInMilliseconds(String timeoutinMilliseconds) {
+    public void setTimeoutInMilliseconds(Integer timeoutinMilliseconds) {
         super.setTimeoutInMilliseconds(timeoutinMilliseconds);
     }
 
@@ -54,5 +52,17 @@ public class VMFaultSpec extends CommandExecutionFaultSpec implements Serializab
     @Override
     public void setDockerArguments(DockerSpecificArguments dockerArguments) {
         super.setDockerArguments(dockerArguments);
+    }
+
+    @JsonIgnore
+    @Override
+    public void setInjectionHomeDir(String injectionHomeDir) {
+        super.setInjectionHomeDir(injectionHomeDir);
+    }
+
+    @JsonIgnore
+    @Override
+    public void setSchedule(SchedulerInfo schedulerInfo) {
+        super.setSchedule(schedule);
     }
 }

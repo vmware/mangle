@@ -13,6 +13,7 @@ package com.vmware.mangle.cassandra.model.faults.specs;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import com.vmware.mangle.services.enums.K8SFaultName;
 
@@ -20,6 +21,7 @@ import com.vmware.mangle.services.enums.K8SFaultName;
  * @author bkaranam Api payload specification for K8S Delete Resource fault spec
  */
 @Data
+@ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 @SuppressWarnings("squid:MaximumInheritanceDepth")
 public class K8SDeleteResourceFaultSpec extends K8SFaultSpec {

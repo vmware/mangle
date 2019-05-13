@@ -11,6 +11,8 @@
 
 package com.vmware.mangle.services.repository;
 
+import java.util.List;
+
 import org.springframework.data.cassandra.repository.AllowFiltering;
 import org.springframework.data.cassandra.repository.CassandraRepository;
 import org.springframework.data.cassandra.repository.Query;
@@ -27,7 +29,14 @@ public interface ADAuthProviderRepository extends CassandraRepository<ADAuthProv
     @Query("SELECT * FROM authenticationprovider WHERE addomain = ?0")
     public ADAuthProviderDto findByAdDomain(String adDomain);
 
+
+    @Query(value = "SELECT * FROM authenticationprovider WHERE addomain in ?0", allowFiltering = true)
+    public List<ADAuthProviderDto> findByAdDomains(List<String> adDomain);
+
     @Query("DELETE from authenticationprovider WHERE addomain = ?0")
     public void deleteByAdDomain(String adDomain);
+
+    @Query("DELETE from authenticationprovider WHERE addomain in ?0")
+    public void deleteByAdDomainIn(List<String> adDomains);
 }
 

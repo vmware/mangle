@@ -15,7 +15,10 @@ import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
 
 import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.log4j.Log4j2;
@@ -38,12 +41,13 @@ import org.springframework.web.bind.annotation.RestController;
 import com.vmware.mangle.cassandra.model.security.Privilege;
 import com.vmware.mangle.cassandra.model.security.Role;
 import com.vmware.mangle.model.enums.HateoasOperations;
-import com.vmware.mangle.model.enums.OperationStatus;
 import com.vmware.mangle.model.response.DeleteOperationResponse;
+import com.vmware.mangle.model.response.ErrorDetails;
 import com.vmware.mangle.services.PrivilegeService;
 import com.vmware.mangle.services.RoleService;
 import com.vmware.mangle.services.deletionutils.RoleDeletionService;
 import com.vmware.mangle.utils.exceptions.MangleException;
+import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
 /**
  *
@@ -165,17 +169,21 @@ public class RoleController {
      *             if user tries to delete default role
      */
     @DeleteMapping(value = "roles")
-    public ResponseEntity<DeleteOperationResponse> deleteRoles(@RequestParam List<String> roles)
-            throws MangleException {
+    public ResponseEntity<ErrorDetails> deleteRoles(@RequestParam List<String> roles) throws MangleException {
         log.info(String.format("Starting execution of the roles: %s", roles.toString()));
         DeleteOperationResponse response = roleDeletionService.deleteRolesByNames(roles);
-        HttpStatus responseStatus = HttpStatus.OK;
+        ErrorDetails errorDetails = new ErrorDetails();
         if (CollectionUtils.isEmpty(response.getAssociations())) {
-            response.setResult(OperationStatus.SUCCESS);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         } else {
-            response.setResult(OperationStatus.FAILED);
-            responseStatus = HttpStatus.PRECONDITION_FAILED;
+            Map<String, Map<String, List<String>>> associations = new HashMap<>();
+            associations.put("associations", response.getAssociations());
+            errorDetails.setTimestamp(new Date());
+            errorDetails.setDescription(response.getResponseMessage());
+            errorDetails.setCode(ErrorCode.DELETE_OPERATION_FAILED.getCode());
+            errorDetails.setDetails(associations);
         }
-        return new ResponseEntity<>(response, responseStatus);
+
+        return new ResponseEntity<>(errorDetails, HttpStatus.PRECONDITION_FAILED);
     }
 }

@@ -14,6 +14,7 @@ package com.vmware.mangle.cassandra.model.faults.specs;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 /**
  * @author bkaranam
@@ -21,6 +22,7 @@ import lombok.EqualsAndHashCode;
  *
  */
 @Data
+@ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 @SuppressWarnings("squid:MaximumInheritanceDepth")
 public class JVMCodeLevelFaultSpec extends JVMAgentFaultSpec {

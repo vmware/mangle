@@ -21,6 +21,7 @@ import org.testng.annotations.Test;
 import com.vmware.mangle.cassandra.model.endpoint.EndpointSpec;
 import com.vmware.mangle.faults.plugin.helpers.byteman.BytemanFaultHelper;
 import com.vmware.mangle.faults.plugin.helpers.byteman.BytemanFaultHelperFactory;
+import com.vmware.mangle.faults.plugin.helpers.byteman.DockerBytemanFaultHelper;
 import com.vmware.mangle.faults.plugin.helpers.byteman.K8sBytemanFaultHelper;
 import com.vmware.mangle.faults.plugin.helpers.byteman.LinuxBytemanFaultHelper;
 import com.vmware.mangle.faults.plugin.mockdata.EndpointMockData;
@@ -42,6 +43,9 @@ public class BytemanFaultHelperFactoryTest {
 
     @Mock
     private LinuxBytemanFaultHelper linuxBytemanFaultHelper;
+
+    @Mock
+    private DockerBytemanFaultHelper dockerBytemanFaultHelper;
 
     private EndpointMockData mockData = new EndpointMockData();
     private EndpointSpec endpointSpec;
@@ -67,10 +71,23 @@ public class BytemanFaultHelperFactoryTest {
     }
 
     @Test(priority = 3)
+    public void testGetDockerBytemanFaultHelper() {
+        endpointSpec.setEndPointType(EndpointType.DOCKER);
+        BytemanFaultHelper helper = bytemanFaultHelperFactory.getHelper(endpointSpec);
+        Assert.assertTrue(helper instanceof DockerBytemanFaultHelper);
+    }
+
+    @Test(priority = 4)
     public void testNegativeCase() {
         endpointSpec.setEndPointType(EndpointType.VCENTER);
         BytemanFaultHelper helper = bytemanFaultHelperFactory.getHelper(endpointSpec);
         Assert.assertNull(helper);
+    }
+
+    @Test(priority = 5, expectedExceptions = {
+            NullPointerException.class }, expectedExceptionsMessageRegExp = "endpoint is marked @NonNull but is null")
+    public void testforNullEndpoint() {
+        BytemanFaultHelper helper = bytemanFaultHelperFactory.getHelper(null);
     }
 
 }

@@ -12,18 +12,20 @@
 package org.jboss.byteman.agent.install;
 
 /**
- * Auxiliary class used by Install to provide clients with ids and display names of attachable
- * JVMs.
+ * Auxiliary class used by Install to provide clients with ids and display names of attachable JVMs.
+ *
+ * @author Andrew Dinn
+ * @author hkilari
  */
-public class VMInfo
-{
+public class VMInfo {
     private String id;
     private String displayName;
-    public VMInfo(String id, String displayName)
-    {
-        this.id =id;
+
+    public VMInfo(String id, String displayName) {
+        this.id = id;
         this.displayName = displayName;
     }
+
     public String getId() {
         return id;
     }

@@ -15,6 +15,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import com.vmware.mangle.services.enums.AgentFaultName;
 
@@ -23,6 +24,7 @@ import com.vmware.mangle.services.enums.AgentFaultName;
  * @author kumargautam
  */
 @Data
+@ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 @JsonIgnoreProperties({ "timeoutinMilliseconds" })
 @SuppressWarnings("squid:MaximumInheritanceDepth")
@@ -38,7 +40,7 @@ public class DiskSpaceSpec extends CommandExecutionFaultSpec {
 
     @JsonIgnore
     @Override
-    public void setTimeoutInMilliseconds(String timeoutinMilliseconds) {
+    public void setTimeoutInMilliseconds(Integer timeoutinMilliseconds) {
         super.setTimeoutInMilliseconds(timeoutinMilliseconds);
     }
 }

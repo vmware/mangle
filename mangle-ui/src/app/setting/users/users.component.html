@@ -6,7 +6,7 @@
 </clr-alert>
 <clr-dg-action-bar>
     <div class="btn-group">
-        <button type="button" class="btn btn-sm btn-secondary" (click)="populateUserForm({'id':null,'name':null,'authSource':null,'roleNames':[]});userModalAdd=true;"><clr-icon shape="plus"></clr-icon> Import User</button>
+        <button type="button" class="btn btn-sm btn-secondary" (click)="populateAddUserForm({'name':null,'password':null,'roleNames':[]});userModalAdd=true;"><clr-icon shape="plus"></clr-icon> Add User</button>
     </div>
 </clr-dg-action-bar>
 <clr-datagrid [clrDgLoading]="isLoading">
@@ -14,10 +14,10 @@
     <clr-dg-column>Roles</clr-dg-column>
     <clr-dg-row *clrDgItems="let user of userList" [clrDgItem]="user">
         <clr-dg-action-overflow *ngIf="user.name != 'admin@mangle.local'">
-            <button class="action-item" (click)="populateUserForm(user);userModalEdit=true;">Edit</button>
-            <button class="action-item" *ngIf="user.authSource != 'mangle.local'" (click)="deleteUser(user)">Delete</button>
+            <button class="action-item" (click)="populateEditUserForm(user);userModalEdit=true;">Edit</button>
+            <button class="action-item" (click)="deleteUser(user)">Delete</button>
         </clr-dg-action-overflow>
-		<clr-dg-cell>{{user.name}}@{{user.authSource}}</clr-dg-cell>
+		<clr-dg-cell>{{user.name}}</clr-dg-cell>
 		<clr-dg-cell><span class="label label-light-blue" *ngFor="let roleName of user.roleNames">{{roleName}}</span></clr-dg-cell>
     </clr-dg-row>
 	<clr-dg-footer>
@@ -27,58 +27,67 @@
 		</clr-dg-pagination>
 	</clr-dg-footer>
 </clr-datagrid>
-<clr-modal [(clrModalOpen)]="userModalAdd">
-    <h3 class="modal-title">Import User</h3>
+<clr-modal [(clrModalOpen)]="userModalAdd" [clrModalClosable]="false">
+    <h3 class="modal-title">Add User</h3>
     <div class="modal-body">
-        <form #userForm="ngForm" (ngSubmit)="addOrUpdateUser(userForm.value);userModalAdd=false;" *ngIf="userFormData" ngNativeValidate>
+        <form #addUserForm="ngForm" (ngSubmit)="addUser(addUserForm.value);userModalAdd=false;addUserForm.reset();" *ngIf="userFormData" ngNativeValidate>
             <section class="form-block">
 				<div class="form-group">
-                    <input type="text" name="id" [(ngModel)]="userFormData.id" [hidden]="true">
-                </div>
-				<div class="form-group">
-                    <label for="name">User Id</label>
-					<input type="text" placeholder="user_id" name="name" [(ngModel)]="userFormData.name" required>
+                    <label for="name">User Name</label>
+					<input type="text" placeholder="user_id" name="name" pattern="^[A-Za-z0-9-_.]+$" title="alphanumeric and special characters (_ - .) are allowed" [(ngModel)]="userFormData.name" required>
                 </div>
                 <div class="form-group">
                     <label for="authSource">Auth Source</label>
-					<select name="authSource" [(ngModel)]="authSource" required>
+					<select name="authSource" [(ngModel)]="userFormData.authSource" required>
                         <ng-container *ngFor="let sourceAuth of authSources">
                             <option [value]="sourceAuth">{{sourceAuth}}</option>
                         </ng-container>
                     </select>
                 </div>
+                <div class="form-group" *ngIf="userFormData.authSource=='mangle.local'">
+                    <label for="name">Password</label>
+					<input type="password" name="password" [(ngModel)]="userFormData.password" [required]="userFormData.authSource=='mangle.local'">
+                </div>
                 <div class="form-group">
                     <label for="privileges">Roles</label>
 					<ng-container *ngFor="let role of roleList">
-						<input type="checkbox" (change)="updateUserFormData($event,role);" />{{role.name}}&nbsp;&nbsp;
+                        <div>
+                            <input *ngIf="role.name !='ROLE_READONLY'" type="checkbox" name="role_add" (change)="updateCurrentSelectedRoles($event,role);" [checked]="false" /><span *ngIf="role.name !='ROLE_READONLY'">{{role.name}}&nbsp;&nbsp;</span>
+                        </div>
 					</ng-container>
                 </div>
             </section>
-            <button type="button" class="btn btn-outline" (click)="userModalAdd=false">CANCEL</button>
+            <button type="button" class="btn btn-outline" (click)="userModalAdd=false;addUserForm.reset();ngOnInit();">CANCEL</button>
             <button type="submit" class="btn btn-primary">SUBMIT</button>
         </form>
     </div>
 </clr-modal>
-<clr-modal [(clrModalOpen)]="userModalEdit">
-    <h3 class="modal-title">Edit User</h3>
+<clr-modal [(clrModalOpen)]="userModalEdit" [clrModalClosable]="false">
+    <h3 class="modal-title">Update User</h3>
     <div class="modal-body">
-        <form #userForm="ngForm" (ngSubmit)="addOrUpdateUser(userForm.value);userModalEdit=false;" *ngIf="userFormData" ngNativeValidate>
+        <form #updateUserForm="ngForm" (ngSubmit)="updateUser(updateUserForm.value);userModalEdit=false;" *ngIf="userFormData" ngNativeValidate>
             <section class="form-block">
 				<div class="form-group">
                     <input type="text" name="id" [(ngModel)]="userFormData.id" [hidden]="true">
                 </div>
 				<div class="form-group">
-                    <label for="name">User Id</label>
+                    <label for="name">User</label>
 					<input type="text" placeholder="user_id" name="name" [(ngModel)]="userFormData.name" readonly>
+                </div>
+                <div class="form-group" *ngIf="passwordFieldRequired">
+                    <label for="name">Password</label>
+					<input type="password" name="password" [(ngModel)]="userFormData.password" [required]="passwordFieldRequired">
                 </div>
                 <div class="form-group">
                     <label for="privileges">Roles</label>
 					<ng-container *ngFor="let role of roleList">
-						<input type="checkbox" (change)="updateUserFormData($event,role);" />{{role.name}}&nbsp;&nbsp;
+                        <div>
+                            <input *ngIf="role.name !='ROLE_READONLY'" type="checkbox" name="role_update" (change)="updateCurrentSelectedRoles($event,role);" [checked]="currentSelectedRoles.indexOf(role.name) > -1" /><span *ngIf="role.name !='ROLE_READONLY'">{{role.name}}&nbsp;&nbsp;</span>
+                        </div>
 					</ng-container>
                 </div>
             </section>
-            <button type="button" class="btn btn-outline" (click)="userModalEdit=false">CANCEL</button>
+            <button type="button" class="btn btn-outline" (click)="userModalEdit=false;ngOnInit();">CANCEL</button>
             <button type="submit" class="btn btn-primary">SUBMIT</button>
         </form>
     </div>

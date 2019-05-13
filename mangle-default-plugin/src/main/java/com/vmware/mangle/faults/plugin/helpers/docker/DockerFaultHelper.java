@@ -23,6 +23,7 @@ import com.vmware.mangle.cassandra.model.faults.specs.DockerFaultSpec;
 import com.vmware.mangle.cassandra.model.tasks.SupportScriptInfo;
 import com.vmware.mangle.cassandra.model.tasks.commands.CommandInfo;
 import com.vmware.mangle.cassandra.model.tasks.commands.CommandOutputProcessingInfo;
+import com.vmware.mangle.faults.plugin.helpers.KnownFailuresHelper;
 import com.vmware.mangle.services.enums.DockerFaultName;
 import com.vmware.mangle.task.framework.endpoint.EndpointClientFactory;
 import com.vmware.mangle.task.framework.skeletons.ICommandExecutionFaultHelper;
@@ -62,6 +63,8 @@ public class DockerFaultHelper implements ICommandExecutionFaultHelper {
         CommandInfo dockerCmdInfo = new CommandInfo();
         dockerCmdInfo.setCommand(buildInjectionCommand((DockerFaultSpec) dockerFaultSpec));
         dockerCmdInfo.setIgnoreExitValueCheck(false);
+        dockerCmdInfo.setExpectedCommandOutputList(Collections.emptyList());
+        dockerCmdInfo.setKnownFailureMap(KnownFailuresHelper.getKnownFailureOfDockerFaultInjectionRequest());
         commandInfoList.add(dockerCmdInfo);
 
         List<CommandOutputProcessingInfo> commandOutputProcessingInfoList = new ArrayList<>();
@@ -79,6 +82,8 @@ public class DockerFaultHelper implements ICommandExecutionFaultHelper {
         CommandInfo remediationCommand = new CommandInfo();
         List<CommandInfo> commandInfoList = new ArrayList<>();
         remediationCommand.setCommand(buildRemediationsCommand((DockerFaultSpec) dockerFaultSpec));
+        remediationCommand.setExpectedCommandOutputList(Collections.emptyList());
+        remediationCommand.setKnownFailureMap(KnownFailuresHelper.getKnownFailureOfDockerFaultRemediationRequest());
         commandInfoList.add(remediationCommand);
         return commandInfoList;
     }
@@ -92,6 +97,7 @@ public class DockerFaultHelper implements ICommandExecutionFaultHelper {
         case DOCKER_PAUSE:
             return DockerFaultName.DOCKER_UNPAUSE.name() + ":"
                     + CommonUtils.convertMaptoDelimitedString(dockerFaultSpec.getArgs(), " ");
+
         default:
             throw new MangleException(ErrorCode.UNSUPPORTED_FAULT, dockerFaultSpec.getDockerFaultName().toString());
         }

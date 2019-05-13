@@ -29,13 +29,14 @@ import com.vmware.mangle.cassandra.model.tasks.commands.CommandExecutionResult;
 import com.vmware.mangle.utils.ICommandExecutor;
 import com.vmware.mangle.utils.RemoteBase;
 import com.vmware.mangle.utils.clients.endpoint.EndpointClient;
+import com.vmware.mangle.utils.constants.ErrorConstants;
 import com.vmware.mangle.utils.constants.NumberConstants;
 import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
 /**
  * @author hkilari
- *
+ * @author bkaranam
  */
 @Log4j2
 public class SSHUtils extends RemoteBase implements ICommandExecutor, EndpointClient {
@@ -91,10 +92,10 @@ public class SSHUtils extends RemoteBase implements ICommandExecutor, EndpointCl
         try {
             session = this.getSession();
             session.connect();
-            log.info("Host connected.");
+            log.debug("Host connected.");
             channel = session.openChannel("sftp");
             channel.connect();
-            log.info("sftp channel opened and connected.");
+            log.debug("sftp channel opened and connected.");
             channelSftp = (ChannelSftp) channel;
             if (workDir != null) {
                 channelSftp.cd(workDir);
@@ -105,10 +106,16 @@ public class SSHUtils extends RemoteBase implements ICommandExecutor, EndpointCl
             }
         } catch (SftpException se) {
             log.error("Exception found while changing the directory", se.getMessage());
-            throw new MangleException(se.getMessage(), ErrorCode.DIRECTORY_NOT_FOUND, workDir);
+            if (se.getMessage().contains(ErrorConstants.RM_NO_SUCH_FILE)) {
+                throw new MangleException(se.getMessage(), ErrorCode.DIRECTORY_NOT_FOUND, workDir);
+            } else if (se.getMessage().contains(ErrorConstants.RM_DICRECTORY_PERMISSION_DENIED)) {
+                throw new MangleException(se.getMessage(), ErrorCode.RM_DIRECTORY_PERMISSION_DENIED, workDir);
+            } else {
+                throw new MangleException(se.getMessage(), ErrorCode.FILE_TRANSFER_ERROR, sourceFilePath, workDir);
+            }
         } catch (Exception e) {
             log.error("Exception found while tranfer the response.", e);
-            throw new MangleException(e.getMessage(), ErrorCode.FILE_TRANSFER_ERROR, sourceFilePath,workDir);
+            throw new MangleException(e.getMessage(), ErrorCode.FILE_TRANSFER_ERROR, sourceFilePath, workDir);
         } finally {
             cleanupSession(session, channelSftp, channel);
         }
@@ -159,8 +166,8 @@ public class SSHUtils extends RemoteBase implements ICommandExecutor, EndpointCl
             commandExecutionResult.setCommandOutput(getCommandExecutionOutput(channel, in, channelTimeout)
                     + getCommandExecutionOutput(channel, ext, channelTimeout));
             commandExecutionResult.setExitCode(channel.getExitStatus());
-            log.info("Command-output: " + commandExecutionResult.getCommandOutput());
-            log.info("exit-status: " + commandExecutionResult.getExitCode());
+            log.debug("Command-output: " + commandExecutionResult.getCommandOutput());
+            log.debug("exit-status: " + commandExecutionResult.getExitCode());
             channel.disconnect();
             session.disconnect();
         } catch (Exception e) {
@@ -203,12 +210,12 @@ public class SSHUtils extends RemoteBase implements ICommandExecutor, EndpointCl
     private void cleanupSession(Session session, ChannelSftp channelSftp, Channel channel) {
         if (channelSftp != null) {
             channelSftp.exit();
-            log.info("sftp Channel exited.");
+            log.debug("sftp Channel exited.");
         }
 
         if (channel != null) {
             channel.disconnect();
-            log.info("Channel disconnected.");
+            log.debug("Channel disconnected.");
         }
 
         if (session != null) {
@@ -226,14 +233,30 @@ public class SSHUtils extends RemoteBase implements ICommandExecutor, EndpointCl
     }
 
     @Override
-    public boolean testConnection() {
+    public boolean testConnection() throws MangleException {
+        Session session = null;
         try {
-            Session session = getSession();
+            session = getSession();
             session.connect();
-            session.disconnect();
-            return true;
         } catch (JSchException exception) {
-            return false;
+            cleanupSession(session, null, null);
+            if (exception.getMessage().contains(ErrorConstants.RM_AUTH_FAIL)) {
+                throw new MangleException(ErrorCode.RM_INVALID_CREDENTIALS);
+            } else if (exception.getMessage().contains(ErrorConstants.RM_CONNECTION_REFUSED)) {
+                throw new MangleException(ErrorCode.RM_CONNECTION_REFUSED);
+            } else {
+                throw new MangleException(ErrorCode.RM_CONNECTION_EXCEPTION, exception.getMessage());
+            }
         }
+        Channel sftpChannel = null;
+        try {
+            sftpChannel = session.openChannel("sftp");
+            sftpChannel.connect();
+        } catch (JSchException exception) {
+            throw new MangleException(ErrorCode.RM_SFTP_NOT_ENABLED);
+        } finally {
+            cleanupSession(session, null, sftpChannel);
+        }
+        return true;
     }
 }

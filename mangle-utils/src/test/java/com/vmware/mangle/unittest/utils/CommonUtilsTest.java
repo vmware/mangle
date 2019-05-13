@@ -23,6 +23,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.Socket;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -30,6 +32,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.TimeZone;
 import java.util.regex.Matcher;
 
 import javax.servlet.ServletOutputStream;
@@ -42,12 +45,13 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.testng.PowerMockTestCase;
 import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.vmware.mangle.utils.CommonUtils;
 import com.vmware.mangle.utils.RemoteHost;
 import com.vmware.mangle.utils.clients.ssh.SSHUtils;
+import com.vmware.mangle.utils.constants.Constants;
 import com.vmware.mangle.utils.mockdata.CommandResultUtils;
 
 /**
@@ -59,8 +63,8 @@ import com.vmware.mangle.utils.mockdata.CommandResultUtils;
 public class CommonUtilsTest extends PowerMockTestCase {
 
     Double value = 234.1341361234132;
-    private static final String filename1 = "src/main/resources/FaultOperationProperties/VCenterFaultOperations.properties";
-    private static final String filename2 = "src/main/resources/MangleVCenterAdapter.property";
+    private static final String filename1 =
+            "src/main/resources/FaultOperationProperties/VCenterFaultOperations.properties";
     private static final String filename3 = "src/test/resources/MockFile.properties";
     private String command = "dummy command";
     private String ip = "10.10.10.10";
@@ -75,35 +79,35 @@ public class CommonUtilsTest extends PowerMockTestCase {
     @Mock
     private File file;
 
-    @BeforeMethod
+    @BeforeClass
     public void initMocks() {
         MockitoAnnotations.initMocks(this);
     }
 
-    @Test
+    @Test(priority = 0)
     public void testRound() {
         double result = CommonUtils.round(value, 2);
         Assert.assertEquals(result, 234.13);
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class)
+    @Test(expectedExceptions = IllegalArgumentException.class, priority = 1)
     public void testRoundFailure() {
         CommonUtils.round(value, -1);
     }
 
-    @Test
+    @Test(priority = 2)
     public void testToSecods() {
         int result = CommonUtils.toSeconds(1);
         Assert.assertEquals(result, 3600);
     }
 
-    @Test
+    @Test(priority = 3)
     public void testIsFileExists() {
         boolean result = CommonUtils.isFileExists(filename1);
         Assert.assertTrue(result);
     }
 
-    @Test
+    @Test(priority = 4)
     public void testRunCommand() throws Exception {
         PowerMockito.whenNew(RemoteHost.class).withNoArguments().thenReturn(remoteHost);
         PowerMockito.when(remoteHost.executeCommand(any(), any(), any(), any())).thenReturn("Successful");
@@ -111,7 +115,7 @@ public class CommonUtilsTest extends PowerMockTestCase {
         Assert.assertEquals(result, "Successful");
     }
 
-    @Test
+    @Test(priority = 5)
     public void testRunCommandList() throws Exception {
         PowerMockito.whenNew(RemoteHost.class).withNoArguments().thenReturn(remoteHost);
         PowerMockito.when(remoteHost.executeCommand(any(), any(), any(), any())).thenReturn("Successful");
@@ -120,61 +124,7 @@ public class CommonUtilsTest extends PowerMockTestCase {
         Assert.assertEquals(result, "Successful");
     }
 
-    @Test
-    public void testReplaceStringInaFile() {
-        File file = new File(filename3);
-        boolean result = CommonUtils.replaceStringInFileContent(file, "dummy", "mangle");
-        Assert.assertTrue(result);
-        result = CommonUtils.replaceStringInFileContent(file, "mangle", "dummy");
-        Assert.assertTrue(result);
-    }
-
-    @Test
-    public void testReplaceStringInaFileFailure() throws Exception {
-        File file = new File(filename2);
-        boolean result = CommonUtils.replaceStringInFileContent(file, "dummy", "mangle");
-        Assert.assertFalse(result);
-    }
-
-    @Test
-    public void testDelayInSeconds() {
-        long start = System.currentTimeMillis();
-        CommonUtils.delayInSeconds(5);
-        long end = System.currentTimeMillis();
-        long time = ((end - start) / 1000);
-        boolean time_difference = time >= 5;
-        Assert.assertTrue(time_difference);
-    }
-
-    @Test
-    public void testDelayInMilliSeconds() {
-        long start = System.currentTimeMillis();
-        CommonUtils.delayInMilliSeconds(1000);
-        long end = System.currentTimeMillis();
-        long timeDifference = (end - start);
-        boolean timeDetails = (timeDifference >= 1000);
-        Assert.assertTrue(timeDetails);
-    }
-
-    @Test(priority = 1)
-    public void testDelayInSecondsFailure() throws InterruptedException {
-        PowerMockito.spy(Thread.class);
-        PowerMockito.doThrow(new InterruptedException()).when(Thread.class);
-        Thread.sleep(Mockito.anyLong());
-        CommonUtils.delayInSeconds(5);
-    }
-
-    @Test(priority = 2)
-    public void testDelayInMiliSecondsFailure() throws InterruptedException {
-        PowerMockito.spy(Thread.class);
-
-        // These two lines are tightly bound.
-        PowerMockito.doThrow(new InterruptedException()).when(Thread.class);
-        Thread.sleep(Mockito.anyLong());
-        CommonUtils.delayInMilliSeconds(5);
-    }
-
-    @Test(priority = 3)
+    @Test(priority = 12)
     public void testGetPropertiesfromString() {
         String propertiesString = "command:echo test#name: command file";
         Properties properties = CommonUtils.getPropertiesfromString(propertiesString);
@@ -182,7 +132,7 @@ public class CommonUtilsTest extends PowerMockTestCase {
         Assert.assertEquals(properties.get("command"), "echo test");
     }
 
-    @Test
+    @Test(priority = 13)
     public void testGetPropertiesfromStringFailure() throws Exception {
         // These two lines are tightly bound.
         PowerMockito.whenNew(StringReader.class).withAnyArguments().thenThrow(new IOException());
@@ -191,7 +141,7 @@ public class CommonUtilsTest extends PowerMockTestCase {
         Assert.assertEquals(properties.size(), 0);
     }
 
-    @Test
+    @Test(priority = 14)
     public void testExtractValue() {
         String regex = "[0-9]{3}";
         String text = "number is 576";
@@ -199,7 +149,7 @@ public class CommonUtilsTest extends PowerMockTestCase {
         Assert.assertNotNull(matcher);
     }
 
-    @Test(description = "Test to verify the extraction of the value matching the given regex, the method should return null when the given string doesn't have any matching value")
+    @Test(description = "Test to verify the extraction of the value matching the given regex, the method should return null when the given string doesn't have any matching value", priority = 15)
     public void testExtractValue2() {
         String regex = "[0-9]{3}";
         String text = "number is nothing";
@@ -207,7 +157,7 @@ public class CommonUtilsTest extends PowerMockTestCase {
         Assert.assertNull(matcher);
     }
 
-    @Test
+    @Test(priority = 16)
     public void testExtractField() {
         String regex = "[0-9]{3}";
         String text = "number is 576";
@@ -216,7 +166,7 @@ public class CommonUtilsTest extends PowerMockTestCase {
         Assert.assertEquals(matched, "576");
     }
 
-    @Test(description = "Test to verify the extraction of value matching the given regex should return null when the given string doesn't have any matching value")
+    @Test(description = "Test to verify the extraction of value matching the given regex should return null when the given string doesn't have any matching value", priority = 17)
     public void testExtractField2() {
         String regex = "[0-9]{3}";
         String text = "number is nothing";
@@ -224,7 +174,7 @@ public class CommonUtilsTest extends PowerMockTestCase {
         Assert.assertNull(matched);
     }
 
-    @Test
+    @Test(priority = 18)
     public void testConvertMaptoDelimitedString() {
         Map<String, String> map = new HashMap<>();
         map.put("name", "mangle");
@@ -233,7 +183,7 @@ public class CommonUtilsTest extends PowerMockTestCase {
         Assert.assertTrue(doesContainString);
     }
 
-    @Test
+    @Test(priority = 19)
     public void testMaptoDelimitedKeyValuePairString() {
         Map<String, String> map = new HashMap<>();
         map.put("name", "mangle");
@@ -245,21 +195,21 @@ public class CommonUtilsTest extends PowerMockTestCase {
         Assert.assertTrue(returnString.contains("tech=qe"));
     }
 
-    @Test
+    @Test(priority = 20)
     public void testGetValuesFromCommandArgsString() {
         String text = "--name:mangle --tech:qe";
         String[] mapString = CommonUtils.getValuesFromCommandArgsString(text, null);
         Assert.assertNotNull(mapString);
     }
 
-    @Test(description = "Test to verify that the getValuesFromCommandArgsString returns the proper tags for a given string with the matching argsprefix")
+    @Test(description = "Test to verify that the getValuesFromCommandArgsString returns the proper tags for a given string with the matching argsprefix", priority = 21)
     public void testGetValuesFromCommandArgsString1() {
         String text = "__name:mangle __tech:qe";
         String[] mapString = CommonUtils.getValuesFromCommandArgsString(text, "__");
         Assert.assertNotNull(mapString);
     }
 
-    @Test
+    @Test(priority = 22)
     public void testIsServerListening() throws Exception {
         Socket socket = Mockito.mock(Socket.class);
         PowerMockito.whenNew(Socket.class).withAnyArguments().thenReturn(socket);
@@ -267,14 +217,14 @@ public class CommonUtilsTest extends PowerMockTestCase {
         Assert.assertTrue(isServerRunning);
     }
 
-    @Test
+    @Test(priority = 23)
     public void testIsServerListeningFailure() throws Exception {
         PowerMockito.whenNew(Socket.class).withArguments(ip, port).thenThrow(new IOException());
         boolean isServerRunning = CommonUtils.isServerListening(ip, port);
         Assert.assertFalse(isServerRunning);
     }
 
-    @Test
+    @Test(priority = 24)
     public void testStartServiceInLinux() throws Exception {
         SSHUtils sshUtils = Mockito.mock(SSHUtils.class);
         PowerMockito.whenNew(SSHUtils.class).withAnyArguments().thenReturn(sshUtils);
@@ -284,7 +234,7 @@ public class CommonUtilsTest extends PowerMockTestCase {
 
     }
 
-    @Test(description = "Test to verify that starting of the service, is executed with a non null execution output, thus the method startServiceInLinux will return true indicating service is running")
+    @Test(description = "Test to verify that starting of the service, is executed with a non null execution output, thus the method startServiceInLinux will return true indicating service is running", priority = 25)
     public void testStartServiceInLinux1() throws Exception {
         SSHUtils sshUtils = Mockito.mock(SSHUtils.class);
         PowerMockito.whenNew(SSHUtils.class).withAnyArguments().thenReturn(sshUtils);
@@ -293,7 +243,7 @@ public class CommonUtilsTest extends PowerMockTestCase {
         Assert.assertTrue(isServiceRunning);
     }
 
-    @Test
+    @Test(priority = 26)
     public void testConvertListToDelimitedString() {
         List<String> list = new ArrayList<>(Arrays.asList("mangle", "qe"));
         String returnString = CommonUtils.convertListToDelimitedString(list, "-");
@@ -302,7 +252,7 @@ public class CommonUtilsTest extends PowerMockTestCase {
 
     }
 
-    @Test
+    @Test(priority = 27)
     public void testSendFileDownloadResponse() throws IOException {
         HttpServletResponse httpServletResponse = Mockito.mock(HttpServletResponse.class);
         ServletOutputStream stream = Mockito.mock(ServletOutputStream.class);
@@ -317,7 +267,7 @@ public class CommonUtilsTest extends PowerMockTestCase {
         verify(httpServletResponse, times(2)).setHeader(anyString(), anyString());
     }
 
-    @Test(description = "Test to verify the sendFileDownloadResponse method when the file provided is null")
+    @Test(description = "Test to verify the sendFileDownloadResponse method when the file provided is null", priority = 28)
     public void testSendFileDownloadResponse1() throws IOException {
         HttpServletResponse httpServletResponse = Mockito.mock(HttpServletResponse.class);
         ServletOutputStream stream = Mockito.mock(ServletOutputStream.class);
@@ -331,24 +281,30 @@ public class CommonUtilsTest extends PowerMockTestCase {
         verify(httpServletResponse, times(1)).setStatus(anyInt());
     }
 
-    @Test(description = "Test to validate method String to Date object when String is in default format DEFAULT_DATE_FORMAT = \"EEE MMM dd HH:mm:ss ZZZ yyyy\"")
+    @Test(description = "Test to validate method String to Date object when String is in default format DEFAULT_DATE_FORMAT = \"EEE MMM dd HH:mm:ss ZZZ yyyy\"", priority = 29)
     public void testgetDateObjectForString() {
-        String timeStamp = (new Date()).toGMTString();
-        Date date = CommonUtils.getDateObjectFor(timeStamp);
-        Assert.assertEquals(date.toGMTString(), timeStamp);
         String timeInDifferentFormat = "Febraury 28, 2019 Thu 10:40:48";
         Date dateForDifferentTimeFormat = CommonUtils.getDateObjectFor(timeInDifferentFormat);
         Assert.assertEquals(dateForDifferentTimeFormat, null);
     }
 
-    @Test(description = " Test to validate method Epoch to String ")
+    @Test(description = " Test to validate method Epoch to String ", priority = 30)
     public void testGetTime() {
         Date timeNow = new Date();
         long timeInEpoch = timeNow.getTime();
-        String expectedTimeStamp = timeNow.toString();
+
+        DateFormat formatter = new SimpleDateFormat(Constants.GMT_DATE_FORMAT);
+        formatter.setTimeZone(TimeZone.getTimeZone(Constants.GMT));
+        String expectedTimeStamp = formatter.format(timeNow);
+
         String timeStamp = CommonUtils.getTime(timeInEpoch);
         Assert.assertEquals(timeStamp, expectedTimeStamp);
     }
 
-
+    @Test
+    public void testValidateName() {
+        Assert.assertTrue(CommonUtils.validateName("dummy_name-test.com"));
+        Assert.assertFalse(CommonUtils.validateName("^#test@test.com$"));
+        Assert.assertFalse(CommonUtils.validateName(null));
+    }
 }

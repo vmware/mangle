@@ -12,16 +12,15 @@
 package com.vmware.mangle.services.scheduler;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
+import java.util.stream.Collectors;
 
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.ApplicationContext;
@@ -31,15 +30,13 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
 import com.vmware.mangle.cassandra.model.faults.specs.TaskSpec;
-import com.vmware.mangle.cassandra.model.scheduler.ScheduledTaskStatus;
 import com.vmware.mangle.cassandra.model.scheduler.SchedulerSpec;
 import com.vmware.mangle.cassandra.model.tasks.Task;
-import com.vmware.mangle.model.enums.OperationStatus;
 import com.vmware.mangle.model.enums.SchedulerJobType;
 import com.vmware.mangle.model.enums.SchedulerStatus;
-import com.vmware.mangle.model.response.DeleteSchedulerResponse;
 import com.vmware.mangle.services.SchedulerService;
 import com.vmware.mangle.services.TaskService;
 import com.vmware.mangle.services.config.SchedulerConfig;
@@ -48,6 +45,7 @@ import com.vmware.mangle.services.deletionutils.TaskDeletionService;
 import com.vmware.mangle.services.events.schedule.ScheduleCreatedEvent;
 import com.vmware.mangle.services.events.schedule.ScheduleUpdatedEvent;
 import com.vmware.mangle.services.tasks.executor.TaskExecutor;
+import com.vmware.mangle.utils.constants.ErrorConstants;
 import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
@@ -56,6 +54,7 @@ import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
  *
  * @author bkaranam
  * @author ashrimali
+ * @author jayasankarr
  */
 
 @Component
@@ -67,10 +66,10 @@ public class Scheduler {
     private TaskService taskService;
 
     @Autowired
-    SchedulerService schedulerService;
+    private SchedulerService schedulerService;
 
     @Autowired
-    TaskExecutor<Task<? extends TaskSpec>> concurrentTaskRunner;
+    private TaskExecutor<Task<? extends TaskSpec>> concurrentTaskRunner;
 
     @Autowired
     private TaskDeletionService taskDeletionService;
@@ -84,11 +83,9 @@ public class Scheduler {
     private Map<String, ScheduledFuture<?>> scheduledJobs;
     private ThreadPoolTaskScheduler taskScheduler;
 
-    private static final String JOB_CANCELLED_MESSAGE = "Cancelled Successfully";
-    private static final String JOB_PAUSED_MESSAGE = "Paused Successfully";
-    private static final String JOB_RESUMED_MESSAGE = "Resumed Successfully";
-    private static final String JOB_NOTSCHEDULED_MESSAGE = "job is not scheduled";
-    private static final String JOB_NOTPAUSED_MESSAGE = "job is not in paused state to resume";
+    public static final String PAUSE_SCHEDULE = "PAUSE";
+    public static final String CANCEL_SCHEDULE = "CANCEL";
+    public static final String DELETE_SCHEDULE = "DELETE";
 
     private Scheduler() {
         log.info("Initializing Mangle Scheduler...");
@@ -117,15 +114,20 @@ public class Scheduler {
                 (ScheduledFuture<? extends Task<? extends TaskSpec>>) this.taskScheduler.schedule(() -> {
                     try {
                         concurrentTaskRunner.execute(task);
-                    } catch (MangleException | InterruptedException e) {
+                    } catch (MangleException e) {
+                        log.error(e);
+                    } catch (InterruptedException e) {
                         log.error(e.getMessage());
+                        Thread.currentThread().interrupt();
                     }
                 }, new CronTrigger(cronExpression));
         if (null != future) {
+            log.trace("Successfully created cron based schedule for the job {}", task.getId());
             task.setScheduledTask(true);
             this.scheduledJobs.put(task.getId(), future);
             taskService.addOrUpdateTask(task);
-            addOrUpdateScheduleJobStatus(task.getId(), SchedulerJobType.CRON, null, cronExpression);
+            addOrUpdateScheduleJobStatus(task.getId(), SchedulerJobType.CRON, null, cronExpression,
+                    task.getTaskData().getSchedule().getDescription());
             return (ScheduledFuture<Task<TaskSpec>>) future;
         } else {
             schedulerDeletionService.deleteSchedulerDetailsByJobId(task.getId());
@@ -148,15 +150,21 @@ public class Scheduler {
                 (ScheduledFuture<? extends Task<? extends TaskSpec>>) this.taskScheduler.schedule(() -> {
                     try {
                         concurrentTaskRunner.execute(task);
-                    } catch (MangleException | InterruptedException e) {
+                    } catch (MangleException e) {
+                        log.error(e);
+                    } catch (InterruptedException e) {
                         log.error(e.getMessage());
+                        Thread.currentThread().interrupt();
                     }
                 }, new Date(timeInMilliseconds));
+
         if (null != future) {
+            log.trace("Successfully created simple schedule for the job {}", task.getId());
             task.setScheduledTask(true);
             taskService.addOrUpdateTask(task);
             this.scheduledJobs.put(task.getId(), future);
-            addOrUpdateScheduleJobStatus(task.getId(), SchedulerJobType.SIMPLE, timeInMilliseconds, null);
+            addOrUpdateScheduleJobStatus(task.getId(), SchedulerJobType.SIMPLE, timeInMilliseconds, null,
+                    task.getTaskData().getSchedule().getDescription());
             return (ScheduledFuture<Task<TaskSpec>>) future;
         } else {
             schedulerDeletionService.deleteSchedulerDetailsByJobId(task.getId());
@@ -172,32 +180,15 @@ public class Scheduler {
      * @return
      * @throws MangleException
      */
-    public Map<String, ScheduledTaskStatus> cancelScheduledJobs(List<String> jobIds) {
-        Map<String, ScheduledTaskStatus> statusMap = new HashMap<>();
-        ScheduledTaskStatus scheduledTaskStatus;
-        for (String jobId : jobIds) {
-            scheduledTaskStatus = new ScheduledTaskStatus();
-            SchedulerSpec schedulerDao =
-                    schedulerService.getScheduledJobByIdandStatus(jobId, SchedulerStatus.SCHEDULED);
-            if (null != schedulerDao) {
-                try {
-                    this.cancelScheduledJob(schedulerDao.getId(), SchedulerStatus.CANCELLED);
-                    scheduledTaskStatus.setStatus(SchedulerStatus.CANCELLED);
-                    scheduledTaskStatus.setMessage(JOB_CANCELLED_MESSAGE);
-                    statusMap.put(jobId, scheduledTaskStatus);
-                } catch (MangleException exception) {
-                    scheduledTaskStatus.setStatus(SchedulerStatus.CANCELLED);
-                    scheduledTaskStatus.setMessage(exception.getMessage());
-                    statusMap.put(jobId, scheduledTaskStatus);
-                }
-            } else {
-                scheduledTaskStatus.setStatus(SchedulerStatus.CANCELLED);
-                scheduledTaskStatus.setMessage(JOB_NOTSCHEDULED_MESSAGE);
-                statusMap.put(jobId, scheduledTaskStatus);
-            }
+    public Set<String> cancelScheduledJobs(List<String> jobIds) throws MangleException {
+        log.trace("Processing request to cancel the schedule for the jobs: {}", jobIds.toString());
+        Set<String> scheduleIds = verifyJobIds(jobIds);
+        for (String scheduleId : scheduleIds) {
+            eventPublisher.publishEvent(new ScheduleUpdatedEvent(scheduleId, CANCEL_SCHEDULE));
         }
-        return statusMap;
+        return scheduleIds;
     }
+
 
     /**
      * Method to pause scheduled job using list of job ids
@@ -206,32 +197,45 @@ public class Scheduler {
      * @return
      * @throws MangleException
      */
-    public Map<String, ScheduledTaskStatus> pauseScheduledJobs(List<String> jobIds) {
-        Map<String, ScheduledTaskStatus> statusMap = new HashMap<>();
-        ScheduledTaskStatus scheduledTaskStatus;
-        for (String jobId : jobIds) {
-            scheduledTaskStatus = new ScheduledTaskStatus();
-            SchedulerSpec schedulerDao =
-                    schedulerService.getScheduledJobByIdandStatus(jobId, SchedulerStatus.SCHEDULED);
-            if (null != schedulerDao) {
-                try {
-                    this.cancelScheduledJob(schedulerDao.getId(), SchedulerStatus.PAUSED);
-                    scheduledTaskStatus.setStatus(SchedulerStatus.PAUSED);
-                    scheduledTaskStatus.setMessage(JOB_PAUSED_MESSAGE);
-                    statusMap.put(jobId, scheduledTaskStatus);
-                } catch (MangleException exception) {
-                    scheduledTaskStatus.setStatus(SchedulerStatus.PAUSE_FAILED);
-                    scheduledTaskStatus.setMessage(exception.getMessage());
-                    statusMap.put(jobId, scheduledTaskStatus);
-                }
-            } else {
-                scheduledTaskStatus.setStatus(SchedulerStatus.PAUSE_FAILED);
-                scheduledTaskStatus.setMessage(JOB_NOTSCHEDULED_MESSAGE);
-                statusMap.put(jobId, scheduledTaskStatus);
-            }
+    public Set<String> pauseScheduledJobs(List<String> jobIds) throws MangleException {
+        log.trace("Processing request to pause the schedule for the jobs: {}", jobIds.toString());
+        Set<String> scheduleIds = verifyJobIds(jobIds);
+        for (String scheduleId : scheduleIds) {
+            eventPublisher.publishEvent(new ScheduleUpdatedEvent(scheduleId, PAUSE_SCHEDULE));
         }
-        return statusMap;
+        return scheduleIds;
     }
+
+
+    /**
+     * Method to get all the scheduled jobs
+     *
+     * @param jobIds
+     * @return
+     */
+    public Set<String> deleteScheduledJobs(List<String> jobIds) throws MangleException {
+        log.trace("Processing request to delete the schedules for the jobs: {}", jobIds.toString());
+        Set<SchedulerSpec> schedulerSpecSet = schedulerService.getSchedulesForIds(jobIds);
+        Set<String> scheduleIds = schedulerSpecSet.stream().map(SchedulerSpec::getId).collect(Collectors.toSet());
+
+        verifyJobsExists(jobIds, scheduleIds);
+
+        List<String> inActiveSchedules = schedulerSpecSet.stream()
+                .filter(schedulerSpec -> schedulerSpec.getStatus() != SchedulerStatus.SCHEDULED)
+                .map(SchedulerSpec::getId).collect(Collectors.toList());
+        List<String> activeSchedules = schedulerSpecSet.stream()
+                .filter(schedulerSpec -> schedulerSpec.getStatus() == SchedulerStatus.SCHEDULED)
+                .map(SchedulerSpec::getId).collect(Collectors.toList());
+
+        log.trace("Deleting all the in-active scheduled");
+        schedulerDeletionService.deleteSchedulerDetailsByJobIds(inActiveSchedules);
+        log.trace("Submitting active schedule jobs {} for deletion", activeSchedules.toString());
+        for (String scheduleId : activeSchedules) {
+            eventPublisher.publishEvent(new ScheduleUpdatedEvent(scheduleId, DELETE_SCHEDULE));
+        }
+        return scheduleIds;
+    }
+
 
     /**
      * Method to resume/reschedule paused job using list of job ids
@@ -240,46 +244,79 @@ public class Scheduler {
      * @return
      * @throws MangleException
      */
-    public Map<String, ScheduledTaskStatus> resumeJobs(List<String> jobIds) {
-        Map<String, ScheduledTaskStatus> statusMap = new HashMap<>();
-        ScheduledTaskStatus scheduledTaskStatus;
-        for (String jobId : jobIds) {
-            scheduledTaskStatus = new ScheduledTaskStatus();
-            SchedulerSpec schedulerDao = schedulerService.getScheduledJobByIdandStatus(jobId, SchedulerStatus.PAUSED);
-            if (null != schedulerDao) {
-                try {
+    public Set<String> resumeJobs(List<String> jobIds) throws MangleException {
+        log.trace("Processing request to resume the schedule for the jobs: {}", jobIds.toString());
+        Set<SchedulerSpec> schedulerSpecSet = schedulerService.getSchedulesForIds(jobIds);
+        Set<String> scheduleIds = schedulerSpecSet.stream().map(SchedulerSpec::getId).collect(Collectors.toSet());
 
-                    this.rescheduleJob(schedulerDao);
-                    scheduledTaskStatus.setStatus(SchedulerStatus.SCHEDULED);
-                    scheduledTaskStatus.setMessage(JOB_RESUMED_MESSAGE);
-                    statusMap.put(jobId, scheduledTaskStatus);
-                } catch (MangleException exception) {
-                    scheduledTaskStatus.setStatus(SchedulerStatus.RESUME_FAILED);
-                    scheduledTaskStatus.setMessage(exception.getMessage());
-                    statusMap.put(jobId, scheduledTaskStatus);
-                }
-            } else {
-                scheduledTaskStatus.setStatus(SchedulerStatus.RESUME_FAILED);
-                scheduledTaskStatus.setMessage(JOB_NOTPAUSED_MESSAGE);
-                statusMap.put(jobId, scheduledTaskStatus);
-            }
+        verifyJobsExists(jobIds, scheduleIds);
+        verifyJobsInSchedule(schedulerSpecSet, SchedulerStatus.PAUSED);
+        for (String jobId : scheduleIds) {
+            SchedulerSpec schedulerDao = schedulerService.getScheduledJobByIdandStatus(jobId, SchedulerStatus.PAUSED);
+            this.rescheduleJob(schedulerDao);
         }
-        return statusMap;
+
+        return scheduleIds;
     }
 
-    /**
-     * Method to cancel the scheduled job
-     *
-     * @param jobId
-     * @return
-     * @throws MangleException
-     */
+    private Set<String> verifyJobIds(List<String> jobIds) throws MangleException {
+        Set<SchedulerSpec> schedulerSpecSet = schedulerService.getSchedulesForIds(jobIds);
+        Set<String> scheduleIds = schedulerSpecSet.stream().map(SchedulerSpec::getId).collect(Collectors.toSet());
 
-    public boolean cancelScheduledJob(String jobId, SchedulerStatus status) throws MangleException {
-        if (null != this.scheduledJobs.get(jobId)) {
-            return cancelAndUpdateJobsMap(jobId, status);
+        verifyJobsExists(jobIds, scheduleIds);
+        verifyJobsInSchedule(schedulerSpecSet, SchedulerStatus.SCHEDULED);
+
+        return scheduleIds;
+    }
+
+    private void verifyJobsExists(List<String> jobIds, Set<String> persistedJobIds) throws MangleException {
+        jobIds.removeAll(persistedJobIds);
+
+        if (!CollectionUtils.isEmpty(jobIds)) {
+            throw new MangleException(ErrorCode.NO_RECORD_FOUND, ErrorConstants.SCHEDULE, jobIds);
         }
-        throw new MangleException(ErrorCode.JOB_NOT_ACTIVE, jobId);
+    }
+
+    private void verifyJobsInSchedule(Set<SchedulerSpec> schedules, SchedulerStatus status) throws MangleException {
+        Set<String> inActiveSchedules = schedules.stream().filter(schedulerSpec -> schedulerSpec.getStatus() != status)
+                .map(SchedulerSpec::getId).collect(Collectors.toSet());
+        if (!CollectionUtils.isEmpty(inActiveSchedules)) {
+            throw new MangleException(ErrorCode.INVALID_STATE_SCHEDULED_JOBIDS, inActiveSchedules, status);
+        }
+    }
+
+    public boolean isTaskAlreadyScheduled(String jobId) {
+        return scheduledJobs.containsKey(jobId);
+    }
+
+    public boolean removeSchedule(String jobId, String status) {
+        boolean isOperationSuccessful = false;
+        if (PAUSE_SCHEDULE.equals(status)) {
+            log.info("Pausing the schedule {}", jobId);
+            isOperationSuccessful = cancelAndUpdateJobsMap(jobId, SchedulerStatus.PAUSED);
+        } else if (CANCEL_SCHEDULE.equals(status)) {
+            log.info("Cancelling the schedule {}", jobId);
+            isOperationSuccessful = cancelAndUpdateJobsMap(jobId, SchedulerStatus.CANCELLED);
+        } else if (DELETE_SCHEDULE.equals(status)) {
+            log.info("Deleting the schedule {}", jobId);
+            isOperationSuccessful = cancelAndUpdateJobsMap(jobId, SchedulerStatus.CANCELLED);
+            if (isOperationSuccessful) {
+                try {
+                    schedulerDeletionService.deleteSchedulerDetailsByJobId(jobId);
+                } catch (MangleException e) {
+                    log.error("Deletion of the job entry failed with the exception: {}", jobId);
+                }
+            }
+        }
+        return isOperationSuccessful;
+    }
+
+    public boolean removeSchedule(String jobId) {
+        boolean cancelledStatus = this.scheduledJobs.get(jobId).cancel(true);
+        if (cancelledStatus) {
+            this.scheduledJobs.remove(jobId);
+        }
+        return cancelledStatus;
     }
 
     /**
@@ -288,11 +325,8 @@ public class Scheduler {
      * @return
      * @throws MangleException
      */
-    public Map<String, ScheduledTaskStatus> cancelAllScheduledJobs() throws MangleException {
-        if (null == scheduledJobs.keySet() || scheduledJobs.keySet().isEmpty()) {
-            throw new MangleException(ErrorCode.NO_ACTIVE_JOBS);
-        }
-        return cancelScheduledJobs(new ArrayList<String>(scheduledJobs.keySet()));
+    public Set<String> cancelAllScheduledJobs() throws MangleException {
+        return cancelScheduledJobs(new ArrayList<>(scheduledJobs.keySet()));
     }
 
     private boolean cancelAndUpdateJobsMap(String jobID, SchedulerStatus status) {
@@ -300,7 +334,7 @@ public class Scheduler {
         if (cancelledStatus) {
             schedulerService.updateSchedulerStatus(jobID, status);
             this.scheduledJobs.remove(jobID);
-            eventPublisher.publishEvent(new ScheduleUpdatedEvent(jobID, status));
+            eventPublisher.publishEvent(new ScheduleUpdatedEvent(jobID, status.name()));
         }
         return cancelledStatus;
     }
@@ -312,46 +346,6 @@ public class Scheduler {
      */
     public List<SchedulerSpec> getAllScheduledJobs() {
         return schedulerService.getAllSchedulerDetails();
-    }
-
-    /**
-     * Method to get all the scheduled jobs
-     *
-     * @param taskIds
-     * @return
-     */
-    public Map<String, DeleteSchedulerResponse> deleteScheduledJobs(List<String> taskIds, boolean deleteTask)
-            throws MangleException {
-        Map<String, DeleteSchedulerResponse> resultMap = new HashMap<>();
-        List<String> deletedTasks = new ArrayList<>();
-        String message;
-        for (String taskId : taskIds) {
-            if (!StringUtils.isEmpty(taskId)) {
-                SchedulerSpec job = getScheduledJob(taskId);
-                if (job != null && job.getStatus() != SchedulerStatus.SCHEDULED) {
-                    resultMap.put(taskId, new DeleteSchedulerResponse(deletScheduledJob(Arrays.asList(taskId)), null));
-                    deletedTasks.add(taskId);
-                } else {
-                    message = "Failed to Delete Job with ID: " + taskId + ". Please verify Job Status";
-                    log.trace("Failed to delete schedule job with id {}", taskId);
-                    resultMap.put(taskId, new DeleteSchedulerResponse(OperationStatus.FAILED, message));
-                }
-            } else {
-                message = "Failed to Delete Job with ID: " + taskId;
-                resultMap.put(taskId, new DeleteSchedulerResponse(OperationStatus.FAILED, message));
-            }
-        }
-
-        if (deleteTask && !CollectionUtils.isEmpty(deletedTasks)) {
-            taskDeletionService.deleteTasksByIds(deletedTasks);
-        }
-
-        return resultMap;
-    }
-
-
-    public OperationStatus deletScheduledJob(List<String> listOfIds) {
-        return schedulerDeletionService.deleteSchedulerDetailsByJobIds(listOfIds);
     }
 
     /**
@@ -390,33 +384,22 @@ public class Scheduler {
      * @param scheduledJob
      * @throws MangleException
      */
-    private void rescheduleJob(SchedulerSpec scheduledJob) throws MangleException {
-        try {
-            Task<TaskSpec> taskDTO = taskService.getTaskById(scheduledJob.getId());
-            if (SchedulerJobType.CRON.equals(scheduledJob.getJobType())) {
-                scheduleCronTask(taskDTO, scheduledJob.getCronExpression());
-            }
-            if (SchedulerJobType.SIMPLE.equals(scheduledJob.getJobType())
-                    && new Date(System.currentTimeMillis()).before(new Date(scheduledJob.getScheduledTime()))) {
-                scheduleSimpleTask(taskDTO, scheduledJob.getScheduledTime());
-            }
-        } catch (MangleException e) {
-            String errorMessage = "Exception while triggering miss fired job by mangle scheduler" + e.getMessage();
-            log.error(errorMessage);
-            throw new MangleException(e, ErrorCode.MISFIRED_JOB_TRIGGER_FAILURE);
-        }
+    private void rescheduleJob(SchedulerSpec scheduledJob) {
+        schedulerService.updateSchedulerStatus(scheduledJob.getId(), SchedulerStatus.INITIALIZING);
+        eventPublisher.publishEvent(new ScheduleCreatedEvent(scheduledJob.getId(), SchedulerStatus.INITIALIZING));
     }
 
     private SchedulerSpec addOrUpdateScheduleJobStatus(String jobId, SchedulerJobType jobType, Long scheduledTime,
-            String cronExpression) {
+            String cronExpression, String description) {
         SchedulerSpec schedulerDAO = new SchedulerSpec();
         schedulerDAO.setId(jobId);
         schedulerDAO.setJobType(jobType);
         schedulerDAO.setScheduledTime(scheduledTime);
         schedulerDAO.setCronExpression(cronExpression);
         schedulerDAO.setStatus(SchedulerStatus.SCHEDULED);
+        schedulerDAO.setDescription(description);
         SchedulerSpec persistedSpec = schedulerService.addOrUpdateSchedulerDetails(schedulerDAO);
-        eventPublisher.publishEvent(new ScheduleCreatedEvent(jobId, persistedSpec.getStatus()));
+        eventPublisher.publishEvent(new ScheduleUpdatedEvent(jobId, persistedSpec.getStatus().name()));
         return persistedSpec;
     }
 

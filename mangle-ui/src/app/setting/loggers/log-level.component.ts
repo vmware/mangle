@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { SettingService } from '../setting.service';
+import { MessageConstants } from 'src/app/common/message.constants';
 
 @Component({
     selector: 'app-log-level',
@@ -38,6 +39,10 @@ export class LogLevelComponent implements OnInit {
                 this.loggers = res.loggers;
                 this.levels = res.levels;
                 this.isLoading = false;
+            }, err => {
+                this.alertMessage = err.error.description;
+                this.errorFlag = true;
+                this.isLoading = false;
             });
     }
 
@@ -48,7 +53,7 @@ export class LogLevelComponent implements OnInit {
         this.settingService.updateLogger(loggerFormVal).subscribe(
             res => {
                 this.getLoggers();
-                this.alertMessage = 'Logger updated successfully!';
+                this.alertMessage = MessageConstants.LOGGER_UPDATE;
                 this.successFlag = true;
                 this.isLoading = false;
             }, err => {

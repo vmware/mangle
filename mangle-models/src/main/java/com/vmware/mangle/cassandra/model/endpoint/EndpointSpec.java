@@ -13,7 +13,10 @@ package com.vmware.mangle.cassandra.model.endpoint;
 
 import java.io.Serializable;
 import java.util.Map;
+import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
 
 import com.datastax.driver.core.DataType.Name;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -22,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.springframework.data.cassandra.core.cql.Ordering;
 import org.springframework.data.cassandra.core.cql.PrimaryKeyType;
 import org.springframework.data.cassandra.core.mapping.CassandraType;
@@ -40,6 +44,7 @@ import com.vmware.mangle.model.enums.EndpointType;
  */
 @Table(value = "EndPointSpec")
 @Data
+@ToString(exclude = { "id" })
 @EqualsAndHashCode(callSuper = true)
 @JsonIgnoreProperties(value = { "primaryKey" })
 public class EndpointSpec extends MangleDto implements Serializable {
@@ -49,7 +54,9 @@ public class EndpointSpec extends MangleDto implements Serializable {
     @ApiModelProperty(position = 0, value = "Name of Endpoint which will be used in the fault apis")
     @PrimaryKeyColumn(value = "name", ordering = Ordering.ASCENDING, type = PrimaryKeyType.PARTITIONED)
     @NotEmpty
+    @Pattern(regexp = "^[A-Za-z0-9-_.]+$", message = "consists only alphanumeric with special characters (_ - .)")
     private String name;
+    @NotNull
     @ApiModelProperty(position = 1, value = "EndpointType is an enum. please use appropriate value")
     @Column
     @CassandraType(type = Name.VARCHAR)
@@ -61,30 +68,36 @@ public class EndpointSpec extends MangleDto implements Serializable {
     @Indexed
     private String credentialsName;
 
+    //Ignored as we are not supporting AWS endpoint in current version
+    @JsonIgnore
     @JsonProperty(required = false)
     @ApiModelProperty(position = 3)
     @Column
+    @Valid
     @CassandraType(type = Name.UDT, userTypeName = "awsConnectionProperties")
     private AWSConnectionProperties awsConnectionProperties;
 
     @JsonProperty(required = false)
     @ApiModelProperty(position = 4)
     @CassandraType(type = Name.UDT, userTypeName = "dockerConnectionProperties")
+    @Valid
     private DockerConnectionProperties dockerConnectionProperties;
 
     @JsonProperty(required = false)
     @ApiModelProperty(position = 5)
     @CassandraType(type = Name.UDT, userTypeName = "remoteMachineConnectionProperties")
+    @Valid
     private RemoteMachineConnectionProperties remoteMachineConnectionProperties;
 
     @JsonProperty(required = false)
     @ApiModelProperty(position = 6)
     @CassandraType(type = Name.UDT, userTypeName = "k8sConnectionProperties")
+    @Valid
     private K8SConnectionProperties k8sConnectionProperties;
-
 
     @ApiModelProperty(position = 7)
     @CassandraType(type = Name.UDT, userTypeName = "vCenterConnectionProperties")
+    @Valid
     private VCenterConnectionProperties vCenterConnectionProperties;
 
     @JsonProperty(required = false)

@@ -36,6 +36,7 @@ import org.testng.annotations.Test;
 
 import com.vmware.mangle.cassandra.model.MangleAdminConfigurationSpec;
 import com.vmware.mangle.cassandra.model.metricprovider.MetricProviderSpec;
+import com.vmware.mangle.model.enums.MetricProviderByStatus;
 import com.vmware.mangle.model.enums.MetricProviderType;
 import com.vmware.mangle.model.response.MetricProviderResponse;
 import com.vmware.mangle.services.EventService;
@@ -108,7 +109,7 @@ public class MetricProviderControllerTest {
 
     /**
      * Test method for
-     * {@link com.vmware.mangle.controller.MangleMetricProviderController#getMetricProviders(MetricProviderType, Boolean)}.
+     * {@link MetricProviderController#getMetricProviders(MetricProviderType, Boolean)}.
      *
      * @throws MangleException
      */
@@ -118,8 +119,7 @@ public class MetricProviderControllerTest {
         metricProviderSpecList.add(wavefrontSpec);
         metricProviderSpecList.add(datadogSpec);
         when(metricProviderService.getAllMetricProviders()).thenReturn(metricProviderSpecList);
-        ResponseEntity<List<MetricProviderSpec>> response =
-                mangleMetricProviderController.getMetricProviders(null, null);
+        ResponseEntity<List<MetricProviderSpec>> response = mangleMetricProviderController.getMetricProviders(null);
         Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
         List<MetricProviderSpec> responseList = response.getBody();
         Assert.assertEquals(responseList.size(), 2);
@@ -129,7 +129,7 @@ public class MetricProviderControllerTest {
 
     /**
      * Test method for
-     * {@link com.vmware.mangle.controller.MangleMetricProviderController#getMetricProviders(MetricProviderType, Boolean)}.
+     * {@link MetricProviderController#getMetricProviders(MetricProviderType, Boolean)}.
      *
      * @throws MangleException
      */
@@ -137,8 +137,7 @@ public class MetricProviderControllerTest {
     public void getMetricProviderTestNull() throws MangleException {
         List<MetricProviderSpec> metricProviderSpecList = new ArrayList<>();
         when(metricProviderService.getAllMetricProviders()).thenReturn(metricProviderSpecList);
-        ResponseEntity<List<MetricProviderSpec>> response =
-                mangleMetricProviderController.getMetricProviders(null, null);
+        ResponseEntity<List<MetricProviderSpec>> response = mangleMetricProviderController.getMetricProviders(null);
         Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
         List<MetricProviderSpec> responseList = response.getBody();
         Assert.assertEquals(responseList.size(), 0);
@@ -146,69 +145,7 @@ public class MetricProviderControllerTest {
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.controller.MangleMetricProviderController#getMetricProviders(MetricProviderType, Boolean)}.
-     *
-     * @throws MangleException
-     */
-    @Test
-    public void testGetMetricProviderByWavefront() throws MangleException {
-        List<MetricProviderSpec> metricProviderSpecList = new ArrayList<>();
-        metricProviderSpecList.add(wavefrontSpec);
-        when(metricProviderService.getMetricProviderByType(MetricProviderType.WAVEFRONT))
-                .thenReturn(metricProviderSpecList);
-        ResponseEntity<List<MetricProviderSpec>> response =
-                mangleMetricProviderController.getMetricProviders(MetricProviderType.WAVEFRONT, null);
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        List<MetricProviderSpec> responseList = response.getBody();
-        Assert.assertEquals(responseList.size(), 1);
-        Assert.assertEquals(responseList.get(0), wavefrontSpec);
-        verify(metricProviderService, times(1)).getMetricProviderByType(MetricProviderType.WAVEFRONT);
-    }
-
-    /**
-     * Test method for
-     * {@link com.vmware.mangle.controller.MangleMetricProviderController#getMetricProviders(MetricProviderType, Boolean)}.
-     *
-     * @throws MangleException
-     */
-    @Test
-    public void testGetMetricProviderByDatadog() throws MangleException {
-        List<MetricProviderSpec> metricProviderSpecList = new ArrayList<>();
-        metricProviderSpecList.add(datadogSpec);
-        when(metricProviderService.getMetricProviderByType(MetricProviderType.DATADOG))
-                .thenReturn(metricProviderSpecList);
-        ResponseEntity<List<MetricProviderSpec>> response =
-                mangleMetricProviderController.getMetricProviders(MetricProviderType.DATADOG, null);
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        List<MetricProviderSpec> responseList = response.getBody();
-        Assert.assertEquals(responseList.size(), 1);
-        Assert.assertEquals(responseList.get(0), datadogSpec);
-        verify(metricProviderService, times(1)).getMetricProviderByType(MetricProviderType.DATADOG);
-    }
-
-    /**
-     * Test method for
-     * {@link com.vmware.mangle.controller.MangleMetricProviderController#getMetricProviders(MetricProviderType, Boolean)}.
-     *
-     * @throws MangleException
-     */
-    @Test
-    public void testGetMetricProviderNotFound() throws MangleException {
-        List<MetricProviderSpec> metricProviderSpecList = new ArrayList<>();
-        when(metricProviderService.getMetricProviderByType(MetricProviderType.DATADOG))
-                .thenReturn(metricProviderSpecList);
-        ResponseEntity<List<MetricProviderSpec>> response =
-                mangleMetricProviderController.getMetricProviders(MetricProviderType.DATADOG, null);
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        List<MetricProviderSpec> responseList = response.getBody();
-        Assert.assertEquals(responseList.size(), 0);
-        verify(metricProviderService, times(1)).getMetricProviderByType(MetricProviderType.DATADOG);
-    }
-
-    /**
-     * Test method for
-     * {@link com.vmware.mangle.controller.MangleMetricProviderController#addMetricProvider(MetricProviderSpec)}.
+     * Test method for {@link MetricProviderController#addMetricProvider(MetricProviderSpec)}.
      *
      * @throws MangleException
      */
@@ -228,8 +165,7 @@ public class MetricProviderControllerTest {
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.controller.MangleMetricProviderController#addMetricProvider(MetricProviderSpec)}.
+     * Test method for {@link MetricProviderController#addMetricProvider(MetricProviderSpec)}.
      *
      * @throws MangleException
      */
@@ -248,8 +184,7 @@ public class MetricProviderControllerTest {
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.controller.MangleMetricProviderController#addMetricProvider(MetricProviderSpec)}.
+     * Test method for {@link MetricProviderController#addMetricProvider(MetricProviderSpec)}.
      *
      * @throws MangleException
      */
@@ -259,19 +194,15 @@ public class MetricProviderControllerTest {
         when(metricProviderService.getMetricProviderByType(MetricProviderType.WAVEFRONT))
                 .thenReturn(new ArrayList<MetricProviderSpec>());
         when(metricProviderService.testConnectionMetricProvider(wavefrontSpec)).thenReturn(false);
-        ResponseEntity<MetricProviderSpec> response = null;
-        try {
-            response = mangleMetricProviderController.addMetricProvider(wavefrontSpec);
-        } catch (MangleException exception) {
-            Assert.assertEquals(response, null);
-        }
+        when(metricProviderService.addMetricProvider(wavefrontSpec)).thenReturn(wavefrontSpec);
+        ResponseEntity<MetricProviderSpec> response = mangleMetricProviderController.addMetricProvider(wavefrontSpec);
+        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
         verify(metricProviderService, times(1)).getMetricProviderByType(MetricProviderType.WAVEFRONT);
         verify(metricProviderService, times(1)).testConnectionMetricProvider(wavefrontSpec);
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.controller.MangleMetricProviderController#updateMetricProvider(MetricProviderSpec)}.
+     * Test method for {@link MetricProviderController#updateMetricProvider(MetricProviderSpec)}.
      *
      * @throws MangleException
      */
@@ -291,8 +222,7 @@ public class MetricProviderControllerTest {
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.controller.MangleMetricProviderController#updateMetricProvider(MetricProviderSpec)}.
+     * Test method for {@link MetricProviderController#updateMetricProvider(MetricProviderSpec)}.
      *
      * @throws MangleException
      */
@@ -301,19 +231,17 @@ public class MetricProviderControllerTest {
     public void testUdateMetricProviderWrongData() throws MangleException {
 
         when(metricProviderService.testConnectionMetricProvider(mockData.wrongSpec())).thenReturn(false);
-        ResponseEntity<MetricProviderSpec> response = null;
-        try {
-            response = mangleMetricProviderController.updateMetricProvider(wavefrontSpec);
-        } catch (MangleException exception) {
-            Assert.assertEquals(response, null);
-        }
+        when(metricProviderService.updateMetricProviderByName(wavefrontSpec.getName(), wavefrontSpec))
+                .thenReturn(wavefrontSpec);
+        ResponseEntity<MetricProviderSpec> response =
+                mangleMetricProviderController.updateMetricProvider(wavefrontSpec);
+        response.getStatusCode().equals(HttpStatus.OK);
         verify(metricProviderService, times(1)).testConnectionMetricProvider(wavefrontSpec);
     }
 
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.controller.MangleMetricProviderController#deleteMetricProvider(String)}.
+     * Test method for {@link MetricProviderController#deleteMetricProvider(String)}.
      *
      * @throws MangleException
      */
@@ -321,18 +249,13 @@ public class MetricProviderControllerTest {
     @Test
     public void testDeleteMetricProviderByName() throws MangleException {
         when(metricProviderService.deleteMetricProvider(wavefrontSpec.getName())).thenReturn(true);
-        ResponseEntity<MetricProviderResponse> response =
-                mangleMetricProviderController.deleteMetricProvider(wavefrontSpec.getName());
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        MetricProviderResponse mangleResponse = new MetricProviderResponse();
-        mangleResponse.setResultStatus(true);
-        Assert.assertEquals(response.getBody(), mangleResponse);
+        ResponseEntity response = mangleMetricProviderController.deleteMetricProvider(wavefrontSpec.getName());
+        Assert.assertEquals(response.getStatusCode(), HttpStatus.NO_CONTENT);
         verify(metricProviderService, times(1)).deleteMetricProvider(wavefrontSpec.getName());
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.controller.MangleMetricProviderController#deleteMetricProvider(String)}.
+     * Test method for {@link MetricProviderController#deleteMetricProvider(String)}.
      *
      * @throws MangleException
      */
@@ -340,18 +263,13 @@ public class MetricProviderControllerTest {
     @Test
     public void testDeleteMetricProviderByNameFalse() throws MangleException {
         when(metricProviderService.deleteMetricProvider(wavefrontSpec.getName())).thenReturn(false);
-        ResponseEntity<MetricProviderResponse> response =
-                mangleMetricProviderController.deleteMetricProvider(wavefrontSpec.getName());
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        MetricProviderResponse mangleResponse = new MetricProviderResponse();
-        mangleResponse.setResultStatus(false);
-        Assert.assertEquals(response.getBody(), mangleResponse);
+        ResponseEntity response = mangleMetricProviderController.deleteMetricProvider(wavefrontSpec.getName());
+        Assert.assertEquals(response.getStatusCode(), HttpStatus.NO_CONTENT);
         verify(metricProviderService, times(1)).deleteMetricProvider(wavefrontSpec.getName());
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.controller.MangleMetricProviderController#deleteMetricProvider(String)}.
+     * Test method for {@link MetricProviderController#deleteMetricProvider(String)}.
      *
      * @throws MangleException
      */
@@ -359,17 +277,13 @@ public class MetricProviderControllerTest {
     @Test
     public void testDeleteMetricProviderAll() throws MangleException {
         when(metricProviderService.deleteAllMetricProviders()).thenReturn(true);
-        ResponseEntity<MetricProviderResponse> response = mangleMetricProviderController.deleteMetricProvider("*");
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        MetricProviderResponse mangleResponse = new MetricProviderResponse();
-        mangleResponse.setResultStatus(true);
-        Assert.assertEquals(response.getBody(), mangleResponse);
+        ResponseEntity response = mangleMetricProviderController.deleteMetricProvider("");
+        Assert.assertEquals(response.getStatusCode(), HttpStatus.NO_CONTENT);
         verify(metricProviderService, times(1)).deleteAllMetricProviders();
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.controller.MangleMetricProviderController#deleteMetricProvider(String)}.
+     * Test method for {@link MetricProviderController#deleteMetricProvider(String)}.
      *
      * @throws MangleException
      */
@@ -377,17 +291,13 @@ public class MetricProviderControllerTest {
     @Test
     public void testDeleteMetricProviderAllFalse() throws MangleException {
         when(metricProviderService.deleteAllMetricProviders()).thenReturn(false);
-        ResponseEntity<MetricProviderResponse> response = mangleMetricProviderController.deleteMetricProvider("*");
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        MetricProviderResponse mangleResponse = new MetricProviderResponse();
-        mangleResponse.setResultStatus(false);
-        Assert.assertEquals(response.getBody(), mangleResponse);
+        ResponseEntity response = mangleMetricProviderController.deleteMetricProvider("");
+        Assert.assertEquals(response.getStatusCode(), HttpStatus.NO_CONTENT);
         verify(metricProviderService, times(1)).deleteAllMetricProviders();
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.controller.MangleMetricProviderController#testConnection(String)}.
+     * Test method for {@link MetricProviderController#testConnection(String)}.
      *
      * @throws MangleException
      */
@@ -395,18 +305,16 @@ public class MetricProviderControllerTest {
     @Test
     public void testTestConnection() throws MangleException {
         when(metricProviderService.testConnectionMetricProvider(wavefrontSpec)).thenReturn(true);
-        ResponseEntity<MetricProviderResponse> response =
-                mangleMetricProviderController.testConnection(wavefrontSpec.getName());
+        ResponseEntity<MetricProviderResponse> response = mangleMetricProviderController.testConnection(wavefrontSpec);
         Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
         MetricProviderResponse mangleResponse = new MetricProviderResponse();
-        mangleResponse.setResultStatus(false);
+        mangleResponse.setResultStatus(true);
         Assert.assertEquals(response.getBody(), mangleResponse);
-        verify(metricProviderService, times(1)).testConnectionMetricProvider(wavefrontSpec.getName());
+        verify(metricProviderService, times(1)).testConnectionMetricProvider(wavefrontSpec);
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.controller.MangleMetricProviderController#testConnection(String)}.
+     * Test method for {@link MetricProviderController#testConnection(String)}.
      *
      * @throws MangleException
      */
@@ -414,18 +322,18 @@ public class MetricProviderControllerTest {
     @Test
     public void testTestConnectionFailure() throws MangleException {
         when(metricProviderService.testConnectionMetricProvider(wavefrontSpec)).thenReturn(false);
-        ResponseEntity<MetricProviderResponse> response =
-                mangleMetricProviderController.testConnection(wavefrontSpec.getName());
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        MetricProviderResponse mangleResponse = new MetricProviderResponse();
-        mangleResponse.setResultStatus(false);
-        Assert.assertEquals(response.getBody(), mangleResponse);
-        verify(metricProviderService, times(1)).testConnectionMetricProvider(wavefrontSpec.getName());
+        ResponseEntity<MetricProviderResponse> response = null;
+        try {
+            response = mangleMetricProviderController.testConnection(wavefrontSpec);
+        } catch (MangleException exception) {
+            Assert.assertEquals(response, null);
+        }
+        verify(metricProviderService, times(1)).testConnectionMetricProvider(wavefrontSpec);
     }
 
     /**
      * Test method for
-     * {@link com.vmware.mangle.controller.MangleMetricProviderController#getMetricProviders(MetricProviderType, Boolean)}.
+     * {@link MetricProviderController#getMetricProviders(MetricProviderType, Boolean)}.
      *
      * @throws MangleException
      *
@@ -435,7 +343,7 @@ public class MetricProviderControllerTest {
     public void testGetActiveMetricProvider() throws MangleException {
         when(metricProviderService.getActiveMetricProvider()).thenReturn(wavefrontSpec);
         ResponseEntity<List<MetricProviderSpec>> response =
-                mangleMetricProviderController.getMetricProviders(null, true);
+                mangleMetricProviderController.getMetricProviders(MetricProviderByStatus.ACTIVE);
         Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
         Assert.assertEquals(response.getBody().get(0).getName(), wavefrontSpec.getName());
         verify(metricProviderService, times(1)).getActiveMetricProvider();
@@ -443,7 +351,7 @@ public class MetricProviderControllerTest {
 
     /**
      * Test method for
-     * {@link com.vmware.mangle.controller.MangleMetricProviderController#getMetricProviders(MetricProviderType, Boolean)}.
+     * {@link MetricProviderController#getMetricProviders(MetricProviderType, Boolean)}.
      *
      * @throws MangleException
      *
@@ -453,15 +361,14 @@ public class MetricProviderControllerTest {
     public void testGetActiveMetricProviderNull() throws MangleException {
         when(metricProviderService.getActiveMetricProvider()).thenReturn(null);
         ResponseEntity<List<MetricProviderSpec>> response =
-                mangleMetricProviderController.getMetricProviders(null, true);
+                mangleMetricProviderController.getMetricProviders(MetricProviderByStatus.ACTIVE);
         Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        Assert.assertEquals(response.getBody().get(0), null);
+        Assert.assertEquals(response.getBody().isEmpty(), true);
         verify(metricProviderService, times(1)).getActiveMetricProvider();
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.controller.MangleMetricProviderController#changeMetricProviderStatus(String)}.
+     * Test method for {@link MetricProviderController#changeMetricProviderStatus(String)}.
      *
      * @throws MangleException
      */
@@ -481,8 +388,7 @@ public class MetricProviderControllerTest {
 
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.controller.MangleMetricProviderController#changeMetricProviderStatus(String)}.
+     * Test method for {@link MetricProviderController#changeMetricProviderStatus(String)}.
      *
      * @throws MangleException
      */
@@ -502,15 +408,15 @@ public class MetricProviderControllerTest {
 
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.controller.MangleMetricProviderController#changeMetricProviderStatus(String)}.
+     * Test method for {@link MetricProviderController#changeMetricProviderStatus(String)}.
      *
      * @throws MangleException
      */
     @Test
     public void testChangeMetricProviderStatusNonExist() throws MangleException {
         when(this.metricProviderService.enableMetricProviderByName("someName")).thenReturn(null);
-        ResponseEntity<MetricProviderResponse> response = mangleMetricProviderController.changeMetricProviderStatus("someName");
+        ResponseEntity<MetricProviderResponse> response =
+                mangleMetricProviderController.changeMetricProviderStatus("someName");
         Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
         MetricProviderResponse mangleResponse = new MetricProviderResponse();
         mangleResponse.setResultStatus(true);
@@ -519,8 +425,7 @@ public class MetricProviderControllerTest {
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.controller.MangleMetricProviderController#changeMangleMetricCollectionStatus(Boolean)}.
+     * Test method for {@link MetricProviderController#changeMangleMetricCollectionStatus(Boolean)}.
      *
      * @throws MangleException
      */
@@ -538,8 +443,7 @@ public class MetricProviderControllerTest {
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.controller.MangleMetricProviderController#changeMangleMetricCollectionStatus(Boolean)}.
+     * Test method for {@link MetricProviderController#changeMangleMetricCollectionStatus(Boolean)}.
      *
      * @throws MangleException
      */
@@ -554,5 +458,20 @@ public class MetricProviderControllerTest {
         mangleResponse.setResultStatus(true);
         Assert.assertEquals(response.getBody(), mangleResponse);
         verify(metricProviderService, times(1)).closeAllMetricCollection();
+    }
+
+    /**
+     * Test method for
+     * {@link com.vmware.mangle.controller.MangleMetricProviderController#getMetricCollectionStatus()}
+     */
+    @Test
+    public void testgetMetricCollectionStatus() {
+        when(this.metricProviderService.isMangleMetricsEnabled()).thenReturn(true);
+        ResponseEntity<MetricProviderResponse> response = mangleMetricProviderController.getMetricCollectionStatus();
+        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
+        MetricProviderResponse mangleResponse = new MetricProviderResponse();
+        mangleResponse.setResultStatus(true);
+        Assert.assertEquals(response.getBody(), mangleResponse);
+        verify(metricProviderService, times(1)).isMangleMetricsEnabled();
     }
 }

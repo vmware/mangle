@@ -23,6 +23,10 @@ import com.vmware.mangle.java.agent.faults.exception.FiaascoException;
 public class AgentFaultFactory {
     private static final Logger LOG = Logger.getLogger(AgentFaultFactory.class.getName());
 
+    private AgentFaultFactory() {
+        throw new java.lang.UnsupportedOperationException("This is a utility class and cannot be instantiated");
+    }
+
     public static AgentFault getFault(Map<String, String> faultArgs) throws Exception {
         String faultName = faultArgs.get("faultName");
         try {

@@ -17,7 +17,7 @@ package com.vmware.mangle.model.enums;
  *
  */
 public enum EndpointType {
-    MACHINE, K8S_CLUSTER, AWS, DOCKER, VCENTER, WAVEFRONT, POD;
+    MACHINE, K8S_CLUSTER, DOCKER, VCENTER, WAVEFRONT;
     @Override
     public String toString() {
         return this.name();

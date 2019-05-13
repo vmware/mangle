@@ -71,7 +71,7 @@ public abstract class AgentFault extends Thread {
         }
         appendTaskActivity("Completed the Fault Remediation");
         faultInfo.setFaultStatus(FaultStatus.COMPLETED);
-        FiaascoTransformListener.forceTerminate(new PrintWriter(System.out));
+        FiaascoTransformListener.terminate(new PrintWriter(System.out));
     }
 
     public void start() {

@@ -11,9 +11,11 @@
 
 package org.jboss.byteman.agent.install;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.util.ArrayList;
@@ -25,11 +27,15 @@ import com.sun.tools.attach.AgentLoadException;
 import com.sun.tools.attach.AttachNotSupportedException;
 import com.sun.tools.attach.VirtualMachine;
 import com.sun.tools.attach.VirtualMachineDescriptor;
+import org.jboss.byteman.agent.submit.Submit;
 
 /**
  * A program which uses the sun.com.tools.attach.VirtualMachine class to install the Byteman agent
  * into a running JVM. This provides an alternative to using the -javaagent option to install the
  * agent.
+ *
+ * @author Andrew Dinn
+ * @author hkilari
  */
 public class Install {
     /**
@@ -40,7 +46,7 @@ public class Install {
      *
      *
      * see method {@link #usage} for details of the command syntax
-     * 
+     *
      * @param args
      *            the command options
      */
@@ -57,21 +63,50 @@ public class Install {
         }
     }
 
-    private static boolean isPortAvailable(String hostname, int givenPort) throws IOException {
+    private boolean isPortAvailable(String hostname, int givenPort) throws IOException {
         hostname = hostname == null ? "localhost" : hostname;
         givenPort = givenPort == 0 ? 9091 : givenPort;
+
         try (ServerSocket theServerSocket = new ServerSocket()) {
             theServerSocket.bind(new InetSocketAddress(hostname, givenPort));
         } catch (Exception e) {
-            throw new IOException("Given Port :" + givenPort + " already in Use.", e);
+            notifyRetriedInstallation(givenPort);
+            throw new IOException("Given Port: " + givenPort + " already in Use.", e);
         }
         return true;
     }
 
 
+    private void notifyRetriedInstallation(int givenPort) throws IllegalStateException {
+        String pid = vm.id();
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        PrintStream standard = System.out;
+        PrintStream printStream = new PrintStream(byteArrayOutputStream);
+        System.setOut(printStream);
+        Submit.main(new String[] { "-p", givenPort + "", "-ping", id });
+        String retrievedPid = byteArrayOutputStream.toString().split(": ")[1].trim();
+        if (retrievedPid.equals(pid)) {
+            try {
+                byteArrayOutputStream.flush();
+            } catch (IOException ex) {
+                System.out.println(ex.getMessage());
+            }
+            System.setOut(standard);
+            System.out.println(byteArrayOutputStream.toString());
+            throw new IllegalStateException("Agent is already running on requested process");
+        }
+        try {
+            byteArrayOutputStream.flush();
+        } catch (IOException ex) {
+            System.out.println(ex.getMessage());
+        }
+        System.setOut(standard);
+        System.out.println(byteArrayOutputStream.toString());
+    }
+
     /**
      * compatability mode
-     * 
+     *
      * @param pid
      *            the process id of the JVM into which the agent should be installed or 0 for this
      *            JVM
@@ -109,7 +144,7 @@ public class Install {
 
     /**
      * compatability mode
-     * 
+     *
      * @param pid
      *            the process id of the JVM into which the agent should be installed or 0 for this
      *            JVM
@@ -149,7 +184,7 @@ public class Install {
 
     /**
      * compatability mode
-     * 
+     *
      * @param pid
      *            the process id of the JVM into which the agent should be installed or 0 for this
      *            JVM
@@ -222,7 +257,7 @@ public class Install {
     /**
      * attach to the virtual machine identified by id and return the value of the named property. id
      * must be the id of a virtual machine returned by method availableVMs.
-     * 
+     *
      * @param id
      *            the id of the machine to attach to
      * @param property
@@ -237,7 +272,7 @@ public class Install {
      * attach to the virtual machine identified by id and return {@code true} if a Byteman agent has
      * already been attached to it. id must be the id of a virtual machine returned by method
      * availableVMs.
-     * 
+     *
      * @param id
      *            the id of the machine to attach to
      * @return {@code true} if and only if a Byteman agent has already been attached to the virtual
@@ -316,7 +351,7 @@ public class Install {
 
     /**
      * check the supplied arguments and stash away the relevant data
-     * 
+     *
      * @param args
      *            the value supplied to main
      */
@@ -581,7 +616,7 @@ public class Install {
 
     /**
      * print usage information and exit with a specific exit code
-     * 
+     *
      * @param exitValue
      *            the value to be supplied to the exit call
      */
@@ -598,7 +633,7 @@ public class Install {
         System.out.println(
                 "    -Dname=value can be used to set system properties whose name starts with \"org.jboss.byteman.\"");
         System.out.println(
-                "    expects to find a byteman agent jar in ${" + BYTEMAN_HOME_ENV_VAR + "}/lib/fiaasco-byteman.jar");
+                "    expects to find a byteman agent jar in ${" + BYTEMAN_HOME_ENV_VAR + "}/lib/mangle-byteman.jar");
         System.out.println("    and JBoss modules plugin jar (if -m option is enabled)  in ${" + BYTEMAN_HOME_ENV_VAR
                 + "}/contrib/jboss-modules-system/byteman-jboss-modules-plugin.jar");
         System.out.println("    (alternatively set System property " + BYTEMAN_HOME_SYSTEM_PROP + " to overide ${"
@@ -643,7 +678,7 @@ public class Install {
     /**
      * Name of agent jar (without extension).
      */
-    private static final String BYTEMAN_AGENT_NAME = "fiaasco-byteman";
+    private static final String BYTEMAN_AGENT_NAME = "mangle-byteman";
 
     /**
      * Base directory to look for JBoss modules plugin jar.

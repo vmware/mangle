@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { SettingService } from '../setting.service';
-import { AuthService } from 'src/app/auth/auth.service';
+import { MessageConstants } from 'src/app/common/message.constants';
 
 @Component({
     selector: 'app-users',
@@ -16,6 +16,9 @@ export class UsersComponent implements OnInit {
     public alertMessage: string;
 
     public userFormData;
+    public passwordFieldRequired: boolean = false;
+    public currentSelectedRoles: any = [];
+
     public authSources: any = [];
     public userList: any;
     public roleList: any;
@@ -25,25 +28,37 @@ export class UsersComponent implements OnInit {
     ngOnInit() {
         this.getUserList();
         this.getRoleList();
-        this.getIdentities();
+        this.getDomains();
     }
 
-    public populateUserForm(userData: any) {
-        if (userData.name != null) {
-            userData.roleNames = [];
-            userData.name = userData.name + "@" + userData.authSource;
-            delete userData["authSource"];
+    public populateAddUserForm(addUserData) {
+        this.getRoleList();
+        this.userFormData = addUserData;
+        this.currentSelectedRoles = [];
+    }
+
+    public populateEditUserForm(editUserData) {
+        this.getRoleList();
+        this.userFormData = editUserData;
+        this.passwordFieldRequired = false;
+        var userAndDomain = editUserData.name.split("@");
+        if (userAndDomain[1] === "mangle.local") {
+            this.passwordFieldRequired = true;
+            this.userFormData.password = null;
         }
-        this.userFormData = userData;
+        this.currentSelectedRoles = [];
+        for (var i = 0; i < editUserData.roleNames.length; i++) {
+            this.currentSelectedRoles.push(editUserData.roleNames[i]);
+        }
     }
 
-    public updateUserFormData(roleEvent, role) {
+    public updateCurrentSelectedRoles(roleEvent, role) {
         if (roleEvent.target.checked) {
-            this.userFormData.roleNames.push(role.name);
+            this.currentSelectedRoles.push(role.name);
         } else {
-            for (var i = 0; i < this.userFormData.roleNames.length; i++) {
-                if (this.userFormData.roleNames[i] == role.name) {
-                    this.userFormData.roleNames.splice(i, 1);
+            for (var i = 0; i < this.currentSelectedRoles.length; i++) {
+                if (this.currentSelectedRoles[i] == role.name) {
+                    this.currentSelectedRoles.splice(i, 1);
                 }
             }
         }
@@ -54,12 +69,12 @@ export class UsersComponent implements OnInit {
         this.settingService.getUserList().subscribe(
             res => {
                 this.userList = res._embedded.userList;
-                for (var i = 0; i < this.userList.length; i++) {
-                    var userSplit = this.userList[i].name.split("@");
-                    this.userList[i].name = userSplit[0];
-                    this.userList[i].authSource = userSplit[1];
-                }
                 this.isLoading = false;
+            }, err => {
+                this.userList = [];
+                this.isLoading = false;
+                this.alertMessage = err.error.description;
+                this.errorFlag = true;
             });
     }
 
@@ -70,27 +85,17 @@ export class UsersComponent implements OnInit {
             });
     }
 
-    public addOrUpdateUser(userFormValue) {
-        userFormValue.roleNames = this.userFormData.roleNames;
-        if (userFormValue.id == null) {
-            userFormValue.name = userFormValue.name + "@" + userFormValue.authSource;
-            delete userFormValue["authSource"];
-            this.addUser(userFormValue);
-        } else {
-            this.updateUser(userFormValue);
-        }
-        this.getRoleList();
-    }
-
-    public addUser(userFormValue) {
-        delete userFormValue["id"];
+    public addUser(addUserFormValue) {
+        addUserFormValue.roleNames = this.currentSelectedRoles;
         this.errorFlag = false;
         this.successFlag = false;
         this.isLoading = true;
-        this.settingService.addUser(userFormValue).subscribe(
+        addUserFormValue.name = addUserFormValue.name + "@" + addUserFormValue.authSource;
+        delete addUserFormValue["authSource"];
+        this.settingService.addUser(addUserFormValue).subscribe(
             res => {
                 this.getUserList();
-                this.alertMessage = 'User added successfully!';
+                this.alertMessage = addUserFormValue.name + MessageConstants.USER_ADD;
                 this.successFlag = true;
                 this.isLoading = false;
             }, err => {
@@ -101,18 +106,19 @@ export class UsersComponent implements OnInit {
             });
     }
 
-    public updateUser(userFormValue) {
+    public updateUser(updateUserFormValue) {
+        updateUserFormValue.roleNames = this.currentSelectedRoles;
         this.errorFlag = false;
         this.successFlag = false;
         this.isLoading = true;
-        this.settingService.updateUser(userFormValue).subscribe(
+        this.settingService.updateUser(updateUserFormValue).subscribe(
             res => {
-                this.getUserList();
-                this.alertMessage = 'User updated successfully!';
+                this.ngOnInit();
+                this.alertMessage = updateUserFormValue.name + MessageConstants.USER_UPDATE;
                 this.successFlag = true;
                 this.isLoading = false;
             }, err => {
-                this.getUserList();
+                this.ngOnInit();
                 this.alertMessage = err.error.description;
                 this.errorFlag = true;
                 this.isLoading = false;
@@ -122,12 +128,11 @@ export class UsersComponent implements OnInit {
     public deleteUser(user) {
         this.errorFlag = false;
         this.successFlag = false;
-        this.isLoading = true;
-        if (confirm('Do you want to delete: ' + user.name + '@' + user.authSource + ' user ?')) {
-            this.settingService.deleteUser(user.name + '@' + user.authSource).subscribe(
+        if (confirm(MessageConstants.DELETE_CONFIRM + user.name + MessageConstants.QUESTION_MARK)) {
+            this.settingService.deleteUser(user.name).subscribe(
                 res => {
                     this.getUserList();
-                    this.alertMessage = user.name + '@' + user.authSource + ' user deleted successfully!';
+                    this.alertMessage = user.name + MessageConstants.USER_DELETE;
                     this.successFlag = true;
                     this.isLoading = false;
                 }, err => {
@@ -141,13 +146,13 @@ export class UsersComponent implements OnInit {
         }
     }
 
-    public getIdentities() {
+    public getDomains() {
         this.isLoading = true;
-        this.settingService.getIdentities().subscribe(
+        this.settingService.getDomains().subscribe(
             res => {
                 if (res._embedded != null) {
-                    for (var i = 0; i < res._embedded.aDAuthProviderDtoList.length; i++) {
-                        this.authSources[i] = res._embedded.aDAuthProviderDtoList[i].adDomain;
+                    for (var i = 0; i < res._embedded.stringList.length; i++) {
+                        this.authSources[i] = res._embedded.stringList[i];
                     }
                 } else {
                     this.authSources = [];

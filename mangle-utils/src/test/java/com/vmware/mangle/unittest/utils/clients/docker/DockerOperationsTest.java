@@ -61,9 +61,6 @@ public class DockerOperationsTest extends PowerMockTestCase {
     private DockerClient dockerClient;
 
     private DockerMockdata mockdata = new DockerMockdata();
-
-    private String host;
-    private String port;
     private String containerName;
     private String containerId;
 
@@ -73,10 +70,7 @@ public class DockerOperationsTest extends PowerMockTestCase {
     @BeforeClass
     public void setUpBeforeClass() throws Exception {
         MockitoAnnotations.initMocks(this);
-        new CustomDockerClient(host, port, true);
         customDockerClient.setDockerClient(dockerClient);
-        host = mockdata.getMockHost();
-        port = mockdata.getMockPort();
         containerName = mockdata.getMockContainerName();
         containerId = mockdata.getMockContainerId();
     }
@@ -111,30 +105,36 @@ public class DockerOperationsTest extends PowerMockTestCase {
         List<Container> allContainers = new ArrayList<>();
         allContainers.add(container);
         when(listContainersCmd.exec()).thenReturn(allContainers);
-        when(container.getNames()).thenReturn(new String[] { containerName });
+        when(container.getNames()).thenReturn(new String[] { "/" + containerName });
         when(container.getId()).thenReturn(containerId);
 
         PauseContainerCmd pauseContainercmd = mock(PauseContainerCmd.class);
         when(customDockerClient.getDockerClient().pauseContainerCmd(containerId)).thenReturn(pauseContainercmd);
 
-        ListContainersCmd listContainersCmd1 = mock(ListContainersCmd.class);
-        when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd1);
-        when(listContainersCmd1.withStatusFilter(anyString())).thenReturn(listContainersCmd1);
-        Container container1 = mock(Container.class);
-        List<Container> allContainers1 = new ArrayList<>();
-        allContainers1.add(container1);
-        when(listContainersCmd1.exec()).thenReturn(allContainers1);
-        when(container1.getNames()).thenReturn(new String[] { containerName });
-        when(container1.getId()).thenReturn(containerId);
-
         try {
-            Assert.assertEquals(DockerOperations.dockerPause(customDockerClient, containerName).getExitCode(),
-                    0);
+            Assert.assertEquals(DockerOperations.dockerPause(customDockerClient, containerName).getExitCode(), 0);
         } catch (Exception e) {
             e.printStackTrace();
         }
         verify(dockerClient, times(2)).listContainersCmd();
 
+    }
+
+    @Test(description = "test to verify the failure of docker pause operation with an exception")
+    public void testdockerPause_V2() throws Exception {
+        ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
+        when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
+        List<Container> allContainers = new ArrayList<>();
+        allContainers.clear();
+        when(listContainersCmd.exec()).thenReturn(allContainers);
+        PauseContainerCmd pauseContainercmd = mock(PauseContainerCmd.class);
+
+        when(customDockerClient.getDockerClient().pauseContainerCmd(null)).thenReturn(pauseContainercmd);
+        try {
+            Assert.assertEquals(DockerOperations.dockerPause(customDockerClient, containerName).getExitCode(), 1);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -151,105 +151,13 @@ public class DockerOperationsTest extends PowerMockTestCase {
         List<Container> allpausedContainers = new ArrayList<>();
         allpausedContainers.add(container);
         when(listContainersCmd.exec()).thenReturn(allpausedContainers);
-        when(container.getNames()).thenReturn(new String[] { containerName });
+        when(container.getNames()).thenReturn(new String[] { "/" + containerName });
         when(container.getId()).thenReturn(containerId);
 
         UnpauseContainerCmd unpauseContainercmd = mock(UnpauseContainerCmd.class);
         when(customDockerClient.getDockerClient().unpauseContainerCmd(containerId)).thenReturn(unpauseContainercmd);
         try {
-            Assert.assertEquals(DockerOperations.dockerUnPause(customDockerClient, containerName).getExitCode(),
-                    0);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        verify(dockerClient, times(2)).listContainersCmd();
-    }
-
-    /**
-     * Test method for {@link#MangleDockerOperations#dockerPause )}.
-     *
-     * @throws Exception
-     */
-    @Test
-    public void testdockerStart() throws Exception {
-        ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
-        when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
-        Container container = mock(Container.class);
-        List<Container> allContainers = new ArrayList<>();
-        allContainers.add(container);
-        when(listContainersCmd.exec()).thenReturn(allContainers);
-        when(container.getNames()).thenReturn(new String[] { containerName });
-        when(container.getId()).thenReturn(containerId);
-
-        StartContainerCmd startContainerCmd = mock(StartContainerCmd.class);
-        when(customDockerClient.getDockerClient().startContainerCmd(containerId)).thenReturn(startContainerCmd);
-
-        try {
-            Assert.assertEquals(
-                    DockerOperations.dockerStart(customDockerClient, containerName, containerId).getExitCode(),
-                    0);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        verify(dockerClient, times(1)).listContainersCmd();
-    }
-
-    /**
-     * Test method for {@link#MangleDockerOperations#dockerPause )}.
-     *
-     * @throws Exception
-     */
-    @Test
-    public void testdockerStop() throws Exception {
-        ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
-        when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
-        when(listContainersCmd.withStatusFilter(anyString())).thenReturn(listContainersCmd);
-        Container container = mock(Container.class);
-        List<Container> allpausedContainers = new ArrayList<>();
-        allpausedContainers.add(container);
-        when(listContainersCmd.exec()).thenReturn(allpausedContainers);
-        when(container.getNames()).thenReturn(new String[] { containerName });
-        when(container.getId()).thenReturn(containerId);
-
-        StopContainerCmd stopContainerCmd = mock(StopContainerCmd.class);
-        when(customDockerClient.getDockerClient().stopContainerCmd(containerId)).thenReturn(stopContainerCmd);
-
-        try {
-            Assert.assertEquals(DockerOperations.dockerStop(customDockerClient, containerName).getExitCode(),
-                    0);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        verify(dockerClient, times(2)).listContainersCmd();
-    }
-
-
-    @Test(description = "test to verify the failure of docker start operation with an exception")
-    public void testdockerStart_V2() throws Exception {
-
-        try {
-            Assert.assertEquals(
-                    DockerOperations.dockerStart(customDockerClient, containerName, null).getExitCode(), 1);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    @Test(description = "test to verify the failure of docker stop operation with an exception")
-    public void testdockerStop_V2() throws Exception {
-        ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
-        when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
-        when(listContainersCmd.withStatusFilter(anyString())).thenReturn(listContainersCmd);
-        Container container = mock(Container.class);
-        List<Container> allContainers = new ArrayList<>();
-        allContainers.add(container);
-        when(listContainersCmd.exec()).thenReturn(allContainers);
-        when(container.getNames()).thenReturn(new String[] { containerName });
-        when(container.getId()).thenReturn(null);
-        try {
-            Assert.assertEquals(DockerOperations.dockerStop(customDockerClient, containerName).getExitCode(),
-                    1);
+            Assert.assertEquals(DockerOperations.dockerUnPause(customDockerClient, containerName).getExitCode(), 1);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -264,48 +172,148 @@ public class DockerOperationsTest extends PowerMockTestCase {
         List<Container> allContainers = new ArrayList<>();
         allContainers.add(container);
         when(listContainersCmd.exec()).thenReturn(allContainers);
-        when(container.getNames()).thenReturn(new String[] { containerName });
+        when(container.getNames()).thenReturn(new String[] { "/" + containerName });
         when(container.getId()).thenReturn(null);
+        UnpauseContainerCmd unpauseContainercmd = mock(UnpauseContainerCmd.class);
+        when(customDockerClient.getDockerClient().unpauseContainerCmd(null)).thenReturn(unpauseContainercmd);
         try {
-            Assert.assertEquals(DockerOperations.dockerUnPause(customDockerClient, containerName).getExitCode(),
-                    1);
+            Assert.assertEquals(DockerOperations.dockerUnPause(customDockerClient, containerName).getExitCode(), 1);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
 
-    @Test(description = "test to verify the failure of docker pause operation with an exception")
-    public void testdockerPause_V2() throws Exception {
-        ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
-        when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
-        List<Container> allContainers = new ArrayList<>();
-        allContainers.clear();
-        when(listContainersCmd.exec()).thenReturn(allContainers);
-        try {
-            Assert.assertEquals(DockerOperations.dockerPause(customDockerClient, containerName).getExitCode(),
-                    1);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    @Test(description = "test to verify the failure of docker unpause operation with an exception")
+    @Test(description = "Positive test case to get the Exit code as 0")
     public void testdockerUnPause_V3() throws Exception {
         ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
         when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
         List<Container> allContainers = new ArrayList<>();
         allContainers.clear();
+        when(listContainersCmd.withStatusFilter("paused")).thenReturn((listContainersCmd));
+
         when(listContainersCmd.exec()).thenReturn(allContainers);
+        UnpauseContainerCmd unpauseContainercmd = mock(UnpauseContainerCmd.class);
+        when(customDockerClient.getDockerClient().unpauseContainerCmd(null)).thenReturn(unpauseContainercmd);
 
         try {
-            Assert.assertEquals(DockerOperations.dockerUnPause(customDockerClient, containerName).getExitCode(),
-                    1);
+            Assert.assertEquals(DockerOperations.dockerUnPause(customDockerClient, containerName).getExitCode(), 1);
         } catch (Exception e) {
             e.printStackTrace();
         }
 
+    }
+
+
+    /**
+     * Test method for {@link#MangleDockerOperations#dockerPause )}.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testdockerStart() throws Exception {
+        ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
+        when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
+        Container container = mock(Container.class);
+        List<Container> allContainers = new ArrayList<>();
+        allContainers.add(container);
+        when(listContainersCmd.exec()).thenReturn(allContainers);
+        when(container.getNames()).thenReturn(new String[] { "/" + containerName });
+        when(container.getId()).thenReturn(containerId);
+
+        StartContainerCmd startContainerCmd = mock(StartContainerCmd.class);
+        when(customDockerClient.getDockerClient().startContainerCmd(containerId)).thenReturn(startContainerCmd);
+
+        try {
+            Assert.assertEquals(
+                    DockerOperations.dockerStart(customDockerClient, containerName, containerId).getExitCode(), 0);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        verify(dockerClient, times(1)).listContainersCmd();
+    }
+
+    @Test(description = "test to verify the failure of docker start operation with an exception")
+    public void testdockerStart_V2() throws Exception {
+        StartContainerCmd startContainerCmd = mock(StartContainerCmd.class);
+        when(customDockerClient.getDockerClient().startContainerCmd(null)).thenReturn(startContainerCmd);
+        try {
+            Assert.assertEquals(DockerOperations.dockerStart(customDockerClient, containerName, null).getExitCode(), 1);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    @Test
+    public void testdockerStartV3() throws Exception {
+        ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
+        when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
+        Container container = mock(Container.class);
+        List<Container> allContainers = new ArrayList<>();
+        allContainers.add(container);
+        when(listContainersCmd.exec()).thenReturn(allContainers);
+        when(container.getNames()).thenReturn(new String[] { "abcd" });
+
+        StartContainerCmd startContainerCmd = mock(StartContainerCmd.class);
+        when(customDockerClient.getDockerClient().startContainerCmd(containerId)).thenReturn(startContainerCmd);
+
+        try {
+            Assert.assertEquals(
+                    DockerOperations.dockerStart(customDockerClient, containerName, containerId).getExitCode(), 1);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Test method for {@link#MangleDockerOperations#dockerPause )}.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testdockerStop() throws Exception {
+        ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
+        when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
+        when(listContainersCmd.withStatusFilter(anyString())).thenReturn(listContainersCmd);
+        Container container = mock(Container.class);
+        List<Container> allstoppedContainers = new ArrayList<>();
+        allstoppedContainers.add(container);
+        when(listContainersCmd.exec()).thenReturn(allstoppedContainers);
+        when(container.getNames()).thenReturn(new String[] { "/" + containerName });
+        when(container.getId()).thenReturn(containerId);
+
+        StopContainerCmd stopContainerCmd = mock(StopContainerCmd.class);
+        when(customDockerClient.getDockerClient().stopContainerCmd(containerId)).thenReturn(stopContainerCmd);
+
+        try {
+            Assert.assertEquals(DockerOperations.dockerStop(customDockerClient, containerName).getExitCode(), 1);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    @Test(description = "test to verify the failure of docker stop operation with an exception")
+    public void testdockerStop_V2() throws Exception {
+        ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
+        when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
+        when(listContainersCmd.withStatusFilter(anyString())).thenReturn(listContainersCmd);
+        Container container = mock(Container.class);
+        List<Container> allContainers = new ArrayList<>();
+        allContainers.add(container);
+        when(listContainersCmd.exec()).thenReturn(allContainers);
+        when(container.getNames()).thenReturn(new String[] { "/" + containerName });
+        when(container.getId()).thenReturn(null);
+
+        StopContainerCmd stopContainerCmd = mock(StopContainerCmd.class);
+        when(customDockerClient.getDockerClient().stopContainerCmd(null)).thenReturn(stopContainerCmd);
+
+        try {
+            Assert.assertEquals(DockerOperations.dockerStop(customDockerClient, containerName).getExitCode(), 1);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Test(description = "test to verify the failure of docker stop operation with an exception")
@@ -316,11 +324,15 @@ public class DockerOperationsTest extends PowerMockTestCase {
         allContainers.clear();
         when(listContainersCmd.exec()).thenReturn(allContainers);
 
+        StopContainerCmd stopContainerCmd = mock(StopContainerCmd.class);
+        when(customDockerClient.getDockerClient().stopContainerCmd(null)).thenReturn(stopContainerCmd);
+
         try {
-            Assert.assertEquals(DockerOperations.dockerStop(customDockerClient, containerName).getExitCode(),
-                    1);
+            Assert.assertEquals(DockerOperations.dockerStop(customDockerClient, containerName).getExitCode(), 1);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
+
 }

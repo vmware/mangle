@@ -1,0 +1,350 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+   Copyright (c) 2016-2019 VMware, Inc. All Rights Reserved.
+
+   This product is licensed to you under the Apache License, Version 2.0 (the "License").
+   You may not use this product except in compliance with the License.
+
+   This product may include a number of subcomponents with separate copyright notices
+   and license terms. Your use of these subcomponents is subject to the terms and
+   conditions of the subcomponent's license, as noted in the LICENSE file.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<modelVersion>4.0.0</modelVersion>
+	<artifactId>mangle-vcenter-adapter</artifactId>
+	<parent>
+		<groupId>com.vmware.mangle</groupId>
+        <artifactId>mangle-root</artifactId>
+        <version>1.0.0</version>
+        <relativePath>../pom.xml</relativePath>
+	</parent>
+
+	<properties>
+		<!--sonarqube properties -->
+		<sonar.host.url>https://fiaasco-quality.svc.eng.vmware.com</sonar.host.url>
+		<sonar.branch>master</sonar.branch>
+		<sonar.login>52ad1326343fe1bbc681f1b7187034a0adf498c2</sonar.login>
+		<sonar.jacoco.reportPath>target/jacoco-final.exec</sonar.jacoco.reportPath>
+		<sonar.coverage.exclusions>**/com/vmware/mangle/model/**/*</sonar.coverage.exclusions>
+	</properties>
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+			<exclusions>
+				<exclusion>
+					<groupId>org.springframework.boot</groupId>
+					<artifactId>spring-boot-starter-logging</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.yaml</groupId>
+			<artifactId>snakeyaml</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>commons-codec</groupId>
+			<artifactId>commons-codec</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>joda-time</groupId>
+			<artifactId>joda-time</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>ru.yandex.qatools.allure</groupId>
+			<artifactId>allure-testng-adaptor</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.google.code.gson</groupId>
+			<artifactId>gson</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.thoughtworks.xstream</groupId>
+			<artifactId>xstream</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-oxm</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>ru.yandex.qatools.allure</groupId>
+			<artifactId>allure-report-data</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-annotations</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpclient</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>log4j</groupId>
+			<artifactId>log4j</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>io.springfox</groupId>
+			<artifactId>springfox-swagger-ui</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>io.springfox</groupId>
+			<artifactId>springfox-swagger2</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-hateoas</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>log4j-over-slf4j</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-all</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.powermock</groupId>
+			<artifactId>powermock-api-mockito</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.powermock</groupId>
+			<artifactId>powermock-api-support</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.powermock</groupId>
+			<artifactId>powermock-module-testng</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.testng</groupId>
+			<artifactId>testng</artifactId>
+		</dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-log4j2</artifactId>
+        </dependency>
+	</dependencies>
+
+	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<version>${maven-compiler.version}</version>
+					<configuration>
+						<source>${java.version}</source>
+						<target>${java.version}</target>
+						<compilerArgument>-Xlint:unchecked</compilerArgument>
+					</configuration>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-checkstyle-plugin</artifactId>
+					<configuration>
+						<includeTestResources>false</includeTestResources>
+						<includeResources>false</includeResources>
+						<includeTestSourceDirectory>true</includeTestSourceDirectory>
+						<headerLocation>config/checkstyle/header.regexp</headerLocation>
+						<configLocation>config/checkstyle/checkstyle.xml</configLocation>
+						<suppressionsLocation>config/checkstyle/checkstyle-suppression.xml</suppressionsLocation>
+					</configuration>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-surefire-plugin</artifactId>
+					<configuration>
+						<includes>
+							<include>**/com/vmware/mangle/unittest/**</include>
+						</includes>
+						<skip>${skipUTs}</skip>
+                        <argLine>${surefireArgLine}</argLine>
+                        <excludes>
+                            <exclude>**/*IT.java</exclude>
+                            <exclude>**/com/vmware/mangle/model/**/*</exclude>
+                            <exclude>**/com/vmware/mangle/utils/restclienttemplate/**/*</exclude>
+                            <exclude>**/com/vmware/mangle/utils/serialization/**/*</exclude>
+                            <exclude>**/com/vmware/mangle/utils/status/**/*</exclude>
+                        </excludes>
+					</configuration>
+				</plugin>
+				<plugin>
+					<groupId>org.jacoco</groupId>
+					<artifactId>jacoco-maven-plugin</artifactId>
+					<version>${jacoco.version}</version>
+					<configuration>
+						<excludes>
+							<exclude>*</exclude>
+						</excludes>
+					</configuration>
+					<executions>
+						<execution>
+							<id>jacoco-initialize</id>
+							<goals>
+								<goal>prepare-agent</goal>
+							</goals>
+                            <configuration>
+                                <destFile>${project.build.directory}/jacoco-ut.exec</destFile>
+                                <propertyName>surefireArgLine</propertyName>
+                            </configuration>
+						</execution>
+                        <execution>
+                            <id>jacoco-report</id>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>report</goal>
+                            </goals>
+                            <configuration>
+                                <dataFile>${project.build.directory}/jacoco-ut.exec</dataFile>
+                                <outputDirectory>${project.reporting.outputDirectory}/jacoco-ut</outputDirectory>
+                            </configuration>
+                        </execution>
+						<execution>
+							<id>jacoco-instrument</id>
+							<goals>
+								<goal>instrument</goal>
+							</goals>
+						</execution>
+						<execution>
+							<id>jacoco-restore-instrumented-classes</id>
+                            <phase>test</phase>
+							<goals>
+								<goal>restore-instrumented-classes</goal>
+							</goals>
+						</execution>
+                        <execution>
+                            <id>merge-test-data</id>
+                            <goals>
+                                <goal>merge</goal>
+                            </goals>
+                            <configuration>
+                                <destFile>${project.build.directory}/jacoco-final.exec</destFile>
+                                <skip>${skip.dump}</skip>
+                                <includes>
+                                    <include />
+                                </includes>
+                                <fileSets>
+                                    <fileSet>
+                                        <directory>${project.build.directory}</directory>
+                                        <includes>
+                                            <include>*.exec</include>
+                                        </includes>
+                                    </fileSet>
+                                </fileSets>
+                            </configuration>
+                        </execution>
+					</executions>
+				</plugin>
+				<!--plugin to generate code coverage report from the exec files generated -->
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-antrun-plugin</artifactId>
+					<executions>
+						<execution>
+							<configuration>
+								<skip>${skip.int.tests.report}</skip>
+								<target>
+									<!-- Execute an ant task within maven -->
+									<echo message="Generating JaCoCo Reports" />
+									<taskdef name="report"
+										classname="org.jacoco.ant.ReportTask">
+										<classpath
+											path="${basedir}/target/jacoco-jars/org.jacoco.ant.jar" />
+									</taskdef>
+									<mkdir dir="${basedir}/target/coverage-report" />
+									<report>
+										<executiondata>
+											<fileset dir="${basedir}">
+												<include name="target/jacoco-final.exec" />
+											</fileset>
+										</executiondata>
+										<structure
+											name="Mangle VCenter Adapter Coverage Report">
+											<group name="coverage">
+												<classfiles>
+													<fileset dir="target/classes">
+                                                        <exclude name = "**/com/vmware/mangle/model/**/*"/>
+                                                        <exclude name = "**/com/vmware/mangle/utils/restclienttemplate/**/*"/>
+                                                        <exclude name = "**/com/vmware/mangle/utils/serialization/**/*"/>
+                                                        <exclude name = "**/com/vmware/mangle/utils/status/**/*"/>
+                                                    </fileset>
+												</classfiles>
+												<sourcefiles encoding="UTF-8">
+													<fileset dir="src/main/java" />
+												</sourcefiles>
+											</group>
+										</structure>
+										<html destdir="${basedir}/target/coverage-report/html" />
+										<xml
+											destfile="${basedir}/target/coverage-report/coverage-report.xml" />
+										<csv
+											destfile="${basedir}/target/coverage-report/coverage-report.csv" />
+									</report>
+								</target>
+							</configuration>
+						</execution>
+					</executions>
+					<dependencies>
+						<dependency>
+							<groupId>org.jacoco</groupId>
+							<artifactId>org.jacoco.ant</artifactId>
+							<version>${jacoco.ant.version}</version>
+						</dependency>
+					</dependencies>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-antrun-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-checkstyle-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.sonarsource.scanner.maven</groupId>
+				<artifactId>sonar-maven-plugin</artifactId>
+			</plugin>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+		</plugins>
+	</build>
+</project>

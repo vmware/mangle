@@ -11,7 +11,7 @@
 
 package com.vmware.mangle.services.mockdata;
 
-import static com.vmware.mangle.services.constants.CommonConstants.BLOCKSIZE_ARG;
+import static com.vmware.mangle.services.constants.CommonConstants.IO_SIZE_ARG;
 import static com.vmware.mangle.services.constants.CommonConstants.LOAD_ARG;
 import static com.vmware.mangle.services.constants.CommonConstants.TARGET_DIRECTORY_ARG;
 
@@ -29,7 +29,7 @@ import com.vmware.mangle.cassandra.model.faults.specs.DockerFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.JVMAgentFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.JVMCodeLevelFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.JVMProperties;
-import com.vmware.mangle.cassandra.model.faults.specs.K8SFaultSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.K8SDeleteResourceFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.K8SFaultTriggerSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.K8SResourceNotReadyFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.KillProcessFaultSpec;
@@ -65,13 +65,13 @@ public class FaultsMockData {
     private EndpointMockData endpointMockData = new EndpointMockData();
     private CredentialsSpecMockData credentialsSpecMockData = new CredentialsSpecMockData();
 
-    private String faultLoad;
+    private Integer faultLoad;
 
     private String javahomePath;
 
     private String jvmProcess;
 
-    private String jvmProcessPort;
+    private Integer jvmProcessPort;
 
     private String jvmProcessUser;
 
@@ -79,7 +79,7 @@ public class FaultsMockData {
 
     private String testPodLabels;
 
-    private String faultExecutionTimeout;
+    private Integer faultExecutionTimeout;
 
     private String faultTaskId;
 
@@ -99,14 +99,14 @@ public class FaultsMockData {
 
     public FaultsMockData() {
         this.properties = ReadProperty.readProperty(Constants.MOCKDATA_FILE);
-        faultLoad = properties.getProperty("faultLoad");
+        faultLoad = Integer.parseInt(properties.getProperty("faultLoad"));
         javahomePath = properties.getProperty("javahomePath");
         jvmProcess = properties.getProperty("jvmProcess");
-        jvmProcessPort = properties.getProperty("jvmProcessPort");
+        jvmProcessPort = Integer.parseInt(properties.getProperty("jvmProcessPort"));
         jvmProcessUser = properties.getProperty("jvmProcessUser");
         testContainername = properties.getProperty("testContainername");
         testPodLabels = properties.getProperty("testPodLabels");
-        faultExecutionTimeout = properties.getProperty("faultExecutionTimeout");
+        faultExecutionTimeout = Integer.parseInt(properties.getProperty("faultExecutionTimeout"));
         faultTaskId = properties.getProperty("faultTaskId");
         httpMethodsString = properties.getProperty("httpMethodsString");
         servicesString = properties.getProperty("servicesString");
@@ -133,7 +133,7 @@ public class FaultsMockData {
         CpuFaultSpec cpuFaultSpec = new CpuFaultSpec();
         cpuFaultSpec.setCpuLoad(faultLoad);
         Map<String, String> args = new HashMap<>();
-        args.put("__load", cpuFaultSpec.getCpuLoad());
+        args.put("__load", String.valueOf(cpuFaultSpec.getCpuLoad()));
         cpuFaultSpec.setArgs(args);
         cpuFaultSpec.setEndpointName(endpointSpec.getName());
         cpuFaultSpec.setFaultName(AgentFaultName.INJECT_CPU_FAULT.getValue());
@@ -154,7 +154,7 @@ public class FaultsMockData {
         JVMAgentFaultSpec cpuFaultSpec = new JVMAgentFaultSpec();
         cpuFaultSpec.setFaultName(AgentFaultName.INJECT_CPU_FAULT.getValue());
         Map<String, String> args = new HashMap<>();
-        args.put("__load", faultLoad);
+        args.put("__load", String.valueOf(faultLoad));
         cpuFaultSpec.setArgs(args);
 
         cpuFaultSpec.setJvmProperties(getJVMProperties());
@@ -242,8 +242,8 @@ public class FaultsMockData {
         return k8SResourceNotReadyFaultSpec;
     }
 
-    public K8SFaultSpec getDeleteK8SResourceFaultSpec() {
-        K8SFaultSpec k8SFaultSpec = new K8SFaultSpec();
+    public K8SDeleteResourceFaultSpec getDeleteK8SResourceFaultSpec() {
+        K8SDeleteResourceFaultSpec k8SFaultSpec = new K8SDeleteResourceFaultSpec();
         k8SFaultSpec.setEndpoint(endpointMockData.k8sEndpointMockData());
         k8SFaultSpec.setEndpointName(endpointMockData.k8sEndpointMockData().getName());
         k8SFaultSpec.setCredentials(credentialsSpecMockData.getk8SCredentialsData());
@@ -308,7 +308,7 @@ public class FaultsMockData {
         MemoryFaultSpec memoryFaultSpec = new MemoryFaultSpec();
         memoryFaultSpec.setFaultName(AgentFaultName.INJECT_MEMORY_FAULT.getValue());
         Map<String, String> args = new HashMap<>();
-        args.put(LOAD_ARG, faultLoad);
+        args.put(LOAD_ARG, String.valueOf(faultLoad));
         memoryFaultSpec.setArgs(args);
         memoryFaultSpec.setTimeoutInMilliseconds(faultExecutionTimeout);
         memoryFaultSpec.setEndpointName(endpointSpec.getName());
@@ -323,13 +323,14 @@ public class FaultsMockData {
         DiskIOFaultSpec diskIOFaultSpec = new DiskIOFaultSpec();
         diskIOFaultSpec.setFaultName(AgentFaultName.INJECT_DISK_IO_FAULT.getValue());
         Map<String, String> args = new HashMap<>();
-        args.put(BLOCKSIZE_ARG, directoryPath);
-        args.put(TARGET_DIRECTORY_ARG, faultLoad);
+        args.put(IO_SIZE_ARG, directoryPath);
+        args.put(TARGET_DIRECTORY_ARG, String.valueOf(faultLoad));
         diskIOFaultSpec.setArgs(args);
         diskIOFaultSpec.setTimeoutInMilliseconds(faultExecutionTimeout);
         diskIOFaultSpec.setEndpointName(endpointSpec.getName());
         diskIOFaultSpec.setEndpoint(endpointSpec);
         diskIOFaultSpec.setCredentials(credentialsSpec);
+        diskIOFaultSpec.setIoSize(0);
         return diskIOFaultSpec;
     }
 

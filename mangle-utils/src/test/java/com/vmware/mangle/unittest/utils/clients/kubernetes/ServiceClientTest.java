@@ -24,6 +24,7 @@ import org.testng.annotations.Test;
 import com.vmware.mangle.cassandra.model.tasks.commands.CommandExecutionResult;
 import com.vmware.mangle.utils.CommandUtils;
 import com.vmware.mangle.utils.clients.kubernetes.KubernetesCommandLineClient;
+import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.mockdata.CommandResultUtils;
 
 /**
@@ -118,9 +119,11 @@ public class ServiceClientTest extends PowerMockTestCase {
 
     /**
      * Test method for {@link KubernetesCommandLineClient#testConnection()}
+     *
+     * @throws MangleException
      */
     @Test(description = "verify the test connection to the kubernetes cluster")
-    public void testTestConnection() {
+    public void testTestConnection() throws MangleException {
         PowerMockito.mockStatic(CommandUtils.class);
         CommandExecutionResult commandExecutionResult = new CommandExecutionResult();
         commandExecutionResult.setCommandOutput("Client Successfully running");
@@ -133,6 +136,8 @@ public class ServiceClientTest extends PowerMockTestCase {
 
     /**
      * Test method for {@link KubernetesCommandLineClient#testConnection()}
+     *
+     * @throws MangleException
      */
     @Test(description = "verify the test connection failure to the kubernetes cluster")
     public void testTestConnectionFailure() {
@@ -142,8 +147,11 @@ public class ServiceClientTest extends PowerMockTestCase {
         commandExecutionResult.setExitCode(0);
         PowerMockito.when(CommandUtils.runCommand(anyString())).thenReturn(commandExecutionResult);
         KubernetesCommandLineClient client = KubernetesCommandLineClient.getClient(kubeconfig);
-        boolean result = client.testConnection();
-        Assert.assertFalse(result);
+        try {
+            client.testConnection();
+        } catch (MangleException exception) {
+            Assert.assertTrue(true);
+        }
     }
 
     /**

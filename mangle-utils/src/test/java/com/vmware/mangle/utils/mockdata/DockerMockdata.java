@@ -18,7 +18,7 @@ package com.vmware.mangle.utils.mockdata;
  */
 public class DockerMockdata {
     private final String host = "10.134.211.2";
-    private final String port = "2375";
+    private final Integer port = 2375;
     private final String containerName = "test";
     private final String containerId = "test1";
 
@@ -26,7 +26,7 @@ public class DockerMockdata {
         return this.host;
     }
 
-    public String getMockPort() {
+    public Integer getMockPort() {
         return this.port;
     }
 

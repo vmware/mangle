@@ -18,7 +18,6 @@ import org.springframework.data.cassandra.core.convert.CassandraConverter;
 import org.springframework.data.cassandra.core.convert.MappingCassandraConverter;
 import org.springframework.data.convert.ReadingConverter;
 
-import com.vmware.mangle.cassandra.model.endpoint.AWSCredentials;
 import com.vmware.mangle.cassandra.model.endpoint.CredentialsSpec;
 import com.vmware.mangle.cassandra.model.endpoint.K8SCredentials;
 import com.vmware.mangle.cassandra.model.endpoint.RemoteMachineCredentials;
@@ -50,8 +49,9 @@ public class CredentialsSpecReadingConverter implements Converter<Row, Credentia
         switch (endpointType) {
         case MACHINE:
             return (RemoteMachineCredentials) cassandraConverter.read(RemoteMachineCredentials.class, source);
-        case AWS:
-            return (AWSCredentials) cassandraConverter.read(AWSCredentials.class, source);
+        // Will be uncommented when we started supporting AWS endpoint
+        /*case AWS:
+            return (AWSCredentials) cassandraConverter.read(AWSCredentials.class, source);*/
         case K8S_CLUSTER:
             return (K8SCredentials) cassandraConverter.read(K8SCredentials.class, source);
         case VCENTER:

@@ -33,19 +33,24 @@ import com.vmware.mangle.model.enums.SchedulerStatus;
 @Repository
 public interface SchedulerRepository extends CassandraRepository<SchedulerSpec, String> {
 
+    @Override
     @AllowFiltering
     Optional<SchedulerSpec> findById(String id);
 
+    @Override
     List<SchedulerSpec> findAll();
 
+    @Override
     @SuppressWarnings({ "unchecked" })
     SchedulerSpec save(SchedulerSpec schedulerSpec);
 
     @Query("DELETE from schedulerSpec WHERE id IN ?0")
     void deleteByIdIn(Collection<String> taskIds);
 
+    @Override
     void deleteById(String taskId);
 
+    @Override
     Slice<SchedulerSpec> findAll(Pageable pageable);
 
     @AllowFiltering

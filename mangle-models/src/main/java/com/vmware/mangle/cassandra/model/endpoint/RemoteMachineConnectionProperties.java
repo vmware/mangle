@@ -13,6 +13,11 @@ package com.vmware.mangle.cassandra.model.endpoint;
 
 import java.io.Serializable;
 
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+
 import com.datastax.driver.core.DataType.Name;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModel;
@@ -35,14 +40,18 @@ public class RemoteMachineConnectionProperties implements Serializable {
     private static final long serialVersionUID = 1L;
     @ApiModelProperty(value = "Target machine's Hostname or IP", example = "10.123.45.68 or mangle.vmware.com")
     @JsonProperty(required = true)
+    @NotEmpty
     private String host;
     @ApiModelProperty(value = "SSH port of the target machine", dataType = "java.lang.Integer", example = "22")
     @JsonProperty(required = false, defaultValue = "22")
-    private Integer sshPort = 22;
+    @NotNull
+    @Min(0) @Max(65535) private Integer sshPort = 22;
     @ApiModelProperty(value = "SSH connection timeout", dataType = "java.lang.Integer", example = "1000")
+    @NotNull
     @JsonProperty(required = false, defaultValue = "60000")
-    private Integer timeout = 60000;
+    @Min(0) @Max(2147483647) private Integer timeout = 60000;
     @ApiModelProperty(value = "Please select OSType from existing enums", example = "LINUX")
+    @NotNull
     @JsonProperty(required = true)
     @CassandraType(type = Name.VARCHAR)
     private OSType osType;

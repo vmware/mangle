@@ -11,7 +11,6 @@
 
 package com.vmware.mangle.unittest.services.hazelcast;
 
-import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
@@ -20,9 +19,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.net.UnknownHostException;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 
 import com.hazelcast.core.Cluster;
@@ -31,8 +27,6 @@ import com.hazelcast.core.EntryEventType;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IMap;
 import com.hazelcast.core.Member;
-import com.hazelcast.core.Partition;
-import com.hazelcast.core.PartitionService;
 import com.hazelcast.nio.Address;
 import com.hazelcast.partition.PartitionLostEvent;
 import org.mockito.InjectMocks;
@@ -90,66 +84,32 @@ public class HazelcastTaskMapListenerTest {
     @Test
     public void testEntryRemovedInprogressStatus() {
         String memberId = UUID.randomUUID().toString();
-        PartitionService partitionService = mock(PartitionService.class);
         Member member = mock(Member.class);
-        Partition partition = mock(Partition.class);
         String key = UUID.randomUUID().toString();
         String value = TaskStatus.IN_PROGRESS.name();
 
-        Set<String> nodeTasks = new HashSet<>(Arrays.asList(key, UUID.randomUUID().toString()));
-
-
-        when(hz.getPartitionService()).thenReturn(partitionService);
-        when(partitionService.getPartition(anyString())).thenReturn(partition);
-        when(partition.getOwner()).thenReturn(member);
-        when(member.getUuid()).thenReturn(memberId);
-        when(hz.getMap("nodeTasks")).thenReturn(nodeMap);
-        when(nodeMap.get(memberId)).thenReturn(nodeTasks);
-
+        doNothing().when(hazelcastTaskService).removeTaskFromClusterNodeCache(anyString());
 
         EntryEvent<String, String> event =
                 new EntryEvent<>(memberId, member, EntryEventType.REMOVED.getType(), key, value);
         listener.entryRemoved(event);
-
-        verify(hz, times(1)).getPartitionService();
-        verify(partitionService, times(1)).getPartition(key);
-        verify(partition, times(1)).getOwner();
-        verify(member, times(1)).getUuid();
-        verify(hz, times(1)).getMap(any());
-        verify(nodeMap, times(1)).get(memberId);
+        verify(hazelcastTaskService, times(1)).removeTaskFromClusterNodeCache(anyString());
     }
 
     @Test
     public void testEntryRemovedNoNodeTasks() {
         String memberId = UUID.randomUUID().toString();
-        PartitionService partitionService = mock(PartitionService.class);
         Member member = mock(Member.class);
-        Partition partition = mock(Partition.class);
         String key = UUID.randomUUID().toString();
         String value = TaskStatus.IN_PROGRESS.name();
 
-        Set<String> nodeTasks = new HashSet<>();
-
-
-        when(hz.getPartitionService()).thenReturn(partitionService);
-        when(partitionService.getPartition(anyString())).thenReturn(partition);
-        when(partition.getOwner()).thenReturn(member);
-        when(member.getUuid()).thenReturn(memberId);
-        when(hz.getMap("nodeTasks")).thenReturn(nodeMap);
-        when(nodeMap.get(memberId)).thenReturn(nodeTasks);
-
+        doNothing().when(hazelcastTaskService).removeTaskFromClusterNodeCache(anyString());
 
         EntryEvent<String, String> event =
                 new EntryEvent<>(memberId, member, EntryEventType.REMOVED.getType(), key, value);
         listener.entryRemoved(event);
 
-        verify(hz, times(1)).getPartitionService();
-        verify(partitionService, times(1)).getPartition(key);
-        verify(partition, times(1)).getOwner();
-        verify(member, times(1)).getUuid();
-        verify(hz, times(1)).getMap(any());
-        verify(nodeMap, times(1)).get(memberId);
-        verify(nodeMap, times(0)).put(anyString(), anyString());
+        verify(hazelcastTaskService, times(1)).removeTaskFromClusterNodeCache(anyString());
     }
 
     @Test

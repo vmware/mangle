@@ -49,31 +49,36 @@
 #        prop= sets system property 'prop' to an empty string
 #        prop unsets system property 'prop'
 #
-#   -v print the version of the byteman agent and this client 
+#   -v print the version of the byteman agent and this client
 #
 # use BYTEMAN_HOME to locate installed byteman release
-if [ -z "$BYTEMAN_HOME" ]; then
+if [ -z "$BYTEMAN_HOME" ]
+then
 # use the root of the path to this file to locate the byteman jar
     BYTEMAN_HOME=${0%*/bin/bmsubmit.sh}
 # allow for rename to plain submit
-    if [ "$BYTEMAN_HOME" == "$0" ]; then
+    if [ "$BYTEMAN_HOME" = "$0" ]
+    then
 	BYTEMAN_HOME=${0%*/bin/bmsubmit}
     fi
-    if [ "$BYTEMAN_HOME" == "$0" ]; then
+    if [ "$BYTEMAN_HOME" = "$0" ]
+    then
 	echo "Unable to find byteman home"
 	exit
     fi
 fi
 
 # the byteman and byteman-submit jars should be in ${BYTEMAN_HOME}/lib
-if [ -r ${BYTEMAN_HOME}/lib/fiaasco-byteman.jar ]; then
-    BYTEMAN_JAR=${BYTEMAN_HOME}/lib/fiaasco-byteman.jar
+if [ -r ${BYTEMAN_HOME}/lib/mangle-byteman.jar ]
+then
+    BYTEMAN_JAR=${BYTEMAN_HOME}/lib/mangle-byteman.jar
 else
-    echo "Cannot locate fiaasco-byteman jar"
+    echo "Cannot locate mangle-byteman jar"
     exit
 fi
-if [ -r ${BYTEMAN_HOME}/lib/byteman-submit.jar ]; then
-    BYTEMAN_SUBMIT_JAR=${BYTEMAN_HOME}/lib/byteman-submit.jar
+if [ -r ${BYTEMAN_HOME}/lib/mangle-byteman-submit.jar ]
+then
+    BYTEMAN_SUBMIT_JAR=${BYTEMAN_HOME}/lib/mangle-byteman-submit.jar
 else
     echo "Cannot locate byteman-submit jar"
     exit

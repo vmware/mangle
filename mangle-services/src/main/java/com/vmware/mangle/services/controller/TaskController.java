@@ -11,10 +11,16 @@
 
 package com.vmware.mangle.services.controller;
 
+import java.text.ParseException;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -23,16 +29,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.vmware.mangle.cassandra.model.faults.specs.TaskSpec;
 import com.vmware.mangle.cassandra.model.tasks.Task;
-import com.vmware.mangle.model.enums.OperationStatus;
 import com.vmware.mangle.model.response.DeleteOperationResponse;
+import com.vmware.mangle.model.response.ErrorDetails;
 import com.vmware.mangle.services.TaskService;
-import com.vmware.mangle.services.constants.CommonConstants;
 import com.vmware.mangle.services.deletionutils.TaskDeletionService;
 import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
@@ -41,7 +47,7 @@ import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
  * @author hkilari
  *
  */
-
+@Log4j2
 @RestController
 @Api(value = "/rest/api/v1/tasks")
 @RequestMapping("/rest/api/v1/tasks")
@@ -60,6 +66,7 @@ public class TaskController {
     @GetMapping(value = "", produces = "application/json")
     public ResponseEntity<List<Task<TaskSpec>>> getAllTasks(
             @RequestParam(name = "isScheduledTask", required = false) Boolean isScheduledTask) throws MangleException {
+        log.info("Received request to retrieve details of all the tasks");
         List<Task<TaskSpec>> tasks = null;
         if (isScheduledTask != null) {
             tasks = taskService.getTaskByIsScheduledTask(isScheduledTask);
@@ -72,6 +79,7 @@ public class TaskController {
     @ApiOperation(value = "API to get task details from Mangle using its id", nickname = "getTaskInfo")
     @GetMapping(value = "/{taskId}", produces = "application/json")
     public ResponseEntity<Task<TaskSpec>> getTask(@PathVariable String taskId) throws MangleException {
+        log.info("Received request to retrieve details for the task with the taskId: {}", taskId);
         if (StringUtils.isEmpty(taskId)) {
             throw new MangleException(ErrorCode.NO_TASK_FOUND, taskId);
         }
@@ -82,19 +90,29 @@ public class TaskController {
 
     @ApiOperation(value = "API to delete tasks from the application")
     @DeleteMapping(value = "", produces = "application/json")
-    public ResponseEntity<DeleteOperationResponse> deleteTasks(@RequestParam List<String> tasksIds)
-            throws MangleException {
+    public ResponseEntity<ErrorDetails> deleteTasks(@RequestParam List<String> tasksIds) throws MangleException {
         DeleteOperationResponse response = taskDeletionService.deleteTasksByIds(tasksIds);
-        HttpStatus responseStatus = HttpStatus.OK;
-        HttpHeaders headers = new HttpHeaders();
+        ErrorDetails errorDetails = new ErrorDetails();
         if (response.getAssociations().size() == 0) {
-            response.setResult(OperationStatus.SUCCESS);
-            headers.add(CommonConstants.MESSAGE_HEADER, CommonConstants.TASKS_DELETED);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         } else {
-            responseStatus = HttpStatus.PRECONDITION_FAILED;
-            response.setResult(OperationStatus.FAILED);
+            Map<String, Map<String, List<String>>> associations = new HashMap<>();
+            associations.put("associations", response.getAssociations());
+            errorDetails.setTimestamp(new Date());
+            errorDetails.setDescription(response.getResponseMessage());
+            errorDetails.setCode(ErrorCode.DELETE_OPERATION_FAILED.getCode());
+            errorDetails.setDetails(associations);
         }
 
-        return new ResponseEntity<>(response, responseStatus);
+        return new ResponseEntity<>(errorDetails, HttpStatus.PRECONDITION_FAILED);
+    }
+
+    @ApiOperation(value = "API to clean-up of InProgress tasks since threshold time specified", nickname = "cleanupInprogressTasks")
+    @PutMapping(value = "/clean-up")
+    public ResponseEntity<String> cleanupInprogressTasks(
+            @ApiParam(value = "Task cleanup threshold value in minutes") @RequestParam(value = "taskCleanupThreshold", required = false, defaultValue = "60") String taskCleanupThreshold)
+            throws ParseException, MangleException {
+        return new ResponseEntity<>(taskService.cleanupInprogressTasks(Long.parseLong(taskCleanupThreshold)),
+                HttpStatus.OK);
     }
 }

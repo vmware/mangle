@@ -47,20 +47,24 @@ public class User {
     @JsonIgnore
     private Set<Role> roles;
 
+    private String password;
+
     @Column
     @Indexed
     private Set<String> roleNames;
 
-    public User(String name, Set<Role> roles) {
+    public User(String name, String password, Set<Role> roles) {
         this.name = name;
         this.roles = roles;
+        this.password = password;
     }
 
-    public User(String name, Role role) {
+    public User(String name, String password, Role role) {
         this.name = name;
         Set<Role> roleSet = new HashSet<>(Arrays.asList(role));
         this.setRoleNames(roleSet.stream().map(Role::getName).collect(Collectors.toSet()));
         this.roles = roleSet;
+        this.password = password;
     }
 
     public User() {

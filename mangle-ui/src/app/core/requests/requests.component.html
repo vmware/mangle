@@ -1,6 +1,6 @@
 <div class="main-container">
     <div class="content-container">
-        <div class="content-area">
+        <div class="content-area height-1200">
             <router-outlet></router-outlet>
         </div>
         <clr-vertical-nav [clrVerticalNavCollapsible]="requestsCollapsible">
@@ -9,7 +9,7 @@
                 <clr-vertical-nav-group-children *clrIfExpanded="true">
                     <a clrVerticalNavLink [routerLink]="['processed']" routerLinkActive="active">Processed Requests</a>
                     <a clrVerticalNavLink [routerLink]="['scheduled']" routerLinkActive="active">Scheduled Jobs</a>
-                    <a clrVerticalNavLink href="application/logfile" target="_blank">Request Logs</a>
+                    <a clrVerticalNavLink href="application/logfile" target="_blank">Logs</a>
                 </clr-vertical-nav-group-children>
             </clr-vertical-nav-group>
         </clr-vertical-nav>

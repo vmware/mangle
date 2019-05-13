@@ -27,6 +27,7 @@ import org.springframework.stereotype.Component;
 import com.vmware.mangle.cassandra.model.security.ADAuthProviderDto;
 import com.vmware.mangle.cassandra.model.security.UsernameDomain;
 import com.vmware.mangle.services.ADAuthProviderService;
+import com.vmware.mangle.services.PrivilegeService;
 import com.vmware.mangle.services.UserService;
 
 /**
@@ -42,11 +43,14 @@ public class ADAuthProvider implements AuthenticationProvider {
 
     private UserService userService;
     private ADAuthProviderService adAuthProviderService;
+    private PrivilegeService privilegeService;
 
     @Autowired
-    public ADAuthProvider(ADAuthProviderService adAuthProviderService, UserService userService) {
+    public ADAuthProvider(ADAuthProviderService adAuthProviderService, UserService userService,
+            PrivilegeService privilegeService) {
         this.userService = userService;
         this.adAuthProviderService = adAuthProviderService;
+        this.privilegeService = privilegeService;
     }
 
     @PostConstruct
@@ -143,7 +147,7 @@ public class ADAuthProvider implements AuthenticationProvider {
     public AuthenticationProvider activeDirectoryLdapAuthenticationProvider(String adUrl, String adDomain) {
         log.debug(String.format("Instantiating new AD provider with AD url %s and AD domain %s", adUrl, adDomain));
         CustomActiveDirectoryLdapAuthenticationProvider provider =
-                new CustomActiveDirectoryLdapAuthenticationProvider(userService, adDomain, adUrl);
+                new CustomActiveDirectoryLdapAuthenticationProvider(userService, privilegeService, adDomain, adUrl);
         provider.setConvertSubErrorCodesToExceptions(true);
         provider.setUseAuthenticationRequestCredentials(true);
 

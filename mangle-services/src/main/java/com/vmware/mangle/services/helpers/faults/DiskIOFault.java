@@ -11,8 +11,8 @@
 
 package com.vmware.mangle.services.helpers.faults;
 
-import static com.vmware.mangle.services.constants.CommonConstants.BLOCKSIZE_ARG;
 import static com.vmware.mangle.services.constants.CommonConstants.DEFAULT_BLOCK_SIZE;
+import static com.vmware.mangle.services.constants.CommonConstants.IO_SIZE_ARG;
 import static com.vmware.mangle.services.constants.CommonConstants.TARGET_DIRECTORY_ARG;
 
 import java.util.HashMap;
@@ -38,13 +38,12 @@ public class DiskIOFault extends AbstractFault {
     protected Map<String, String> getFaultSpecificArgs() {
         DiskIOFaultSpec localFaultSpec = (DiskIOFaultSpec) faultSpec;
         Map<String, String> specificArgs = new HashMap<>();
-        if ("0".equals(localFaultSpec.getIoSize())) {
-            specificArgs.put(BLOCKSIZE_ARG, DEFAULT_BLOCK_SIZE);
+        if (0 == localFaultSpec.getIoSize()) {
+            specificArgs.put(IO_SIZE_ARG, DEFAULT_BLOCK_SIZE);
         } else {
-            specificArgs.put(BLOCKSIZE_ARG, localFaultSpec.getIoSize());
+            specificArgs.put(IO_SIZE_ARG, String.valueOf(localFaultSpec.getIoSize()));
         }
         specificArgs.put(TARGET_DIRECTORY_ARG, localFaultSpec.getTargetDir());
         return specificArgs;
     }
-
 }

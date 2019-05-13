@@ -13,6 +13,8 @@ package com.vmware.mangle.cassandra.model.endpoint;
 
 import java.io.Serializable;
 
+import javax.validation.constraints.NotEmpty;
+
 import io.swagger.annotations.ApiModel;
 import lombok.Data;
 import org.springframework.data.cassandra.core.mapping.UserDefinedType;
@@ -27,5 +29,6 @@ import org.springframework.data.cassandra.core.mapping.UserDefinedType;
 @Data
 public class AWSConnectionProperties implements Serializable {
     private static final long serialVersionUID = 1L;
+    @NotEmpty
     private String region;
 }

@@ -6,7 +6,7 @@
 </clr-alert>
 <h1>Processed Requests</h1><clr-icon shape="refresh" (click)="getAllProcessedTasks();"></clr-icon><br />
 <clr-datagrid [clrDgLoading]="isLoading">
-    <clr-dg-column>Task Name</clr-dg-column>
+    <clr-dg-column [clrDgField]="'taskName'">Task Name</clr-dg-column>
     <clr-dg-column style="min-width:144px;" [clrDgField]="'triggerui.taskStatus'">Status</clr-dg-column>
     <clr-dg-column [clrDgField]="'taskData.endpointName'">Endpoint Name</clr-dg-column>
     <clr-dg-column [clrDgField]="'taskType'">Task Type</clr-dg-column>
@@ -15,8 +15,8 @@
     <clr-dg-column [clrDgField]="'triggerui.endTime'">End Time</clr-dg-column>
     <clr-dg-row *clrDgItems="let processedRequest of processedRequests" [clrDgItem]="processedRequest">
         <clr-dg-action-overflow>
-            <button class="action-item" (click)="deleteTask(processedRequest);" *ngIf="processedRequest.triggerui.taskStatus == 'COMPLETED' || processedRequest.triggerui.taskStatus == 'FAILED' || processedRequest.triggerui.taskStatus == 'CANCELLED'">Delete</button>
-            <button class="action-item" (click)="remediateFault(processedRequest);" *ngIf="processedRequest.remediated==false && processedRequest.scheduledTask==false && processedRequest.taskType=='INJECTION'">Remediate Fault</button>
+            <button class="action-item" (click)="deleteTask(processedRequest);" *ngIf="processedRequest.triggerui.taskStatus != 'IN_PROGRESS' && processedRequest.triggerui.taskStatus != 'NOT STARTED'">Delete</button>
+            <button class="action-item" (click)="remediateFault(processedRequest);" *ngIf="processedRequest.remediated==false && processedRequest.scheduledTask==false && processedRequest.taskType=='INJECTION' && processedRequest.triggerui.taskStatus == 'COMPLETED'">Remediate Fault</button>
             <button class="action-item" (click)="viewReport(processedRequest);viewReportFlage=true;">Report</button>
         </clr-dg-action-overflow>
         <clr-dg-cell style="overflow:hidden;">{{processedRequest.taskName}}</clr-dg-cell>
@@ -32,12 +32,12 @@
         <clr-dg-cell style="overflow:hidden;">{{processedRequest.taskData.endpointName}}</clr-dg-cell>
         <clr-dg-cell style="overflow:hidden;">{{processedRequest.taskType}}</clr-dg-cell>
         <clr-dg-cell style="overflow:hidden;">{{processedRequest.taskDescription}}</clr-dg-cell>
-        <clr-dg-cell style="overflow:hidden;">{{processedRequest.triggerui.startTime | date:'EEE MMM dd HH:mm:ss z yyyy'}}</clr-dg-cell>
-        <clr-dg-cell style="overflow:hidden;">{{processedRequest.triggerui.endTime | date:'EEE MMM dd HH:mm:ss z yyyy'}}</clr-dg-cell>
+        <clr-dg-cell style="overflow:hidden;">{{processedRequest.triggerui.startTime | date:'medium'}}</clr-dg-cell>
+        <clr-dg-cell style="overflow:hidden;">{{processedRequest.triggerui.endTime | date:'medium'}}</clr-dg-cell>
     </clr-dg-row>
     <clr-dg-footer>
-        <clr-dg-pagination #pagination [clrDgPageSize]="30">
-            <clr-dg-page-size [clrPageSizeOptions]="[30,50,100]">Requests per page</clr-dg-page-size>
+        <clr-dg-pagination #pagination [clrDgPageSize]="10">
+            <clr-dg-page-size [clrPageSizeOptions]="[10,20,50,100]">Requests per page</clr-dg-page-size>
             {{pagination.firstItem + 1}} - {{pagination.lastItem + 1}} of {{pagination.totalItems}} requests
         </clr-dg-pagination>
     </clr-dg-footer>

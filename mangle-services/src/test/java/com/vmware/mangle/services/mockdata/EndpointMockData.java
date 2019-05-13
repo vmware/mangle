@@ -14,7 +14,6 @@ package com.vmware.mangle.services.mockdata;
 import java.util.HashMap;
 import java.util.Properties;
 
-import com.vmware.mangle.cassandra.model.endpoint.AWSConnectionProperties;
 import com.vmware.mangle.cassandra.model.endpoint.DockerConnectionProperties;
 import com.vmware.mangle.cassandra.model.endpoint.EndpointSpec;
 import com.vmware.mangle.cassandra.model.endpoint.K8SConnectionProperties;
@@ -29,17 +28,17 @@ import com.vmware.mangle.utils.constants.Constants;
 /**
  * Endpoint Mock Data.
  *
- * @author kumargautam
+ * @author kumargautam, dbhat
  */
 public class EndpointMockData {
 
     private Properties properties;
     // AWS Connection Properties
-    private String awsRegion;
+    //private String awsRegion;
 
     // Docker Connection Properties
     private String dockerHostname;
-    private String dockerPort;
+    private Integer dockerPort;
     private boolean tlsEnabled;
 
     // RemoteMachine Connection Properties
@@ -55,9 +54,9 @@ public class EndpointMockData {
 
     public EndpointMockData() {
         this.properties = ReadProperty.readProperty(Constants.MOCKDATA_FILE);
-        this.awsRegion = properties.getProperty("awsRegion");
+        //this.awsRegion = properties.getProperty("awsRegion");
         this.dockerHostname = properties.getProperty("dockerHostName");
-        this.dockerPort = properties.getProperty("dockerPort");
+        this.dockerPort = Integer.parseInt(properties.getProperty("dockerPort"));
         this.tlsEnabled = Boolean.parseBoolean(properties.getProperty("dockertlsEnabled"));
 
         this.host = properties.getProperty("rmHost");
@@ -69,7 +68,8 @@ public class EndpointMockData {
         vcenterIp = properties.getProperty("vcenter.ip");
     }
 
-    public EndpointSpec awsEndpointMockData() {
+    //Will be uncommented when started supporting AWS endpoint
+    /*public EndpointSpec awsEndpointMockData() {
         EndpointSpec awsEndpointSpec = new EndpointSpec();
         Properties properties = ReadProperty.readProperty(Constants.MOCKDATA_FILE);
         awsEndpointSpec.setName(properties.getProperty("awsEndpointName"));
@@ -77,7 +77,7 @@ public class EndpointMockData {
         awsEndpointSpec.setCredentialsName(properties.getProperty("awsName"));
         awsEndpointSpec.setAwsConnectionProperties(getAWSConnectionProperties());
         return awsEndpointSpec;
-    }
+    }*/
 
     public EndpointSpec k8sEndpointMockData() {
         EndpointSpec k8sEndpointSpec = new EndpointSpec();
@@ -118,12 +118,12 @@ public class EndpointMockData {
         return rmEndpointSpec;
     }
 
-    public AWSConnectionProperties getAWSConnectionProperties() {
+    //Will be uncommented when we started supporting AWS endpoint
+    /*public AWSConnectionProperties getAWSConnectionProperties() {
         AWSConnectionProperties awsConnectionProperties = new AWSConnectionProperties();
         awsConnectionProperties.setRegion(awsRegion);
         return awsConnectionProperties;
-    }
-
+    }*/
     public void getA() {
 
     }
@@ -178,9 +178,6 @@ public class EndpointMockData {
         WaveFrontConnectionProperties waveFrontConnectionProperties = new WaveFrontConnectionProperties();
         waveFrontConnectionProperties.setWavefrontInstance(properties.getProperty("WavefrontInstance"));
         waveFrontConnectionProperties.setWavefrontAPIToken(properties.getProperty("WavefrontAPIToken"));
-        waveFrontConnectionProperties.setWaveFrontProxy(properties.getProperty("WaveFrontProxy"));
-        waveFrontConnectionProperties
-                .setWaveFrontProxyPort(Integer.parseInt(properties.getProperty("WaveFrontProxyPort")));
         waveFrontConnectionProperties.setSource(properties.getProperty("WaveFrontSource"));
         HashMap<String, String> staticTags = new HashMap<>();
         staticTags.put(properties.getProperty("WaveFrontStaticTagKey"),

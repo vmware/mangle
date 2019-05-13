@@ -14,7 +14,6 @@ package com.vmware.mangle.services.events.schedule;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import com.vmware.mangle.model.enums.SchedulerStatus;
 import com.vmware.mangle.services.cassandra.model.events.basic.Event;
 
 /**
@@ -27,9 +26,9 @@ import com.vmware.mangle.services.cassandra.model.events.basic.Event;
 public class ScheduleUpdatedEvent extends Event {
     private static final long serialVersionUID = 1L;
     private String scheduleID;
-    private SchedulerStatus scheduleStatus;
+    private String scheduleStatus;
 
-    public ScheduleUpdatedEvent(String scheduleId, SchedulerStatus scheduleStatus) {
+    public ScheduleUpdatedEvent(String scheduleId, String scheduleStatus) {
         super("ScheduleUpdatedEvent",
                 "Scheduler with the Id " + scheduleId + " is updated to status:" + scheduleStatus);
         this.scheduleID = scheduleId;

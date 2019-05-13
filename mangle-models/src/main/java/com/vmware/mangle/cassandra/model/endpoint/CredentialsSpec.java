@@ -12,6 +12,7 @@
 package com.vmware.mangle.cassandra.model.endpoint;
 
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Pattern;
 
 import com.datastax.driver.core.DataType.Name;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -47,6 +48,7 @@ public class CredentialsSpec extends MangleDto {
     private String id;
     @PrimaryKeyColumn(value = "name", ordering = Ordering.ASCENDING, type = PrimaryKeyType.PARTITIONED)
     @NotEmpty
+    @Pattern(regexp = "^[A-Za-z0-9-_.]+$", message = "consists only alphanumeric with special characters (_ - .)")
     private String name;
 
     @JsonProperty(required = false)

@@ -48,7 +48,7 @@ public class CommandUtils implements ICommandExecutor {
     public static CommandExecutionResult runCommand(String command, long timeout) {
         StringBuilder commandOutput = new StringBuilder();
         CommandExecutionResult commandExecutionResult = new CommandExecutionResult();
-        log.info(LOG_MESSAGE + command);
+        log.debug(LOG_MESSAGE + command);
         try {
             Process process = Runtime.getRuntime().exec(createCommandArray(command));
             StreamGobbler errorGobbler = new StreamGobbler(process.getErrorStream());
@@ -60,10 +60,13 @@ public class CommandUtils implements ICommandExecutor {
             } else {
                 process.waitFor();
             }
+            errorGobbler.join();
+            outputGobbler.join();
             commandOutput.append(errorGobbler.getOutput());
             commandOutput.append(outputGobbler.getOutput());
             commandExecutionResult.setExitCode(process.exitValue());
             commandExecutionResult.setCommandOutput(commandOutput.toString());
+            log.debug("Command Output:" + commandOutput.toString());
             return getCommandExecutionResult(process, commandExecutionResult);
 
         } catch (IOException | InterruptedException e) {

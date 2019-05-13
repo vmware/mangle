@@ -19,10 +19,7 @@ import java.io.StringReader;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.Socket;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -32,6 +29,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.StringTokenizer;
+import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -41,6 +39,7 @@ import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.FileUtils;
 import org.springframework.context.annotation.Description;
 import org.springframework.util.ResourceUtils;
+import org.springframework.util.StringUtils;
 
 import com.vmware.mangle.cassandra.model.tasks.SupportScriptInfo;
 import com.vmware.mangle.utils.clients.ssh.SSHUtils;
@@ -170,27 +169,6 @@ public class CommonUtils {
             output.append(runCommand(cmd, vmIP, vmUser, vmPassword));
         }
         return output.toString();
-    }
-
-    /**
-     * Method to replace a string in file
-     *
-     * @param file
-     * @param targetString
-     * @param replacementString
-     * @return true or false
-     */
-    public static boolean replaceStringInFileContent(File file, String targetString, String replacementString) {
-        Path path = Paths.get(file.toURI());
-        try {
-            String content = new String(Files.readAllBytes(path), Charset.defaultCharset());
-            content = content.replaceAll(targetString, replacementString);
-            Files.write(path, content.getBytes(Charset.defaultCharset()));
-            return true;
-        } catch (IOException e) {
-            log.error(e);
-            return false;
-        }
     }
 
     public static String getLogfilePath(String executionName) {
@@ -372,7 +350,11 @@ public class CommonUtils {
     public static String convertMaptoDelimitedString(Map<String, String> args, String delimiter) {
         StringBuilder text = new StringBuilder();
         for (Entry<String, String> entry : args.entrySet()) {
-            text.append(entry.getKey() + delimiter + entry.getValue() + delimiter);
+            String value = entry.getValue();
+            if (StringUtils.isEmpty(value)) {
+                value = " ";
+            }
+            text.append(entry.getKey() + delimiter + value + delimiter);
         }
         return text.substring(0, text.length() - 1);
     }
@@ -443,7 +425,37 @@ public class CommonUtils {
      * @return : String version of time corresponding to the epoch miliseconds specified.
      */
     public static String getTime(long epochMillis) {
-        Date date = new Date(epochMillis);
-        return date.toString();
+        DateFormat formatter = new SimpleDateFormat(Constants.GMT_DATE_FORMAT);
+        formatter.setTimeZone(TimeZone.getTimeZone(Constants.GMT));
+        return formatter.format(new Date(epochMillis));
+    }
+
+    /**
+     * @param stringMap
+     * @return: String array constructed by the provided map.
+     */
+    public static String[] getStringArrayFromMap(Map<String, String> stringMap) {
+
+        String[] stringArray = new String[stringMap.size() * 2];
+        int count = 0;
+        for (Entry<String, String> each : stringMap.entrySet()) {
+            stringArray[count] = each.getKey();
+            count++;
+            stringArray[count] = each.getValue();
+            count++;
+        }
+        return stringArray;
+    }
+
+    /**
+     * @param str
+     * @return true if matches the regexp else false
+     */
+    public static boolean validateName(String str) {
+        if (StringUtils.hasLength(str)) {
+            String regexp = "^[A-Za-z0-9-_.]+$";
+            return str.matches(regexp);
+        }
+        return false;
     }
 }

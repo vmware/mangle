@@ -27,6 +27,8 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -99,32 +101,74 @@ public class SecurityConfig implements WebMvcConfigurer {
         private final String adminRead = DefaultPrivileges.ADMIN_READ.name();
         private final String userReadWrite = DefaultPrivileges.USER_READ_WRITE.name();
         private final String readOnly = DefaultPrivileges.READONLY.name();
+        private final String rest = "/rest";
+        private final String v1_api = "/api/v1/";
+        private final String rest_v1_api = rest + v1_api;
 
         @Override
         protected void configure(HttpSecurity http) throws Exception {
             http.httpBasic().and().authorizeRequests()
                     .antMatchers("/", "/*.html", "/*.js", "/*.map", "/assets/**", "/*.ico").permitAll()
-                    .antMatchers("/rest/api/v1/auth-provider-management/domains").permitAll()
-                    .antMatchers(HttpMethod.GET, "/rest/api/v1/authentication-management/users/admin").permitAll()
-                    .antMatchers(HttpMethod.GET, "/rest/api/v1/user-authentication-management/**")
+
+                    .antMatchers(rest_v1_api + "auth-provider-management/domains").permitAll()
+
+                    .antMatchers(HttpMethod.GET, rest_v1_api + "user-management/users/admin").permitAll()
+
+                    .antMatchers(HttpMethod.GET, rest_v1_api + "tasks")
+                    .hasAnyAuthority(adminRead, adminReadWrite, readOnly, userReadWrite)
+
+                    .antMatchers(HttpMethod.GET, rest_v1_api + "tasks/**")
+                    .hasAnyAuthority(adminRead, adminReadWrite, readOnly, userReadWrite)
+
+                    .antMatchers(HttpMethod.GET, rest_v1_api + "scheduler")
+                    .hasAnyAuthority(adminRead, adminReadWrite, readOnly, userReadWrite)
+
+                    .antMatchers(HttpMethod.GET, rest_v1_api + "endpoints")
+                    .hasAnyAuthority(adminRead, adminReadWrite, readOnly, userReadWrite)
+
+                    .antMatchers(HttpMethod.GET, rest_v1_api + "endpoints/**")
+                    .hasAnyAuthority(adminRead, adminReadWrite, readOnly, userReadWrite)
+
+                    .antMatchers(HttpMethod.GET, rest_v1_api + "role-management/roles")
+                    .hasAnyAuthority(adminRead, adminReadWrite, readOnly, userReadWrite)
+
+                    .antMatchers(HttpMethod.GET, rest_v1_api + "role-management/privileges")
                     .hasAnyAuthority(adminRead, adminReadWrite)
-                    .antMatchers("/rest/api/v1/user-authentication-management/**").hasAuthority(adminReadWrite)
-                    .antMatchers(HttpMethod.GET, "/rest/api/v1/role-management/**")
-                    .hasAnyAuthority(adminRead, adminReadWrite).antMatchers("/rest/api/v1/role-management/**")
-                    .hasAuthority(adminReadWrite).antMatchers("/rest/api/v1/user-management/user")
+
+                    .antMatchers(rest_v1_api + "role-management/**").hasAuthority(adminReadWrite)
+
+                    .antMatchers(rest_v1_api + "user-management/user")
                     .hasAnyAuthority(adminRead, adminReadWrite, readOnly)
-                    .antMatchers(HttpMethod.GET, "/rest/api/v1/user-management/**")
-                    .hasAnyAuthority(adminRead, adminReadWrite).antMatchers("/rest/api/v1/user-management/**")
-                    .hasAuthority(adminReadWrite)
-                    .antMatchers(HttpMethod.GET, "/rest/api/v1/auth-provider-management/**")
-                    .hasAnyAuthority(adminRead, adminReadWrite).antMatchers("/rest/api/v1/auth-provider-management/**")
-                    .hasAuthority(adminReadWrite).antMatchers(HttpMethod.GET, "/rest/api/v1/scheduler/**")
-                    .hasAnyAuthority(adminRead, adminReadWrite).antMatchers("/rest/api/v1/scheduler/**")
-                    .hasAuthority(adminReadWrite).antMatchers("/rest/api/v1/endpoints/**")
-                    .hasAnyAuthority(adminRead, adminReadWrite, userReadWrite).antMatchers("/rest/api/**")
-                    .hasAuthority(adminReadWrite).antMatchers("/rest/api/v1/administration/**")
-                    .hasAnyAuthority(adminRead, adminReadWrite, userReadWrite).and().logout()
-                    .deleteCookies("JSESSIONID");
+
+                    .antMatchers(rest_v1_api + "user-management/password")
+                    .hasAnyAuthority(adminRead, adminReadWrite, userReadWrite, readOnly)
+
+                    .antMatchers(HttpMethod.GET, rest_v1_api + "user-management/**")
+                    .hasAnyAuthority(adminRead, adminReadWrite)
+
+                    .antMatchers(rest_v1_api + "user-management/**").hasAuthority(adminReadWrite)
+
+                    .antMatchers(HttpMethod.GET, rest_v1_api + "auth-provider-management/**")
+                    .hasAnyAuthority(adminRead, adminReadWrite)
+
+                    .antMatchers(rest_v1_api + "auth-provider-management/**").hasAuthority(adminReadWrite)
+
+                    .antMatchers(HttpMethod.GET, rest_v1_api + "scheduler/**")
+                    .hasAnyAuthority(adminRead, adminReadWrite)
+
+                    .antMatchers(rest_v1_api + "scheduler/**").hasAuthority(adminReadWrite)
+
+                    .antMatchers(rest_v1_api + "endpoints/**").hasAnyAuthority(adminRead, adminReadWrite, userReadWrite)
+
+                    .antMatchers(rest_v1_api + "faults/**").hasAnyAuthority(adminRead, adminReadWrite, userReadWrite)
+
+                    .antMatchers(rest + "/api/**").hasAuthority(adminReadWrite)
+
+                    .antMatchers(rest_v1_api + "administration/**")
+                    .hasAnyAuthority(adminRead, adminReadWrite, userReadWrite)
+
+                    .and().logout().deleteCookies("JSESSIONID");
+            http.sessionManagement().maximumSessions(5).sessionRegistry(sessionRegistry());
             http.authorizeRequests().anyRequest().authenticated();
             http.csrf().disable();
         }
@@ -133,6 +177,12 @@ public class SecurityConfig implements WebMvcConfigurer {
         public AuthenticationSuccessHandler myAuthenticationSuccessHandler() {
             return new MyAuthenticationSuccessHandler();
         }
+
+        @Bean
+        public SessionRegistry sessionRegistry() {
+            return new SessionRegistryImpl();
+        }
+
     }
 
 }

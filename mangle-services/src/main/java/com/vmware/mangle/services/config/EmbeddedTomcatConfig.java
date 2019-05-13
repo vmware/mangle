@@ -33,7 +33,7 @@ public class EmbeddedTomcatConfig {
 
     @Value("${server.port.http}")
     private int serverHttpPort;
-    @Value("${server.port}")
+    @Value("${server.port.https}")
     private int serverHttpsPort;
 
     @Bean

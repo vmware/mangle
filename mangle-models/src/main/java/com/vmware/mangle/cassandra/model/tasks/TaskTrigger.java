@@ -44,4 +44,5 @@ public class TaskTrigger implements Serializable {
     private boolean isTriggerMetricCollected;
     @JsonIgnore
     private String currentStage;
+    private String node;
 }

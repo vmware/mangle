@@ -1,5 +1,5 @@
 --Changeset kumargautam:Create credentialsspec schema
-DROP TABLE credentialsspec;
+DROP TABLE IF EXISTS credentialsspec;
 
 CREATE TABLE IF NOT EXISTS credentialsspec (name text,id text,password text,type text,username text,privatekey blob,kubeconfig blob,accesskeyid text,secretkey text,PRIMARY KEY (name));
 

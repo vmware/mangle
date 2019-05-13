@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { SettingComponent } from './setting.component';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -17,7 +17,7 @@ describe('SettingComponent', () => {
   let coreService: CoreService;
   let fixture: ComponentFixture<SettingComponent>;
 
-  beforeEach(async(() => {
+  beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [
         BrowserAnimationsModule,
@@ -27,21 +27,18 @@ describe('SettingComponent', () => {
         ClarityModule,
         RouterTestingModule.withRoutes([{ path: 'setting', component: SettingComponent }])
       ],
-      declarations: [ SettingComponent, CoreComponent ],
+      declarations: [SettingComponent, CoreComponent],
       providers: [
         CoreService
       ],
-      schemas: [ NO_ERRORS_SCHEMA ]
+      schemas: [NO_ERRORS_SCHEMA]
     })
-    .compileComponents();
-  }));
-
-  beforeEach(() => {
+      .compileComponents();
     fixture = TestBed.createComponent(SettingComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
     coreService = TestBed.get(CoreService);
-    spyOn(coreService, 'getMyDetails').and.returnValue(of({"name":"user@mangle.local"}));
+    spyOn(coreService, 'getMyDetails').and.returnValue(of({ "name": "user@mangle.local" }));
   });
 
   it('should create', () => {

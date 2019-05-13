@@ -13,13 +13,16 @@ package com.vmware.mangle.cassandra.model.faults.specs;
 
 import java.io.Serializable;
 
+import javax.validation.constraints.NotNull;
+
 import com.datastax.driver.core.DataType.Name;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.ToString;
 import org.springframework.data.cassandra.core.mapping.CassandraType;
 
+import com.vmware.mangle.cassandra.model.scheduler.SchedulerInfo;
 import com.vmware.mangle.cassandra.model.tasks.K8SSpecificArguments;
 import com.vmware.mangle.services.enums.DockerFaultName;
 
@@ -29,12 +32,12 @@ import com.vmware.mangle.services.enums.DockerFaultName;
  *         Api payload specification for Docker specific faults
  */
 @Getter
+@ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
-@JsonIgnoreProperties({ "timeoutinMilliseconds", "k8sArguments" })
-@SuppressWarnings("squid:MaximumInheritanceDepth")
 public class DockerFaultSpec extends CommandExecutionFaultSpec implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    @NotNull
     @CassandraType(type = Name.VARCHAR)
     private DockerFaultName dockerFaultName;
 
@@ -55,8 +58,21 @@ public class DockerFaultSpec extends CommandExecutionFaultSpec implements Serial
 
     @JsonIgnore
     @Override
-    public void setTimeoutInMilliseconds(String timeoutinMilliseconds) {
+    public void setTimeoutInMilliseconds(Integer timeoutinMilliseconds) {
         super.setTimeoutInMilliseconds(timeoutinMilliseconds);
     }
+
+    @JsonIgnore
+    @Override
+    public void setInjectionHomeDir(String injectionHomeDir) {
+        super.setInjectionHomeDir(injectionHomeDir);
+    }
+
+    @JsonIgnore
+    @Override
+    public void setSchedule(SchedulerInfo schedulerInfo) {
+        super.setSchedule(schedule);
+    }
+
 
 }

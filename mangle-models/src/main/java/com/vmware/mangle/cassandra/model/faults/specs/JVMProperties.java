@@ -12,6 +12,9 @@
 package com.vmware.mangle.cassandra.model.faults.specs;
 
 import java.io.Serializable;
+
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -43,5 +46,7 @@ public class JVMProperties implements Serializable {
     @ApiModelProperty(value = "Any free port which will be used for local socket connection from mangle agent to jvm process. "
             + "                Please make sure the user who started the jvm process have inbound and outbound localhost access to the port", example = "9091")
     @JsonProperty(required = false, defaultValue = "9091")
-    private String port = "9091";
+    @Min(0)
+    @Max(65535)
+    private Integer port = 9091;
 }

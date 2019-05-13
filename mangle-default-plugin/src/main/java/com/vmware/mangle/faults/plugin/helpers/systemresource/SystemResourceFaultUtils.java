@@ -11,29 +11,30 @@
 
 package com.vmware.mangle.faults.plugin.helpers.systemresource;
 
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.BLOCK_SIZE;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.BLOCK_SIZE_SCRIPT_ARG;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.CPU_INJECTION_COMMAND_WITH_ARGS;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.DISK_IO_INJECTION_COMMAND_WITH_ARGS;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.FAULT_NAME;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.FORWARD_SLASH;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.KILL_PROCESS_REMEDIATION_COMMAND;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.KILL_SERVICE_INJECTION_COMMAND_WITH_ARGS;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.LOAD;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.LOAD_SCRIPT_ARG;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.MEMORY_INJECTION_COMMAND_WITH_ARGS;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.OPERATION_REMEDIATE;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.PROCESS_IDENTIFIER;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.TARGET_DIRECTORY;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.TARGET_DIRECTORY_SCRIPT_ARG;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.TIMEOUT_IN_MILLI_SEC;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.TIMEOUT_SCRIPT_ARG;
+import static com.vmware.mangle.utils.constants.FaultConstants.BLOCK_SIZE_SCRIPT_ARG;
+import static com.vmware.mangle.utils.constants.FaultConstants.CPU_INJECTION_COMMAND_WITH_ARGS;
+import static com.vmware.mangle.utils.constants.FaultConstants.DISK_IO_INJECTION_COMMAND_WITH_ARGS;
+import static com.vmware.mangle.utils.constants.FaultConstants.FAULT_NAME;
+import static com.vmware.mangle.utils.constants.FaultConstants.FORWARD_SLASH;
+import static com.vmware.mangle.utils.constants.FaultConstants.IO_SIZE;
+import static com.vmware.mangle.utils.constants.FaultConstants.KILL_PROCESS_REMEDIATION_COMMAND;
+import static com.vmware.mangle.utils.constants.FaultConstants.KILL_SERVICE_INJECTION_COMMAND_WITH_ARGS;
+import static com.vmware.mangle.utils.constants.FaultConstants.LOAD;
+import static com.vmware.mangle.utils.constants.FaultConstants.LOAD_SCRIPT_ARG;
+import static com.vmware.mangle.utils.constants.FaultConstants.MEMORY_INJECTION_COMMAND_WITH_ARGS;
+import static com.vmware.mangle.utils.constants.FaultConstants.OPERATION_REMEDIATE;
+import static com.vmware.mangle.utils.constants.FaultConstants.PROCESS_IDENTIFIER;
+import static com.vmware.mangle.utils.constants.FaultConstants.TARGET_DIRECTORY;
+import static com.vmware.mangle.utils.constants.FaultConstants.TARGET_DIRECTORY_SCRIPT_ARG;
+import static com.vmware.mangle.utils.constants.FaultConstants.TIMEOUT_IN_MILLI_SEC;
+import static com.vmware.mangle.utils.constants.FaultConstants.TIMEOUT_SCRIPT_ARG;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec;
 import com.vmware.mangle.cassandra.model.tasks.SupportScriptInfo;
@@ -91,7 +92,7 @@ public class SystemResourceFaultUtils {
     private String getdiskIOInjectionCommand(Map<String, String> faultArgs, String scriptBasePath) {
         return new StringBuilder(scriptBasePath).append(String.format(DISK_IO_INJECTION_COMMAND_WITH_ARGS,
                 TARGET_DIRECTORY_SCRIPT_ARG, faultArgs.get(TARGET_DIRECTORY), BLOCK_SIZE_SCRIPT_ARG,
-                faultArgs.get(BLOCK_SIZE), TIMEOUT_SCRIPT_ARG, faultArgs.get(TIMEOUT_IN_MILLI_SEC))).toString();
+                faultArgs.get(IO_SIZE), TIMEOUT_SCRIPT_ARG, faultArgs.get(TIMEOUT_IN_MILLI_SEC))).toString();
     }
 
 
@@ -129,10 +130,12 @@ public class SystemResourceFaultUtils {
                 command = getRemediationCommand(getScriptNameforFault(FaultName.DISKFAULT), scriptBasePath);
                 break;
             case KILLPROCESSFAULT:
-                command = new StringBuilder(
-                        getRemediationCommand(FaultName.KILLPROCESSFAULT.getScriptFileName(), scriptBasePath))
-                                .append(" --remediationCommand=\"")
-                                .append(faultArgs.get(KILL_PROCESS_REMEDIATION_COMMAND)).append("\"").toString();
+                if (!StringUtils.isEmpty(faultArgs.get(KILL_PROCESS_REMEDIATION_COMMAND))) {
+                    command = new StringBuilder(
+                            getRemediationCommand(FaultName.KILLPROCESSFAULT.getScriptFileName(), scriptBasePath))
+                                    .append(" --remediationCommand=\"")
+                                    .append(faultArgs.get(KILL_PROCESS_REMEDIATION_COMMAND)).append("\"").toString();
+                }
                 break;
             default:
                 command = "";

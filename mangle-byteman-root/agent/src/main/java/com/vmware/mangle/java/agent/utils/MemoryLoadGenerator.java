@@ -11,8 +11,8 @@
 
 package com.vmware.mangle.java.agent.utils;
 
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -34,20 +34,24 @@ public class MemoryLoadGenerator implements Runnable {
 
     public void run() {
         LOG.info("Fiaasco Injecting MemoryLoad Fault for duration: " + duration + "at Load: " + load);
-        LOG.info("MaxHeapSize Available: " + RuntimeUtils.getMaxHeapSpace());
+        LOG.info("MaxHeapSize Available: " + RuntimeUtils.getMaxHeapSpace() / 100 + " kb");
+        LOG.info("Current HeapUsage: " + RuntimeUtils.getUsedHeapSpace());
         long size = getSizeinBytes(load);
-        List<String> loadList = new ArrayList<>();
-        while (RuntimeUtils.getUsedHeapSpace() <= size) {
-            char[] chars = new char[100];
-            Arrays.fill(chars, 'a');
-            loadList.add(new String(chars));
-        }
+        LOG.info("Requested Consumption: " + size / 100);
+        LinkedList<String> loadList = new LinkedList<>();
         long startTime = System.currentTimeMillis();
-        LOG.info("Current UsedHeapSize: " + RuntimeUtils.getUsedHeapSpace());
+
         threadLocal.set(loadList);
         while (System.currentTimeMillis() - startTime < duration) {
+            LOG.info("Current HeapUsage: " + RuntimeUtils.getUsedHeapSpace());
+            while (RuntimeUtils.getUsedHeapSpace() <= size) {
+                char[] chars = new char[100];
+                Arrays.fill(chars, 'a');
+                loadList.addFirst(new String(chars));
+            }
+            LOG.info("HeapUsage post injection: " + RuntimeUtils.getUsedHeapSpace());
             try {
-                Thread.sleep(60);
+                Thread.sleep(10000);
             } catch (InterruptedException e) {
                 LOG.info("Exiting the thread");
                 break;

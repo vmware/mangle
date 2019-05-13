@@ -30,7 +30,6 @@ import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
 /**
  * Abstract class for any Mangle Fault
- *
  * @author bkaranam
  */
 @Data
@@ -39,8 +38,7 @@ public abstract class AbstractFault {
     TaskType taskType;
 
 
-    protected AbstractFault(CommandExecutionFaultSpec faultSpec, TaskType taskType)
-            throws MangleException {
+    protected AbstractFault(CommandExecutionFaultSpec faultSpec, TaskType taskType) throws MangleException {
         this.faultSpec = faultSpec;
         this.taskType = taskType;
         validateForEndpointSupport();
@@ -67,12 +65,10 @@ public abstract class AbstractFault {
 
     /**
      * Method to call triggetTask method in FaultTaskFactory class
-     *
      * @throws MangleException
      */
     @SuppressWarnings("unchecked")
     public Task<TaskSpec> invokeFault(FaultInjectionHelper faultInjectionHelper) throws MangleException {
-        getFaultSpec().setArgs(getFaultSpecificArgs());
         Task<? extends TaskSpec> task = faultInjectionHelper.getTask(getFaultSpec());
         return (Task<TaskSpec>) task;
     }

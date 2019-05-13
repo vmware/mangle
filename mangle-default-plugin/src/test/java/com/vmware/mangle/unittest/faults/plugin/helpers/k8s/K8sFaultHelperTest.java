@@ -12,6 +12,7 @@
 package com.vmware.mangle.unittest.faults.plugin.helpers.k8s;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,8 +30,6 @@ import com.vmware.mangle.cassandra.model.tasks.commands.CommandExecutionResult;
 import com.vmware.mangle.cassandra.model.tasks.commands.CommandInfo;
 import com.vmware.mangle.faults.plugin.helpers.k8s.K8sFaultHelper;
 import com.vmware.mangle.faults.plugin.mockdata.FaultsMockData;
-import com.vmware.mangle.services.enums.K8SFaultName;
-import com.vmware.mangle.services.enums.K8SResource;
 import com.vmware.mangle.task.framework.endpoint.EndpointClientFactory;
 import com.vmware.mangle.unittest.faults.plugin.helpers.CommandResultUtils;
 import com.vmware.mangle.utils.ICommandExecutor;
@@ -57,16 +56,16 @@ public class K8sFaultHelperTest {
     private FaultsMockData faultsMockData = new FaultsMockData();
 
 
-    private String getPodsListString() {
-        return "sym-inventory-service-243-0 sym-inventory-service-243-1 sym-inventory-service-243-2";
+    public static String getPodsListString() {
+        return "app-inventory-service-243-0 app-inventory-service-243-1 app-inventory-service-243-2";
     }
 
 
-    private List<String> getPodsAsList() {
+    public static List<String> getPodsAsList() {
         List<String> list = new ArrayList<>();
-        list.add("sym-inventory-service-243-0");
-        list.add("sym-inventory-service-243-1");
-        list.add("sym-inventory-service-243-2");
+        list.add("app-inventory-service-243-0");
+        list.add("app-inventory-service-243-1");
+        list.add("app-inventory-service-243-2");
         return list;
     }
 
@@ -85,8 +84,9 @@ public class K8sFaultHelperTest {
         ICommandExecutor executor = null;
         try {
             K8SFaultSpec k8sFaultSpec = faultsMockData.getDeleteK8SResourceFaultSpec();
-            Mockito.when(endpointClientFactory.getEndPointClient(k8sFaultSpec.getCredentials(),
-                    k8sFaultSpec.getEndpoint())).thenReturn(kubernetesCommandLineClient);
+            Mockito.when(
+                    endpointClientFactory.getEndPointClient(k8sFaultSpec.getCredentials(), k8sFaultSpec.getEndpoint()))
+                    .thenReturn(kubernetesCommandLineClient);
             executor = k8sFaultHelper.getExecutor(k8sFaultSpec);
         } catch (MangleException e) {
             log.error("testGetExecutor failed with Exception: ", e);
@@ -98,13 +98,10 @@ public class K8sFaultHelperTest {
     @Test
     public void testGetResouceList() {
         try {
-            K8SFaultSpec k8sFaultSpec = getK8sDeleteResourceFault();
+            K8SFaultSpec k8sFaultSpec = faultsMockData.getDeleteK8SResourceFaultSpec();
             Mockito.when(endpointClientFactory.getEndPointClient(Mockito.any(), Mockito.any()))
                     .thenReturn(kubernetesCommandLineClient);
             ICommandExecutor executor = k8sFaultHelper.getExecutor(k8sFaultSpec);
-            Map<String, String> resourceLabels = new HashMap<>();
-            resourceLabels.put("app", "sym-inventory-service");
-            k8sFaultSpec.setResourceLabels(resourceLabels);
 
             Mockito.when(kubernetesCommandLineClient.executeCommand(Mockito.any()))
                     .thenReturn(CommandResultUtils.getCommandResult(getPodsListString()));
@@ -119,14 +116,12 @@ public class K8sFaultHelperTest {
     @Test
     public void testGetResouceListWithRandomInjectionTrue() {
         try {
-            K8SFaultSpec k8sFaultSpec = getK8sDeleteResourceFault();
+            K8SFaultSpec k8sFaultSpec = faultsMockData.getDeleteK8SResourceFaultSpec();
             k8sFaultSpec.setRandomInjection(true);
-            Mockito.when(endpointClientFactory.getEndPointClient(k8sFaultSpec.getCredentials(),
-                    k8sFaultSpec.getEndpoint())).thenReturn(kubernetesCommandLineClient);
+            Mockito.when(
+                    endpointClientFactory.getEndPointClient(k8sFaultSpec.getCredentials(), k8sFaultSpec.getEndpoint()))
+                    .thenReturn(kubernetesCommandLineClient);
             ICommandExecutor executor = k8sFaultHelper.getExecutor(k8sFaultSpec);
-            Map<String, String> resourceLabels = new HashMap<>();
-            resourceLabels.put("app", "sym-inventory-service");
-            k8sFaultSpec.setResourceLabels(resourceLabels);
 
             Mockito.when(kubernetesCommandLineClient.executeCommand(Mockito.any()))
                     .thenReturn(CommandResultUtils.getCommandResult(getPodsListString()));
@@ -142,10 +137,11 @@ public class K8sFaultHelperTest {
     @Test
     public void testGetResouceListWithInValidResourceLabels() {
         try {
-            K8SFaultSpec k8sFaultSpec = getK8sDeleteResourceFault();
+            K8SFaultSpec k8sFaultSpec = faultsMockData.getDeleteK8SResourceFaultSpec();
             k8sFaultSpec.setRandomInjection(true);
-            Mockito.when(endpointClientFactory.getEndPointClient(k8sFaultSpec.getCredentials(),
-                    k8sFaultSpec.getEndpoint())).thenReturn(kubernetesCommandLineClient);
+            Mockito.when(
+                    endpointClientFactory.getEndPointClient(k8sFaultSpec.getCredentials(), k8sFaultSpec.getEndpoint()))
+                    .thenReturn(kubernetesCommandLineClient);
             ICommandExecutor executor = k8sFaultHelper.getExecutor(k8sFaultSpec);
 
             Mockito.when(kubernetesCommandLineClient.executeCommand(Mockito.any()))
@@ -161,14 +157,12 @@ public class K8sFaultHelperTest {
     public void testGetResouceListWithEmptyResponseFromCommandExecutor() {
         Mockito.reset(kubernetesCommandLineClient);
         try {
-            K8SFaultSpec k8sFaultSpec = getK8sDeleteResourceFault();
+            K8SFaultSpec k8sFaultSpec = faultsMockData.getDeleteK8SResourceFaultSpec();
             k8sFaultSpec.setRandomInjection(true);
-            Mockito.when(endpointClientFactory.getEndPointClient(k8sFaultSpec.getCredentials(),
-                    k8sFaultSpec.getEndpoint())).thenReturn(kubernetesCommandLineClient);
+            Mockito.when(
+                    endpointClientFactory.getEndPointClient(k8sFaultSpec.getCredentials(), k8sFaultSpec.getEndpoint()))
+                    .thenReturn(kubernetesCommandLineClient);
             ICommandExecutor executor = k8sFaultHelper.getExecutor(k8sFaultSpec);
-            Map<String, String> resourceLabels = new HashMap<>();
-            resourceLabels.put("app", "sym-inventory-service");
-            k8sFaultSpec.setResourceLabels(resourceLabels);
             Mockito.when(kubernetesCommandLineClient.executeCommand(Mockito.any()))
                     .thenReturn(CommandResultUtils.getCommandResult(""));
             List<String> resources = k8sFaultHelper.getResouceList(executor, k8sFaultSpec);
@@ -183,14 +177,12 @@ public class K8sFaultHelperTest {
     public void testGetResouceListWithErrorResponseFromCommandExecutor() {
         Mockito.reset(kubernetesCommandLineClient);
         try {
-            K8SFaultSpec k8sFaultSpec = getK8sDeleteResourceFault();
+            K8SFaultSpec k8sFaultSpec = faultsMockData.getDeleteK8SResourceFaultSpec();
             k8sFaultSpec.setRandomInjection(true);
-            Mockito.when(endpointClientFactory.getEndPointClient(k8sFaultSpec.getCredentials(),
-                    k8sFaultSpec.getEndpoint())).thenReturn(kubernetesCommandLineClient);
+            Mockito.when(
+                    endpointClientFactory.getEndPointClient(k8sFaultSpec.getCredentials(), k8sFaultSpec.getEndpoint()))
+                    .thenReturn(kubernetesCommandLineClient);
             ICommandExecutor executor = k8sFaultHelper.getExecutor(k8sFaultSpec);
-            Map<String, String> resourceLabels = new HashMap<>();
-            resourceLabels.put("app", "sym-inventory-service");
-            k8sFaultSpec.setResourceLabels(resourceLabels);
             Mockito.when(kubernetesCommandLineClient.executeCommand(Mockito.any()))
                     .thenReturn(CommandResultUtils.getCommandResult("error"));
             List<String> resources = k8sFaultHelper.getResouceList(executor, k8sFaultSpec);
@@ -205,14 +197,12 @@ public class K8sFaultHelperTest {
     public void testGetResouceListWithNonZeroExitCodeResponseFromCommandExecutor() {
         Mockito.reset(kubernetesCommandLineClient);
         try {
-            K8SFaultSpec k8sFaultSpec = getK8sDeleteResourceFault();
+            K8SFaultSpec k8sFaultSpec = faultsMockData.getDeleteK8SResourceFaultSpec();
             k8sFaultSpec.setRandomInjection(true);
-            Mockito.when(endpointClientFactory.getEndPointClient(k8sFaultSpec.getCredentials(),
-                    k8sFaultSpec.getEndpoint())).thenReturn(kubernetesCommandLineClient);
+            Mockito.when(
+                    endpointClientFactory.getEndPointClient(k8sFaultSpec.getCredentials(), k8sFaultSpec.getEndpoint()))
+                    .thenReturn(kubernetesCommandLineClient);
             ICommandExecutor executor = k8sFaultHelper.getExecutor(k8sFaultSpec);
-            Map<String, String> resourceLabels = new HashMap<>();
-            resourceLabels.put("app", "sym-inventory-service");
-            k8sFaultSpec.setResourceLabels(resourceLabels);
             CommandExecutionResult result = CommandResultUtils.getCommandResult("error");
             result.setExitCode(126);
             Mockito.when(kubernetesCommandLineClient.executeCommand(Mockito.any())).thenReturn(result);
@@ -227,13 +217,11 @@ public class K8sFaultHelperTest {
     @Test
     public void testGetInjectionCommandInfoListForDeleteResourceFault() {
         try {
-            K8SFaultSpec k8sFaultSpec = getK8sDeleteResourceFault();
-            Mockito.when(endpointClientFactory.getEndPointClient(k8sFaultSpec.getCredentials(),
-                    k8sFaultSpec.getEndpoint())).thenReturn(kubernetesCommandLineClient);
+            K8SFaultSpec k8sFaultSpec = faultsMockData.getDeleteK8SResourceFaultSpec();
+            Mockito.when(
+                    endpointClientFactory.getEndPointClient(k8sFaultSpec.getCredentials(), k8sFaultSpec.getEndpoint()))
+                    .thenReturn(kubernetesCommandLineClient);
             ICommandExecutor executor = k8sFaultHelper.getExecutor(k8sFaultSpec);
-            Map<String, String> resourceLabels = new HashMap<>();
-            resourceLabels.put("app", "sym-inventory-service");
-            k8sFaultSpec.setResourceLabels(resourceLabels);
 
             k8sFaultSpec.setResourcesList(getPodsAsList());
             List<CommandInfo> injectionCommands = k8sFaultHelper.getInjectionCommandInfoList(executor, k8sFaultSpec);
@@ -241,7 +229,7 @@ public class K8sFaultHelperTest {
             log.info(RestTemplateWrapper.objectToJson(injectionCommands));
             Assert.assertEquals(injectionCommands.size(), 1);
             Assert.assertEquals(injectionCommands.get(0),
-                    getInjectionCommand(" delete  pod -l app=sym-inventory-service"));
+                    getInjectionCommand(" delete  pod -l app=app-inventory-service"));
             List<CommandInfo> remediationCommands =
                     k8sFaultHelper.getRemediationCommandInfoList(executor, k8sFaultSpec);
             log.info(RestTemplateWrapper.objectToJson(remediationCommands));
@@ -255,23 +243,22 @@ public class K8sFaultHelperTest {
     @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "No enum constant com.vmware.mangle.services.enums.K8SFaultName.testFaultName")
     public void testGetInjectionCommandInfoListForUnSupportedFault() {
         try {
-            K8SFaultSpec k8sFaultSpec = getK8sDeleteResourceFault();
+            K8SFaultSpec k8sFaultSpec = faultsMockData.getDeleteK8SResourceFaultSpec();
             Map<String, String> specificArgs = new HashMap<>();
             specificArgs.put("operation", "testFaultName");
             k8sFaultSpec.setArgs(specificArgs);
             k8sFaultSpec.setRandomInjection(true);
-            Mockito.when(endpointClientFactory.getEndPointClient(k8sFaultSpec.getCredentials(),
-                    k8sFaultSpec.getEndpoint())).thenReturn(kubernetesCommandLineClient);
+            Mockito.when(
+                    endpointClientFactory.getEndPointClient(k8sFaultSpec.getCredentials(), k8sFaultSpec.getEndpoint()))
+                    .thenReturn(kubernetesCommandLineClient);
             ICommandExecutor executor = k8sFaultHelper.getExecutor(k8sFaultSpec);
             Map<String, String> resourceLabels = new HashMap<>();
-            resourceLabels.put("app", "sym-inventory-service");
-            k8sFaultSpec.setResourceLabels(resourceLabels);
             k8sFaultSpec.setResourcesList(getPodsAsList());
             List<CommandInfo> injectionCommands = k8sFaultHelper.getInjectionCommandInfoList(executor, k8sFaultSpec);
             log.info(RestTemplateWrapper.objectToJson(injectionCommands));
             Assert.assertEquals(injectionCommands.size(), 1);
             Assert.assertEquals(injectionCommands.get(0),
-                    getInjectionCommand(" delete  pod -l app=sym-inventory-service"));
+                    getInjectionCommand(" delete  pod -l app=app-inventory-service"));
             List<CommandInfo> remediationCommands =
                     k8sFaultHelper.getRemediationCommandInfoList(executor, k8sFaultSpec);
             log.info(RestTemplateWrapper.objectToJson(remediationCommands));
@@ -285,14 +272,12 @@ public class K8sFaultHelperTest {
     @Test
     public void testGetInjectionCommandInfoListForDeleteResourceFaultWithRandomInjection() {
         try {
-            K8SFaultSpec k8sFaultSpec = getK8sDeleteResourceFault();
+            K8SFaultSpec k8sFaultSpec = faultsMockData.getDeleteK8SResourceFaultSpec();
             k8sFaultSpec.setRandomInjection(true);
-            Mockito.when(endpointClientFactory.getEndPointClient(k8sFaultSpec.getCredentials(),
-                    k8sFaultSpec.getEndpoint())).thenReturn(kubernetesCommandLineClient);
+            Mockito.when(
+                    endpointClientFactory.getEndPointClient(k8sFaultSpec.getCredentials(), k8sFaultSpec.getEndpoint()))
+                    .thenReturn(kubernetesCommandLineClient);
             ICommandExecutor executor = k8sFaultHelper.getExecutor(k8sFaultSpec);
-            Map<String, String> resourceLabels = new HashMap<>();
-            resourceLabels.put("app", "sym-inventory-service");
-            k8sFaultSpec.setResourceLabels(resourceLabels);
 
             Mockito.when(kubernetesCommandLineClient.executeCommand(Mockito.any()))
                     .thenReturn(CommandResultUtils.getCommandResult(getPodsListString()));
@@ -301,7 +286,7 @@ public class K8sFaultHelperTest {
             log.info(RestTemplateWrapper.objectToJson(injectionCommands));
             Assert.assertEquals(injectionCommands.size(), 1);
             Assert.assertTrue(verifyInjectionCommandInfoListForDeleteResource(injectionCommands.get(0),
-                    getInjectionCommand(" delete  pod -l app=sym-inventory-service")));
+                    getInjectionCommand(" delete  pod -l app=app-inventory-service")));
             List<CommandInfo> remediationCommands =
                     k8sFaultHelper.getRemediationCommandInfoList(executor, k8sFaultSpec);
             log.info(RestTemplateWrapper.objectToJson(remediationCommands));
@@ -317,59 +302,199 @@ public class K8sFaultHelperTest {
 
     private boolean verifyInjectionCommandInfoListForDeleteResource(CommandInfo commandInfo,
             CommandInfo injectionCommand) {
-        if (commandInfo.equals(getInjectionCommand(" delete  pod sym-inventory-service-243-0"))) {
+        if (commandInfo.equals(getInjectionCommand(" delete  pod app-inventory-service-243-0"))) {
             return true;
         }
-        if (commandInfo.equals(getInjectionCommand(" delete  pod sym-inventory-service-243-1"))) {
+        if (commandInfo.equals(getInjectionCommand(" delete  pod app-inventory-service-243-1"))) {
             return true;
         }
-        if (commandInfo.equals(getInjectionCommand(" delete  pod sym-inventory-service-243-2"))) {
+        if (commandInfo.equals(getInjectionCommand(" delete  pod app-inventory-service-243-2"))) {
             return true;
         }
         return false;
-    }
-
-    private K8SFaultSpec getK8sDeleteResourceFault() {
-        K8SFaultSpec k8sFaultSpec = faultsMockData.getDeleteK8SResourceFaultSpec();
-        Map<String, String> specificArgs = new HashMap<>();
-        specificArgs.put("operation", K8SFaultName.DELETE_RESOURCE.name());
-        k8sFaultSpec.setArgs(specificArgs);
-        k8sFaultSpec.setResourceType(K8SResource.POD);
-        k8sFaultSpec.setRandomInjection(false);
-        return k8sFaultSpec;
     }
 
     @Test
     public void testgetInjectResourceNotReadyFault() {
         try {
             K8SFaultSpec k8sFaultSpec = faultsMockData.getK8SResourceNotReadyFaultSpec();
-            Map<String, String> specificArgs = new HashMap<>();
-            specificArgs.put("operation", K8SFaultName.NOTREADY_RESOURCE.name());
-            k8sFaultSpec.setArgs(specificArgs);
-            k8sFaultSpec.setResourceType(K8SResource.POD);
-            k8sFaultSpec.setRandomInjection(false);
-            Mockito.when(endpointClientFactory.getEndPointClient(k8sFaultSpec.getCredentials(),
-                    k8sFaultSpec.getEndpoint())).thenReturn(kubernetesCommandLineClient);
+            Mockito.when(
+                    endpointClientFactory.getEndPointClient(k8sFaultSpec.getCredentials(), k8sFaultSpec.getEndpoint()))
+                    .thenReturn(kubernetesCommandLineClient);
             ICommandExecutor executor = k8sFaultHelper.getExecutor(k8sFaultSpec);
-            Map<String, String> resourceLabels = new HashMap<>();
-            resourceLabels.put("app", "sym-inventory-service");
-            k8sFaultSpec.setResourceLabels(resourceLabels);
 
             k8sFaultSpec.setResourcesList(getPodsAsList());
             log.info(k8sFaultSpec.getResourcesList());
             List<CommandInfo> injectionCommands = k8sFaultHelper.getInjectionCommandInfoList(executor, k8sFaultSpec);
             log.info(RestTemplateWrapper.objectToJson(injectionCommands));
-            Assert.assertEquals(injectionCommands.size(), 3);
-            Assert.assertEquals(injectionCommands.get(0), getInjectionCommand(
-                    " patch pod  sym-inventory-service-243-0 -p '{\"spec\":{\"containers\":[{\"name\":\"testContainer\",\"image\":\"nginx\"}]}}' "));
+            List<CommandInfo> expectedCommands =
+                    getExpectedInjectionCommandsForNonRandomResourceNotReadyFaultInjection();
+            Assert.assertEquals(injectionCommands, expectedCommands);
+            /*Assert.assertEquals(injectionCommands.get(0), getInjectionCommand(
+                    " patch pod  app-inventory-service-243-0 -p '{\"spec\":{\"containers\":[{\"name\":\"testContainer\",\"image\":\"nginx\"}]}}' "));*/
             List<CommandInfo> remediationCommands =
                     k8sFaultHelper.getRemediationCommandInfoList(executor, k8sFaultSpec);
             log.info(RestTemplateWrapper.objectToJson(remediationCommands));
-            Assert.assertEquals(remediationCommands.size(), 3);
+            Assert.assertEquals(remediationCommands,
+                    getExpectedRemediationCommandsForNonRandomResourceNotReadyFaultRemediation());
         } catch (MangleException e) {
             log.error("testgetInjectResourceNotReadyFault failed with Exception: ", e);
             Assert.assertTrue(false);
         }
+    }
+
+    public static List<CommandInfo> getExpectedInjectionCommandsForNonRandomResourceNotReadyFaultInjection() {
+        List<CommandInfo> list = new ArrayList<>();
+        CommandInfo pod1VerifyReadinessProbeCommand = new CommandInfo();
+        pod1VerifyReadinessProbeCommand.setCommand(
+                " get pod app-inventory-service-243-0 -o template  --template=\"{{range .spec.containers}}{{if eq .name \\\"testContainer\\\"}}{{if .readinessProbe}}ReadinessProbe Configured{{else}}ReadinessProbe not Configured for container testContainer {{end}}{{end}}{{end}}\"");
+        pod1VerifyReadinessProbeCommand.setIgnoreExitValueCheck(false);
+        pod1VerifyReadinessProbeCommand.setNoOfRetries(0);
+        pod1VerifyReadinessProbeCommand.setRetryInterval(0);
+        pod1VerifyReadinessProbeCommand.setTimeout(0);
+        pod1VerifyReadinessProbeCommand.setExpectedCommandOutputList(Arrays.asList("ReadinessProbe Configured"));
+
+        CommandInfo pod1PatchCommand = new CommandInfo();
+        pod1PatchCommand.setCommand(
+                " patch pod  app-inventory-service-243-0 -p '{\"spec\":{\"containers\":[{\"name\":\"testContainer\",\"image\":\"nginx\"}]}}' ");
+        pod1PatchCommand.setIgnoreExitValueCheck(false);
+        pod1PatchCommand.setNoOfRetries(0);
+        pod1PatchCommand.setRetryInterval(0);
+        pod1PatchCommand.setTimeout(0);
+
+        CommandInfo pod1VerifyReadyStateCommand = new CommandInfo();
+        pod1VerifyReadyStateCommand.setCommand(
+                " get pod app-inventory-service-243-0 -o template  --template=\"{{range .status.containerStatuses}}{{if eq .name \\\"testContainer\\\"}}{{.ready}}{{end}}{{end}}\"");
+        pod1VerifyReadyStateCommand.setIgnoreExitValueCheck(false);
+        pod1VerifyReadyStateCommand.setNoOfRetries(30);
+        pod1VerifyReadyStateCommand.setRetryInterval(10);
+        pod1VerifyReadyStateCommand.setTimeout(0);
+        pod1VerifyReadyStateCommand.setExpectedCommandOutputList(Arrays.asList("false"));
+
+        CommandInfo pod2VerifyReadinessProbeCommand = new CommandInfo();
+        pod2VerifyReadinessProbeCommand.setCommand(
+                " get pod app-inventory-service-243-1 -o template  --template=\"{{range .spec.containers}}{{if eq .name \\\"testContainer\\\"}}{{if .readinessProbe}}ReadinessProbe Configured{{else}}ReadinessProbe not Configured for container testContainer {{end}}{{end}}{{end}}\"");
+        pod2VerifyReadinessProbeCommand.setIgnoreExitValueCheck(false);
+        pod2VerifyReadinessProbeCommand.setNoOfRetries(0);
+        pod2VerifyReadinessProbeCommand.setRetryInterval(0);
+        pod2VerifyReadinessProbeCommand.setTimeout(0);
+        pod2VerifyReadinessProbeCommand.setExpectedCommandOutputList(Arrays.asList("ReadinessProbe Configured"));
+
+        CommandInfo pod2PatchCommand = new CommandInfo();
+        pod2PatchCommand.setCommand(
+                " patch pod  app-inventory-service-243-1 -p '{\"spec\":{\"containers\":[{\"name\":\"testContainer\",\"image\":\"nginx\"}]}}' ");
+        pod2PatchCommand.setIgnoreExitValueCheck(false);
+        pod2PatchCommand.setNoOfRetries(0);
+        pod2PatchCommand.setRetryInterval(0);
+        pod2PatchCommand.setTimeout(0);
+
+        CommandInfo pod2VerifyReadyStateCommand = new CommandInfo();
+        pod2VerifyReadyStateCommand.setCommand(
+                " get pod app-inventory-service-243-1 -o template  --template=\"{{range .status.containerStatuses}}{{if eq .name \\\"testContainer\\\"}}{{.ready}}{{end}}{{end}}\"");
+        pod2VerifyReadyStateCommand.setIgnoreExitValueCheck(false);
+        pod2VerifyReadyStateCommand.setNoOfRetries(30);
+        pod2VerifyReadyStateCommand.setRetryInterval(10);
+        pod2VerifyReadyStateCommand.setTimeout(0);
+        pod2VerifyReadyStateCommand.setExpectedCommandOutputList(Arrays.asList("false"));
+
+        CommandInfo pod3VerifyReadinessProbeCommand = new CommandInfo();
+        pod3VerifyReadinessProbeCommand.setCommand(
+                " get pod app-inventory-service-243-2 -o template  --template=\"{{range .spec.containers}}{{if eq .name \\\"testContainer\\\"}}{{if .readinessProbe}}ReadinessProbe Configured{{else}}ReadinessProbe not Configured for container testContainer {{end}}{{end}}{{end}}\"");
+        pod3VerifyReadinessProbeCommand.setIgnoreExitValueCheck(false);
+        pod3VerifyReadinessProbeCommand.setNoOfRetries(0);
+        pod3VerifyReadinessProbeCommand.setRetryInterval(0);
+        pod3VerifyReadinessProbeCommand.setTimeout(0);
+        pod3VerifyReadinessProbeCommand.setExpectedCommandOutputList(Arrays.asList("ReadinessProbe Configured"));
+
+        CommandInfo pod3PatchCommand = new CommandInfo();
+        pod3PatchCommand.setCommand(
+                " patch pod  app-inventory-service-243-2 -p '{\"spec\":{\"containers\":[{\"name\":\"testContainer\",\"image\":\"nginx\"}]}}' ");
+        pod3PatchCommand.setIgnoreExitValueCheck(false);
+        pod3PatchCommand.setNoOfRetries(0);
+        pod3PatchCommand.setRetryInterval(0);
+        pod3PatchCommand.setTimeout(0);
+
+        CommandInfo pod3VerifyReadyStateCommand = new CommandInfo();
+        pod3VerifyReadyStateCommand.setCommand(
+                " get pod app-inventory-service-243-2 -o template  --template=\"{{range .status.containerStatuses}}{{if eq .name \\\"testContainer\\\"}}{{.ready}}{{end}}{{end}}\"");
+        pod3VerifyReadyStateCommand.setIgnoreExitValueCheck(false);
+        pod3VerifyReadyStateCommand.setNoOfRetries(30);
+        pod3VerifyReadyStateCommand.setRetryInterval(10);
+        pod3VerifyReadyStateCommand.setTimeout(0);
+        pod3VerifyReadyStateCommand.setExpectedCommandOutputList(Arrays.asList("false"));
+
+        list.add(pod1VerifyReadinessProbeCommand);
+        list.add(pod1PatchCommand);
+        list.add(pod1VerifyReadyStateCommand);
+        list.add(pod2VerifyReadinessProbeCommand);
+        list.add(pod2PatchCommand);
+        list.add(pod2VerifyReadyStateCommand);
+        list.add(pod3VerifyReadinessProbeCommand);
+        list.add(pod3PatchCommand);
+        list.add(pod3VerifyReadyStateCommand);
+        return list;
+    }
+
+    public static List<CommandInfo> getExpectedRemediationCommandsForNonRandomResourceNotReadyFaultRemediation() {
+        List<CommandInfo> list = new ArrayList<>();
+        CommandInfo pod1PatchCommand = new CommandInfo();
+        pod1PatchCommand.setCommand(
+                " patch pod  app-inventory-service-243-0 -p '{\"spec\":{\"containers\":[{\"name\":\"testContainer\",\"image\":\"app-inventory-service-243-0 app-inventory-service-243-1 app-inventory-service-243-2\"}]}}' ");
+        pod1PatchCommand.setIgnoreExitValueCheck(false);
+        pod1PatchCommand.setNoOfRetries(0);
+        pod1PatchCommand.setRetryInterval(0);
+        pod1PatchCommand.setTimeout(0);
+
+        CommandInfo pod1VerifyReadyStateCommand = new CommandInfo();
+        pod1VerifyReadyStateCommand.setCommand(
+                " get pod app-inventory-service-243-0 -o template  --template=\"{{range .status.containerStatuses}}{{if eq .name \\\"testContainer\\\"}}{{.ready}}{{end}}{{end}}\"");
+        pod1VerifyReadyStateCommand.setIgnoreExitValueCheck(false);
+        pod1VerifyReadyStateCommand.setNoOfRetries(30);
+        pod1VerifyReadyStateCommand.setRetryInterval(10);
+        pod1VerifyReadyStateCommand.setTimeout(0);
+        pod1VerifyReadyStateCommand.setExpectedCommandOutputList(Arrays.asList("true"));
+
+        CommandInfo pod2PatchCommand = new CommandInfo();
+        pod2PatchCommand.setCommand(
+                " patch pod  app-inventory-service-243-1 -p '{\"spec\":{\"containers\":[{\"name\":\"testContainer\",\"image\":\"app-inventory-service-243-0 app-inventory-service-243-1 app-inventory-service-243-2\"}]}}' ");
+        pod2PatchCommand.setIgnoreExitValueCheck(false);
+        pod2PatchCommand.setNoOfRetries(0);
+        pod2PatchCommand.setRetryInterval(0);
+        pod2PatchCommand.setTimeout(0);
+
+        CommandInfo pod2VerifyReadyStateCommand = new CommandInfo();
+        pod2VerifyReadyStateCommand.setCommand(
+                " get pod app-inventory-service-243-1 -o template  --template=\"{{range .status.containerStatuses}}{{if eq .name \\\"testContainer\\\"}}{{.ready}}{{end}}{{end}}\"");
+        pod2VerifyReadyStateCommand.setIgnoreExitValueCheck(false);
+        pod2VerifyReadyStateCommand.setNoOfRetries(30);
+        pod2VerifyReadyStateCommand.setRetryInterval(10);
+        pod2VerifyReadyStateCommand.setTimeout(0);
+        pod2VerifyReadyStateCommand.setExpectedCommandOutputList(Arrays.asList("true"));
+
+        CommandInfo pod3PatchCommand = new CommandInfo();
+        pod3PatchCommand.setCommand(
+                " patch pod  app-inventory-service-243-2 -p '{\"spec\":{\"containers\":[{\"name\":\"testContainer\",\"image\":\"app-inventory-service-243-0 app-inventory-service-243-1 app-inventory-service-243-2\"}]}}' ");
+        pod3PatchCommand.setIgnoreExitValueCheck(false);
+        pod3PatchCommand.setNoOfRetries(0);
+        pod3PatchCommand.setRetryInterval(0);
+        pod3PatchCommand.setTimeout(0);
+
+        CommandInfo pod3VerifyReadyStateCommand = new CommandInfo();
+        pod3VerifyReadyStateCommand.setCommand(
+                " get pod app-inventory-service-243-2 -o template  --template=\"{{range .status.containerStatuses}}{{if eq .name \\\"testContainer\\\"}}{{.ready}}{{end}}{{end}}\"");
+        pod3VerifyReadyStateCommand.setIgnoreExitValueCheck(false);
+        pod3VerifyReadyStateCommand.setNoOfRetries(30);
+        pod3VerifyReadyStateCommand.setRetryInterval(10);
+        pod3VerifyReadyStateCommand.setTimeout(0);
+        pod3VerifyReadyStateCommand.setExpectedCommandOutputList(Arrays.asList("true"));
+
+        list.add(pod1PatchCommand);
+        list.add(pod1VerifyReadyStateCommand);
+        list.add(pod2PatchCommand);
+        list.add(pod2VerifyReadyStateCommand);
+        list.add(pod3PatchCommand);
+        list.add(pod3VerifyReadyStateCommand);
+        return list;
     }
 
     private CommandInfo getInjectionCommand(String command) {

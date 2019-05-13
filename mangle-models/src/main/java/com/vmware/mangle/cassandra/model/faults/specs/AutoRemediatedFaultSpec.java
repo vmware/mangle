@@ -11,6 +11,8 @@
 
 package com.vmware.mangle.cassandra.model.faults.specs;
 
+import javax.validation.constraints.Min;
+
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -25,6 +27,7 @@ import lombok.EqualsAndHashCode;
 public class AutoRemediatedFaultSpec extends FaultSpec {
 
     private static final long serialVersionUID = 1L;
-    @ApiModelProperty(value = "Long Value to timeout/auto Remediate the Injected Fault")
-    protected String timeoutInMilliseconds;
+    @ApiModelProperty(value = "Integer Value to timeout/auto Remediate the Injected Fault")
+    @Min(0)
+    protected Integer timeoutInMilliseconds;
 }

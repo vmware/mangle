@@ -19,21 +19,20 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import com.vmware.mangle.services.enums.AgentFaultName;
 
 /**
  * @author jayasankarr
- *
- *
  */
 @Data
+@ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 @JsonIgnoreProperties({ "timeoutinMilliseconds" })
 @SuppressWarnings("squid:MaximumInheritanceDepth")
 public class KillProcessFaultSpec extends CommandExecutionFaultSpec {
     private static final long serialVersionUID = 1L;
-    @NotEmpty
     @ApiModelProperty(value = "Command to restart the process,if provided fault will be remediated", example = "if its a service: service restart command has to be provided")
     private String remediationCommand;
     @NotEmpty
@@ -47,7 +46,7 @@ public class KillProcessFaultSpec extends CommandExecutionFaultSpec {
 
     @JsonIgnore
     @Override
-    public void setTimeoutInMilliseconds(String timeoutinMilliseconds) {
+    public void setTimeoutInMilliseconds(Integer timeoutinMilliseconds) {
         super.setTimeoutInMilliseconds(timeoutinMilliseconds);
     }
 

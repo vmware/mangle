@@ -7,14 +7,14 @@
 <div [hidden]="epDatagrid">
 	<clr-dg-action-bar>
 		<div class="btn-group">
-			<button type="button" class="btn btn-sm btn-secondary" (click)="populateEndpointForm({'id':null,'name':null,'vcenterConnectionProperties':{'hostname':'','vcenterAdapterProperties':{'vcenterAdapterUrl':'','username':'','password':''}},'endPointType':'VCENTER','credentialsName':null,'tags':null});epDatagrid=true;epForm=false;addEdit='Add';"><clr-icon shape="plus"></clr-icon> VMware vCenter</button>
+			<button type="button" class="btn btn-sm btn-secondary" (click)="populateEndpointForm({'id':null,'name':null,'vcenterConnectionProperties':{'hostname':'','vcenterAdapterProperties':{'vcAdapterUrl':'','username':'','password':''}},'endPointType':'VCENTER','credentialsName':null,'tags':null});epDatagrid=true;epForm=false;addEdit='Add';"><clr-icon shape="plus"></clr-icon> VMware vCenter</button>
 		</div>
 	</clr-dg-action-bar>
 	<clr-datagrid [clrDgLoading]="isLoading">
-		<clr-dg-column>Endpoint Name</clr-dg-column>
-		<clr-dg-column>Credentials Name</clr-dg-column>
-        <clr-dg-column>Host</clr-dg-column>
-        <clr-dg-column>vCenter Adapter</clr-dg-column>
+		<clr-dg-column [clrDgField]="'name'">Endpoint Name</clr-dg-column>
+		<clr-dg-column [clrDgField]="'credentialsName'">Credentials Name</clr-dg-column>
+        <clr-dg-column [clrDgField]="'vcenterConnectionProperties.hostname'">Host</clr-dg-column>
+        <clr-dg-column [clrDgField]="'vcenterConnectionProperties.vcenterAdapterProperties.vcAdapterUrl'">vCenter Adapter</clr-dg-column>
         <clr-dg-column>Tags</clr-dg-column>
 		<clr-dg-row *clrDgItems="let endpoint of endpoints" [clrDgItem]="endpoint">
 			<clr-dg-action-overflow>
@@ -24,7 +24,7 @@
 			<clr-dg-cell>{{endpoint.name}}</clr-dg-cell>
 			<clr-dg-cell>{{endpoint.credentialsName}}</clr-dg-cell>
             <clr-dg-cell>{{endpoint.vcenterConnectionProperties.hostname}}</clr-dg-cell>
-            <clr-dg-cell>{{endpoint.vcenterConnectionProperties.vcenterAdapterProperties.vcenterAdapterUrl}}</clr-dg-cell>
+            <clr-dg-cell>{{endpoint.vcenterConnectionProperties.vcenterAdapterProperties.vcAdapterUrl}}</clr-dg-cell>
             <clr-dg-cell><span class="label label-info" *ngFor="let item of endpoint.tags | keyvalue">{{item.key}}={{item.value}}</span></clr-dg-cell>
 		</clr-dg-row>
 		<clr-dg-footer>
@@ -37,7 +37,7 @@
 </div>
 <div [hidden]="epForm">
 	<h3 class="modal-title">{{addEdit}} vCenter</h3>
-	<form #vcenterForm="ngForm" (ngSubmit)="addOrUpdateEndpoint(vcenterForm.value);epDatagrid=false;epForm=true;" *ngIf="epFormData" ngNativeValidate>
+	<form #vcenterForm="ngForm" #nativeVcenterForm *ngIf="epFormData" (ngSubmit)="addOrUpdateEndpoint(vcenterForm.value);epDatagrid=false;epForm=true;" ngNativeValidate>
         <section class="form-block">
             <div class="form-group">
                 <input type="text" name="id" [(ngModel)]="epFormData.id" [hidden]="true">
@@ -47,17 +47,19 @@
             </div>
 			<div class="form-group">
 				<label for="name">Endpoint Name</label>
-                <input type="text" name="name" [(ngModel)]="epFormData.name" [required]="addEdit == 'Add'" [readonly]="addEdit == 'Edit'">
+                <input type="text" name="name" pattern="^[A-Za-z0-9-_.]+$" title="alphanumeric and special characters (_ - .) are allowed" [(ngModel)]="epFormData.name" [required]="addEdit == 'Add'" [readonly]="addEdit == 'Edit'">
             </div>
 			<div class="form-group">
                 <label for="credentialsName">Credential Name</label>
-                <div class="select">
-                    <select name="credentialsName" [(ngModel)]="epFormData.credentialsName" required>
-                        <ng-container *ngFor="let credential of credentials">
-                            <option [value]="credential.name" *ngIf="credential.type == 'VCENTER'">{{credential.name}}</option>
+                <clr-dropdown>
+                    <input clrDropdownTrigger type="text" name="credentialsName" (input)="searchCredentials($event.target.value);" [(ngModel)]="epFormData.credentialsName" />
+                    <clr-icon shape="caret down" clrDropdownTrigger size="24" (click)="searchCredentials('');"></clr-icon>
+                    <clr-dropdown-menu *clrIfOpen clrPosition="bottom-left">
+                        <ng-container *ngFor="let searchedCredential of searchedCredentials">
+                            <button type="button" clrDropdownItem *ngIf="searchedCredential.type == 'VCENTER'" (click)="setCredentialVal(searchedCredential.name);">{{searchedCredential.name}}</button>
                         </ng-container>
-                    </select>
-                </div><clr-icon shape="plus-circle" (click)="vcenterCredential=true" style="width:21px;height:39px;"></clr-icon>
+                    </clr-dropdown-menu>
+                </clr-dropdown><clr-icon shape="plus-circle" (click)="vcenterCredential=true;" style="width:21px;height:39px;"></clr-icon>
             </div>
 			<fieldset ngModelGroup="vcenterConnectionProperties">
                 <div class="form-group">
@@ -70,8 +72,8 @@
                 <br />
                 <fieldset ngModelGroup="vcenterAdapterProperties">
                     <div class="form-group">
-                        <label for="vcenterAdapterUrl">Adapter URL</label>
-                        <input type="text" placeholder="http://0.0.0.0:9000" name="vcenterAdapterUrl" [(ngModel)]="epFormData.vcenterConnectionProperties.vcenterAdapterProperties.vcenterAdapterUrl" required>
+                        <label for="vcAdapterUrl">Adapter URL</label>
+                        <input type="text" placeholder="http://0.0.0.0:9000" name="vcAdapterUrl" [(ngModel)]="epFormData.vcenterConnectionProperties.vcenterAdapterProperties.vcAdapterUrl" required>
                     </div>
                     <div class="form-group">
                         <label for="username">Username</label>
@@ -89,19 +91,19 @@
                 <clr-icon shape="plus-circle" (click)="tagsModal=true;" style="width:21px;height:30px;"></clr-icon>
             </div>
         </section>
-        <button type="button" class="btn btn-outline" (click)="epDatagrid=false;epForm=true;">CANCEL</button>
-        <button [clrLoading]="testEndpointBtnState" type="button" class="btn btn-outline" (click)="testEndpointConnection(vcenterForm.value);" [disabled]="!vcenterForm.form.valid">TEST CONNECTION</button>
+        <button type="button" class="btn btn-outline" (click)="epDatagrid=false;epForm=true;ngOnInit();">CANCEL</button>
+        <button [clrLoading]="testEndpointBtnState" type="button" class="btn btn-outline" (click)="testEndpointConnection(nativeVcenterForm.reportValidity(), vcenterForm.value);">TEST CONNECTION</button>
         <button type="submit" class="btn btn-primary" [disabled]="disableSubmit">SUBMIT</button>
     </form>
 </div>
-<clr-modal [(clrModalOpen)]="vcenterCredential">
+<clr-modal [(clrModalOpen)]="vcenterCredential" [clrModalClosable]="false">
     <h3 class="modal-title">Add Vcenter Credential</h3>
     <div class="modal-body">
-        <form #vcenterCredentialForm="ngForm" (ngSubmit)="addVcenterCredential(vcenterCredentialForm.value);vcenterCredential=false;vcenterCredentialForm.reset();">
+        <form #vcenterCredentialForm="ngForm" (ngSubmit)="addVcenterCredential(vcenterCredentialForm.value);vcenterCredential=false;vcenterCredentialForm.reset();" ngNativeValidate>
             <section class="form-block">
                 <div class="form-group">
                     <label for="name">Name</label>
-                    <input type="text" name="name" ngModel required>
+                    <input type="text" name="name" pattern="^[A-Za-z0-9-_.]+$" title="alphanumeric and special characters (_ - .) are allowed" ngModel required>
                 </div>
 				<div class="form-group">
                     <label for="userName">User</label>

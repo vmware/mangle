@@ -38,8 +38,10 @@ public class VCenterClient implements EndpointClient {
 
     @Override
     public boolean testConnection() throws MangleException {
-        vCenterAdapterClient.testConnection();
-        return VMOperations.testConnection(vCenterAdapterClient, getVCenterSpec());
+        if (vCenterAdapterClient.testConnection()) {
+            return VMOperations.testConnection(vCenterAdapterClient, getVCenterSpec());
+        }
+        return false;
     }
 
     public VCenterSpec getVCenterSpec() {

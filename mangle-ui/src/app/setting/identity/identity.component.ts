@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { SettingService } from '../setting.service';
+import { MessageConstants } from 'src/app/common/message.constants';
 
 @Component({
     selector: 'app-identity',
@@ -28,6 +29,7 @@ export class IdentityComponent implements OnInit {
     }
 
     public getIdentities() {
+        this.errorFlag = false;
         this.isLoading = true;
         this.settingService.getIdentities().subscribe(
             res => {
@@ -38,6 +40,11 @@ export class IdentityComponent implements OnInit {
                     this.identities = [];
                     this.isLoading = false;
                 }
+            }, err => {
+                this.identities = [];
+                this.isLoading = false;
+                this.alertMessage = err.error.description;
+                this.errorFlag = true;
             });
     }
 
@@ -57,7 +64,7 @@ export class IdentityComponent implements OnInit {
         this.settingService.addIdentitySource(identitySourceFormData).subscribe(
             res => {
                 this.getIdentities();
-                this.alertMessage = 'Identity source added successfully!';
+                this.alertMessage = identitySourceFormData.adDomain + MessageConstants.IDENTITY_ADD;
                 this.successFlag = true;
                 this.isLoading = false;
             }, err => {
@@ -75,7 +82,7 @@ export class IdentityComponent implements OnInit {
         this.settingService.updateIdentitySource(identitySourceFormData).subscribe(
             res => {
                 this.getIdentities();
-                this.alertMessage = 'Identity source updated successfully!';
+                this.alertMessage = identitySourceFormData.adDomain + MessageConstants.IDENTITY_UPDATE;
                 this.successFlag = true;
                 this.isLoading = false;
             }, err => {
@@ -89,12 +96,11 @@ export class IdentityComponent implements OnInit {
     public deleteIdentity(identity) {
         this.errorFlag = false;
         this.successFlag = false;
-        this.isLoading = true;
-        if (confirm('Do you want to delete: ' + identity.adDomain + ' identity source?')) {
+        if (confirm(MessageConstants.DELETE_CONFIRM + identity.adDomain + MessageConstants.QUESTION_MARK)) {
             this.settingService.deleteIdentity(identity.adDomain).subscribe(
                 res => {
                     this.getIdentities();
-                    this.alertMessage = identity.adUrl + ' identity source deleted successfully!';
+                    this.alertMessage = identity.adDomain + MessageConstants.IDENTITY_DELETE;
                     this.successFlag = true;
                     this.isLoading = false;
                 }, err => {

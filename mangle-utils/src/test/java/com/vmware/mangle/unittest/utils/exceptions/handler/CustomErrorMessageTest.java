@@ -105,10 +105,10 @@ public class CustomErrorMessageTest extends PowerMockTestCase {
      */
     @Test
     public void testGetErrorMessageString() {
-        when(env.getProperty(anyString())).thenReturn("File size exceeded max file size limit of {0} .");
+        when(env.getProperty(anyString())).thenReturn("File size exceeded max file size limit of {0}");
         String actualResult = customErrorMessage.getErrorMessage(ErrorCode.FILE_SIZE_EXCEEDED.getCode());
         verify(env, times(1)).getProperty(anyString());
-        String expectedResult = "File size exceeded max file size limit of {0} .";
+        String expectedResult = "File size exceeded max file size limit of ";
         Assert.assertEquals(actualResult, expectedResult);
     }
 

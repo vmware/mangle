@@ -63,17 +63,30 @@ public class RoleDeletionService {
         Map<String, List<String>> associations = new HashMap<>();
         List<Role> toBeDeletedRoles = new ArrayList<>();
 
-        for (String roleName : roles) {
-            Role role = getRoleForDeletion(roleName);
-            List<String> associatedUsers = getUserAssociationForRole(roleName);
+        List<Role> persistedRoles = roleRepository.findByNameIn(roles);
+        List<String> roleNames = persistedRoles.stream().map(Role::getName).collect(Collectors.toList());
+        roles.removeAll(roleNames);
+
+        if (!roles.isEmpty()) {
+            throw new MangleException(ErrorCode.NO_RECORD_FOUND, ErrorConstants.ROLE, roles.toString());
+        }
+
+        for (Role role : persistedRoles) {
+            if (role.getType() == MangleScopeEnum.MANGLE_DEFAULT) {
+                log.error("Deletion of mangle default roles is not supported");
+                throw new MangleException(ErrorCode.DEFAULT_ROLE_DELETE);
+            }
+
+            List<String> associatedUsers = getUserAssociationForRole(role.getName());
             if (!CollectionUtils.isEmpty(associatedUsers)) {
-                associations.put(roleName, associatedUsers);
+                associations.put(role.getName(), associatedUsers);
             } else {
                 toBeDeletedRoles.add(role);
             }
         }
 
         if (CollectionUtils.isEmpty(associations)) {
+            log.info("Pre-check successful, Deleting following roles: {}", roleNames.toString());
             roleRepository.deleteAll(toBeDeletedRoles);
         } else {
             response.setAssociations(associations);
@@ -82,48 +95,10 @@ public class RoleDeletionService {
         return response;
     }
 
-    /**
-     * Deletes single role matching the roleName
-     *
-     * @param roleName
-     * @throws MangleException:
-     *             if mangle_default role is tried to be deleted
-     */
-    public DeleteOperationResponse deleteRoleByName(String roleName) throws MangleException {
-        log.info("Deleting the role: " + roleName);
-        DeleteOperationResponse response = new DeleteOperationResponse();
-        Map<String, List<String>> associations = new HashMap<>();
-
-        Role role = getRoleForDeletion(roleName);
-        List<String> associatedUsers = getUserAssociationForRole(roleName);
-        if (!CollectionUtils.isEmpty(associatedUsers)) {
-            associations.put(roleName, associatedUsers);
-            response.setAssociations(associations);
-            response.setResponseMessage(ErrorConstants.ROLE_DELETION_PRE_CONDITION_FAILURE);
-        } else {
-            roleRepository.delete(role);
-        }
-        return response;
-    }
-
-    private Role getRoleForDeletion(String roleName) throws MangleException {
-        Role role = roleRepository.findByName(roleName);
-        if (role != null) {
-            if (MangleScopeEnum.MANGLE_DEFAULT == role.getType()) {
-                log.info("Failed to delete the role, because role is of type mangle_default");
-                throw new MangleException(ErrorConstants.DEFAULT_ROLE_DELETE, ErrorCode.DEFAULT_ROLE_DELETE);
-            }
-        } else {
-            log.error(String.format("Role %s not found", roleName));
-            throw new MangleException(ErrorConstants.ROLE_NOT_FOUND, ErrorCode.ROLE_NOT_FOUND, roleName);
-        }
-        return role;
-    }
-
     private List<String> getUserAssociationForRole(String roleName) {
         List<User> users = userService.getUsersForRole(roleName);
         if (!CollectionUtils.isEmpty(users)) {
-            return users.stream().map(user -> user.getName()).collect(Collectors.toList());
+            return users.stream().map(User::getName).collect(Collectors.toList());
         }
         return Collections.emptyList();
     }

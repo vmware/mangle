@@ -38,6 +38,6 @@ public class VCenterCredentials extends CredentialsSpec {
     private String password;
 
     public VCenterCredentials() {
-        setType(EndpointType.MACHINE);
+        setType(EndpointType.VCENTER);
     }
 }

@@ -18,6 +18,7 @@ import com.vmware.mangle.cassandra.model.tasks.commands.CommandExecutionResult;
 import com.vmware.mangle.task.framework.endpoint.EndpointClientFactory;
 import com.vmware.mangle.utils.ICommandExecutor;
 import com.vmware.mangle.utils.clients.docker.CustomDockerClient;
+import com.vmware.mangle.utils.exceptions.MangleException;
 
 /**
  * @author bkaranam Utility class to execute commands on Docker host using dockerClient
@@ -36,7 +37,7 @@ public class DockerCommandUtils implements ICommandExecutor {
                 .getEndPointClient(jvmAgentFaultSpec.getCredentials(), jvmAgentFaultSpec.getEndpoint());
     }
 
-    public CommandExecutionResult runCommand(String command) {
+    public CommandExecutionResult runCommand(String command) throws MangleException {
         CommandExecutionResult commandExecutionResult = new CommandExecutionResult();
         commandExecutionResult = this.dockerClient
                 .execCommandInContainerByName(faultSpec.getDockerArguments().getContainerName(), command);
@@ -46,7 +47,14 @@ public class DockerCommandUtils implements ICommandExecutor {
 
 
     public CommandExecutionResult executeCommand(String command) {
-        return this.runCommand(command);
+        try {
+            return this.runCommand(command);
+        } catch (MangleException e) {
+            CommandExecutionResult commandExecutionResult = new CommandExecutionResult();
+            commandExecutionResult.setCommandOutput(e.getMessage());
+            commandExecutionResult.setExitCode(1);
+            return commandExecutionResult;
+        }
     }
 
 }

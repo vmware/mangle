@@ -30,6 +30,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import javax.ws.rs.ProcessingException;
+
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CopyArchiveToContainerCmd;
 import com.github.dockerjava.api.command.ExecCreateCmd;
@@ -72,12 +74,15 @@ import org.testng.annotations.Test;
 
 import com.vmware.mangle.cassandra.model.tasks.commands.CommandExecutionResult;
 import com.vmware.mangle.utils.clients.docker.CustomDockerClient;
+import com.vmware.mangle.utils.exceptions.MangleException;
+import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
 
 /**
  * Unit Test Case for CustomDockerClient.
  *
  * @author kumargautam
+ *
  */
 @PrepareForTest(value = { DockerClientBuilder.class, CustomDockerClient.class, ExposedPort.class })
 @PowerMockIgnore(value = { "javax.net.ssl.*" })
@@ -90,7 +95,7 @@ public class CustomDockerClientTest extends PowerMockTestCase {
     @Mock
     private DockerClientBuilder dockerClientBuilder;
     private final String host = "10.134.211.2";
-    private final String port = "2375";
+    private final Integer port = 2375;
     private final String containerName = "test";
     private final String containerId = "test1";
 
@@ -101,7 +106,7 @@ public class CustomDockerClientTest extends PowerMockTestCase {
     public void setUpBeforeClass() throws Exception {
         PowerMockito.mockStatic(DockerClientBuilder.class);
         MockitoAnnotations.initMocks(this);
-        new CustomDockerClient(host, port, true);
+        new CustomDockerClient(host, port, true, null);
         customDockerClient.setDockerClient(dockerClient);
     }
 
@@ -136,7 +141,7 @@ public class CustomDockerClientTest extends PowerMockTestCase {
      */
     @Test(description = "verify the creation of mangle docker client")
     public void testInstantiateClient() {
-        CustomDockerClient customDockerClient = new CustomDockerClient(host, port, false);
+        CustomDockerClient customDockerClient = new CustomDockerClient(host, port, false, null);
         Assert.assertNotNull(customDockerClient.getDockerClient());
     }
 
@@ -156,16 +161,18 @@ public class CustomDockerClientTest extends PowerMockTestCase {
     /**
      * Test method for
      * {@link com.vmware.mangle.clients.docker.CustomDockerClient#execCreateCmdByContainerName(java.lang.String)}.
+     *
+     * @throws MangleException
      */
     @Test
-    public void testExecCreateCmdByContainerName() {
+    public void testExecCreateCmdByContainerName() throws MangleException {
         ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
         when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
         Container container = mock(Container.class);
         List<Container> allContainers = new ArrayList<>();
         allContainers.add(container);
         when(listContainersCmd.exec()).thenReturn(allContainers);
-        when(container.getNames()).thenReturn(new String[] { containerName });
+        when(container.getNames()).thenReturn(new String[] { "/" + containerName });
         when(container.getId()).thenReturn(containerId);
         ExecCreateCmd execCreateCmd = mock(ExecCreateCmd.class);
         when(execCreateCmd.getContainerId()).thenReturn(containerId);
@@ -174,6 +181,26 @@ public class CustomDockerClientTest extends PowerMockTestCase {
         Assert.assertEquals(actualResult.getContainerId(), containerId);
         verify(dockerClient, times(1)).listContainersCmd();
         verify(dockerClient, times(1)).execCreateCmd(anyString());
+    }
+
+
+    @Test(description = "verify ProcessingException thrown through findContainerId")
+    public void testExecCreateCmdByContainerNametoThrowProcessingException() throws MangleException {
+        ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
+        when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
+        Container container = mock(Container.class);
+        List<Container> allContainers = new ArrayList<>();
+        allContainers.add(container);
+        ProcessingException processingException = mock(ProcessingException.class);
+        doThrow(processingException).when(listContainersCmd).exec();
+
+        when(container.getNames()).thenReturn(new String[] { containerName });
+        when(container.getId()).thenReturn(containerId);
+        try {
+            customDockerClient.execCreateCmdByContainerName(containerName);
+        } catch (MangleException e) {
+            Assert.assertEquals(e.getErrorCode(), ErrorCode.DOCKER_CONNECTION_FAILURE);
+        }
     }
 
     /**
@@ -196,6 +223,7 @@ public class CustomDockerClientTest extends PowerMockTestCase {
         when(exec.getId()).thenReturn(containerId);
         ByteArrayOutputStream byteArrayOutputStream = mock(ByteArrayOutputStream.class);
         PowerMockito.whenNew(ByteArrayOutputStream.class).withNoArguments().thenReturn(byteArrayOutputStream);
+
         ExecStartCmd execStartCmd = mock(ExecStartCmd.class);
         when(dockerClient.execStartCmd(anyString())).thenReturn(execStartCmd);
         when(execStartCmd.withDetach(anyBoolean())).thenReturn(execStartCmd);
@@ -205,7 +233,8 @@ public class CustomDockerClientTest extends PowerMockTestCase {
                 .withArguments(any(OutputStream.class), any(OutputStream.class)).thenReturn(execStartResultCallback);
         when(execStartCmd.exec(execStartResultCallback)).thenReturn(execStartResultCallback);
         when(execStartResultCallback.awaitCompletion()).thenReturn(execStartResultCallback);
-        PowerMockito.when(byteArrayOutputStream.toString()).thenReturn(containerId);
+        PowerMockito.when(byteArrayOutputStream.toString()).thenReturn(containerId).thenReturn("");
+
 
         ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
         when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
@@ -213,7 +242,7 @@ public class CustomDockerClientTest extends PowerMockTestCase {
         List<Container> allContainers = new ArrayList<>();
         allContainers.add(container);
         when(listContainersCmd.exec()).thenReturn(allContainers);
-        when(container.getNames()).thenReturn(new String[] { containerName });
+        when(container.getNames()).thenReturn(new String[] { "/" + containerName });
         when(container.getId()).thenReturn(containerId);
 
         InspectExecResponse inspectExecResponse = mock(InspectExecResponse.class);
@@ -224,12 +253,12 @@ public class CustomDockerClientTest extends PowerMockTestCase {
         when(inspectExecCmd.exec()).thenReturn(inspectExecResponse);
         when(dockerClient.inspectExecCmd(anyString())).thenReturn(inspectExecCmd);
 
-        CommandExecutionResult actualResult = customDockerClient.execCommandInContainerByName(containerId, "cp test");
+        CommandExecutionResult actualResult = customDockerClient.execCommandInContainerByName(containerName, "cp test");
         Assert.assertEquals(actualResult.getCommandOutput(), containerId);
         Assert.assertEquals(actualResult.getExitCode(), 0);
         verify(dockerClient, times(1)).execCreateCmd(anyString());
         verify(dockerClient, times(1)).execStartCmd(anyString());
-        PowerMockito.verifyNew(ByteArrayOutputStream.class, times(1)).withNoArguments();
+        PowerMockito.verifyNew(ByteArrayOutputStream.class, times(2)).withNoArguments();
     }
 
     /**
@@ -270,7 +299,7 @@ public class CustomDockerClientTest extends PowerMockTestCase {
         List<Container> allContainers = new ArrayList<>();
         allContainers.add(container);
         when(listContainersCmd.exec()).thenReturn(allContainers);
-        when(container.getNames()).thenReturn(new String[] { containerName });
+        when(container.getNames()).thenReturn(new String[] { "/" + containerName });
         when(container.getId()).thenReturn(containerId);
 
         InspectExecResponse inspectExecResponse = mock(InspectExecResponse.class);
@@ -279,11 +308,115 @@ public class CustomDockerClientTest extends PowerMockTestCase {
         when(inspectExecCmd.exec()).thenReturn(inspectExecResponse);
         when(dockerClient.inspectExecCmd(anyString())).thenReturn(inspectExecCmd);
 
-        CommandExecutionResult actualResult = customDockerClient.execCommandInContainerByName(containerId, "cp test");
+        CommandExecutionResult actualResult = customDockerClient.execCommandInContainerByName(containerName, "cp test");
         Assert.assertEquals(actualResult.getCommandOutput(), null);
         verify(dockerClient, times(1)).execCreateCmd(anyString());
         verify(dockerClient, times(1)).execStartCmd(anyString());
-        PowerMockito.verifyNew(ByteArrayOutputStream.class, times(1)).withNoArguments();
+        PowerMockito.verifyNew(ByteArrayOutputStream.class, times(2)).withNoArguments();
+    }
+
+
+    @Test(description = "verify the execution of command on the container--To verify the RuntimeException")
+    public void testExecCommandInContainerByNametoCatchRunTimeException() throws Exception {
+        ExecCreateCmd execCreateCmd = mock(ExecCreateCmd.class);
+        when(dockerClient.execCreateCmd(anyString())).thenReturn(execCreateCmd);
+        when(execCreateCmd.withCmd(anyString(), anyString(), anyString())).thenReturn(execCreateCmd);
+        when(execCreateCmd.withTty(anyBoolean())).thenReturn(execCreateCmd);
+        when(execCreateCmd.withAttachStdin(anyBoolean())).thenReturn(execCreateCmd);
+        when(execCreateCmd.withAttachStdout(anyBoolean())).thenReturn(execCreateCmd);
+        when(execCreateCmd.withAttachStderr(anyBoolean())).thenReturn(execCreateCmd);
+        ExecCreateCmdResponse exec = mock(ExecCreateCmdResponse.class);
+        when(execCreateCmd.exec()).thenReturn(exec);
+        when(exec.getId()).thenReturn(containerId);
+        ByteArrayOutputStream byteArrayOutputStream = mock(ByteArrayOutputStream.class);
+        PowerMockito.whenNew(ByteArrayOutputStream.class).withNoArguments().thenReturn(byteArrayOutputStream);
+        ExecStartCmd execStartCmd = mock(ExecStartCmd.class);
+        when(dockerClient.execStartCmd(anyString())).thenReturn(execStartCmd);
+        when(execStartCmd.withDetach(anyBoolean())).thenReturn(execStartCmd);
+        when(execStartCmd.withTty(anyBoolean())).thenReturn(execStartCmd);
+        ExecStartResultCallback execStartResultCallback = mock(ExecStartResultCallback.class);
+        PowerMockito.whenNew(ExecStartResultCallback.class)
+                .withArguments(any(OutputStream.class), any(OutputStream.class)).thenReturn(execStartResultCallback);
+        when(execStartCmd.exec(execStartResultCallback)).thenReturn(execStartResultCallback);
+        doThrow(new RuntimeException()).when(execStartResultCallback).awaitCompletion();
+
+        PowerMockito.when(byteArrayOutputStream.toString()).thenReturn(containerId);
+
+        ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
+        when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
+        Container container = mock(Container.class);
+        List<Container> allContainers = new ArrayList<>();
+        allContainers.add(container);
+        when(listContainersCmd.exec()).thenReturn(allContainers);
+        when(container.getNames()).thenReturn(new String[] { "/" + containerName });
+        when(container.getId()).thenReturn(containerId);
+
+        InspectExecResponse inspectExecResponse = mock(InspectExecResponse.class);
+        when(inspectExecResponse.getContainerID()).thenReturn(containerId);
+        InspectExecCmd inspectExecCmd = mock(InspectExecCmd.class);
+        when(inspectExecCmd.exec()).thenReturn(inspectExecResponse);
+        when(dockerClient.inspectExecCmd(anyString())).thenReturn(inspectExecCmd);
+
+        try {
+            customDockerClient.execCommandInContainerByName(containerName, "cp test");
+        } catch (MangleException e) {
+            Assert.assertEquals(e.getErrorCode(), ErrorCode.DOCKER_CONNECTION_FAILURE);
+        }
+        verify(dockerClient, times(1)).execCreateCmd(anyString());
+        verify(dockerClient, times(1)).execStartCmd(anyString());
+    }
+
+    @Test(description = "verify the execution of command on the container---To verify the Processing Exception")
+    public void testExecCommandInContainerByNametoCatchProcessException() throws Exception {
+        ExecCreateCmd execCreateCmd = mock(ExecCreateCmd.class);
+        when(dockerClient.execCreateCmd(anyString())).thenReturn(execCreateCmd);
+        when(execCreateCmd.withCmd(anyString(), anyString(), anyString())).thenReturn(execCreateCmd);
+        when(execCreateCmd.withTty(anyBoolean())).thenReturn(execCreateCmd);
+        when(execCreateCmd.withAttachStdin(anyBoolean())).thenReturn(execCreateCmd);
+        when(execCreateCmd.withAttachStdout(anyBoolean())).thenReturn(execCreateCmd);
+        when(execCreateCmd.withAttachStderr(anyBoolean())).thenReturn(execCreateCmd);
+        ExecCreateCmdResponse exec = mock(ExecCreateCmdResponse.class);
+        when(execCreateCmd.exec()).thenReturn(exec);
+
+        ProcessingException processingException = mock(ProcessingException.class);
+        doThrow(processingException).when(execCreateCmd).exec();
+
+        when(exec.getId()).thenReturn(containerId);
+        ByteArrayOutputStream byteArrayOutputStream = mock(ByteArrayOutputStream.class);
+        PowerMockito.whenNew(ByteArrayOutputStream.class).withNoArguments().thenReturn(byteArrayOutputStream);
+        ExecStartCmd execStartCmd = mock(ExecStartCmd.class);
+        when(dockerClient.execStartCmd(anyString())).thenReturn(execStartCmd);
+        when(execStartCmd.withDetach(anyBoolean())).thenReturn(execStartCmd);
+        when(execStartCmd.withTty(anyBoolean())).thenReturn(execStartCmd);
+        ExecStartResultCallback execStartResultCallback = mock(ExecStartResultCallback.class);
+        PowerMockito.whenNew(ExecStartResultCallback.class)
+                .withArguments(any(OutputStream.class), any(OutputStream.class)).thenReturn(execStartResultCallback);
+        when(execStartCmd.exec(execStartResultCallback)).thenReturn(execStartResultCallback);
+        doThrow(new RuntimeException()).when(execStartResultCallback).awaitCompletion();
+        PowerMockito.when(byteArrayOutputStream.toString()).thenReturn(containerId);
+
+
+        ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
+        when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
+        Container container = mock(Container.class);
+        List<Container> allContainers = new ArrayList<>();
+        allContainers.add(container);
+        when(listContainersCmd.exec()).thenReturn(allContainers);
+        when(container.getNames()).thenReturn(new String[] { "/" + containerName });
+        when(container.getId()).thenReturn(containerId);
+
+        InspectExecResponse inspectExecResponse = mock(InspectExecResponse.class);
+        when(inspectExecResponse.getContainerID()).thenReturn(containerId);
+        InspectExecCmd inspectExecCmd = mock(InspectExecCmd.class);
+        when(inspectExecCmd.exec()).thenReturn(inspectExecResponse);
+        when(dockerClient.inspectExecCmd(anyString())).thenReturn(inspectExecCmd);
+
+        try {
+            customDockerClient.execCommandInContainerByName(containerName, "cp test");
+        } catch (MangleException e) {
+            Assert.assertEquals(e.getErrorCode(), ErrorCode.DOCKER_CONNECTION_FAILURE);
+        }
+        verify(dockerClient, times(1)).execCreateCmd(anyString());
     }
 
     /**
@@ -336,16 +469,18 @@ public class CustomDockerClientTest extends PowerMockTestCase {
     /**
      * Test method for
      * {@link com.vmware.mangle.clients.docker.CustomDockerClient#stopContainerByName(java.lang.String)}.
+     *
+     * @throws MangleException
      */
     @Test(expectedExceptions = Exception.class, description = "verify the stopping of container by container name")
-    public void testStopContainerByNameFailed() {
+    public void testStopContainerByNameFailed() throws MangleException {
         ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
         when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
         Container container = mock(Container.class);
         List<Container> allContainers = new ArrayList<>();
         allContainers.add(container);
         when(listContainersCmd.exec()).thenReturn(allContainers);
-        when(container.getNames()).thenReturn(new String[] { containerName });
+        when(container.getNames()).thenReturn(new String[] { "/" + containerName });
         when(container.getId()).thenReturn(containerId);
         StopContainerCmd stopContainerCmd = mock(StopContainerCmd.class);
         when(dockerClient.stopContainerCmd(anyString())).thenReturn(stopContainerCmd);
@@ -358,16 +493,18 @@ public class CustomDockerClientTest extends PowerMockTestCase {
     /**
      * Test method for
      * {@link com.vmware.mangle.clients.docker.CustomDockerClient#stopContainerByName(java.lang.String)}.
+     *
+     * @throws MangleException
      */
     @Test
-    public void testStopContainerByName() {
+    public void testStopContainerByName() throws MangleException {
         ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
         when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
         Container container = mock(Container.class);
         List<Container> allContainers = new ArrayList<>();
         allContainers.add(container);
         when(listContainersCmd.exec()).thenReturn(allContainers);
-        when(container.getNames()).thenReturn(new String[] { containerName });
+        when(container.getNames()).thenReturn(new String[] { "/" + containerName });
         when(container.getId()).thenReturn(containerId);
         StopContainerCmd stopContainerCmd = mock(StopContainerCmd.class);
         when(dockerClient.stopContainerCmd(anyString())).thenReturn(stopContainerCmd);
@@ -381,9 +518,11 @@ public class CustomDockerClientTest extends PowerMockTestCase {
     /**
      * Test method for
      * {@link com.vmware.mangle.clients.docker.CustomDockerClient#startContainerByName(java.lang.String)}.
+     *
+     * @throws MangleException
      */
     @Test(expectedExceptions = Exception.class, description = "verify the failure of starting of a container by container name")
-    public void testStartContainerByNameFailure() {
+    public void testStartContainerByNameFailure() throws MangleException {
         ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
         when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
         Container container = mock(Container.class);
@@ -403,16 +542,18 @@ public class CustomDockerClientTest extends PowerMockTestCase {
     /**
      * Test method for
      * {@link com.vmware.mangle.clients.docker.CustomDockerClient#startContainerByName(java.lang.String)}.
+     *
+     * @throws MangleException
      */
     @Test
-    public void testStartContainerByName() {
+    public void testStartContainerByName() throws MangleException {
         ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
         when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
         Container container = mock(Container.class);
         List<Container> allContainers = new ArrayList<>();
         allContainers.add(container);
         when(listContainersCmd.exec()).thenReturn(allContainers);
-        when(container.getNames()).thenReturn(new String[] { containerName });
+        when(container.getNames()).thenReturn(new String[] { "/" + containerName });
         when(container.getId()).thenReturn(containerId);
         StartContainerCmd startContainerCmd = mock(StartContainerCmd.class);
         when(dockerClient.startContainerCmd(anyString())).thenReturn(startContainerCmd);
@@ -426,16 +567,18 @@ public class CustomDockerClientTest extends PowerMockTestCase {
     /**
      * Test method for
      * {@link com.vmware.mangle.clients.docker.CustomDockerClient#stopAndDeleteContainerByName(java.lang.String)}.
+     *
+     * @throws MangleException
      */
     @Test(expectedExceptions = Exception.class, description = "verify the failure of stopping and deletion of a container by name")
-    public void testStopAndDeleteContainerByNameFailure() {
+    public void testStopAndDeleteContainerByNameFailure() throws MangleException {
         ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
         when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
         Container container = mock(Container.class);
         List<Container> allContainers = new ArrayList<>();
         allContainers.add(container);
         when(listContainersCmd.exec()).thenReturn(allContainers);
-        when(container.getNames()).thenReturn(new String[] { containerName });
+        when(container.getNames()).thenReturn(new String[] { "/" + containerName });
         when(container.getId()).thenReturn(containerId);
         StopContainerCmd stopContainerCmd = mock(StopContainerCmd.class);
         RemoveContainerCmd removeContainerCmd = mock(RemoveContainerCmd.class);
@@ -451,16 +594,18 @@ public class CustomDockerClientTest extends PowerMockTestCase {
     /**
      * Test method for
      * {@link com.vmware.mangle.clients.docker.CustomDockerClient#stopAndDeleteContainerByName(java.lang.String)}.
+     *
+     * @throws MangleException
      */
     @Test
-    public void testStopAndDeleteContainerByName() {
+    public void testStopAndDeleteContainerByName() throws MangleException {
         ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
         when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
         Container container = mock(Container.class);
         List<Container> allContainers = new ArrayList<>();
         allContainers.add(container);
         when(listContainersCmd.exec()).thenReturn(allContainers);
-        when(container.getNames()).thenReturn(new String[] { containerName });
+        when(container.getNames()).thenReturn(new String[] { "/" + containerName });
         when(container.getId()).thenReturn(containerId);
         StopContainerCmd stopContainerCmd = mock(StopContainerCmd.class);
         RemoveContainerCmd removeContainerCmd = mock(RemoveContainerCmd.class);
@@ -530,16 +675,18 @@ public class CustomDockerClientTest extends PowerMockTestCase {
     /**
      * Test method for
      * {@link com.vmware.mangle.clients.docker.CustomDockerClient#listProcessesContainerByName(java.lang.String)}.
+     *
+     * @throws MangleException
      */
     @Test
-    public void testListProcessesContainerByName() {
+    public void testListProcessesContainerByName() throws MangleException {
         ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
         when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
         Container container = mock(Container.class);
         List<Container> allContainers = new ArrayList<>();
         allContainers.add(container);
         when(listContainersCmd.exec()).thenReturn(allContainers);
-        when(container.getNames()).thenReturn(new String[] { containerName });
+        when(container.getNames()).thenReturn(new String[] { "/" + containerName });
         when(container.getId()).thenReturn(containerId);
         TopContainerCmd topContainerCmd = mock(TopContainerCmd.class);
         when(dockerClient.topContainerCmd(anyString())).thenReturn(topContainerCmd);
@@ -558,9 +705,11 @@ public class CustomDockerClientTest extends PowerMockTestCase {
     /**
      * Test method for
      * {@link com.vmware.mangle.clients.docker.CustomDockerClient#deleteAllMatchingContainer(java.lang.String)}.
+     *
+     * @throws MangleException
      */
     @Test(expectedExceptions = Exception.class, description = "Verify the failure in the deletion of the matching container")
-    public void testDeleteAllMatchingContainerFailure() {
+    public void testDeleteAllMatchingContainerFailure() throws MangleException {
         ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
         when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
         when(listContainersCmd.withStatusFilter(anyString())).thenReturn(listContainersCmd);
@@ -568,7 +717,7 @@ public class CustomDockerClientTest extends PowerMockTestCase {
         List<Container> allContainers = new ArrayList<>();
         allContainers.add(container);
         when(listContainersCmd.exec()).thenReturn(allContainers);
-        when(container.getNames()).thenReturn(new String[] { containerName });
+        when(container.getNames()).thenReturn(new String[] { "/" + containerName });
         when(container.getId()).thenReturn(containerId);
 
         StopContainerCmd stopContainerCmd = mock(StopContainerCmd.class);
@@ -586,9 +735,11 @@ public class CustomDockerClientTest extends PowerMockTestCase {
     /**
      * Test method for
      * {@link com.vmware.mangle.clients.docker.CustomDockerClient#deleteAllMatchingContainer(java.lang.String)}.
+     *
+     * @throws MangleException
      */
     @Test
-    public void testDeleteAllMatchingContainer() {
+    public void testDeleteAllMatchingContainer() throws MangleException {
         ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
         when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
         when(listContainersCmd.withStatusFilter(anyString())).thenReturn(listContainersCmd);
@@ -596,7 +747,7 @@ public class CustomDockerClientTest extends PowerMockTestCase {
         List<Container> allContainers = new ArrayList<>();
         allContainers.add(container);
         when(listContainersCmd.exec()).thenReturn(allContainers);
-        when(container.getNames()).thenReturn(new String[] { containerName });
+        when(container.getNames()).thenReturn(new String[] { "/" + containerName });
         when(container.getId()).thenReturn(containerId);
 
         StopContainerCmd stopContainerCmd = mock(StopContainerCmd.class);
@@ -701,7 +852,7 @@ public class CustomDockerClientTest extends PowerMockTestCase {
         List<Container> allContainers = new ArrayList<>();
         allContainers.add(container);
         when(listContainersCmd.exec()).thenReturn(allContainers);
-        when(container.getNames()).thenReturn(new String[] { containerName });
+        when(container.getNames()).thenReturn(new String[] { "/" + containerName });
         when(container.getId()).thenReturn(containerId);
         Container actualRes = customDockerClient.getContainerByName(containerName);
         Assert.assertEquals(actualRes.getId(), containerId);
@@ -863,7 +1014,7 @@ public class CustomDockerClientTest extends PowerMockTestCase {
         List<Container> allContainers = new ArrayList<>();
         allContainers.add(container);
         when(listContainersCmd.exec()).thenReturn(allContainers);
-        when(container.getNames()).thenReturn(new String[] { containerName });
+        when(container.getNames()).thenReturn(new String[] { "/" + containerName });
         when(container.getId()).thenReturn(containerId);
         CopyArchiveToContainerCmd containerCmd = mock(CopyArchiveToContainerCmd.class);
         when(dockerClient.copyArchiveToContainerCmd(anyString())).thenReturn(containerCmd);
@@ -895,7 +1046,7 @@ public class CustomDockerClientTest extends PowerMockTestCase {
         List<Container> allContainers = new ArrayList<>();
         allContainers.add(container);
         when(listContainersCmd.exec()).thenReturn(allContainers);
-        when(container.getNames()).thenReturn(new String[] { containerName });
+        when(container.getNames()).thenReturn(new String[] { "/" + containerName });
         when(container.getId()).thenReturn(containerId);
         CopyArchiveToContainerCmd containerCmd = mock(CopyArchiveToContainerCmd.class);
         when(dockerClient.copyArchiveToContainerCmd(anyString())).thenReturn(containerCmd);
@@ -919,6 +1070,39 @@ public class CustomDockerClientTest extends PowerMockTestCase {
      * {@link com.vmware.mangle.clients.docker.CustomDockerClient#copyFileToContainerByName(java.lang.String, java.lang.String, java.lang.String)}.
      */
     @Test
+    public void testCopyFileToContainerByNameclientProtocolfailure() throws Exception {
+        ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
+        when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
+        when(listContainersCmd.withStatusFilter(anyString())).thenReturn(listContainersCmd);
+        Container container = mock(Container.class);
+        List<Container> allContainers = new ArrayList<>();
+        allContainers.add(container);
+        when(listContainersCmd.exec()).thenReturn(allContainers);
+        when(container.getNames()).thenReturn(new String[] { "/" + containerName });
+        when(container.getId()).thenReturn(containerId);
+        CopyArchiveToContainerCmd containerCmd = mock(CopyArchiveToContainerCmd.class);
+        when(dockerClient.copyArchiveToContainerCmd(anyString())).thenReturn(containerCmd);
+        when(containerCmd.withRemotePath(anyString())).thenReturn(containerCmd);
+        when(containerCmd.withHostResource(anyString())).thenReturn(containerCmd);
+        doThrow(new ProcessingException("org.apache.http.client.ClientProtocolException")).when(containerCmd).exec();
+        ProcessingException exception = mock(ProcessingException.class);
+        when(exception.getMessage()).thenReturn("org.apache.http.client.ClientProtocolException");
+        boolean exceptionCalled = false;
+        try {
+            customDockerClient.copyFileToContainerByName(containerName, "/test", "/test");
+        } catch (Exception e) {
+            exceptionCalled = true;
+        }
+        Assert.assertTrue(exceptionCalled);
+        verify(dockerClient, times(1)).listContainersCmd();
+        verify(dockerClient, times(1)).copyArchiveToContainerCmd(anyString());
+    }
+
+    /**
+     * Test method for
+     * {@link com.vmware.mangle.clients.docker.CustomDockerClient#copyFileToContainerByName(java.lang.String, java.lang.String, java.lang.String)}.
+     */
+    @Test
     public void testCopyFileToContainerByName() throws Exception {
         ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
         when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
@@ -927,7 +1111,7 @@ public class CustomDockerClientTest extends PowerMockTestCase {
         List<Container> allContainers = new ArrayList<>();
         allContainers.add(container);
         when(listContainersCmd.exec()).thenReturn(allContainers);
-        when(container.getNames()).thenReturn(new String[] { containerName });
+        when(container.getNames()).thenReturn(new String[] { "/" + containerName });
         when(container.getId()).thenReturn(containerId);
         CopyArchiveToContainerCmd containerCmd = mock(CopyArchiveToContainerCmd.class);
         when(dockerClient.copyArchiveToContainerCmd(anyString())).thenReturn(containerCmd);
@@ -940,21 +1124,29 @@ public class CustomDockerClientTest extends PowerMockTestCase {
 
     /**
      * Test method for {@link com.vmware.mangle.clients.docker.CustomDockerClient#testConnection()}.
+     *
+     * @throws MangleException
      */
     @Test(description = "verify the test connection to the docker host is failed")
-    public void testTestConnectionFailure() {
+    public void testTestConnectionFailure() throws MangleException {
         PingCmd pingCmd = mock(PingCmd.class);
         when(dockerClient.pingCmd()).thenReturn(pingCmd);
-        doThrow(new RuntimeException("ping test failed")).when(pingCmd).exec();
-        Assert.assertFalse(customDockerClient.testConnection());
-        verify(dockerClient, times(1)).pingCmd();
+        doThrow(new DockerClientException("ping test failed")).when(pingCmd).exec();
+        try {
+            Assert.assertFalse(customDockerClient.testConnection());
+        } catch (MangleException exception) {
+            Assert.assertTrue(true);
+            verify(dockerClient, times(1)).pingCmd();
+        }
     }
 
     /**
      * Test method for {@link com.vmware.mangle.clients.docker.CustomDockerClient#testConnection()}.
+     *
+     * @throws MangleException
      */
     @Test(description = "verify the test connection to the docker host")
-    public void testTestConnection() {
+    public void testTestConnection() throws MangleException {
         PingCmd pingCmd = mock(PingCmd.class);
         when(dockerClient.pingCmd()).thenReturn(pingCmd);
 
@@ -1015,14 +1207,14 @@ public class CustomDockerClientTest extends PowerMockTestCase {
 
 
     @Test(description = "retrieve the container ip address for the given container name, should return null if the container name is not found")
-    public void testGetDockerIPByName() {
+    public void testGetDockerIPByName() throws MangleException {
         ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
         when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
         Container container = mock(Container.class);
         List<Container> allContainers = new ArrayList<>();
         allContainers.add(container);
         when(listContainersCmd.exec()).thenReturn(allContainers);
-        when(container.getNames()).thenReturn(new String[] { containerName });
+        when(container.getNames()).thenReturn(new String[] { "/" + containerName });
         when(container.getId()).thenReturn(containerId);
 
         String ip = customDockerClient.getDockerIPByName(containerName);

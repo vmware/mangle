@@ -19,6 +19,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -38,7 +39,7 @@ import org.testng.annotations.Test;
 
 import com.vmware.mangle.cassandra.model.security.ADAuthProviderDto;
 import com.vmware.mangle.services.ADAuthProviderService;
-import com.vmware.mangle.services.UserAuthenticationService;
+import com.vmware.mangle.services.UserService;
 import com.vmware.mangle.services.config.ADAuthProvider;
 import com.vmware.mangle.services.controller.AuthProviderController;
 import com.vmware.mangle.services.mockdata.AuthProviderMockData;
@@ -64,7 +65,7 @@ public class AuthProviderControllerTest {
     private ADAuthProvider adAuthProvider;
 
     @Mock
-    private UserAuthenticationService userAuthenticationService;
+    private UserService userService;
 
     private AuthProviderMockData authProviderMockData = new AuthProviderMockData();
 
@@ -183,7 +184,7 @@ public class AuthProviderControllerTest {
 
         when(adAuthProviderService.doesADAuthExists(adAuth)).thenReturn(false);
         when(adAuthProviderService.addADAuthProvider(adAuth)).thenReturn(adAuth);
-        Mockito.doNothing().when(adAuthProviderService).removeADAuthProvider(adAuth.getId());
+        Mockito.doNothing().when(adAuthProviderService).removeADAuthProvider(Collections.singletonList(adAuth.getId()));
         when(adAuthProvider.setAdAuthProvider(Mockito.anyString(), Mockito.anyString())).thenReturn(false);
 
         try {
@@ -236,10 +237,10 @@ public class AuthProviderControllerTest {
 
 
     @Test
-    public void removeADAuthProviderSuccessful() {
+    public void removeADAuthProviderSuccessful() throws MangleException {
         log.info("Executing test: removeADAuthProviderSuccessful");
         List<String> authProvidersId = authProviderMockData.getListOfStrings();
-        Mockito.doNothing().when(adAuthProviderService).removeADAuthProvider(Mockito.anyString());
+        Mockito.doNothing().when(adAuthProviderService).removeADAuthProvider(Mockito.anyList());
 
         ResponseEntity response = authProviderController.removeADAuthProvider(authProvidersId);
         Assert.assertEquals(response.getStatusCode(), HttpStatus.NO_CONTENT);
@@ -250,12 +251,12 @@ public class AuthProviderControllerTest {
         log.info("Executing test: testGetAllDomains");
         Set<String> domainNames = new HashSet<>();
         when(adAuthProviderService.getAllDomains()).thenReturn(domainNames);
-        when(userAuthenticationService.getDefaultDomainName()).thenReturn(Constants.LOCAL_DOMAIN_NAME);
+        when(userService.getDefaultDomainName()).thenReturn(Constants.LOCAL_DOMAIN_NAME);
         ResponseEntity responseEntity = authProviderController.getAlldomains();
         Assert.assertEquals(responseEntity.getStatusCode(), HttpStatus.OK);
         Collection content = ((Resources) responseEntity.getBody()).getContent();
         Assert.assertEquals(content.size(), 1);
-        verify(userAuthenticationService, times(1)).getDefaultDomainName();
+        verify(userService, times(1)).getDefaultDomainName();
         verify(adAuthProviderService, times(1)).getAllDomains();
     }
 

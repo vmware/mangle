@@ -13,6 +13,7 @@ package com.vmware.mangle.unittest.utils.exceptions.handler;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -28,11 +29,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.powermock.modules.testng.PowerMockTestCase;
 import org.springframework.core.MethodParameter;
+import org.springframework.data.cassandra.CassandraConnectionFailureException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -311,5 +314,24 @@ public class CustomizedResponseEntityExceptionHandlerTest extends PowerMockTestC
         Assert.assertEquals(actualRsult.getStatusCodeValue(), 400);
         verify(customErrorMessage, times(1)).getErrorMessage(anyString());
         verify(bindingResult, times(1)).getFieldErrors();
+    }
+
+    /**
+     * Test method for
+     * {@link com.vmware.mangle.exceptions.handler.CustomizedResponseEntityExceptionHandler#handleCassandraConnectionFailureException(java.lang.Exception, org.springframework.web.context.request.WebRequest)}.
+     */
+    @Test
+    public void testHandleCassandraConnectionFailureException() {
+        CassandraConnectionFailureException exception = mock(CassandraConnectionFailureException.class);
+        when(exception.getMessage()).thenReturn("testHandleCassandraConnectionFailureException");
+        NoHostAvailableException noHostAvailableException = mock(NoHostAvailableException.class);
+        when(exception.getCause()).thenReturn(noHostAvailableException);
+        when(noHostAvailableException.getCustomMessage(anyInt(), anyBoolean(), anyBoolean()))
+                .thenReturn("All host(s) tried for query failed");
+        ResponseEntity<ErrorDetails> actualRsult =
+                customizedResponseEntityExceptionHandler.handleCassandraConnectionFailureException(exception, request);
+        Assert.assertEquals(actualRsult.getStatusCode(), HttpStatus.INTERNAL_SERVER_ERROR);
+        verify(exception, times(1)).getMessage();
+        verify(exception, times(2)).getCause();
     }
 }

@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { LoginComponent } from './login.component';
 import { FormsModule } from '@angular/forms';
@@ -10,13 +10,15 @@ import { ClarityModule, ClrLoadingState } from '@clr/angular';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { BrowserModule } from '@angular/platform-browser';
 import { of } from 'rxjs';
+import { Router } from '@angular/router';
 
 describe('LoginComponent', () => {
   let component: LoginComponent;
   let authService: AuthService;
+  let router: Router;
   let fixture: ComponentFixture<LoginComponent>;
 
-  beforeEach(async(() => {
+  beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [
         BrowserModule,
@@ -33,15 +35,14 @@ describe('LoginComponent', () => {
       schemas: [NO_ERRORS_SCHEMA]
     })
       .compileComponents();
-  }));
-
-  beforeEach(() => {
     fixture = TestBed.createComponent(LoginComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
     authService = TestBed.get(AuthService);
+    router = TestBed.get(Router);
     spyOn(authService, 'getAuthSources').and.returnValue(of({ "_embedded": { "stringList": ["mangle.local"] } }));
     spyOn(authService, 'login').and.returnValue(of(new HttpResponse<any>({ status: 200, body: {} })));
+    spyOn(router, 'navigateByUrl');
   });
 
   it('should create', () => {

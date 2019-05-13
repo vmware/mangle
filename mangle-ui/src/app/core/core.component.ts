@@ -1,4 +1,4 @@
-import { Component, OnInit, NgZone } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CoreService } from './core.service';
 import { AuthService } from '../auth/auth.service';
 import { Router } from '@angular/router';
@@ -10,7 +10,7 @@ import { Router } from '@angular/router';
 })
 export class CoreComponent implements OnInit {
 
-  constructor(private coreService: CoreService, private authService: AuthService, private router: Router, private ngZone: NgZone) { }
+  constructor(private coreService: CoreService, private authService: AuthService, private router: Router) { }
 
   public user: string;
   public domain: string;
@@ -39,8 +39,7 @@ export class CoreComponent implements OnInit {
 
   logout() {
     this.authService.logout();
-    this.ngZone.run(() => this.router.navigateByUrl('login')).then();
-    //this.router.navigateByUrl('login');
+    this.router.navigateByUrl('login');
   }
 
   public getMyRolesAndPrivileges(roleQueryString) {

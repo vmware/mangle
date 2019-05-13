@@ -26,7 +26,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import com.vmware.mangle.metric.reporter.WavefrontMetricHelper;
-import com.vmware.mangle.metric.reporter.constants.MetricReporterTestConstants;
+import com.vmware.mangle.unittest.metric.constants.MetricReporterTestConstants;
 
 /**
  * Unit Test Case for WavefrontMetricHelper.
@@ -85,7 +85,7 @@ public class WavefrontMetricHelperTest extends PowerMockTestCase {
     @Test(description = "Verify the addition of statictags and null customtags to the wavefrontMetricHelper, the return map should only contain statictags")
     public void testAddStaticTags1() {
         Map<String, String> customTags = new HashMap<>();
-        customTags.put(MetricReporterTestConstants.CPU_USAGE, "80.4");
+        customTags.put(com.vmware.mangle.unittest.metric.constants.MetricReporterTestConstants.CPU_USAGE, "80.4");
         Map<String, String> actualResult = WavefrontMetricHelper.addStaticTags(null, this.staticTags);
         Assert.assertEquals(actualResult.size(), 1);
     }

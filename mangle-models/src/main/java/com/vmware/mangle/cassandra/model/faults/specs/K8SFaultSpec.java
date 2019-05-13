@@ -51,7 +51,7 @@ public class K8SFaultSpec extends CommandExecutionFaultSpec implements Serializa
 
     @JsonIgnore
     @Override
-    public void setTimeoutInMilliseconds(String timeoutinMilliseconds) {
+    public void setTimeoutInMilliseconds(Integer timeoutinMilliseconds) {
         super.setTimeoutInMilliseconds(timeoutinMilliseconds);
     }
 

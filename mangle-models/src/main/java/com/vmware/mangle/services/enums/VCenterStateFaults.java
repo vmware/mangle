@@ -19,7 +19,7 @@ package com.vmware.mangle.services.enums;
 public enum VCenterStateFaults {
     POWEROFF_VM(VCenterFaultRemediation.POWERON_VM),
     SUSPEND_VM(VCenterFaultRemediation.POWERON_VM),
-    RESTART_VM(null);
+    RESET_VM(null);
 
     private VCenterFaultRemediation remediation;
 

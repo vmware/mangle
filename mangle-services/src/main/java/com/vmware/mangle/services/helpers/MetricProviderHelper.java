@@ -43,6 +43,10 @@ public class MetricProviderHelper {
     public Notifier getActiveNotificationProvider() {
         try {
             MetricProviderSpec activeMetricProvider = metricProviderService.getActiveMetricProvider();
+            if (null == activeMetricProvider) {
+                log.debug(" No Active metric providers are found. ");
+                return null;
+            }
             MetricProviderClient client = metrciProviderClientFactory.getMetricProviderClient(activeMetricProvider);
             if (client instanceof DatadogClient) {
                 DatadogClient datadogClient = (DatadogClient) client;

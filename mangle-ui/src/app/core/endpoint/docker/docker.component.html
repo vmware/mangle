@@ -1,20 +1,20 @@
 <clr-alert *ngIf="errorFlag" [clrAlertType]="'danger'">
 	<div class="alert-item">{{alertMessage}}</div>
-  </clr-alert>
-  <clr-alert *ngIf="successFlag" [clrAlertType]="'success'">
+</clr-alert>
+<clr-alert *ngIf="successFlag" [clrAlertType]="'success'">
 	<div class="alert-item">{{alertMessage}}</div>
-  </clr-alert>
+</clr-alert>
 <div [hidden]="epDatagrid">
 	<clr-dg-action-bar>
 		<div class="btn-group">
-			<button type="button" class="btn btn-sm btn-secondary" (click)="populateEndpointForm({'id':null,'name':null,'endPointType':'DOCKER','dockerConnectionProperties':{'dockerHostname':null,'dockerPort':null,'tlsEnabled':true},'tags':null});epDatagrid=true;epForm=false;addEdit='Add'"><clr-icon shape="plus"></clr-icon> Docker</button>
+			<button type="button" class="btn btn-sm btn-secondary" (click)="populateEndpointForm({'id':null,'name':null,'endPointType':'DOCKER','dockerConnectionProperties':{'dockerHostname':null,'dockerPort':2375,'tlsEnabled':false},'tags':null});epDatagrid=true;epForm=false;addEdit='Add'"><clr-icon shape="plus"></clr-icon> Docker</button>
 		</div>
 	</clr-dg-action-bar>
 	<clr-datagrid [clrDgLoading]="isLoading">
-		<clr-dg-column>Endpoint Name</clr-dg-column>
-		<clr-dg-column>Docker Host</clr-dg-column>
-		<clr-dg-column>Port</clr-dg-column>
-		<clr-dg-column>TLS Enabled</clr-dg-column>
+		<clr-dg-column [clrDgField]="'name'">Endpoint Name</clr-dg-column>
+		<clr-dg-column [clrDgField]="'dockerConnectionProperties.dockerHostname'">Docker Host</clr-dg-column>
+		<clr-dg-column [clrDgField]="'dockerConnectionProperties.dockerPort'">Port</clr-dg-column>
+		<clr-dg-column [clrDgField]="'dockerConnectionProperties.tlsEnabled'">TLS Enabled</clr-dg-column>
 		<clr-dg-column>Tags</clr-dg-column>
 		<clr-dg-row *clrDgItems="let endpoint of endpoints" [clrDgItem]="endpoint">
 			<clr-dg-action-overflow>
@@ -37,7 +37,7 @@
 </div>
 <div [hidden]="epForm">
 	<h3 class="modal-title">{{addEdit}} Docker</h3>
-	<form #dockerForm="ngForm" (ngSubmit)="addOrUpdateEndpoint(dockerForm.value);epDatagrid=false;epForm=true;" *ngIf="epFormData" ngNativeValidate>
+	<form #dockerForm="ngForm" #nativeDockerForm *ngIf="epFormData" (ngSubmit)="addOrUpdateEndpoint(dockerForm.value);epDatagrid=false;epForm=true;" ngNativeValidate>
         <section class="form-block">
             <div class="form-group">
                 <input type="text" name="id" [(ngModel)]="epFormData.id" [hidden]="true">
@@ -47,7 +47,7 @@
             </div>
 			<div class="form-group">
 				<label for="name">Endpoint Name</label>
-                <input type="text" name="name" [(ngModel)]="epFormData.name" [required]="addEdit == 'Add'" [readonly]="addEdit == 'Edit'">
+                <input type="text" name="name" pattern="^[A-Za-z0-9-_.]+$" title="Only alphanumeric and special characters (_ - .) allowed." [(ngModel)]="epFormData.name" [required]="addEdit == 'Add'" [readonly]="addEdit == 'Edit'">
             </div>
 			<fieldset ngModelGroup="dockerConnectionProperties">
                 <div class="form-group">
@@ -56,7 +56,7 @@
                 </div>
 				<div class="form-group">
                     <label for="dockerPort">Docker Port</label>
-                    <input type="text" name="dockerPort" [(ngModel)]="epFormData.dockerConnectionProperties.dockerPort" required>
+                    <input type="number" min="0" max="65535" name="dockerPort" [(ngModel)]="epFormData.dockerConnectionProperties.dockerPort" required>
                 </div>
 				<div class="form-group">
 					<label for="tlsEnabled">TLS Enabled</label>
@@ -67,6 +67,17 @@
 						</select>
 					</div>
 				</div>
+				<div class="form-group" *ngIf="epFormData.dockerConnectionProperties.tlsEnabled">
+					<label for="certificatesName">Certificates Name</label>
+					<div class="select">
+						<select name="certificatesName" [(ngModel)]="epFormData.dockerConnectionProperties.certificatesName">
+							<option></option>
+							<ng-container *ngFor="let certificate of certificates">
+								<option [value]="certificate.name" *ngIf="certificate.type == 'DOCKER'">{{certificate.name}}</option>
+							</ng-container>
+						</select>
+					</div><clr-icon shape="plus-circle" (click)="dockerCertificates=true;" style="width:21px;height:39px;"></clr-icon>
+				</div>
 			</fieldset>
 			<div class="form-group">
 				<label for="tags">Tags</label>
@@ -74,8 +85,8 @@
 				<clr-icon shape="plus-circle" (click)="tagsModal=true;" style="width:21px;height:30px;"></clr-icon>
 			</div>
 		</section>
-		<button type="button" class="btn btn-outline" (click)="epDatagrid=false;epForm=true;">CANCEL</button>
-		<button [clrLoading]="testEndpointBtnState" type="button" class="btn btn-outline" (click)="testEndpointConnection(dockerForm.value);" [disabled]="!dockerForm.form.valid">TEST CONNECTION</button>
+		<button type="button" class="btn btn-outline" (click)="epDatagrid=false;epForm=true;ngOnInit();">CANCEL</button>
+		<button [clrLoading]="testEndpointBtnState" type="button" class="btn btn-outline" (click)="testEndpointConnection(nativeDockerForm.reportValidity(), dockerForm.value);">TEST CONNECTION</button>
         <button type="submit" class="btn btn-primary" [disabled]="disableSubmit">SUBMIT</button>
     </form>
 </div>
@@ -97,5 +108,32 @@
 			<button type="submit" class="btn btn-primary">ADD</button>
 		</form>
 	</div>
+</clr-modal>
+<clr-modal [(clrModalOpen)]="dockerCertificates">
+    <h3 class="modal-title">Upload Docker Certificates</h3>
+    <div class="modal-body">
+        <form #DockerCertificatesForm="ngForm" (ngSubmit)="addDockerCertificates(DockerCertificatesForm.value);dockerCertificates=false;DockerCertificatesForm.reset();" ngNativeValidate>
+            <section class="form-block">
+                <div class="form-group">
+                    <label for="name">Name</label>
+                    <input type="text" name="name" ngModel required>
+                </div>
+                <div class="form-group">
+                    <label for="caCert">CA Certificate</label>
+                    <input type="file" name="caCert" (change)="getDockerCaCertFile($event)" ngModel required>
+                </div>
+                <div class="form-group">
+                    <label for="serverCert">Server Certificate</label>
+                    <input type="file" name="serverCert" (change)="getDockerServerCertFile($event)" ngModel required>
+                </div>
+                <div class="form-group">
+                    <label for="privateKey">PrivateKey</label>
+                    <input type="file" name="privateKey" (change)="getDockerPrivateKeyFile($event)" ngModel required>
+                </div>
+            </section>
+            <button type="button" class="btn btn-outline" (click)="dockerCertificates=false;DockerCertificatesForm.reset();">CANCEL</button>
+            <button type="submit" class="btn btn-primary">SUBMIT</button>
+        </form>
+    </div>
 </clr-modal>
 	

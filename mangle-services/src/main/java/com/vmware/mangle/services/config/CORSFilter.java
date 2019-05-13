@@ -12,6 +12,7 @@
 package com.vmware.mangle.services.config;
 
 import java.io.IOException;
+
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -52,11 +53,18 @@ public class CORSFilter implements Filter {
         } else {
             response.setContentType(MediaType.TEXT_HTML_VALUE);
             response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
-            response.getWriter()
-                    .write(new StringBuilder("<html><body><p>").append(URLConstants.MANGLE_CURRENT_STATUS_MESSAGE)
-                            .append(URLConstants.getMangleNodeCurrentStatus()).append(".Please exit Mangle from ")
-                            .append(URLConstants.getMangleNodeCurrentStatus())
-                            .append(" or contact administrator</p></body></html>").toString());
+
+            StringBuilder maintenanceMessage = new StringBuilder(
+                    "<style>body { text-align: center; padding: 200px; font: 20px Helvetica, sans-serif; color: #333;}</style><section style=\"background:#D9E4EA;\"><br/>");
+            if (URLConstants.getMangleNodeCurrentStatus().equals(MangleNodeStatus.PAUSE)) {
+                maintenanceMessage.append("<h3>Mangle Is Paused</h3>").append(
+                        "<p>Sorry for the inconvenience, Please contact admin, otherwise mangle will be back online shortly!</p><p>&mdash; The Mangle Admin</p><br></section>");
+            }
+            if (URLConstants.getMangleNodeCurrentStatus().equals(MangleNodeStatus.MAINTENANCE_MODE)) {
+                maintenanceMessage.append("<h3>Mangle Is Under Maintenance</h3>").append(
+                        "<p>Sorry for the inconvenience, performing some maintenance at the moment.</p><p>Please contact admin, otherwise mangle will be back online shortly!</p><p>&mdash; The Mangle Admin</p><br></section>");
+            }
+            response.getWriter().write(maintenanceMessage.toString());
             response.getWriter().flush();
             response.getWriter().close();
         }

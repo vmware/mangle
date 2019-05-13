@@ -11,16 +11,18 @@
 
 package com.vmware.mangle.faults.plugin.mockdata;
 
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.DEFAULT_TEMP_DIR;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.JAVA_HOME_PATH;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.LOAD_ARG;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.TASK_ID;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.USER;
 import static com.vmware.mangle.services.dto.AgentRuleConstants.HTTP_METHODS_STRING;
 import static com.vmware.mangle.services.dto.AgentRuleConstants.SERVICES_STRING;
+import static com.vmware.mangle.utils.constants.FaultConstants.DEFAULT_TEMP_DIR;
+import static com.vmware.mangle.utils.constants.FaultConstants.JAVA_HOME_PATH;
+import static com.vmware.mangle.utils.constants.FaultConstants.LOAD_ARG;
+import static com.vmware.mangle.utils.constants.FaultConstants.TASK_ID;
+import static com.vmware.mangle.utils.constants.FaultConstants.USER;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -39,11 +41,13 @@ import com.vmware.mangle.cassandra.model.faults.specs.K8SResourceNotReadyFaultSp
 import com.vmware.mangle.cassandra.model.faults.specs.VMDiskFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.VMNicFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.VMStateFaultSpec;
+import com.vmware.mangle.cassandra.model.tasks.DockerSpecificArguments;
 import com.vmware.mangle.cassandra.model.tasks.K8SSpecificArguments;
 import com.vmware.mangle.cassandra.model.tasks.SupportScriptInfo;
 import com.vmware.mangle.services.enums.AgentFaultName;
 import com.vmware.mangle.services.enums.BytemanFaultType;
 import com.vmware.mangle.services.enums.DockerFaultName;
+import com.vmware.mangle.services.enums.K8SFaultName;
 import com.vmware.mangle.services.enums.K8SResource;
 import com.vmware.mangle.services.enums.VCenterDiskFaults;
 import com.vmware.mangle.services.enums.VCenterNicFaults;
@@ -63,13 +67,13 @@ public class FaultsMockData {
     private EndpointMockData endpointMockData = new EndpointMockData();
     private CredentialsSpecMockData credentialsSpecMockData = new CredentialsSpecMockData();
 
-    private String faultLoad;
+    private Integer faultLoad;
 
     private String javahomePath;
 
     private String jvmProcess;
 
-    private String jvmProcessPort;
+    private Integer jvmProcessPort;
 
     private String jvmProcessUser;
 
@@ -77,7 +81,7 @@ public class FaultsMockData {
 
     private String testPodLabels;
 
-    private String faultExecutionTimeout;
+    private Integer faultExecutionTimeout;
 
     private String faultTaskId;
 
@@ -87,16 +91,19 @@ public class FaultsMockData {
 
     private String bytemanUser;
 
+    private String testPodInAction;
+
     public FaultsMockData() {
         this.properties = ReadProperty.readProperty(Constants.MOCKDATA_FILE);
-        faultLoad = properties.getProperty("faultLoad");
+        faultLoad = Integer.parseInt(properties.getProperty("faultLoad"));
         javahomePath = properties.getProperty("javahomePath");
         jvmProcess = properties.getProperty("jvmProcess");
-        jvmProcessPort = properties.getProperty("jvmProcessPort");
+        jvmProcessPort = Integer.parseInt(properties.getProperty("jvmProcessPort"));
         jvmProcessUser = properties.getProperty("jvmProcessUser");
         testContainername = properties.getProperty("testContainername");
         testPodLabels = properties.getProperty("testPodLabels");
-        faultExecutionTimeout = properties.getProperty("faultExecutionTimeout");
+        testPodInAction = properties.getProperty("testPodInAction");
+        faultExecutionTimeout = Integer.parseInt(properties.getProperty("faultExecutionTimeout"));
         faultTaskId = properties.getProperty("faultTaskId");
         httpMethodsString = properties.getProperty("httpMethodsString");
         servicesString = properties.getProperty("servicesString");
@@ -113,13 +120,23 @@ public class FaultsMockData {
         return k8SFaultSpec;
     }
 
+    public K8SFaultTriggerSpec getK8SJVMCodeLevelFaultTriggerSpec() {
+        K8SFaultTriggerSpec k8SFaultSpec = new K8SFaultTriggerSpec();
+
+        JVMCodeLevelFaultSpec jvmCodeLevelFaultSpec = getK8sSpringExceptionJVMCodeLevelFaultSpec();
+
+        k8SFaultSpec.setFaultSpec(jvmCodeLevelFaultSpec);
+        k8SFaultSpec.setSchedule(jvmCodeLevelFaultSpec.getSchedule());
+        return k8SFaultSpec;
+    }
+
     public CpuFaultSpec getK8SCPUFaultSpec() {
         K8SCredentials credentialsSpec = credentialsSpecMockData.getk8SCredentialsData();
         EndpointSpec endpointSpec = endpointMockData.k8sEndpointMockData();
         CpuFaultSpec cpuFaultSpec = new CpuFaultSpec();
         cpuFaultSpec.setCpuLoad(faultLoad);
         Map<String, String> args = new HashMap<>();
-        args.put(LOAD_ARG, cpuFaultSpec.getCpuLoad());
+        args.put(LOAD_ARG, String.valueOf(cpuFaultSpec.getCpuLoad()));
         cpuFaultSpec.setArgs(args);
         cpuFaultSpec.setEndpointName(endpointSpec.getName());
 
@@ -134,15 +151,15 @@ public class FaultsMockData {
         return cpuFaultSpec;
     }
 
-    public JVMAgentFaultSpec getK8sCpuJvmAgentFaultSpec() {
+    public CpuFaultSpec getK8sCpuJvmAgentFaultSpec() {
         K8SCredentials credentialsSpec = credentialsSpecMockData.getk8SCredentialsData();
         EndpointSpec endpointSpec = endpointMockData.k8sEndpointMockData();
-        JVMAgentFaultSpec cpuFaultSpec = new JVMAgentFaultSpec();
+        CpuFaultSpec cpuFaultSpec = new CpuFaultSpec();
         cpuFaultSpec.setFaultName(AgentFaultName.INJECT_CPU_FAULT.getValue());
         Map<String, String> args = new HashMap<>();
-        args.put(LOAD_ARG, faultLoad);
+        args.put(LOAD_ARG, String.valueOf(faultLoad));
         cpuFaultSpec.setArgs(args);
-
+        cpuFaultSpec.setCpuLoad(faultLoad);
         cpuFaultSpec.setJvmProperties(getJVMProperties());
         cpuFaultSpec.setK8sArguments(getK8SSpecificArguments());
         cpuFaultSpec.setTimeoutInMilliseconds(faultExecutionTimeout);
@@ -156,16 +173,14 @@ public class FaultsMockData {
     public DockerFaultSpec getDockerPauseFaultSpec() {
         DockerFaultSpec faultSpec = new DockerFaultSpec();
 
-
         Map<String, String> specificArgs = new LinkedHashMap<>();
         specificArgs.put("--containerName", testContainername);
         faultSpec.setArgs(specificArgs);
         EndpointSpec endpointSpec = endpointMockData.dockerEndpointMockData();
-
+        faultSpec.setEndpointName(endpointSpec.getName());
         faultSpec.setEndpoint(endpointSpec);
         faultSpec.setDockerFaultName(DockerFaultName.DOCKER_PAUSE);
         faultSpec.setFaultName(DockerFaultName.DOCKER_PAUSE.name());
-
         return faultSpec;
     }
 
@@ -185,39 +200,50 @@ public class FaultsMockData {
         return faultSpec;
     }
 
-    public JVMAgentFaultSpec getLinuxCpuJvmAgentFaultSpec() {
+    public CpuFaultSpec getLinuxCpuJvmAgentFaultSpec() {
         RemoteMachineCredentials credentialsSpec = credentialsSpecMockData.getRMCredentialsData();
         EndpointSpec endpointSpec = endpointMockData.rmEndpointMockData();
-        JVMAgentFaultSpec cpuFaultSpec = new JVMAgentFaultSpec();
+        CpuFaultSpec cpuFaultSpec = new CpuFaultSpec();
         cpuFaultSpec.setFaultName(AgentFaultName.INJECT_CPU_FAULT.getValue());
         Map<String, String> args = new HashMap<>();
-        args.put(LOAD_ARG, faultLoad);
+        cpuFaultSpec.setCpuLoad(faultLoad);
+        args.put(LOAD_ARG, String.valueOf(faultLoad));
         cpuFaultSpec.setArgs(args);
-
         cpuFaultSpec.setJvmProperties(getJVMProperties());
         cpuFaultSpec.setTimeoutInMilliseconds(faultExecutionTimeout);
-
+        List<SupportScriptInfo> listSupportScript = new ArrayList<>();
+        listSupportScript.add(getSupportScriptInfo());
+        cpuFaultSpec.setSupportScriptInfo(listSupportScript);
         cpuFaultSpec.setEndpointName(endpointSpec.getName());
         cpuFaultSpec.setEndpoint(endpointSpec);
         cpuFaultSpec.setCredentials(credentialsSpec);
         return cpuFaultSpec;
     }
 
-    public JVMAgentFaultSpec getDockerCpuJvmAgentFaultSpec() {
+    public CpuFaultSpec getDockerCpuJvmAgentFaultSpec() {
         EndpointSpec endpointSpec = endpointMockData.dockerEndpointMockData();
-        JVMAgentFaultSpec cpuFaultSpec = new JVMAgentFaultSpec();
+        CpuFaultSpec cpuFaultSpec = new CpuFaultSpec();
         cpuFaultSpec.setFaultName(AgentFaultName.INJECT_CPU_FAULT.getValue());
         Map<String, String> args = new HashMap<>();
-        args.put(LOAD_ARG, faultLoad);
+        args.put(LOAD_ARG, String.valueOf(faultLoad));
         cpuFaultSpec.setArgs(args);
-
+        cpuFaultSpec.setCpuLoad(faultLoad);
         cpuFaultSpec.setJvmProperties(getJVMProperties());
         cpuFaultSpec.setTimeoutInMilliseconds(faultExecutionTimeout);
-
         cpuFaultSpec.setEndpointName(endpointSpec.getName());
         cpuFaultSpec.setEndpoint(endpointSpec);
+        SupportScriptInfo supportScript = new SupportScriptInfo();
+        supportScript.setScriptFileName("cpuburn.sh");
+        supportScript.setTargetDirectoryPath("/tmp/");
+        supportScript.setClassPathResource(true);
+        supportScript.setExecutable(true);
+        List<SupportScriptInfo> listSupportScript = new ArrayList<>();
+        listSupportScript.add(supportScript);
+        cpuFaultSpec.setSupportScriptInfo(listSupportScript);
+        cpuFaultSpec.setDockerArguments(getDockerSpecificArguments());
         return cpuFaultSpec;
     }
+
 
     public JVMAgentFaultSpec getDockerCpuJvmAgentFaultSpecV2() {
         JVMAgentFaultSpec cpuFaultSpec = getDockerCpuJvmAgentFaultSpec();
@@ -227,7 +253,7 @@ public class FaultsMockData {
 
     private Map<String, String> setFaultArgsV2() {
         Map<String, String> args = new HashMap<>();
-        args.put(LOAD_ARG, faultLoad);
+        args.put(LOAD_ARG, String.valueOf(faultLoad));
         args.put(JAVA_HOME_PATH, javahomePath);
         return args;
 
@@ -292,6 +318,9 @@ public class FaultsMockData {
         springServiceExceptionFaultSpec.setEndpointName(endpointSpec.getName());
         springServiceExceptionFaultSpec.setEndpoint(endpointSpec);
 
+        DockerSpecificArguments dockerArguments = new DockerSpecificArguments();
+        dockerArguments.setContainerName("testContainer");
+        springServiceExceptionFaultSpec.setDockerArguments(dockerArguments);
         springServiceExceptionFaultSpec.setJvmProperties(getJVMProperties());
         springServiceExceptionFaultSpec.setTimeoutInMilliseconds(faultExecutionTimeout);
         return springServiceExceptionFaultSpec;
@@ -310,8 +339,15 @@ public class FaultsMockData {
         K8SSpecificArguments k8sArguments = new K8SSpecificArguments();
         k8sArguments.setContainerName(testContainername);
         k8sArguments.setEnableRandomInjection(true);
+        k8sArguments.setPodInAction(testPodInAction);
         k8sArguments.setPodLabels(testPodLabels);
         return k8sArguments;
+    }
+
+    public DockerSpecificArguments getDockerSpecificArguments() {
+        DockerSpecificArguments dockerArgs = new DockerSpecificArguments();
+        dockerArgs.setContainerName(testContainername);
+        return dockerArgs;
     }
 
     public K8SResourceNotReadyFaultSpec getK8SResourceNotReadyFaultSpec() {
@@ -320,8 +356,15 @@ public class FaultsMockData {
         k8SResourceNotReadyFaultSpec.setEndpoint(endpointMockData.k8sEndpointMockData());
         k8SResourceNotReadyFaultSpec.setEndpointName(endpointMockData.k8sEndpointMockData().getName());
         k8SResourceNotReadyFaultSpec.setCredentials(credentialsSpecMockData.getk8SCredentialsData());
-        //k8SResourceNotReadyFaultSpec.set
         k8SResourceNotReadyFaultSpec.setResourceType(K8SResource.POD);
+        Map<String, String> resourceLabels = new HashMap<>();
+        resourceLabels.put("app", "app-inventory-service");
+        k8SResourceNotReadyFaultSpec.setResourceLabels(resourceLabels);
+        Map<String, String> specificArgs = new HashMap<>();
+        specificArgs.put("operation", K8SFaultName.NOTREADY_RESOURCE.name());
+        k8SResourceNotReadyFaultSpec.setArgs(specificArgs);
+        k8SResourceNotReadyFaultSpec.setResourceType(K8SResource.POD);
+        k8SResourceNotReadyFaultSpec.setRandomInjection(false);
         return k8SResourceNotReadyFaultSpec;
     }
 
@@ -330,6 +373,14 @@ public class FaultsMockData {
         k8SFaultSpec.setEndpoint(endpointMockData.k8sEndpointMockData());
         k8SFaultSpec.setEndpointName(endpointMockData.k8sEndpointMockData().getName());
         k8SFaultSpec.setCredentials(credentialsSpecMockData.getk8SCredentialsData());
+        Map<String, String> resourceLabels = new HashMap<>();
+        resourceLabels.put("app", "app-inventory-service");
+        k8SFaultSpec.setResourceLabels(resourceLabels);
+        Map<String, String> specificArgs = new HashMap<>();
+        specificArgs.put("operation", K8SFaultName.DELETE_RESOURCE.name());
+        k8SFaultSpec.setArgs(specificArgs);
+        k8SFaultSpec.setResourceType(K8SResource.POD);
+        k8SFaultSpec.setRandomInjection(false);
         return k8SFaultSpec;
     }
 

@@ -19,8 +19,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -42,7 +44,10 @@ import com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.TaskSpec;
 import com.vmware.mangle.cassandra.model.tasks.FaultTask;
 import com.vmware.mangle.cassandra.model.tasks.Task;
+import com.vmware.mangle.cassandra.model.tasks.TaskStatus;
+import com.vmware.mangle.cassandra.model.tasks.TaskTrigger;
 import com.vmware.mangle.services.TaskService;
+import com.vmware.mangle.services.constants.CommonConstants;
 import com.vmware.mangle.services.mockdata.TasksMockData;
 import com.vmware.mangle.services.repository.TaskRepository;
 import com.vmware.mangle.utils.exceptions.MangleException;
@@ -477,5 +482,23 @@ public class TaskServiceTest {
 
         Assert.assertEquals(1, retrievedTasks.size());
         verify(taskRepository, times(1)).findByIds(any());
+    }
+
+    @SuppressWarnings("deprecation")
+    @Test
+    public void testCleanupInprogressTasks() throws ParseException, MangleException {
+        Task<TaskSpec> task = tasksMockData.getDummyTask();
+        TaskTrigger trigger = task.getTriggers().peek();
+        trigger.setStartTime(new Date(System.currentTimeMillis() - 60000).toGMTString());
+        trigger.setTaskStatus(TaskStatus.IN_PROGRESS);
+        List<Task<TaskSpec>> tasks = new ArrayList<>();
+        tasks.add(task);
+        List<String> taskIds = new ArrayList<>(Arrays.asList(task.getId()));
+        Mockito.when(taskRepository.findAll()).thenReturn(tasks);
+        Mockito.when(taskRepository.save(any())).thenReturn(task);
+        String actualResult = taskService.cleanupInprogressTasks(60);
+        Assert.assertEquals(actualResult, String.format(CommonConstants.INPROGRESS_TASK_FOR_CLEANUP, taskIds));
+        verify(taskRepository, times(1)).findAll();
+        verify(taskRepository, times(1)).save(any());
     }
 }

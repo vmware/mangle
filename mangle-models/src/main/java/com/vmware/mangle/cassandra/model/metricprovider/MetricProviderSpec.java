@@ -12,9 +12,10 @@
 package com.vmware.mangle.cassandra.model.metricprovider;
 
 import java.io.Serializable;
-
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
 
 import com.datastax.driver.core.DataType.Name;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -52,8 +53,10 @@ public class MetricProviderSpec extends MangleDto implements Serializable {
     @ApiModelProperty(position = 0, value = "Name of MetricProvider which will be used to send metrics")
     @PrimaryKey(value = "name")
     @NotEmpty
+    @Pattern(regexp = "^[A-Za-z0-9-_.]+$", message = "consists only alphanumeric with special characters (_ - .)")
     private String name;
 
+    @NotNull
     @ApiModelProperty(position = 1, value = "Type of Metric Provider")
     private MetricProviderType metricProviderType;
 

@@ -39,7 +39,7 @@ public class EndpointMockData {
 
     // Docker Connection Properties
     private String dockerHostname;
-    private String dockerPort;
+    private Integer dockerPort;
     private boolean tlsEnabled;
 
     // RemoteMachine Connection Properties
@@ -57,7 +57,7 @@ public class EndpointMockData {
         this.properties = ReadProperty.readProperty(Constants.MOCKDATA_FILE);
         this.awsRegion = properties.getProperty("awsRegion");
         this.dockerHostname = properties.getProperty("dockerHostName");
-        this.dockerPort = properties.getProperty("dockerPort");
+        this.dockerPort = Integer.parseInt(properties.getProperty("dockerPort"));
         this.tlsEnabled = Boolean.parseBoolean(properties.getProperty("dockertlsEnabled"));
 
         this.host = properties.getProperty("rmHost");
@@ -69,7 +69,8 @@ public class EndpointMockData {
         vcenterIp = properties.getProperty("vcenter.ip");
     }
 
-    public EndpointSpec awsEndpointMockData() {
+    // Will be uncommented once we support AWS endpoint
+    /*public EndpointSpec awsEndpointMockData() {
         EndpointSpec awsEndpointSpec = new EndpointSpec();
         Properties properties = ReadProperty.readProperty(Constants.MOCKDATA_FILE);
         awsEndpointSpec.setName(properties.getProperty("awsEndpointName"));
@@ -77,7 +78,7 @@ public class EndpointMockData {
         awsEndpointSpec.setCredentialsName(properties.getProperty("awsName"));
         awsEndpointSpec.setAwsConnectionProperties(getAWSConnectionProperties());
         return awsEndpointSpec;
-    }
+    }*/
 
     public EndpointSpec k8sEndpointMockData() {
         EndpointSpec k8sEndpointSpec = new EndpointSpec();
@@ -166,9 +167,6 @@ public class EndpointMockData {
         WaveFrontConnectionProperties waveFrontConnectionProperties = new WaveFrontConnectionProperties();
         waveFrontConnectionProperties.setWavefrontInstance(properties.getProperty("WavefrontInstance"));
         waveFrontConnectionProperties.setWavefrontAPIToken(properties.getProperty("WavefrontAPIToken"));
-        waveFrontConnectionProperties.setWaveFrontProxy(properties.getProperty("WaveFrontProxy"));
-        waveFrontConnectionProperties
-                .setWaveFrontProxyPort(Integer.parseInt(properties.getProperty("WaveFrontProxyPort")));
         waveFrontConnectionProperties.setSource(properties.getProperty("WaveFrontSource"));
         HashMap<String, String> staticTags = new HashMap<>();
         staticTags.put(properties.getProperty("WaveFrontStaticTagKey"),

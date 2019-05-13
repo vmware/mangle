@@ -24,6 +24,9 @@ import com.vmware.mangle.cassandra.model.tasks.commands.CommandExecutionResult;
 import com.vmware.mangle.utils.CommandUtils;
 import com.vmware.mangle.utils.ICommandExecutor;
 import com.vmware.mangle.utils.clients.endpoint.EndpointClient;
+import com.vmware.mangle.utils.constants.ErrorConstants;
+import com.vmware.mangle.utils.exceptions.MangleException;
+import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
 /**
  * @author bkaranam Class to create KubernetesCommandLine client
@@ -146,8 +149,32 @@ public class KubernetesCommandLineClient implements ICommandExecutor, EndpointCl
     }
 
     @Override
-    public boolean testConnection() {
-        CommandExecutionResult output = CommandUtils.runCommand(this.kubectl + " cluster-info");
-        return output.getCommandOutput().contains("running");
+    public boolean testConnection() throws MangleException {
+        String getNamespaceCommand = KubernetesTemplates.GET + KubernetesTemplates.NAMESPACE;
+        CommandExecutionResult output = CommandUtils.runCommand(this.kubectl + getNamespaceCommand + getNameSpace());
+        return validateK8SCommandOutput(output.getCommandOutput());
+    }
+
+    private boolean validateK8SCommandOutput(String commandOutput) throws MangleException {
+        if (commandOutput.contains(ErrorConstants.K8S_ERROR_LOADING_CONFIG_FILE)) {
+            throw new MangleException(ErrorCode.K8S_INVALID_CONFIG_FILE);
+        } else if (commandOutput.contains(ErrorConstants.K8S_RESOURCE_NOT_FOUND)) {
+            throw new MangleException(ErrorCode.K8S_NAMESPACE_NOT_FOUND, getNameSpace());
+        } else if (commandOutput.contains(ErrorConstants.K8S_ERROR_CONNECTING_SERVER)) {
+            throw new MangleException(ErrorCode.K8S_ERROR_FROM_SERVER, commandOutput);
+        } else if (commandOutput.contains(ErrorConstants.K8S_SERVER_DOES_NOT_HAVE_RESOURCE_TYPE)) {
+            throw new MangleException(ErrorCode.K8S_TEST_CONNECTION_ERROR);
+        } else if (commandOutput.toLowerCase().contains(ErrorConstants.K8S_ERROR)) {
+            throw new MangleException(ErrorCode.K8S_ERROR_FROM_SERVER, commandOutput);
+        } else {
+            return true;
+        }
+    }
+
+    public static void validateConfigFile(String configFilePath) throws MangleException {
+        CommandExecutionResult output = CommandUtils.runCommand("kubectl --kubeconfig " + configFilePath + " version");
+        if (output.getCommandOutput().contains(ErrorConstants.K8S_ERROR_LOADING_CONFIG_FILE)) {
+            throw new MangleException(ErrorCode.K8S_INVALID_CONFIG_FILE);
+        }
     }
 }

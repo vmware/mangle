@@ -110,7 +110,7 @@ public class FiaascoTransformListener extends Thread {
     public static synchronized boolean terminate(PrintWriter out) {
         // we don't want the listener shutdown to be aborted because of
         // triggered rules
-        LOG.info("Terminating Listener");
+        LOG.info("Trying to Terminate Listener");
         boolean enabled = true;
         try {
             enabled = Rule.disableTriggersInternal();
@@ -299,6 +299,8 @@ public class FiaascoTransformListener extends Thread {
                 getThreadDump(in, out);
             } else if (line.contains("HEAPDUMP")) {
                 getHeapDump(in, out);
+            } else if (line.contains("HEAPUSAGE")) {
+                getCurrentMemoryUsage(in, out);
             } else if (line.contains("GETALLFAULTS")) {
                 listAllFaultsInfo(in, out);
             } else if (line.contains("FORCETERMINATE")) {
@@ -329,8 +331,7 @@ public class FiaascoTransformListener extends Thread {
     }
 
     private void sendStatus(BufferedReader in, PrintWriter out) {
-        out.println(FiaascoTransformListener.class.getName() + ": I am here on Pid: " + RuntimeUtils.getPid()
-                + ". What You want?");
+        out.println(FiaascoTransformListener.class.getName() + "- I am here on Pid: " + RuntimeUtils.getPid());
         out.flush();
         try {
             in.close();
@@ -420,6 +421,19 @@ public class FiaascoTransformListener extends Thread {
             in.close();
         } catch (IOException e) {
             out.append("Unable to capture heapdump. Reason: \n");
+            out.append(e.toString());
+            out.append("\n");
+            e.printStackTrace(out);
+        }
+    }
+
+    private void getCurrentMemoryUsage(BufferedReader in, PrintWriter out) {
+        try {
+            out.println("Current HeapUsage: " + RuntimeUtils.getUsedHeapSpace());
+            out.flush();
+            in.close();
+        } catch (IOException e) {
+            out.append("Unable to retrieve current heap usage. Reason: \n");
             out.append(e.toString());
             out.append("\n");
             e.printStackTrace(out);

@@ -13,8 +13,8 @@ package com.vmware.mangle.cassandra.model.metricprovider;
 
 import java.io.Serializable;
 import java.util.Map;
+
 import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModel;
@@ -27,21 +27,13 @@ import org.springframework.data.cassandra.core.mapping.UserDefinedType;
  *
  * @author kumargautam
  * @author ashrimali
+ * @author dbhat
  */
 @UserDefinedType("waveFrontConnectionProperties")
 @Data
 @ApiModel(description = "WaveFrontMetricProviderProperties should be specified if MetricProvider type is WaveFront Metric Provider")
 public class WaveFrontConnectionProperties implements Serializable {
     private static final long serialVersionUID = 1L;
-
-    @ApiModelProperty(value = "Proxy instance for wavefront.")
-    @NotEmpty
-    private String waveFrontProxy;
-
-    @ApiModelProperty(value = "WaveFrontProxy Port for the Metric Provider, if not specified default to '2878' port")
-    @JsonProperty(defaultValue = "2878")
-    @NotNull
-    private Integer waveFrontProxyPort;
 
     @ApiModelProperty(value = "Source which is generating the metrics, if not specified default to 'Mangle'")
     @JsonProperty(defaultValue = "Mangle")
@@ -58,9 +50,4 @@ public class WaveFrontConnectionProperties implements Serializable {
     @ApiModelProperty(value = "<bearer token>")
     @NotEmpty
     private String wavefrontAPIToken;
-
-    @ApiModelProperty(value = "Wavefront Prefix to append with metrics for the metrics")
-    @JsonProperty(defaultValue = "Mangle")
-    @NotEmpty
-    private String prefix;
 }

@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -21,8 +21,7 @@ describe('ProcessedComponent', () => {
     let coreService: CoreService;
     let fixture: ComponentFixture<ProcessedComponent>;
 
-    beforeEach(async(() => {
-        jasmine.DEFAULT_TIMEOUT_INTERVAL = 2147483647;
+    beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [
                 BrowserAnimationsModule,
@@ -40,9 +39,6 @@ describe('ProcessedComponent', () => {
             ],
             schemas: [NO_ERRORS_SCHEMA]
         }).compileComponents();
-    }));
-
-    beforeEach(() => {
         coreService = TestBed.get(CoreService);
         spyOn(coreService, 'getMyDetails').and.returnValue(of({ "name": "user@mangle.local" }));
         requestsService = TestBed.get(RequestsService);

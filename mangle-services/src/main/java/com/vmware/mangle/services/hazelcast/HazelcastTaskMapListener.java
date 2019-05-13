@@ -11,12 +11,9 @@
 
 package com.vmware.mangle.services.hazelcast;
 
-import java.util.Set;
-
 import com.hazelcast.core.EntryEvent;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceAware;
-import com.hazelcast.core.IMap;
 import com.hazelcast.map.listener.EntryAddedListener;
 import com.hazelcast.map.listener.EntryEvictedListener;
 import com.hazelcast.map.listener.EntryRemovedListener;
@@ -26,9 +23,7 @@ import com.hazelcast.partition.PartitionEventListener;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
 
-import com.vmware.mangle.utils.constants.URLConstants;
 import com.vmware.mangle.utils.exceptions.MangleException;
 
 
@@ -75,11 +70,10 @@ public class HazelcastTaskMapListener implements HazelcastInstanceAware, EntryAd
      * Triggered when an entry is deleted from the hazelcast task map An entry from the hazelcast is
      * removed if an task is of type
      *
-     * 1. schedule, and the status of the schedule is either changed
-     * to cancelled or paused or failed
+     * 1. schedule, and the status of the schedule is either changed to cancelled or paused or
+     * failed
      *
-     * 2. simple fault, and the status of the task is changed to
-     * either failed/completed
+     * 2. simple fault, and the status of the task is changed to either failed/completed
      *
      * In these scenarios hazelcast entry remove event is triggered, which will update nodeTasks
      * map, which holds the mapping of node to task association for each of the task
@@ -89,14 +83,7 @@ public class HazelcastTaskMapListener implements HazelcastInstanceAware, EntryAd
     @Override
     public void entryRemoved(EntryEvent<String, String> event) {
         log.debug("Task with the id {} is removed from hazelcast cluster cache", event.getKey());
-        String taskId = event.getKey();
-        IMap<String, Set<String>> nodeTasks = hz.getMap(URLConstants.HAZELCAST_NODE_TASKS_MAP);
-        String nodeId = hz.getPartitionService().getPartition(taskId).getOwner().getUuid();
-        Set<String> currentNodeTasks = nodeTasks.get(nodeId);
-        if (!CollectionUtils.isEmpty(currentNodeTasks)) {
-            currentNodeTasks.remove(taskId);
-            nodeTasks.put(nodeId, currentNodeTasks);
-        }
+        hazelcastTaskService.removeTaskFromClusterNodeCache(event.getKey());
     }
 
     @Override
@@ -106,6 +93,11 @@ public class HazelcastTaskMapListener implements HazelcastInstanceAware, EntryAd
 
     @Override
     public void entryUpdated(EntryEvent<String, String> event) {
+        try {
+            hazelcastTaskService.cleanUpTask(event.getKey(), event.getValue());
+        } catch (MangleException e) {
+            log.error("Clean up of the task {} failed with the error {}", event.getKey(), e.getMessage());
+        }
         log.debug("Entry update event is triggered for the task with the id: {} ", event.getKey());
     }
 

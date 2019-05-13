@@ -11,10 +11,10 @@
 
 package com.vmware.mangle.faults.plugin.helpers.byteman;
 
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.TASK_ID;
 import static com.vmware.mangle.services.dto.AgentRuleConstants.CLASS_NAME;
 import static com.vmware.mangle.services.dto.AgentRuleConstants.METHOD_NAME;
 import static com.vmware.mangle.services.dto.AgentRuleConstants.RULE_EVENT;
+import static com.vmware.mangle.utils.constants.FaultConstants.TASK_ID;
 
 import java.io.File;
 import java.io.IOException;

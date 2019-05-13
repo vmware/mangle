@@ -23,14 +23,19 @@ public class CommonConstants {
 
     public static final String NO_RECORD_FOUND_FOR_ID = "Fault not found for given id ";
     public static final String NO_RECORD_FOUND_FOR_NAME = "Fault not found for given name ";
-    public static final String ENDPOINTS_RESULT_FOUND = "Successfully got all the endpoints available";
-    public static final String ENDPOINTS_UPDATED = "Successfully endpoint updated";
-    public static final String ENDPOINTS_CREATED = "Successfully endpoint created";
-    public static final String CREDENTIALS_RESULT_FOUND = "Successfully got all the credentials available";
-    public static final String CREDENTIALS_CREATED = "Successfully credential created";
-    public static final String CREDENTIALS_DELETED = "Successfully credentials deleted";
-    public static final String ENDPOINTS_DELETED = "Successfully endpoints deleted";
-    public static final String TASKS_DELETED = "Successfully deleted tasks";
+    public static final String ENDPOINTS_RESULT_FOUND = "Successfully retrieved all the endpoints";
+    public static final String ENDPOINTS_UPDATED = "Updated endpoint successfully";
+    public static final String ENDPOINTS_CREATED = "Created endpoint successfully";
+    public static final String CREDENTIALS_RESULT_FOUND = "Successfully retrieved all the credentials";
+    public static final String CREDENTIALS_CREATED = "Created credential successfully";
+    public static final String CREDENTIALS_DELETED = "Deleted credentials successfully";
+
+    public static final String CERTIFICATES_RESULT_FOUND = "Successfully retrieved all the certificates";
+    public static final String CERTIFICATES_CREATED = "Created certificates successfully";
+    public static final String CERTIFICATES_DELETED = "Deleted certificates successfully";
+
+    public static final String ENDPOINTS_DELETED = "Endpoints deleted successfully";
+    public static final String TASKS_DELETED = "Tasks deleted successfully";
     public static final String TEST_CONNECTION_SUCCESS = "Test Connection is success";
     public static final String REQUEST_FAILED_MESSAGE_HEADER = "mangle_request_error";
     public static final String MESSAGE_HEADER = "mangle_message";
@@ -43,6 +48,11 @@ public class CommonConstants {
     public static final String KILL_PROCESS_REMEDIATION_COMMAND_ARG = ARGUEMENT_PREFIX + "remediationCommand";
     public static final String OS_TYPE_ARG = ARGUEMENT_PREFIX + "osType";
     public static final String LOAD_ARG = ARGUEMENT_PREFIX + "load";
-    public static final String BLOCKSIZE_ARG = ARGUEMENT_PREFIX + "blockSize";
+    public static final String IO_SIZE_ARG = ARGUEMENT_PREFIX + "ioSize";
     public static final String TARGET_DIRECTORY_ARG = ARGUEMENT_PREFIX + "targetDir";
+    public static final String TASK_FAILURE_REASON_FOR_CLEANUP = "Task update missed by Mangle";
+    public static final String NO_INPROGRESS_TASK_FOR_CLEANUP = "No Inprogress tasks found in the given threshold time";
+    public static final String INPROGRESS_TASK_FOR_CLEANUP = "Completed clean-up of inprogress tasks %s";
+    public static final String SUPPORT_BUNDLE_PATH_NOT_NULL = "Support bundle path cannot be empty";
+    public static final String MANGLE_SUPPORT_BUNDLE_FILE_NAME = "mangle-support-bundle-";
 }

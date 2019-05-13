@@ -17,6 +17,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.validateMockitoUsage;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.testng.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,8 +27,6 @@ import com.datastax.driver.core.PagingState;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.modules.testng.PowerMockTestCase;
 import org.springframework.data.cassandra.core.query.CassandraPageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -37,13 +36,17 @@ import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import com.vmware.mangle.cassandra.model.endpoint.CredentialsSpec;
 import com.vmware.mangle.cassandra.model.endpoint.EndpointSpec;
 import com.vmware.mangle.model.enums.EndpointType;
 import com.vmware.mangle.services.CredentialService;
+import com.vmware.mangle.services.EndpointCertificatesService;
 import com.vmware.mangle.services.EndpointService;
+import com.vmware.mangle.services.mockdata.CredentialsSpecMockData;
 import com.vmware.mangle.services.mockdata.EndpointMockData;
 import com.vmware.mangle.services.repository.EndpointRepository;
 import com.vmware.mangle.task.framework.endpoint.EndpointClientFactory;
+import com.vmware.mangle.utils.clients.endpoint.EndpointClient;
 import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
@@ -52,8 +55,7 @@ import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
  *
  * @author kumargautam
  */
-@PowerMockIgnore(value = { "org.apache.logging.log4j.*" })
-public class EndpointServiceTest extends PowerMockTestCase {
+public class EndpointServiceTest {
 
     private EndpointService endpointService;
     @Mock
@@ -61,10 +63,13 @@ public class EndpointServiceTest extends PowerMockTestCase {
     @Mock
     private CredentialService credentialService;
     @Mock
+    private EndpointCertificatesService certificatesService;
+    @Mock
     private EndpointClientFactory endpointClientFactory;
 
     private EndpointMockData mockData = new EndpointMockData();
     private EndpointSpec endpointSpec;
+    private CredentialsSpecMockData credentialsSpecMockData = new CredentialsSpecMockData();
 
     /**
      * @throws java.lang.Exception
@@ -72,7 +77,8 @@ public class EndpointServiceTest extends PowerMockTestCase {
     @BeforeMethod
     public void setUpBeforeClass() {
         MockitoAnnotations.initMocks(this);
-        endpointService = new EndpointService(repository, credentialService, endpointClientFactory);
+        endpointService =
+                new EndpointService(repository, credentialService, endpointClientFactory, certificatesService);
         this.endpointSpec = mockData.rmEndpointMockData();
     }
 
@@ -94,7 +100,7 @@ public class EndpointServiceTest extends PowerMockTestCase {
     }
 
     /**
-     * Test method for {@link com.vmware.mangle.service.EndpointService#getAllEndpoints()}.
+     * Test method for {@link EndpointService#getAllEndpoints()}.
      */
     @Test
     public void testGetAllEndpoints() {
@@ -108,8 +114,7 @@ public class EndpointServiceTest extends PowerMockTestCase {
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.service.EndpointService#getEndpointByName(java.lang.String)}.
+     * Test method for {@link EndpointService#getEndpointByName(java.lang.String)}.
      *
      * @throws MangleException
      */
@@ -123,8 +128,7 @@ public class EndpointServiceTest extends PowerMockTestCase {
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.service.EndpointService#getEndpointByName(java.lang.String)}.
+     * Test method for {@link EndpointService#getEndpointByName(java.lang.String)}.
      *
      * @throws MangleException
      */
@@ -143,8 +147,7 @@ public class EndpointServiceTest extends PowerMockTestCase {
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.service.EndpointService#getEndpointByName(java.lang.String)}.
+     * Test method for {@link EndpointService#getEndpointByName(java.lang.String)}.
      *
      * @throws MangleException
      */
@@ -164,7 +167,7 @@ public class EndpointServiceTest extends PowerMockTestCase {
 
     /**
      * Test method for
-     * {@link com.vmware.mangle.service.EndpointService#getAllEndpointByType(com.vmware.mangle.model.enums.EndpointType)}.
+     * {@link EndpointService#getAllEndpointByType(com.vmware.mangle.model.enums.EndpointType)}.
      *
      * @throws MangleException
      */
@@ -181,7 +184,7 @@ public class EndpointServiceTest extends PowerMockTestCase {
 
     /**
      * Test method for
-     * {@link com.vmware.mangle.service.EndpointService#getAllEndpointByType(com.vmware.mangle.model.enums.EndpointType)}.
+     * {@link EndpointService#getAllEndpointByType(com.vmware.mangle.model.enums.EndpointType)}.
      *
      * @throws MangleException
      */
@@ -201,7 +204,7 @@ public class EndpointServiceTest extends PowerMockTestCase {
 
     /**
      * Test method for
-     * {@link com.vmware.mangle.service.EndpointService#getAllEndpointByType(com.vmware.mangle.model.enums.EndpointType)}.
+     * {@link EndpointService#getAllEndpointByType(com.vmware.mangle.model.enums.EndpointType)}.
      *
      * @throws MangleException
      */
@@ -220,8 +223,7 @@ public class EndpointServiceTest extends PowerMockTestCase {
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.service.EndpointService#updateEndpointByEndpointName(String, EndpointSpec)}
+     * Test method for {@link EndpointService#updateEndpointByEndpointName(String, EndpointSpec)}
      *
      * @throws MangleException
      */
@@ -239,9 +241,7 @@ public class EndpointServiceTest extends PowerMockTestCase {
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.service.EndpointService#updateEndpointByEndpointName(String, EndpointSpec)}
-     * =
+     * Test method for {@link EndpointService#updateEndpointByEndpointName(String, EndpointSpec)} =
      *
      * @throws MangleException
      */
@@ -263,8 +263,7 @@ public class EndpointServiceTest extends PowerMockTestCase {
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.service.EndpointService#updateEndpointByEndpointName(String, EndpointSpec)}
+     * Test method for {@link EndpointService#updateEndpointByEndpointName(String, EndpointSpec)}
      *
      * @throws MangleException
      */
@@ -286,8 +285,7 @@ public class EndpointServiceTest extends PowerMockTestCase {
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.service.EndpointService#addOrUpdateEndpoint(EndpointSpec)}
+     * Test method for {@link EndpointService#addOrUpdateEndpoint(EndpointSpec)}
      *
      * @throws MangleException
      */
@@ -303,8 +301,7 @@ public class EndpointServiceTest extends PowerMockTestCase {
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.service.EndpointService#addOrUpdateEndpoint(EndpointSpec)}
+     * Test method for {@link EndpointService#addOrUpdateEndpoint(EndpointSpec)}
      *
      */
     @Test
@@ -323,8 +320,7 @@ public class EndpointServiceTest extends PowerMockTestCase {
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.service.EndpointService#addOrUpdateEndpoint(EndpointSpec)}
+     * Test method for {@link EndpointService#addOrUpdateEndpoint(EndpointSpec)}
      *
      * @throws MangleException
      */
@@ -343,8 +339,7 @@ public class EndpointServiceTest extends PowerMockTestCase {
 
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.service.EndpointService#getEndpointBasedOnPage(int, int)}.
+     * Test method for {@link EndpointService#getEndpointBasedOnPage(int, int)}.
      */
     @SuppressWarnings("unchecked")
     @Test
@@ -362,8 +357,7 @@ public class EndpointServiceTest extends PowerMockTestCase {
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.service.EndpointService#getEndpointBasedOnPage(int, int)}.
+     * Test method for {@link EndpointService#getEndpointBasedOnPage(int, int)}.
      */
     @SuppressWarnings("unchecked")
     @Test(description = "Test to get the data from 2 page with size 4")
@@ -381,8 +375,7 @@ public class EndpointServiceTest extends PowerMockTestCase {
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.service.EndpointService#getEndpointBasedOnPage(int, int)}.
+     * Test method for {@link EndpointService#getEndpointBasedOnPage(int, int)}.
      */
     @SuppressWarnings("unchecked")
     @Test(description = "Test to get the data from 3 page with size 4")
@@ -400,5 +393,109 @@ public class EndpointServiceTest extends PowerMockTestCase {
         verify(repository, times(3)).findAll(any(Pageable.class));
         Assert.assertEquals(actualResult.getSize(), 4);
         verify(slice, times(1)).getSize();
+    }
+
+    /**
+     * Test method for {@link EndpointService#testEndpointConnection(EndpointSpec)}
+     *
+     */
+    @Test
+    public void testTestEndpointConnectionWithNullCredentialsName() {
+        EndpointSpec endpointSpec1 = mockData.rmEndpointMockData();
+        endpointSpec1.setCredentialsName(null);
+        try {
+            endpointService.testEndpointConnection(endpointSpec1);
+        } catch (MangleException e) {
+            Assert.assertEquals(e.getErrorCode(), ErrorCode.FIELD_VALUE_EMPTY);
+        }
+    }
+
+    /**
+     * Test method for {@link EndpointService#testEndpointConnection(EndpointSpec)}
+     *
+     * @throws MangleException
+     *
+     */
+    @Test
+    public void testTestEndpointConnectionForDocker() throws MangleException {
+        EndpointSpec endpointSpec1 = mockData.dockerEndpointMockData();
+        EndpointClient client = Mockito.mock(EndpointClient.class);
+        when(client.testConnection()).thenReturn(true);
+        when(endpointClientFactory.getEndPointClient(any(CredentialsSpec.class), any(EndpointSpec.class)))
+                .thenReturn(client);
+        assertTrue(endpointService.testEndpointConnection(endpointSpec1));
+        verify(endpointClientFactory, times(1)).getEndPointClient(any(CredentialsSpec.class), any(EndpointSpec.class));
+    }
+
+    /**
+     * Test method for {@link EndpointService#testEndpointConnection(EndpointSpec)}
+     *
+     * @throws MangleException
+     *
+     */
+    @Test
+    public void testTestEndpointConnectionForRemoteMachine() throws MangleException {
+        when(credentialService.getCredentialByName(anyString()))
+                .thenReturn(credentialsSpecMockData.getRMCredentialsData());
+        EndpointClient client = Mockito.mock(EndpointClient.class);
+        when(client.testConnection()).thenReturn(true);
+        when(endpointClientFactory.getEndPointClient(any(CredentialsSpec.class), any(EndpointSpec.class)))
+                .thenReturn(client);
+        assertTrue(endpointService.testEndpointConnection(endpointSpec));
+        verify(endpointClientFactory, times(1)).getEndPointClient(any(CredentialsSpec.class), any(EndpointSpec.class));
+        verify(credentialService, times(1)).getCredentialByName(anyString());
+    }
+
+    /**
+     * Test method for {@link EndpointService#testEndpointConnection(EndpointSpec)}
+     *
+     */
+    @Test
+    public void testTestEndpointConnectionWithNullConnectionProperties() {
+        EndpointSpec endpointSpec1 = mockData.rmEndpointMockData();
+        endpointSpec1.setRemoteMachineConnectionProperties(null);
+        try {
+            endpointService.testEndpointConnection(endpointSpec1);
+        } catch (MangleException e) {
+            Assert.assertEquals(e.getErrorCode(), ErrorCode.PROVIDE_CONNECTION_PROPERTIES_FOR_ENDPOINT);
+        }
+    }
+
+    /**
+     * Test method for {@link EndpointService#testEndpointConnection(EndpointSpec)}
+     *
+     * @throws MangleException
+     *
+     */
+    @Test
+    public void testTestEndpointConnectionForVcenter() throws MangleException {
+        when(credentialService.getCredentialByName(anyString()))
+                .thenReturn(credentialsSpecMockData.getVCenterCredentialsData());
+        EndpointClient client = Mockito.mock(EndpointClient.class);
+        when(client.testConnection()).thenReturn(true);
+        when(endpointClientFactory.getEndPointClient(any(CredentialsSpec.class), any(EndpointSpec.class)))
+                .thenReturn(client);
+        assertTrue(endpointService.testEndpointConnection(mockData.getVCenterEndpointSpecMock()));
+        verify(endpointClientFactory, times(1)).getEndPointClient(any(CredentialsSpec.class), any(EndpointSpec.class));
+        verify(credentialService, times(1)).getCredentialByName(anyString());
+    }
+
+    /**
+     * Test method for {@link EndpointService#testEndpointConnection(EndpointSpec)}
+     *
+     * @throws MangleException
+     *
+     */
+    @Test
+    public void testTestEndpointConnectionForK8S() throws MangleException {
+        when(credentialService.getCredentialByName(anyString()))
+                .thenReturn(credentialsSpecMockData.getk8SCredentialsData());
+        EndpointClient client = Mockito.mock(EndpointClient.class);
+        when(client.testConnection()).thenReturn(true);
+        when(endpointClientFactory.getEndPointClient(any(CredentialsSpec.class), any(EndpointSpec.class)))
+                .thenReturn(client);
+        assertTrue(endpointService.testEndpointConnection(mockData.k8sEndpointMockData()));
+        verify(endpointClientFactory, times(1)).getEndPointClient(any(CredentialsSpec.class), any(EndpointSpec.class));
+        verify(credentialService, times(1)).getCredentialByName(anyString());
     }
 }

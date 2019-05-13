@@ -1,15 +1,19 @@
-<!-- Copyright (c) 2016-2019 VMware, Inc. All Rights Reserved. This product 
-	is licensed to you under the Apache License, Version 2.0 (the "License"). 
-	You may not use this product except in compliance with the License. This 
-	product may include a number of subcomponents with separate copyright notices 
-	and license terms. Your use of these subcomponents is subject to the terms 
-	and conditions of the subcomponent's license, as noted in the LICENSE file. -->
+<!--
+   Copyright (c) 2016-2019 VMware, Inc. All Rights Reserved.
+
+   This product is licensed to you under the Apache License, Version 2.0 (the "License").
+   You may not use this product except in compliance with the License.
+
+   This product may include a number of subcomponents with separate copyright notices
+   and license terms. Your use of these subcomponents is subject to the terms and
+   conditions of the subcomponent's license, as noted in the LICENSE file.
+-->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<artifactId>mangle-byteman-agent</artifactId>
-	<name>mangle-byteman-agent</name>
+	<artifactId>mangle-byteman</artifactId>
+	<name>mangle-byteman</name>
 	<packaging>jar</packaging>
 	<description>
         The Byteman agent jar contains the implementation of the Byteman java agent, including
@@ -17,9 +21,9 @@
         listener.
     </description>
 	<parent>
-		<groupId>org.jboss.byteman</groupId>
+		<groupId>com.vmware.mangle</groupId>
 		<artifactId>mangle-byteman-root</artifactId>
-		<version>3.0.10</version>
+		<version>1.0.0</version>
 	</parent>
 	<properties>
 		<debug.args>-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005</debug.args>
@@ -104,7 +108,6 @@
 				<dependency>
 					<groupId>com.google.code.gson</groupId>
 					<artifactId>gson</artifactId>
-					<version>${gson.version}</version>
 				</dependency>
 			</dependencies>
 		</profile>
@@ -116,14 +119,13 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.jboss.byteman</groupId>
-			<artifactId>byteman-submit</artifactId>
+			<groupId>com.vmware.mangle</groupId>
+			<artifactId>mangle-byteman-submit</artifactId>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.jboss.byteman</groupId>
 			<artifactId>byteman</artifactId>
-			<version>3.0.10</version>
 		</dependency>
 	</dependencies>
 </project>

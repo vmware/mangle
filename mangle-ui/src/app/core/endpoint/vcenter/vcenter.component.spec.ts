@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { VcenterComponent } from './vcenter.component';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
@@ -11,21 +11,17 @@ import { BrowserModule } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
 import { ClarityModule } from '@clr/angular';
 import { of } from 'rxjs';
-import { CoreService } from '../../core.service';
-import { CoreComponent } from '../../core.component';
-import { LoginComponent } from 'src/app/auth/login/login.component';
 
 describe('VcenterComponent', () => {
   let component: VcenterComponent;
   let endpointService: EndpointService;
-  let coreService: CoreService;
   let fixture: ComponentFixture<VcenterComponent>;
 
-  let ep_data: any = { "id": null, "name": "vcenter_ep", "endPointType": "VCENTER", "credentialsName": "vcenter_cred", "vcenterConnectionProperties": { "hostname": "0.0.0.0", "vcenterAdapterProperties":{"vcenterAdapterUrl":"http://0.0.0.0","username":"admin","password":""} } };
-  let ep_data_id: any = { "id": "with_id", "name": "vcenter_ep", "endPointType": "VCENTER", "credentialsName": "vcenter_cred", "vcenterConnectionProperties": { "hostname": "0.0.0.0", "vcenterAdapterProperties":{"vcenterAdapterUrl":"http://0.0.0.0","username":"admin","password":""} } };
+  let ep_data: any = { "id": null, "name": "vcenter_ep", "endPointType": "VCENTER", "credentialsName": "vcenter_cred", "vcenterConnectionProperties": { "hostname": "0.0.0.0", "vcenterAdapterProperties": { "vcenterAdapterUrl": "http://0.0.0.0", "username": "admin", "password": "" } } };
+  let ep_data_id: any = { "id": "with_id", "name": "vcenter_ep", "endPointType": "VCENTER", "credentialsName": "vcenter_cred", "vcenterConnectionProperties": { "hostname": "0.0.0.0", "vcenterAdapterProperties": { "vcenterAdapterUrl": "http://0.0.0.0", "username": "admin", "password": "" } } };
   let cred_data: any = { "name": "vcenter_cred", "userName": "root", "password": "machine_pass" };
 
-  beforeEach(async(() => {
+  beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [
         BrowserAnimationsModule,
@@ -34,24 +30,18 @@ describe('VcenterComponent', () => {
         HttpClientModule,
         CommonModule,
         ClarityModule,
-        RouterTestingModule.withRoutes([{ path: 'vcenter', component: VcenterComponent }, { path: 'login', component: LoginComponent }])
+        RouterTestingModule.withRoutes([{ path: 'vcenter', component: VcenterComponent }])
       ],
-      declarations: [VcenterComponent, CoreComponent, LoginComponent],
+      declarations: [VcenterComponent],
       providers: [
-        EndpointService,
-        CoreService
+        EndpointService
       ],
       schemas: [NO_ERRORS_SCHEMA]
     })
       .compileComponents();
-  }));
-
-  beforeEach(() => {
     endpointService = TestBed.get(EndpointService);
     spyOn(endpointService, 'getEndpoints').and.returnValue(of([ep_data]));
     spyOn(endpointService, 'getCredentials').and.returnValue(of([cred_data]));
-    coreService = TestBed.get(CoreService);
-    spyOn(coreService, 'getMyDetails').and.returnValue(of({ "name": "user@mangle.local" }));
     fixture = TestBed.createComponent(VcenterComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
@@ -114,7 +104,7 @@ describe('VcenterComponent', () => {
 
   it('should test endpoint connection', () => {
     spyOn(endpointService, 'testEndpointConnection').and.returnValue(of(ep_data));
-    component.testEndpointConnection(ep_data);
+    component.testEndpointConnection(true, ep_data);
     expect(component.successFlag).toBe(true);
     expect(component.disableSubmit).toBe(false);
     expect(endpointService.testEndpointConnection).toHaveBeenCalled();

@@ -19,6 +19,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.mockito.Mock;
@@ -72,20 +73,23 @@ public class EndpointDeletionServiceTest {
     @BeforeMethod
     public void initMocks() {
         MockitoAnnotations.initMocks(this);
-        deletionService =
-                new EndpointDeletionService(endpointRepository, schedulerService, taskService);
+        deletionService = new EndpointDeletionService(endpointRepository, schedulerService, taskService);
         this.endpointSpec = mockData.rmEndpointMockData();
     }
 
 
     @Test
     public void testDeleteEndpointByNames() throws MangleException {
-        doNothing().when(endpointRepository).deleteByNameIn(any());
-        when(taskService.getTasksByIds(any())).thenReturn(new ArrayList<>());
-        when(schedulerService.getActiveScheduleJobs()).thenReturn(new ArrayList<>());
 
         List<String> endpointNameList = new ArrayList<>();
         endpointNameList.add(endpointSpec.getName());
+
+        doNothing().when(endpointRepository).deleteByNameIn(any());
+        when(taskService.getTasksByIds(any())).thenReturn(new ArrayList<>());
+        when(schedulerService.getActiveScheduleJobs()).thenReturn(new ArrayList<>());
+        when(endpointRepository.findByNames(endpointNameList)).thenReturn(Collections.singletonList(endpointSpec));
+
+
         DeleteOperationResponse actualResult = deletionService.deleteEndpointByNames(endpointNameList);
         Assert.assertEquals(0, actualResult.getAssociations().size());
         verify(endpointRepository, times(1)).deleteByNameIn(any());
@@ -120,12 +124,15 @@ public class EndpointDeletionServiceTest {
     @Test
     public void testProcessEndpointDeletionPrecheck() throws MangleException {
         List<Task<TaskSpec>> tasks = tasksMockData.getDummyTasks();
-        doNothing().when(endpointRepository).deleteByNameIn(any());
-        when(taskService.getTasksByIds(any())).thenReturn(tasks);
-        when(schedulerService.getActiveScheduleJobs()).thenReturn(new ArrayList<>());
 
         List<String> endpointNameList = new ArrayList<>();
         endpointNameList.add(endpointSpec.getName());
+
+        doNothing().when(endpointRepository).deleteByNameIn(any());
+        when(taskService.getTasksByIds(any())).thenReturn(tasks);
+        when(schedulerService.getActiveScheduleJobs()).thenReturn(new ArrayList<>());
+        when(endpointRepository.findByNames(endpointNameList)).thenReturn(Collections.singletonList(endpointSpec));
+
         DeleteOperationResponse actualResult = deletionService.deleteEndpointByNames(endpointNameList);
         Assert.assertEquals(0, actualResult.getAssociations().size());
         verify(endpointRepository, times(1)).deleteByNameIn(any());

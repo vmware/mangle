@@ -41,6 +41,9 @@ public interface EndpointRepository extends CassandraRepository<EndpointSpec, St
     @AllowFiltering
     Optional<EndpointSpec> findByName(String endpointName);
 
+    @Query("select * from EndPointSpec WHERE name IN ?0")
+    List<EndpointSpec> findByNames(List<String> endpointName);
+
     @AllowFiltering
     List<EndpointSpec> findByEndPointType(EndpointType endPointType);
 

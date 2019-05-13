@@ -15,7 +15,6 @@ import java.io.Serializable;
 import javax.validation.Valid;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -33,7 +32,6 @@ public class TaskSpec extends MangleDto implements Serializable {
 
     private static final long serialVersionUID = 1L;
     private String id;
-    @JsonProperty(required = false)
     @Valid
     protected SchedulerInfo schedule;
     @JsonIgnore

@@ -17,24 +17,24 @@ import javax.management.MBeanServer;
 
 /**
  * Utiltiy Class to capture Heap dump of Java Application
- * 
+ *
  * @author hkilari
  *
  */
 public class HeapDumpUtils {
-    // This is the name of the HotSpot Diagnostic MBean
     private static final String HOTSPOT_BEAN_NAME = "com.sun.management:type=HotSpotDiagnostic";
 
+    private HeapDumpUtils() {
+        throw new java.lang.UnsupportedOperationException("This is a utility class and cannot be instantiated");
+    }
 
-    /*   Call this method from your application whenever you 
-      want to dump the heap snapshot into a file.
-     
-      @param fileName name of the heap dump file
-      @param live flag that tells whether to dump
-                  only the live objects*/
-
-    // get the hotspot diagnostic MBean from the
-    // platform MBean server
+    /**
+     * Call this method from your application whenever you want to dump the heap snapshot into a
+     * file.
+     *
+     * @param fileName
+     * @param live
+     */
     @SuppressWarnings("restriction")
     public static void dumpHeap(String fileName, boolean live) {
         try {

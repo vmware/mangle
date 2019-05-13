@@ -36,20 +36,20 @@ public class ScheduleEventListener {
     @EventListener
     public void handleSchedulerUpdatedEvent(ScheduleUpdatedEvent scheduleUpdatedEvent) {
         log.debug("Scheduler update event listener is triggered");
-        if (scheduleUpdatedEvent.getScheduleStatus() == SchedulerStatus.CANCELLED
-                || scheduleUpdatedEvent.getScheduleStatus() == SchedulerStatus.PAUSED
-                || scheduleUpdatedEvent.getScheduleStatus() == SchedulerStatus.FINISHED) {
+        if (scheduleUpdatedEvent.getScheduleStatus().equals(SchedulerStatus.CANCELLED.name())
+                || scheduleUpdatedEvent.getScheduleStatus().equals(SchedulerStatus.PAUSED.name())
+                || scheduleUpdatedEvent.getScheduleStatus().equals(SchedulerStatus.FINISHED.name())) {
             taskCache.deleteFromTaskCache(scheduleUpdatedEvent.getScheduleID());
         } else {
             taskCache.updateTaskCache(scheduleUpdatedEvent.getScheduleID(),
-                    scheduleUpdatedEvent.getScheduleStatus().name());
+                    scheduleUpdatedEvent.getScheduleStatus());
         }
     }
 
     @EventListener
     public void handleSchedulerCreatedEvent(ScheduleCreatedEvent scheduleCreatedEvent) {
         log.debug("Scheduler create event listener is triggered");
-        taskCache.updateTaskCache(scheduleCreatedEvent.getScheduleID(),
+        taskCache.addTaskToCache(scheduleCreatedEvent.getScheduleID(),
                 scheduleCreatedEvent.getScheduleStatus().name());
     }
 

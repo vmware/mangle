@@ -8,8 +8,8 @@
 		<form #userForm="ngForm" (ngSubmit)="updatePassword(userForm.value);" *ngIf="userFormData" ngNativeValidate>
 			<section class="form-block">
 				<div class="form-group">
-					<label for="username">User Name</label>
-					<input type="text" name="username" [(ngModel)]="userFormData.username" required readonly>
+					<label for="name">User Name</label>
+					<input type="text" name="name" [(ngModel)]="userFormData.name" required readonly>
 				</div>
 				<div class="form-group">
 					<label for="oldPassword">Old Password</label>

@@ -13,13 +13,13 @@ fi
 if [ "$operation" = "precheck" ]
 then
     preRequisitescheck
+    cleanup
     exit 0
 fi
 
 if [ "$operation" = "status" ]
 then
     status
-    exit 0
 fi
 
 if [ "$operation" = "inject" ]
@@ -31,47 +31,47 @@ fi
 }
 
 readAndParseArgs(){
-  if [ $# -eq 0 ]
-  then
-     help
-  fi
-
-  for arg in "$@"
-  do
-     if [ ! -z "$(echo $arg | grep -E "^--")" ]; then
-        key=$(echo $arg | cut -d= -f1)
-        value=$(echo $arg | cut -d= -f2)
-        var=$(echo $key | cut -d- -f3)
-        export $var="${value}"
-     fi
-  done
-
-  if [ -z $operation ]
-  then
-     help
-  else
-     if [ $operation != "inject" -a $operation != "precheck" -a $operation != "status" -a $operation != "remediate" ]
-     then
+    if [ $# -eq 0 ]
+    then
         help
-     fi
-  fi
+    fi
 
-  if [ $operation = "inject" ]
-  then
-      if [ -z $processIdentifier ]
-	  then
-       help
-	  fi
-  fi
+    for arg in "$@"
+    do
+        if [ ! -z "$(echo $arg | grep -E "^--")" ]; then
+            key=$(echo $arg | cut -d= -f1)
+            value=$(echo $arg | cut -d= -f2)
+            var=$(echo $key | cut -d- -f3)
+            export $var="${value}"
+        fi
+    done
 
-  if [ $operation = "remediate" ]
-  then
-      if [ -z "$remediationCommand" ]
-	  then
-       help
-	  fi
-  fi
-}
+    if [ -z $operation ]
+    then
+        help
+    else
+        if [ $operation != "inject" -a $operation != "precheck" -a $operation != "status" -a $operation != "remediate" ]
+        then
+            help
+        fi
+    fi
+
+    if [ $operation = "inject" ]
+    then
+        if [ -z $processIdentifier ]
+        then
+            help
+        fi
+    fi
+
+    if [ $operation = "remediate" ]
+    then
+        if [ -z "$remediationCommand" ]
+        then
+            help
+        fi
+    fi
+  }
 
 help(){
     echo "$0 --operation=<precheck | status>"
@@ -84,14 +84,17 @@ help(){
 
 preRequisitescheck()
 {
+    isAwkPresent
+    running_in_docker
     isPgrepPresent
     isKillPresent
     if [ ! -z "$precheckmessage" ]
-   then
-      echo "Precheck:Failed $precheckmessage required to proceed with injection"
-      exit $errorexitcode
-   fi
-   echo "Precheck:Success"
+    then
+        echo "Precheck:Failed $precheckmessage required to proceed with injection"
+        cleanup
+        exit $errorexitcode
+    fi
+    echo "Precheck:Success"
 }
 
 isPgrepPresent(){
@@ -110,46 +113,95 @@ isKillPresent(){
     fi
 }
 
+isAwkPresent(){
+   awk > /dev/null 2>&1
+   awkRetVal=$?
+   if [ $awkRetVal -ne 0 -a $awkRetVal -ne 1 -a $awkRetVal -ne 2 ]; then
+      precheckmessage="$precheckmessage,awk"
+   fi
+}
+
 status(){
+    pgrep -f "killprocess.sh" > /dev/null 2>&1
+    mainProcessRetVal=$?
+    if [ $mainProcessRetVal -eq 0 ]
+    then
+        echo "Status: Inprogress"
+        exit 0
+    fi
     pgrep -f "killprocessscript.sh" > /dev/null 2>&1
-    statusCheckRetVal=$?
-    if [ $statusCheckRetVal -eq 0 ]
+    childProcessRetVal=$?
+    if [ $childProcessRetVal -eq 0 ]
     then
         echo "Status: Inprogress"
     else
         echo "Status: Completed/NotRunning"
     fi
+    exit 0
 }
 
 remediate(){
-    $remediationCommand &
+    $remediationCommand > /dev/null 2>&1 &
     cleanup
     echo "Remediated: Kill Service injection"
 }
 
 cleanup(){
-    rm -rf $basedir/killprocessscript.sh  > /dev/null 2>&1
+    rm -rf $basedir/killprocess.sh > /dev/null 2>&1
+}
+
+running_in_docker() {
+  awk -F/ '$2 == "docker"' /proc/self/cgroup | read
+  isDockerRetVal=$?
+  if [ $isDockerRetVal -eq 0 ]; then
+     IS_CONTAINER=true
+  fi
 }
 
 injectFault(){
-processcount=$(pgrep -f $processIdentifier | wc -l)
-echo "Found:"${processcount} "in endpoint"
-#Three default processes related to this script
-if [ "$processcount" -ne 4 ]
-then
-    echo "identifier is wrong,cant kill service"
-    exit $errorexitcode
-fi
-cat << EOF > $basedir/killprocessscript.sh
-#!/bin/sh
-#sleeping the process so that if pid is the entry point process container may exit and task will fail
-identifier=\$1
-sleep 5s
-pgrep -f \$identifier |xargs kill -9
+    currentProcessId=$(pgrep -f "killprocess")
+    allProcessIds=$(pgrep -f $processIdentifier)
+    actualProcessIdsToKill=$(echo "$allProcessIds"|grep -v $currentProcessId)
+    processCount=$(echo $actualProcessIdsToKill|wc -w)
+    if [ $processCount -eq 0 ]
+    then
+        echo "no process found with identifier $processIdentifier, can't kill service"
+        cleanup
+        exit $errorexitcode
+    fi
+
+    if [ $processCount -gt 1 ]
+    then
+        echo "Found more than one process ("$(echo $actualProcessIdsToKill|xargs)") with same process identifier: $processIdentifier"
+        cleanup
+        exit $errorexitcode
+    fi
+
+   if [ ! -z "$IS_CONTAINER" ]; then
+    cat << EOF > $basedir/killprocessscript.sh
+    #!/bin/sh
+    #sleeping the process so that if pid is the entry point process container may exit and task will fail
+    echo "killing processID: $actualProcessIdsToKill"
+    sleep 5s
+    kill -9 $actualProcessIdsToKill
+    rm -rf $basedir/killprocessscript.sh $basedir/killProcessFault.log > /dev/null 2>&1
 EOF
-chmod 777 $basedir/killprocessscript.sh
-$basedir/killprocessscript.sh $processIdentifier &
-echo "Triggered: Kill Process injection"
+    chmod 777 $basedir/killprocessscript.sh
+    $basedir/killprocessscript.sh > $basedir/killProcessFault.log 2>&1 &
+    echo "Triggered: Kill Process injection"
+   else
+    sleep 5s
+    output=$(kill -9 $actualProcessIdsToKill)
+    killProcessExitVal=$?
+    if [ $killProcessExitVal -eq 0 ]
+    then
+       echo "killing processID: $actualProcessIdsToKill"
+       echo "Triggered: Kill Process injection"
+    else
+       echo $output
+       exit $errorexitcode
+    fi
+   fi
 }
 
 #calling main function

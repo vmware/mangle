@@ -46,6 +46,9 @@ import org.testng.annotations.Test;
 
 import com.vmware.mangle.cassandra.model.tasks.commands.CommandExecutionResult;
 import com.vmware.mangle.utils.clients.ssh.SSHUtils;
+import com.vmware.mangle.utils.constants.ErrorConstants;
+import com.vmware.mangle.utils.exceptions.MangleException;
+import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
 /**
  * Unit Test Case for SSHUtils.
@@ -202,6 +205,7 @@ public class SSHUtilsTest extends PowerMockTestCase {
     @Test(priority = 7)
     public void testTestConnection() throws Exception {
         testLoginBefore();
+        when(session.openChannel(anyString())).thenReturn(channelSftp);
         Assert.assertTrue(sshUtils.testConnection());
         testLoginAfter();
     }
@@ -212,13 +216,80 @@ public class SSHUtilsTest extends PowerMockTestCase {
      * @throws Exception
      */
     @Test(priority = 8)
-    public void testTestConnectionFailure() throws Exception {
-        testLoginBefore();
-        doThrow(JSchException.class).when(session).connect();
-        Assert.assertFalse(sshUtils.testConnection());
-        PowerMockito.verifyNew(JSch.class, times(1)).withNoArguments();
-        verify(jSch, times(1)).getSession(anyString(), anyString(), anyInt());
-        verify(session, times(1)).connect();
+    public void testTestConnectionInvalidCredentialsFailure() throws Exception {
+        try {
+            testLoginBefore();
+            JSchException exception = new JSchException(ErrorConstants.RM_AUTH_FAIL);
+            doThrow(exception).when(session).connect();
+            when(session.openChannel(anyString())).thenReturn(channelSftp);
+            sshUtils.testConnection();
+        } catch (MangleException exception) {
+            Assert.assertEquals(exception.getErrorCode(), ErrorCode.RM_INVALID_CREDENTIALS);
+            PowerMockito.verifyNew(JSch.class, times(1)).withNoArguments();
+            verify(jSch, times(1)).getSession(anyString(), anyString(), anyInt());
+            verify(session, times(1)).connect();
+        }
+    }
+
+    /**
+     * Test method for {@link com.vmware.mangle.clients.ssh.SSHUtils#testConnection()}.
+     *
+     * @throws Exception
+     */
+    @Test(priority = 9)
+    public void testTestConnectionConnectionRefusedFailure() throws Exception {
+        try {
+            testLoginBefore();
+            JSchException exception = new JSchException(ErrorConstants.RM_CONNECTION_REFUSED);
+            doThrow(exception).when(session).connect();
+            when(session.openChannel(anyString())).thenReturn(channelSftp);
+            sshUtils.testConnection();
+        } catch (MangleException exception) {
+            Assert.assertEquals(exception.getErrorCode(), ErrorCode.RM_CONNECTION_REFUSED);
+            PowerMockito.verifyNew(JSch.class, times(1)).withNoArguments();
+            verify(jSch, times(1)).getSession(anyString(), anyString(), anyInt());
+            verify(session, times(1)).connect();
+        }
+    }
+
+    /**
+     * Test method for {@link com.vmware.mangle.clients.ssh.SSHUtils#testConnection()}.
+     *
+     * @throws Exception
+     */
+    @Test(priority = 10)
+    public void testTestConnectionSftpNotEnabledFailure() throws Exception {
+        try {
+            testLoginBefore();
+            doThrow(JSchException.class).when(session).openChannel(anyString());
+            sshUtils.testConnection();
+        } catch (MangleException exception) {
+            Assert.assertEquals(exception.getErrorCode(), ErrorCode.RM_SFTP_NOT_ENABLED);
+            PowerMockito.verifyNew(JSch.class, times(1)).withNoArguments();
+            verify(jSch, times(1)).getSession(anyString(), anyString(), anyInt());
+            verify(session, times(1)).connect();
+        }
+    }
+
+    /**
+     * Test method for {@link com.vmware.mangle.clients.ssh.SSHUtils#testConnection()}.
+     *
+     * @throws Exception
+     */
+    @Test(priority = 11)
+    public void testTestGenericConnectionConnectionFailure() throws Exception {
+        try {
+            testLoginBefore();
+            JSchException exception = new JSchException("Connection Failure");
+            doThrow(exception).when(session).connect();
+            when(session.openChannel(anyString())).thenReturn(channelSftp);
+            sshUtils.testConnection();
+        } catch (MangleException exception) {
+            Assert.assertEquals(exception.getErrorCode(), ErrorCode.RM_CONNECTION_EXCEPTION);
+            PowerMockito.verifyNew(JSch.class, times(1)).withNoArguments();
+            verify(jSch, times(1)).getSession(anyString(), anyString(), anyInt());
+            verify(session, times(1)).connect();
+        }
     }
 
     /**
@@ -227,7 +298,7 @@ public class SSHUtilsTest extends PowerMockTestCase {
      *
      * @throws Exception
      */
-    @Test(priority = 9)
+    @Test(priority = 12)
     public void testPutFileDirectoryNotFoundError() throws Exception {
         testsBeforePutFile();
         doThrow(new SftpException(1, "directory not found")).when(channelSftp).cd(anyString());
@@ -259,7 +330,7 @@ public class SSHUtilsTest extends PowerMockTestCase {
      *
      * @throws Exception
      */
-    @Test(priority = 10)
+    @Test(priority = 13)
     public void testPutFileGenericFileTransferError() throws Exception {
         testsBeforePutFile();
         doNothing().when(channelSftp).cd(anyString());

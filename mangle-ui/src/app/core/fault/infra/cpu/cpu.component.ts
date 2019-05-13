@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { FaultService } from '../../fault.service';
 import { EndpointService } from 'src/app/core/endpoint/endpoint.service';
-import { CommonFault } from '../../common.fault';
+import { ClrLoadingState } from '@clr/angular';
 
 @Component({
   selector: 'app-cpu-infra',
@@ -11,27 +11,31 @@ import { CommonFault } from '../../common.fault';
 })
 export class CpuInfraComponent implements OnInit {
 
-  public commonFault: CommonFault = new CommonFault();
-
   public errorFlag = false;
   public successFlag = false;
   public alertMessage: string;
 
-  public clockRanges: any;
-  public hourRanges: any;
-  public dateRages: any;
-  public dayRanges: any;
-  public cronType: string = "Minutes";
+  public cronModal: boolean = false;
 
   public disableSchedule: boolean = true;
   public disableRun: boolean = false;
+
+  public tagsData: any = {};
+
+  public timeInMillisecondsHidden: boolean = true;
+  public cronExpressionHidden: boolean = true;
+  public descriptionHidden: boolean = true;
+  public selectedSchedulePrev: string = "";
 
   public endpoints: any = [];
   public dockerHidden: boolean = true;
   public k8sHidden: boolean = true;
 
+  public runBtnState: ClrLoadingState = ClrLoadingState.DEFAULT;
+
   public faultFormData: any = {
     "cpuLoad": 0,
+    "injectionHomeDir": null,
     "dockerArguments": {
       "containerName": null
     },
@@ -42,20 +46,21 @@ export class CpuInfraComponent implements OnInit {
       "podLabels": null
     },
     "schedule": {
-      "cronExpression": null
+      "cronExpression": null,
+      "timeInMilliseconds": null,
+      "description": null
     },
-    "timeoutInMilliseconds": null
+    "timeoutInMilliseconds": 0
   };
+
+  public searchedEndpoints: any = [];
 
   constructor(private faultService: FaultService, private endpointService: EndpointService, private router: Router) {
 
   }
 
   ngOnInit() {
-    this.clockRanges = this.commonFault.getClockRanges();
-    this.hourRanges = this.commonFault.getHourRanges();
-    this.dateRages = this.commonFault.getDateRages();
-    this.dayRanges = this.commonFault.getDayRanges();
+    this.errorFlag = false;
     this.endpointService.getAllEndpoints().subscribe(
       res => {
         if (res.code) {
@@ -63,7 +68,54 @@ export class CpuInfraComponent implements OnInit {
         } else {
           this.endpoints = res;
         }
+      }, err => {
+        this.endpoints = [];
+        this.alertMessage = err.error.description;
+        this.errorFlag = true;
       });
+  }
+
+  public searchEndpoint(searchKeyWord) {
+    this.searchedEndpoints = [];
+    for (var i = 0; i < this.endpoints.length; i++) {
+      if (this.endpoints[i].name.indexOf(searchKeyWord) > -1) {
+        this.searchedEndpoints.push(this.endpoints[i]);
+      }
+    }
+  }
+
+  public setEndpointVal(endpointVal) {
+    this.faultFormData.endpointName = endpointVal;
+  }
+
+  public updateTags(tagsVal) {
+    this.tagsData[tagsVal.tagKey] = tagsVal.tagValue;
+  }
+
+  public removeTag(tagKeyToRemove) {
+    delete this.tagsData[tagKeyToRemove];
+  }
+
+  public setScheduleVal(selectedSchedule) {
+    if (this.selectedSchedulePrev == selectedSchedule.value) {
+      selectedSchedule.checked = false;
+      this.timeInMillisecondsHidden = true;
+      this.cronExpressionHidden = true;
+      this.descriptionHidden = true;
+    } else {
+      this.timeInMillisecondsHidden = true;
+      this.cronExpressionHidden = true;
+      this.descriptionHidden = true;
+      if (selectedSchedule.value == "timeInMilliseconds") {
+        this.timeInMillisecondsHidden = false;
+        this.descriptionHidden = false;
+      }
+      if (selectedSchedule.value == "cronExpression") {
+        this.cronExpressionHidden = false;
+        this.descriptionHidden = false;
+      }
+      this.selectedSchedulePrev = selectedSchedule.value;
+    }
   }
 
   public displayEndpointFields(endpointNameVal) {
@@ -71,6 +123,11 @@ export class CpuInfraComponent implements OnInit {
     this.k8sHidden = true;
     for (var i = 0; i < this.endpoints.length; i++) {
       if (endpointNameVal == this.endpoints[i].name) {
+        if (this.endpoints[i].tags != null) {
+          this.tagsData = this.endpoints[i].tags;
+        } else {
+          this.tagsData = {};
+        }
         if (this.endpoints[i].endPointType == 'DOCKER') {
           this.dockerHidden = false;
         }
@@ -81,33 +138,44 @@ export class CpuInfraComponent implements OnInit {
     }
   }
 
-  public composeSchedule(scheduleFormVal) {
-    scheduleFormVal.cronType = this.cronType;
-    this.faultFormData.schedule.cronExpression = this.commonFault.getCronExpression(scheduleFormVal);
+  public setScheduleCron(eventVal) {
+    this.faultFormData.schedule.cronExpression = eventVal;
     this.setSubmitButton();
+    this.cronModal = false;
   }
 
-  setSubmitButton() {
-    if (this.faultFormData.schedule.cronExpression == "" || this.faultFormData.schedule.cronExpression == null) {
-      this.disableSchedule = true;
-      this.disableRun = false;
-    } else {
+  public setSubmitButton() {
+    if ((this.faultFormData.schedule.cronExpression != "" && this.faultFormData.schedule.cronExpression != null) || (this.faultFormData.schedule.timeInMilliseconds != null && this.faultFormData.schedule.timeInMilliseconds != 0)) {
       this.disableSchedule = false;
       this.disableRun = true;
+    } else {
+      this.disableSchedule = true;
+      this.disableRun = false;
     }
   }
 
   public executeCpuFault(faultData) {
+    this.runBtnState = ClrLoadingState.LOADING;
     this.errorFlag = false;
     this.successFlag = false;
+    if (this.tagsData != {}) {
+      faultData.tags = this.tagsData;
+    }
     this.faultService.executeCpuFault(faultData).subscribe(
       res => {
-        this.alertMessage = 'Fault triggred successfully!';
-        this.successFlag = true;
-        this.router.navigateByUrl('core/requests');
+        this.tagsData = {};
+        if (res.taskData.schedule == null) {
+          this.router.navigateByUrl('core/requests/processed');
+        } else {
+          this.router.navigateByUrl('core/requests/scheduled');
+        }
       }, err => {
         this.alertMessage = err.error.description;
         this.errorFlag = true;
+        if (this.alertMessage === undefined) {
+          this.alertMessage = err.error.error;
+        }
+        this.runBtnState = ClrLoadingState.DEFAULT;
       });
   }
 

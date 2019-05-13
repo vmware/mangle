@@ -28,7 +28,6 @@ import com.vmware.mangle.cassandra.model.security.User;
  */
 @Repository
 public interface UserRepository extends CassandraRepository<User, String> {
-
     @AllowFiltering
     User findByName(String name);
 

@@ -22,6 +22,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,7 +34,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.vmware.mangle.cassandra.model.metricprovider.MetricProviderSpec;
-import com.vmware.mangle.model.enums.MetricProviderType;
+import com.vmware.mangle.model.enums.MetricProviderByStatus;
 import com.vmware.mangle.model.response.MetricProviderResponse;
 import com.vmware.mangle.services.MetricProviderService;
 import com.vmware.mangle.services.cassandra.model.events.basic.EntityCreatedEvent;
@@ -66,25 +67,27 @@ public class MetricProviderController {
     /**
      * API to get metric providers
      *
-     * @param metricProviderType
-     * @param isActiveMetricProvider
+     * @param metricProviderByStatus
      * @return ResponseEntity<List<MetricProviderSpec>>
      * @throws MangleException
      */
     @ApiOperation(value = "API to get Metric Providers.", nickname = "getMetricProviders")
     @GetMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<MetricProviderSpec>> getMetricProviders(
-            @RequestParam(name = "metricProviderByType", required = false) MetricProviderType metricProviderType,
-            @RequestParam(name = "isActiveMetricProvider", required = false) Boolean isActiveMetricProvider)
+            @RequestParam(name = "metricProviderByStatus", required = false) MetricProviderByStatus metricProviderByStatus)
             throws MangleException {
         List<MetricProviderSpec> metricProviders = new ArrayList<>();
-        if (null != metricProviderType) {
-            log.info("API to get Metric Providers by type.");
-            metricProviders = this.metricProviderService.getMetricProviderByType(metricProviderType);
-        } else if (null != isActiveMetricProvider && isActiveMetricProvider) {
-            log.info("API to get Active Metric Provider");
-            MetricProviderSpec metricProvider = this.metricProviderService.getActiveMetricProvider();
-            metricProviders.add(metricProvider);
+        if (null != metricProviderByStatus) {
+            if (metricProviderByStatus.equals(MetricProviderByStatus.ACTIVE)) {
+                log.info("API to get Active Metric Provider");
+                MetricProviderSpec metricProvider = this.metricProviderService.getActiveMetricProvider();
+                if (null != metricProvider) {
+                    metricProviders.add(metricProvider);
+                }
+            } else if (metricProviderByStatus.equals(MetricProviderByStatus.ALL)) {
+                log.info("API to get all Metric Providers.");
+                metricProviders = this.metricProviderService.getAllMetricProviders();
+            }
         } else {
             log.info("API to get all Metric Providers.");
             metricProviders = this.metricProviderService.getAllMetricProviders();
@@ -112,10 +115,7 @@ public class MetricProviderController {
             @Validated @RequestBody MetricProviderSpec metricProviderSpec) throws MangleException {
         log.info("API to add a Metric Provider");
         if (this.metricProviderService.getMetricProviderByType(metricProviderSpec.getMetricProviderType()).isEmpty()) {
-            if (!this.metricProviderService.testConnectionMetricProvider(metricProviderSpec)) {
-                throw new MangleException(ErrorConstants.TEST_CONNECTION_FAILED_METRICPROVIDER,
-                        ErrorCode.TEST_CONNECTION_FAILED, metricProviderSpec.getName());
-            }
+            this.metricProviderService.testConnectionMetricProvider(metricProviderSpec);
             MetricProviderSpec metricSpec = this.metricProviderService.addMetricProvider(metricProviderSpec);
             HttpHeaders headers = new HttpHeaders();
             headers.add(CommonConstants.MESSAGE_HEADER, MetricProviderConstants.METRIC_PROVIDER_CREATED);
@@ -125,8 +125,7 @@ public class MetricProviderController {
 
         } else {
             log.debug("Can't add more than one metric provider of same type");
-            throw new MangleException(ErrorConstants.DUPLICATE_RECORD, ErrorCode.DUPLICATE_RECORD,
-                    metricProviderSpec.getName());
+            throw new MangleException(ErrorConstants.SAME_RECORD, ErrorCode.SAME_RECORD, metricProviderSpec.getName());
         }
 
     }
@@ -143,10 +142,7 @@ public class MetricProviderController {
     public ResponseEntity<MetricProviderSpec> updateMetricProvider(
             @Validated @RequestBody MetricProviderSpec metricProviderSpec) throws MangleException {
         log.info("API to update a  Metric Provider");
-        if (!this.metricProviderService.testConnectionMetricProvider(metricProviderSpec)) {
-            throw new MangleException(ErrorConstants.TEST_CONNECTION_FAILED_METRICPROVIDER,
-                    ErrorCode.TEST_CONNECTION_FAILED, metricProviderSpec.getName());
-        }
+        this.metricProviderService.testConnectionMetricProvider(metricProviderSpec);
         MetricProviderSpec resultSpec =
                 this.metricProviderService.updateMetricProviderByName(metricProviderSpec.getName(), metricProviderSpec);
         HttpHeaders headers = new HttpHeaders();
@@ -164,20 +160,16 @@ public class MetricProviderController {
      */
     @ApiOperation(value = "API to delete Metric Provider by name", nickname = "deleteMetricProvider")
     @DeleteMapping(value = "")
-    public ResponseEntity<MetricProviderResponse> deleteMetricProvider(
-            @RequestParam("metricProviderName") String metricProviderName) throws MangleException {
+    public ResponseEntity deleteMetricProvider(@RequestParam("metricProviderName") String metricProviderName)
+            throws MangleException {
         log.info("API to delete Metric Provider");
-        boolean status = false;
-        if (metricProviderName.equals("*")) {
-            status = this.metricProviderService.deleteAllMetricProviders();
+        if (StringUtils.isEmpty(metricProviderName)) {
+            this.metricProviderService.deleteAllMetricProviders();
         } else {
-            status = this.metricProviderService.deleteMetricProvider(metricProviderName);
+            this.metricProviderService.deleteMetricProvider(metricProviderName);
         }
-        MetricProviderResponse mangleResponse = new MetricProviderResponse();
-        mangleResponse.setResultStatus(status);
-        HttpHeaders headers = new HttpHeaders();
-        headers.add(CommonConstants.MESSAGE_HEADER, MetricProviderConstants.METRIC_PROVIDER_DELETED);
-        return new ResponseEntity<>(mangleResponse, headers, HttpStatus.OK);
+
+        return new ResponseEntity(HttpStatus.NO_CONTENT);
     }
 
     /**
@@ -190,9 +182,13 @@ public class MetricProviderController {
     @ApiOperation(value = "API to test connection of  Metric Provider", nickname = "testConnection")
     @PostMapping(value = "/test-connection", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<MetricProviderResponse> testConnection(
-            @RequestParam("metricProviderName") String metricProviderName) throws MangleException {
+            @Validated @RequestBody MetricProviderSpec metricProviderSpec) throws MangleException {
         log.info("API to test connection of  Metric Provider");
-        boolean status = this.metricProviderService.testConnectionMetricProvider(metricProviderName);
+        boolean status = this.metricProviderService.testConnectionMetricProvider(metricProviderSpec);
+        if (!status) {
+            throw new MangleException(ErrorConstants.TEST_CONNECTION_FAILED_METRICPROVIDER,
+                    ErrorCode.TEST_CONNECTION_FAILED, metricProviderSpec.getName());
+        }
         MetricProviderResponse mangleResponse = new MetricProviderResponse();
         mangleResponse.setResultStatus(status);
         HttpHeaders headers = new HttpHeaders();
@@ -250,5 +246,24 @@ public class MetricProviderController {
             return new ResponseEntity<>(mangleResponse, headers, HttpStatus.OK);
         }
     }
+
+
+    /**
+     * API to get status of Mangle Metrics Collection
+     *
+     * @return ResponseEntity<MetricProviderResponse>
+     */
+    @ApiOperation(value = "API to get status of Mangle Metrics Collection", nickname = "getMetricProviders")
+    @GetMapping(value = "/mangle-metrics-collection-status", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<MetricProviderResponse> getMetricCollectionStatus() {
+        log.info("API to get status of Mangle Metrics Collection");
+        boolean status = this.metricProviderService.isMangleMetricsEnabled();
+        MetricProviderResponse mangleResponse = new MetricProviderResponse();
+        mangleResponse.setResultStatus(status);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(CommonConstants.MESSAGE_HEADER, MetricProviderConstants.SENDING_MANGLE_METRICS_STATUS);
+        return new ResponseEntity<>(mangleResponse, headers, HttpStatus.OK);
+    }
+
 
 }

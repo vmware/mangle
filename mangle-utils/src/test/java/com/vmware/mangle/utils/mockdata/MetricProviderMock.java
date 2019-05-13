@@ -23,19 +23,19 @@ public class MetricProviderMock {
 
     }
 
-    public static String wavefrontInstance = "https://try.wavefront.com";
+    public static String WAVEFRONT_INSTANCE = "https://try.wavefront.com";
     public static String dummyApiKey = "dummy-api-key";
     public static String dummyAppKey = "dummyAppKey";
     public static String dummyPrefix = "metric-prefix";
     public static String source = "mangle";
     public static String datadogInstance = "https://api.datadoghq.com";
+    public static String WAVEFRONT_PROXY_PORT = "2878";
 
     public static WaveFrontConnectionProperties getDummyWavefrontConnectionProperties() {
         WaveFrontConnectionProperties properties = new WaveFrontConnectionProperties();
-        properties.setPrefix(dummyPrefix);
         properties.setSource(source);
         properties.setWavefrontAPIToken(dummyApiKey);
-        properties.setWavefrontInstance(wavefrontInstance);
+        properties.setWavefrontInstance(WAVEFRONT_INSTANCE);
         return properties;
     }
 

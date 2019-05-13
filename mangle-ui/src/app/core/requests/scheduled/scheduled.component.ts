@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { RequestsService } from '../requests.service';
 import { Router } from '@angular/router';
 import { ClrDatagridSortOrder } from '@clr/angular';
+import { MessageConstants } from 'src/app/common/message.constants';
 
 @Component({
   selector: 'app-scheduled',
@@ -50,15 +51,14 @@ export class ScheduledComponent implements OnInit {
     );
   }
 
-  public deleteSchedule(scheduleTask) {
+  public deleteScheduleOnly(scheduleTask) {
     this.errorFlag = false;
     this.successFlag = false;
-    this.isLoadingScheduledJobs = true;
-    if (confirm('Associated tasks will also be deleted. Are you sure you want to delete schedule: ' + scheduleTask.id + '?')) {
-      this.requestsService.deleteSchedule(scheduleTask.id).subscribe(
+    if (confirm(MessageConstants.DELETE_CONFIRM + scheduleTask.id + MessageConstants.QUESTION_MARK)) {
+      this.requestsService.deleteScheduleOnly(scheduleTask.id).subscribe(
         res => {
           this.getAllScheduleJobs();
-          this.alertMessage = scheduleTask.id + ' schedule deleted successfully!';
+          this.alertMessage = scheduleTask.id + MessageConstants.SCHEDULE_DELETE;
           this.successFlag = true;
           this.isLoadingScheduledJobs = false;
         }, err => {
@@ -66,6 +66,33 @@ export class ScheduledComponent implements OnInit {
           this.alertMessage = err.error.description;
           this.errorFlag = true;
           this.isLoadingScheduledJobs = false;
+          if (this.alertMessage === undefined) {
+            this.alertMessage = err.error.error;
+          }
+        });
+    } else {
+      // Do nothing!
+    }
+  }
+
+  public deleteSchedule(scheduleTask) {
+    this.errorFlag = false;
+    this.successFlag = false;
+    if (confirm(MessageConstants.DELETE_SCHEDULE_CONFIRM + scheduleTask.id + MessageConstants.QUESTION_MARK)) {
+      this.requestsService.deleteSchedule(scheduleTask.id).subscribe(
+        res => {
+          this.getAllScheduleJobs();
+          this.alertMessage = scheduleTask.id + MessageConstants.SCHEDULE_DELETE;
+          this.successFlag = true;
+          this.isLoadingScheduledJobs = false;
+        }, err => {
+          this.getAllScheduleJobs();
+          this.alertMessage = err.error.description;
+          this.errorFlag = true;
+          this.isLoadingScheduledJobs = false;
+          if (this.alertMessage === undefined) {
+            this.alertMessage = err.error.error;
+          }
         });
     } else {
       // Do nothing!
@@ -75,12 +102,11 @@ export class ScheduledComponent implements OnInit {
   public cancelSchedule(scheduleTask) {
     this.errorFlag = false;
     this.successFlag = false;
-    this.isLoadingScheduledJobs = true;
-    if (confirm('Are you sure you want to delete schedule: ' + scheduleTask.id + '?')) {
+    if (confirm(MessageConstants.CANCEL_CONFIRM + scheduleTask.id + MessageConstants.QUESTION_MARK)) {
       this.requestsService.cancelSchedule(scheduleTask.id).subscribe(
         res => {
           this.getAllScheduleJobs();
-          this.alertMessage = scheduleTask.id + ' schedule canceled successfully!';
+          this.alertMessage = scheduleTask.id + MessageConstants.SCHEDULE_CANCEL;
           this.successFlag = true;
           this.isLoadingScheduledJobs = false;
         }, err => {
@@ -88,6 +114,9 @@ export class ScheduledComponent implements OnInit {
           this.alertMessage = err.error.description;
           this.errorFlag = true;
           this.isLoadingScheduledJobs = false;
+          if (this.alertMessage === undefined) {
+            this.alertMessage = err.error.error;
+          }
         });
     } else {
       // Do nothing!
@@ -97,12 +126,11 @@ export class ScheduledComponent implements OnInit {
   public pauseSchedule(scheduleTask) {
     this.errorFlag = false;
     this.successFlag = false;
-    this.isLoadingScheduledJobs = true;
-    if (confirm('Are you sure you want to delete schedule: ' + scheduleTask.id + '?')) {
+    if (confirm(MessageConstants.PAUSE_CONFIRM + scheduleTask.id + MessageConstants.QUESTION_MARK)) {
       this.requestsService.pauseSchedule(scheduleTask.id).subscribe(
         res => {
           this.getAllScheduleJobs();
-          this.alertMessage = scheduleTask.id + ' schedule paused successfully!';
+          this.alertMessage = scheduleTask.id + MessageConstants.SCHEDULE_PAUSE;
           this.successFlag = true;
           this.isLoadingScheduledJobs = false;
         }, err => {
@@ -110,6 +138,9 @@ export class ScheduledComponent implements OnInit {
           this.alertMessage = err.error.description;
           this.errorFlag = true;
           this.isLoadingScheduledJobs = false;
+          if (this.alertMessage === undefined) {
+            this.alertMessage = err.error.error;
+          }
         });
     } else {
       // Do nothing!
@@ -119,12 +150,11 @@ export class ScheduledComponent implements OnInit {
   public resumeSchedule(scheduleTask) {
     this.errorFlag = false;
     this.successFlag = false;
-    this.isLoadingScheduledJobs = true;
-    if (confirm('Are you sure you want to delete schedule: ' + scheduleTask.id + '?')) {
+    if (confirm(MessageConstants.RESUME_CONFIRM + scheduleTask.id + MessageConstants.QUESTION_MARK)) {
       this.requestsService.resumeSchedule(scheduleTask.id).subscribe(
         res => {
           this.getAllScheduleJobs();
-          this.alertMessage = scheduleTask.id + ' schedule resumed successfully!';
+          this.alertMessage = scheduleTask.id + MessageConstants.SCHEDULE_RESUME;
           this.successFlag = true;
           this.isLoadingScheduledJobs = false;
         }, err => {
@@ -132,6 +162,9 @@ export class ScheduledComponent implements OnInit {
           this.alertMessage = err.error.description;
           this.errorFlag = true;
           this.isLoadingScheduledJobs = false;
+          if (this.alertMessage === undefined) {
+            this.alertMessage = err.error.error;
+          }
         });
     } else {
       // Do nothing!
@@ -148,6 +181,14 @@ export class ScheduledComponent implements OnInit {
           this.isLoadingScheduledTaskDetails = false;
         } else {
           this.scheduledTaskDetails = res;
+          if (res.triggers != null) {
+            for (var i = 0; i < res.triggers.length; i++) {
+              res.triggers[i].startTime = new Date(res.triggers[i].startTime);
+              if (res.triggers[i].endTime != null) {
+                res.triggers[i].endTime = new Date(res.triggers[i].endTime);
+              }
+            }
+          }
           this.isLoadingScheduledTaskDetails = false;
         }
       }, err => {

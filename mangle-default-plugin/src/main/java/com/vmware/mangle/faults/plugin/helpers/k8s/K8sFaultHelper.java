@@ -11,7 +11,7 @@
 
 package com.vmware.mangle.faults.plugin.helpers.k8s;
 
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.OPERATION;
+import static com.vmware.mangle.utils.constants.FaultConstants.OPERATION;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -43,9 +43,8 @@ import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
 /**
- * @author bkaranam
- * Implementation of {@link ICommandExecutionFaultHelper} to support K8S specific
- * faults
+ * @author bkaranam Implementation of {@link ICommandExecutionFaultHelper} to support K8S specific
+ *         faults
  */
 @Log4j2
 @Component
@@ -106,8 +105,7 @@ public class K8sFaultHelper implements ICommandExecutionFaultHelper {
      * @return {@link String} command
      * @throws MangleException
      */
-    private List<CommandInfo> buildInjectionCommandList(K8SFaultSpec k8sFaultSpec)
-            throws MangleException {
+    private List<CommandInfo> buildInjectionCommandList(K8SFaultSpec k8sFaultSpec) throws MangleException {
         String operation = k8sFaultSpec.getArgs().get(OPERATION);
         List<CommandInfo> commandList = null;
         switch (K8SFaultName.valueOf(operation)) {
@@ -125,6 +123,7 @@ public class K8sFaultHelper implements ICommandExecutionFaultHelper {
 
     /**
      * Method to generate remediation commands for ResourceNotReady fault
+     *
      * @param resourcesList
      */
     private List<CommandInfo> getResourceNotReadyFaultRemediationCommand(ICommandExecutor executor,
@@ -132,25 +131,42 @@ public class K8sFaultHelper implements ICommandExecutionFaultHelper {
         log.info("Generating Remediation command for K8S ResourceNotReady fault");
         List<CommandInfo> commandInfoList = new ArrayList<>();
         for (String resourceName : k8sFaultSpec.getResourcesList()) {
-            CommandInfo k8sCommandInfo = new CommandInfo();
-            k8sCommandInfo.setIgnoreExitValueCheck(false);
-            String command = null;
             if (k8sFaultSpec.getResourceType().equals(K8SResource.POD)) {
+                CommandInfo k8sPatchCommandInfo = new CommandInfo();
+                k8sPatchCommandInfo.setIgnoreExitValueCheck(false);
                 String containerName = ((K8SResourceNotReadyFaultSpec) (k8sFaultSpec)).getAppContainerName();
                 String originalImage = executor
                         .executeCommand(
                                 String.format(KubernetesTemplates.GET_CONTAINER_IMAGE, resourceName, containerName))
                         .getCommandOutput().trim();
-                command = String.format(KubernetesTemplates.PATCH_CONTAINER_IMAGE_OF_POD, resourceName, containerName,
-                        originalImage);
+                k8sPatchCommandInfo.setCommand(String.format(KubernetesTemplates.PATCH_CONTAINER_IMAGE_OF_POD,
+                        resourceName, containerName, originalImage));
+                commandInfoList.add(k8sPatchCommandInfo);
+
+                CommandInfo checkContainerStateInfo = new CommandInfo();
+                checkContainerStateInfo.setIgnoreExitValueCheck(false);
+                checkContainerStateInfo.setNoOfRetries(30);
+                checkContainerStateInfo.setRetryInterval(10);
+                checkContainerStateInfo
+                        .setCommand(String.format(KubernetesTemplates.IS_CONTAINER_READY, resourceName, containerName));
+                checkContainerStateInfo.setExpectedCommandOutputList(Arrays.asList("true"));
+                commandInfoList.add(checkContainerStateInfo);
+
+                log.debug("Remediation command for K8S " + k8sFaultSpec.getResourceType().name() + "not ready fault:"
+                        + k8sPatchCommandInfo.getCommand());
+
             } else if (k8sFaultSpec.getResourceType().equals(K8SResource.NODE)) {
-                command = KubernetesTemplates.UNCORDON + resourceName;
+                CommandInfo nodeUnCordonCommandInfo = new CommandInfo();
+                nodeUnCordonCommandInfo.setIgnoreExitValueCheck(false);
+                nodeUnCordonCommandInfo.setCommand(KubernetesTemplates.UNCORDON + resourceName);
+                commandInfoList.add(nodeUnCordonCommandInfo);
+                log.debug("Remediation command for K8S " + k8sFaultSpec.getResourceType().name() + "not ready fault:"
+                        + nodeUnCordonCommandInfo.getCommand());
             } else {
                 throw new MangleException(ErrorCode.UNSUPPORTED_K8S_RESOURCE_TYPE);
             }
-            log.info("Remediation command for K8S ResourceNotReady fault: " + command);
-            k8sCommandInfo.setCommand(command);
-            commandInfoList.add(k8sCommandInfo);
+
+
         }
         return commandInfoList;
     }
@@ -164,22 +180,44 @@ public class K8sFaultHelper implements ICommandExecutionFaultHelper {
             throws MangleException {
         List<CommandInfo> commandInfoList = new ArrayList<>();
         for (String resourceName : k8sFaultSpec.getResourcesList()) {
-            CommandInfo k8sCommandInfo = new CommandInfo();
 
-            k8sCommandInfo.setIgnoreExitValueCheck(false);
-            String command = null;
             if (k8sFaultSpec.getResourceType().equals(K8SResource.POD)) {
-                String containerName = ((K8SResourceNotReadyFaultSpec) (k8sFaultSpec)).getAppContainerName();
 
-                command = String.format(KubernetesTemplates.PATCH_CONTAINER_IMAGE_OF_POD, resourceName, containerName,
-                        KubernetesTemplates.NGINX_CONTAINER_IMAGE);
+                String containerName = ((K8SResourceNotReadyFaultSpec) (k8sFaultSpec)).getAppContainerName();
+                CommandInfo checkForReadinessProbeCommand = new CommandInfo();
+                checkForReadinessProbeCommand
+                        .setCommand(String.format(KubernetesTemplates.IS_CONTAINER_HAS_READINESS_PROBE, resourceName,
+                                containerName, containerName));
+                checkForReadinessProbeCommand.setExpectedCommandOutputList(Arrays.asList("ReadinessProbe Configured"));
+                commandInfoList.add(checkForReadinessProbeCommand);
+
+                CommandInfo k8sPatchCommandInfo = new CommandInfo();
+                k8sPatchCommandInfo.setIgnoreExitValueCheck(false);
+                k8sPatchCommandInfo.setCommand(String.format(KubernetesTemplates.PATCH_CONTAINER_IMAGE_OF_POD,
+                        resourceName, containerName, KubernetesTemplates.NGINX_CONTAINER_IMAGE));
+                commandInfoList.add(k8sPatchCommandInfo);
+
+                CommandInfo checkContainerStateInfo = new CommandInfo();
+                checkContainerStateInfo.setIgnoreExitValueCheck(false);
+                checkContainerStateInfo.setNoOfRetries(30);
+                checkContainerStateInfo.setRetryInterval(10);
+                checkContainerStateInfo
+                        .setCommand(String.format(KubernetesTemplates.IS_CONTAINER_READY, resourceName, containerName));
+                checkContainerStateInfo.setExpectedCommandOutputList(Arrays.asList("false"));
+                commandInfoList.add(checkContainerStateInfo);
+                log.debug("Injection command for K8S " + k8sFaultSpec.getResourceType().name() + " not ready fault:"
+                        + k8sPatchCommandInfo.getCommand());
             } else if (k8sFaultSpec.getResourceType().equals(K8SResource.NODE)) {
-                command = KubernetesTemplates.CORDON + resourceName;
+                CommandInfo nodeCordonCommandInfo = new CommandInfo();
+                nodeCordonCommandInfo.setIgnoreExitValueCheck(false);
+                String command = KubernetesTemplates.CORDON + resourceName;
+                nodeCordonCommandInfo.setCommand(command);
+                commandInfoList.add(nodeCordonCommandInfo);
+                log.debug("Injection command for K8S " + k8sFaultSpec.getResourceType().name() + " not ready fault:"
+                        + nodeCordonCommandInfo.getCommand());
             } else {
                 throw new MangleException(ErrorCode.UNSUPPORTED_K8S_RESOURCE_TYPE);
             }
-            k8sCommandInfo.setCommand(command);
-            commandInfoList.add(k8sCommandInfo);
         }
         return commandInfoList;
     }
@@ -206,11 +244,11 @@ public class K8sFaultHelper implements ICommandExecutionFaultHelper {
 
     /**
      * Method to select resource randomly if resource labels specified in the input
+     *
      * @return {@link String} resourceName
      * @throws MangleException
      */
-    public List<String> getResouceList(ICommandExecutor executor, K8SFaultSpec k8sFaultSpec)
-            throws MangleException {
+    public List<String> getResouceList(ICommandExecutor executor, K8SFaultSpec k8sFaultSpec) throws MangleException {
         List<String> resources = new ArrayList<>();
         if (StringUtils.isNotEmpty(k8sFaultSpec.getResourceName())) {
             resources.add(k8sFaultSpec.getResourceName());

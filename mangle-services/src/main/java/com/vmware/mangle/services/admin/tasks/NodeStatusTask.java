@@ -33,6 +33,7 @@ import com.vmware.mangle.cassandra.model.tasks.TaskTrigger;
 import com.vmware.mangle.model.task.MangleNodeStatusDto;
 import com.vmware.mangle.task.framework.skeletons.ITaskHelper;
 import com.vmware.mangle.utils.CommonUtils;
+import com.vmware.mangle.utils.constants.Constants;
 import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.MangleRuntimeException;
 import com.vmware.mangle.utils.exceptions.handler.CustomErrorMessage;
@@ -43,7 +44,7 @@ import com.vmware.mangle.utils.messages.tasks.TaskExecutionMessages;
  * @author bkaranam (bhanukiran karanam)
  */
 @Log4j2
-@Component(value = "NodeStatusTask")
+@Component(value = Constants.NODESTATUS_TASK_NAME)
 public class NodeStatusTask<T extends MangleNodeStatusDto> implements ITaskHelper<T> {
     @Autowired
     private CustomErrorMessage customErrorMessage;

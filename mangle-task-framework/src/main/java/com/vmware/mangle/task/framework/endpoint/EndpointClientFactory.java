@@ -21,6 +21,7 @@ import org.apache.commons.io.FileUtils;
 import org.springframework.stereotype.Component;
 
 import com.vmware.mangle.cassandra.model.endpoint.CredentialsSpec;
+import com.vmware.mangle.cassandra.model.endpoint.DockerCertificates;
 import com.vmware.mangle.cassandra.model.endpoint.DockerConnectionProperties;
 import com.vmware.mangle.cassandra.model.endpoint.EndpointSpec;
 import com.vmware.mangle.cassandra.model.endpoint.K8SConnectionProperties;
@@ -34,7 +35,6 @@ import com.vmware.mangle.utils.clients.endpoint.EndpointClient;
 import com.vmware.mangle.utils.clients.kubernetes.KubernetesCommandLineClient;
 import com.vmware.mangle.utils.clients.ssh.SSHUtils;
 import com.vmware.mangle.utils.clients.vcenter.VCenterClient;
-import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.MangleRuntimeException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 import com.vmware.mangle.utils.helpers.security.DecryptFields;
@@ -56,30 +56,60 @@ public class EndpointClientFactory {
         case MACHINE:
             return getRemoteMachineClient(credentials, endpoint.getRemoteMachineConnectionProperties());
         case VCENTER:
-            try {
-                return getVCenterEndpoint(credentials, endpoint.getVCenterConnectionProperties());
-            } catch (MangleException e) {
-                log.error(e.getMessage());
-                log.debug(e);
-                return null;
-            }
+            return getVCenterEndpoint(credentials, endpoint.getVCenterConnectionProperties());
         default:
             return null;
         }
     }
 
-    public VCenterClient getVCenterEndpoint(CredentialsSpec credentialsSpec, VCenterConnectionProperties connProperties)
-            throws MangleException {
+    public VCenterClient getVCenterEndpoint(CredentialsSpec credentialsSpec,
+            VCenterConnectionProperties connProperties) {
         VCenterCredentials vCenterCredentials = (VCenterCredentials) DecryptFields.decrypt(credentialsSpec);
-        VCenterClient client = new VCenterClient(connProperties.getHostname(), vCenterCredentials.getUserName(),
+        return new VCenterClient(connProperties.getHostname(), vCenterCredentials.getUserName(),
                 vCenterCredentials.getPassword(), connProperties.getVCenterAdapterProperties());
-        client.getVCenterAdapterClient().testConnection();
-        return client;
     }
 
     private CustomDockerClient getCustomDockerClient(DockerConnectionProperties dockerConnectionProps) {
-        return new CustomDockerClient(dockerConnectionProps.getDockerHostname(), dockerConnectionProps.getDockerPort(),
-                dockerConnectionProps.isTlsEnabled());
+        if (null != dockerConnectionProps.getCertificatesSpec()) {
+            DockerCertificates certificates =
+                    (DockerCertificates) DecryptFields.decrypt(dockerConnectionProps.getCertificatesSpec());
+            String dockerCertPath = createDockerCertPath(certificates);
+            return new CustomDockerClient(dockerConnectionProps.getDockerHostname(),
+                    dockerConnectionProps.getDockerPort(), dockerConnectionProps.getTlsEnabled(), dockerCertPath);
+        } else {
+            return new CustomDockerClient(dockerConnectionProps.getDockerHostname(),
+                    dockerConnectionProps.getDockerPort(), dockerConnectionProps.getTlsEnabled(), null);
+        }
+    }
+
+    private String createDockerCertPath(DockerCertificates certificates) {
+        String dockerCertPath = System.getProperty("java.io.tmpdir") + File.separator + "dockerCertPath"
+                + File.separator + certificates.getName();
+        try {
+            FileUtils.forceMkdir(new File(dockerCertPath));
+            File caCertFile = new File(dockerCertPath + File.separator + "ca.pem");
+            File serverCertFile = new File(dockerCertPath + File.separator + "cert.pem");
+            File privateKeyFile = new File(dockerCertPath + File.separator + "key.pem");
+
+            if (caCertFile.exists()) {
+                Files.delete(caCertFile.toPath());
+            }
+            FileUtils.writeByteArrayToFile(caCertFile, certificates.getCaCert());
+
+            if (serverCertFile.exists()) {
+                Files.delete(serverCertFile.toPath());
+            }
+            FileUtils.writeByteArrayToFile(serverCertFile, certificates.getServerCert());
+
+            if (privateKeyFile.exists()) {
+                Files.delete(privateKeyFile.toPath());
+            }
+            FileUtils.writeByteArrayToFile(privateKeyFile, certificates.getPrivateKey());
+        } catch (IOException e) {
+            log.warn(e.getMessage());
+            throw new MangleRuntimeException(e, ErrorCode.IO_EXCEPTION);
+        }
+        return dockerCertPath;
     }
 
     private KubernetesCommandLineClient getK8SClient(CredentialsSpec credentials,
@@ -113,11 +143,11 @@ public class EndpointClientFactory {
                 (RemoteMachineCredentials) DecryptFields.decrypt(credentials);
         SSHUtils sshClient = null;
         if (null == remoteMachineCredentials.getPrivateKey()) {
-            sshClient = new SSHUtils(remoteMachineConnectionProps.getHost(), remoteMachineCredentials.getUserName(),
+            sshClient = new SSHUtils(remoteMachineConnectionProps.getHost(), remoteMachineCredentials.getUsername(),
                     remoteMachineCredentials.getPassword(), remoteMachineConnectionProps.getSshPort(),
                     remoteMachineConnectionProps.getTimeout());
         } else {
-            sshClient = new SSHUtils(remoteMachineConnectionProps.getHost(), remoteMachineCredentials.getUserName(),
+            sshClient = new SSHUtils(remoteMachineConnectionProps.getHost(), remoteMachineCredentials.getUsername(),
                     remoteMachineConnectionProps.getSshPort(), new String(remoteMachineCredentials.getPrivateKey()),
                     remoteMachineConnectionProps.getTimeout());
         }

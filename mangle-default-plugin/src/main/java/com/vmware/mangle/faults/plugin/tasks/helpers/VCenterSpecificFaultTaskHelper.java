@@ -23,6 +23,7 @@ import com.vmware.mangle.cassandra.model.tasks.SupportScriptInfo;
 import com.vmware.mangle.cassandra.model.tasks.Task;
 import com.vmware.mangle.cassandra.model.tasks.TaskType;
 import com.vmware.mangle.faults.plugin.helpers.vcenter.VCenterFaultHelper;
+import com.vmware.mangle.faults.plugin.utils.TaskDescriptionUtils;
 import com.vmware.mangle.task.framework.helpers.AbstractCommandExecutionTaskHelper;
 import com.vmware.mangle.utils.ICommandExecutor;
 import com.vmware.mangle.utils.exceptions.MangleException;
@@ -65,8 +66,7 @@ public class VCenterSpecificFaultTaskHelper<T extends VMFaultSpec> extends Abstr
 
     @Override
     public String getDescription(Task<T> task) {
-        return "Executing Fault: " + task.getTaskData().getFaultName() + " on endpoint: "
-                + task.getTaskData().getEndpointName();
+        return TaskDescriptionUtils.getDescription(task);
     }
 
     @Override

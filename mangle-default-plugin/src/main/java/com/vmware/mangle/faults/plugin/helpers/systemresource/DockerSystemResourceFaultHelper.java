@@ -16,18 +16,16 @@
 
 package com.vmware.mangle.faults.plugin.helpers.systemresource;
 
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.EXPECTED_REMEDIATION_MESSAGE_FOR_FILE_NOT_FOUND;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.MESSAGE_THROWN_FOR_EXPECTED_REMEDIATION_FAILURE;
-
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+
+import org.springframework.util.StringUtils;
 
 import com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec;
 import com.vmware.mangle.cassandra.model.tasks.SupportScriptInfo;
 import com.vmware.mangle.cassandra.model.tasks.commands.CommandInfo;
+import com.vmware.mangle.faults.plugin.helpers.KnownFailuresHelper;
 import com.vmware.mangle.faults.plugin.helpers.docker.DockerCommandUtils;
 import com.vmware.mangle.task.framework.endpoint.EndpointClientFactory;
 import com.vmware.mangle.utils.ICommandExecutor;
@@ -59,32 +57,33 @@ public class DockerSystemResourceFaultHelper extends SystemResourceFaultHelper {
     }
 
     @Override
-    public List<CommandInfo> getInjectionCommandInfoList(CommandExecutionFaultSpec faultSpec)
-            throws MangleException {
+    public List<CommandInfo> getInjectionCommandInfoList(CommandExecutionFaultSpec faultSpec) throws MangleException {
         List<CommandInfo> commandInfoList = new ArrayList<>();
         CommandInfo injectFaultCommandInfo = new CommandInfo();
         injectFaultCommandInfo.setCommand(
                 systemResourceFaultUtils.buildInjectionCommand(faultSpec.getArgs(), faultSpec.getInjectionHomeDir()));
         injectFaultCommandInfo.setIgnoreExitValueCheck(false);
+        injectFaultCommandInfo
+                .setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfSystemResourceFaultInjectionRequest());
         injectFaultCommandInfo.setExpectedCommandOutputList(Collections.emptyList());
         commandInfoList.add(injectFaultCommandInfo);
         return commandInfoList;
     }
 
     @Override
-    public List<CommandInfo> getRemediationcommandInfoList(CommandExecutionFaultSpec faultSpec)
-            throws MangleException {
+    public List<CommandInfo> getRemediationcommandInfoList(CommandExecutionFaultSpec faultSpec) throws MangleException {
         List<CommandInfo> commandInfoList = new ArrayList<>();
-        CommandInfo commandInfo = new CommandInfo();
-        commandInfo.setCommand(
-                systemResourceFaultUtils.buildRemediationCommand(faultSpec.getArgs(), faultSpec.getInjectionHomeDir()));
-        commandInfo.setIgnoreExitValueCheck(false);
-        commandInfo.setExpectedCommandOutputList(Collections.emptyList());
-        Map<String, String> knownFailureMap = new HashMap<>();
-        knownFailureMap.put(EXPECTED_REMEDIATION_MESSAGE_FOR_FILE_NOT_FOUND,
-                MESSAGE_THROWN_FOR_EXPECTED_REMEDIATION_FAILURE);
-        commandInfo.setKnownFailureMap(knownFailureMap);
-        commandInfoList.add(commandInfo);
+        String remediationCommand =
+                systemResourceFaultUtils.buildRemediationCommand(faultSpec.getArgs(), faultSpec.getInjectionHomeDir());
+        if (!StringUtils.isEmpty(remediationCommand)) {
+            CommandInfo commandInfo = new CommandInfo();
+            commandInfo.setCommand(remediationCommand);
+            commandInfo.setIgnoreExitValueCheck(false);
+            commandInfo.setExpectedCommandOutputList(Collections.emptyList());
+            commandInfo
+                    .setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfSystemResourceFaultRemediationRequest());
+            commandInfoList.add(commandInfo);
+        }
         return commandInfoList;
     }
 

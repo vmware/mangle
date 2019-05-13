@@ -11,17 +11,26 @@
 
 package com.vmware.mangle.utils.clients.metricprovider;
 
+import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 
 import com.vmware.mangle.cassandra.model.metricprovider.WaveFrontConnectionProperties;
 import com.vmware.mangle.utils.clients.restclient.RestTemplateWrapper;
+import com.vmware.mangle.utils.constants.MetricProviderConstants;
+import com.vmware.mangle.utils.exceptions.MangleException;
+import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
 /**
  * @author ranjans
  *
  *         Endpoint client for WaveFront Server
  */
+@Log4j2
 public class WaveFrontServerClient extends RestTemplateWrapper implements MetricProviderClient {
+
+    private WaveFrontConnectionProperties wfConnProperties;
 
     public WaveFrontServerClient(String wavefrontUrl, String wavefrontAPIToken) {
         setHeadersAndBaseUrl(wavefrontUrl, wavefrontAPIToken);
@@ -29,11 +38,21 @@ public class WaveFrontServerClient extends RestTemplateWrapper implements Metric
 
     public WaveFrontServerClient(WaveFrontConnectionProperties properties) {
         this(properties.getWavefrontInstance(), properties.getWavefrontAPIToken());
+        this.wfConnProperties = properties;
     }
 
     @Override
-    public boolean testConnection() {
-        return this.get("/api/v2/source?limit=10", String.class).getStatusCode().value() == 200;
+    public boolean testConnection() throws MangleException {
+        ResponseEntity<String> response =
+                (ResponseEntity<String>) this.get(MetricProviderConstants.WAVEFRONT_API_TEST_CONNECTION, String.class);
+        log.debug("Response on trying to test connection with Wavefront instance: \n" + response);
+        if (StringUtils.isEmpty(response)) {
+            throw new MangleException(ErrorCode.UNABLE_TO_CONNECT_TO_WAVEFRONT_INSTANCE);
+        }
+        if (response.getStatusCode().value() != 200) {
+            throw new MangleException(ErrorCode.AUTH_FAILURE_TO_WAVEFRONT);
+        }
+        return response.getStatusCode().value() == 200;
     }
 
     private void setHeadersAndBaseUrl(String wavefrontUrl, String wavefrontAPIToken) {

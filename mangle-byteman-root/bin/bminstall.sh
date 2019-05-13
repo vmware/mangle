@@ -37,20 +37,23 @@
 #
 
 # helper function to obtain java version
-function print_java_version()
+print_java_version()
 {
   java -version 2>&1 |  grep "version" | cut -d'"' -f2 | cut -b3
 }
 
 # use BYTEMAN_HOME to locate installed byteman release
-if [ -z "$BYTEMAN_HOME" ]; then
+if [ -z "$BYTEMAN_HOME" ]
+then
 # use the root of the path to this file to locate the byteman jar
     BYTEMAN_HOME=${0%*/bin/bminstall.sh}
 # allow for rename to plain bminstall
-    if [ "$BYTEMAN_HOME" == "$0" ]; then
+    if [ "$BYTEMAN_HOME" = "$0" ]
+    then
 	BYTEMAN_HOME=${0%*/bin/bminstall}
     fi
-    if [ "$BYTEMAN_HOME" == "$0" ]; then
+    if [ "$BYTEMAN_HOME" = "$0" ]
+    then
 	echo "Unable to find byteman home"
 	exit
     fi
@@ -59,31 +62,37 @@ fi
 # check that we can find  the byteman jar via BYTEMAN_HOME
 
 # the Install class is in the byteman-install jar
-if [ -r ${BYTEMAN_HOME}/lib/fiaasco-byteman.jar ]; then
-    BYTEMAN_JAR=${BYTEMAN_HOME}/lib/fiaasco-byteman.jar
+if [ -r ${BYTEMAN_HOME}/lib/mangle-byteman.jar ]
+then
+    BYTEMAN_JAR=${BYTEMAN_HOME}/lib/mangle-byteman.jar
 else
     echo "Cannot locate byteman jar"
     exit
 fi
 # the Install class is in the byteman-install jar
-if [ -r ${BYTEMAN_HOME}/lib/byteman-install.jar ]; then
-    BYTEMAN_INSTALL_JAR=${BYTEMAN_HOME}/lib/byteman-install.jar
+if [ -r ${BYTEMAN_HOME}/lib/mangle-byteman-install.jar ]
+then
+    BYTEMAN_INSTALL_JAR=${BYTEMAN_HOME}/lib/mangle-byteman-install.jar
 else
     echo "Cannot locate byteman install jar"
     exit
 fi
 # for jdk6/7/8 we also need a tools jar from JAVA_HOME
 JAVA_VERSION=$(print_java_version)
-if [ $JAVA_VERSION -le 8 ]; then
-  if [ -z "$JAVA_HOME" ]; then
+if [ $JAVA_VERSION -le 8 ]
+then
+  if [ -z "$JAVA_HOME" ]
+  then
      echo "please set JAVA_HOME"
      exit
   fi
 # on Linux we need to add the tools jar to the path
 # this is not currently needed on a Mac
   OS=`uname`
-  if [ ${OS} != "Darwin" ]; then
-    if [ -r ${JAVA_HOME}/lib/tools.jar ]; then
+  if [ ${OS} != "Darwin" ]
+  then
+    if [ -r ${JAVA_HOME}/lib/tools.jar ]
+    then
       TOOLS_JAR=${JAVA_HOME}/lib/tools.jar
       CP=${BYTEMAN_INSTALL_JAR}:${TOOLS_JAR}
     else
@@ -91,8 +100,10 @@ if [ $JAVA_VERSION -le 8 ]; then
       CP=${BYTEMAN_INSTALL_JAR}
     fi
   else
-    if [ $JAVA_VERSION -gt 6 ]; then
-      if [ -r ${JAVA_HOME}/Classes/classes.jar ]; then
+    if [ $JAVA_VERSION -gt 6 ]
+    then
+      if [ -r ${JAVA_HOME}/Classes/classes.jar ]
+      then
         TOOLS_JAR=${JAVA_HOME}/Classes/classes.jar
         CP=${BYTEMAN_INSTALL_JAR}:${TOOLS_JAR}
       else
@@ -100,7 +111,7 @@ if [ $JAVA_VERSION -le 8 ]; then
         CP=${BYTEMAN_INSTALL_JAR}
       fi
     else
-      CP=${BYTEMAN_INSTALL_JAR}                          
+      CP=${BYTEMAN_INSTALL_JAR} 
     fi
   fi
 else
@@ -109,6 +120,6 @@ fi
 
 # allow for extra java opts via setting BYTEMAN_JAVA_OPTS
 # attach class will validate arguments
-CP=$CP:${BYTEMAN_HOME}/lib/fiaasco-byteman.jar:${BYTEMAN_HOME}/lib/tools.jar
+CP=$CP:${BYTEMAN_HOME}/lib/mangle-byteman.jar:${BYTEMAN_HOME}/lib/mangle-byteman-submit.jar:${BYTEMAN_HOME}/lib/tools.jar
 echo java -Djava.library.path=${BYTEMAN_HOME}/bin ${BYTEMAN_JAVA_OPTS} -classpath $CP org.jboss.byteman.agent.install.Install $*
 java -Djava.library.path=${BYTEMAN_HOME}/bin ${BYTEMAN_JAVA_OPTS} -classpath $CP org.jboss.byteman.agent.install.Install $*

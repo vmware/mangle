@@ -16,6 +16,7 @@ import static com.vmware.mangle.utils.constants.URLConstants.HAZELCAST_NODE_TASK
 import static com.vmware.mangle.utils.constants.URLConstants.TASKS_WAIT_TIME_SECONDS;
 
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceAware;
@@ -25,6 +26,7 @@ import com.hazelcast.core.MemberAttributeEvent;
 import com.hazelcast.core.MembershipEvent;
 import com.hazelcast.core.MembershipListener;
 import com.hazelcast.core.PartitionService;
+import com.hazelcast.nio.Address;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -109,13 +111,13 @@ public class HazelcastClusterMembershipListener implements MembershipListener, H
         log.debug("Member removed event triggered by hazelcast instance {} leaving the cluster",
                 membershipEvent.getMember().getAddress());
 
-        String removedNode = membershipEvent.getMember().getUuid();
-        String currentNode = hz.getCluster().getLocalMember().getUuid();
+        String removedNodeUUID = membershipEvent.getMember().getUuid();
+        String currentNodeUUID = hz.getCluster().getLocalMember().getUuid();
 
         IMap<String, Set<String>> nodeToTaskMapping = hz.getMap(HAZELCAST_NODE_TASKS_MAP);
 
-        Set<String> executingTasks = nodeToTaskMapping.get(removedNode);
-        Set<String> currentNodeTasks = nodeToTaskMapping.get(currentNode);
+        Set<String> executingTasks = nodeToTaskMapping.get(removedNodeUUID);
+        Set<String> currentNodeTasks = nodeToTaskMapping.get(currentNodeUUID);
 
 
         if (executingTasks != null && !executingTasks.isEmpty()) {
@@ -124,11 +126,11 @@ public class HazelcastClusterMembershipListener implements MembershipListener, H
             synchronized (hazelcastTaskService) {
                 for (String taskId : executingTasks) {
                     if (partitionService.getPartition(taskId).getOwner() != null
-                            && partitionService.getPartition(taskId).getOwner().getUuid().equals(currentNode)
+                            && partitionService.getPartition(taskId).getOwner().getUuid().equals(currentNodeUUID)
                             && (CollectionUtils.isEmpty(currentNodeTasks) || !currentNodeTasks.contains(taskId))) {
                         try {
                             log.debug("Task {} will be triggered as the node {} assigned the partition ownership",
-                                    taskId, currentNode);
+                                    taskId, currentNodeUUID);
                             log.info("Triggering the task {}", taskId);
                             hazelcastTaskService.triggerTask(taskId);
                         } catch (MangleException e) {
@@ -141,14 +143,13 @@ public class HazelcastClusterMembershipListener implements MembershipListener, H
         }
 
         HazelcastClusterConfig config = clusterConfigService.getClusterConfiguration();
-        boolean removeMemberFromConfig = true;
-        for (Member member : hz.getCluster().getMembers()) {
-            if (member.getAddress().getHost() == membershipEvent.getMember().getAddress().getHost()) {
-                removeMemberFromConfig = false;
-                break;
-            }
-        }
-        if (removeMemberFromConfig) {
+        Address removedMemberAddress = membershipEvent.getMember().getAddress();
+        Set<Member> membersSet = hz.getCluster().getMembers();
+
+        Set<Member> currentNodeSet = membersSet.stream()
+                .filter(member -> member.getAddress().getHost().equals(removedMemberAddress.getHost())).collect(Collectors.toSet());
+
+        if (CollectionUtils.isEmpty(currentNodeSet) && config.getMembers().contains(removedMemberAddress.getHost())) {
             config.getMembers().remove(membershipEvent.getMember().getAddress().getHost());
             clusterConfigService.updateClusterConfiguration(config);
         }
@@ -188,6 +189,7 @@ public class HazelcastClusterMembershipListener implements MembershipListener, H
         hz = hazelcastInstance;
         hazelcastTaskService.setHazelcastInstance(hz);
         partitionService = hz.getPartitionService();
+        taskRunner.setNode(hz.getCluster().getLocalMember().getAddress().getHost());
     }
 
     private static void updateMangleNodeCurrentStatus(MangleNodeStatus nodeStatus) {

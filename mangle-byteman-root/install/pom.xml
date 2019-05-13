@@ -20,10 +20,10 @@
     </description>
 	<name>byteman-install</name>
 	<parent>
-		<groupId>org.jboss.byteman</groupId>
+		<groupId>com.vmware.mangle</groupId>
 		<artifactId>mangle-byteman-root</artifactId>
-		<version>3.0.10</version>
-		<relativePath>../pom.xml</relativePath>	
+		<version>1.0.0</version>
+		<relativePath>../pom.xml</relativePath>
 	</parent>
 	<profiles>
 		<!-- the install code uses the VM_Attach API which is available in the 
@@ -41,6 +41,10 @@
 					<version>1.8</version>
 					<scope>system</scope>
 					<systemPath>${tools.jar}</systemPath>
+				</dependency>
+				<dependency>
+					<groupId>com.vmware.mangle</groupId>
+					<artifactId>mangle-byteman-submit</artifactId>
 				</dependency>
 			</dependencies>
 		</profile>

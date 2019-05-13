@@ -1,17 +1,30 @@
 import { TestBed } from '@angular/core/testing';
 
 import { ConfigService } from './config.service';
-import { HttpClientModule } from '@angular/common/http';
+import { HttpClientModule, HttpClient } from '@angular/common/http';
 
 describe('ConfigService', () => {
-  beforeEach(() => TestBed.configureTestingModule({
-    imports: [
-      HttpClientModule
-    ]
-  }));
+  let configService: ConfigService;
+  let http: HttpClient;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [
+        HttpClientModule
+      ]
+    });
+    configService = TestBed.get(ConfigService);
+    http = TestBed.get(HttpClient);
+    spyOn(http, 'put');
+  });
 
   it('should be created', () => {
-    const service: ConfigService = TestBed.get(ConfigService);
-    expect(service).toBeTruthy();
+    expect(configService).toBeTruthy();
   });
+
+  it('should update local user config', () => {
+    configService.updateLocalUserConfig({}, "");
+    expect(http.put).toHaveBeenCalled();
+  });
+
 });

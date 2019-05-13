@@ -15,13 +15,25 @@ import java.util.HashMap;
 import java.util.Map;
 
 import lombok.extern.log4j.Log4j2;
+import org.springframework.util.StringUtils;
 
 import com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.CpuFaultSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.DiskIOFaultSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.DiskSpaceSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.DockerFaultSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.K8SFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.K8SFaultTriggerSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.KillProcessFaultSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.MemoryFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.TaskSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.VMDiskFaultSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.VMNicFaultSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.VMStateFaultSpec;
 import com.vmware.mangle.cassandra.model.tasks.Task;
 import com.vmware.mangle.cassandra.model.tasks.TaskStatus;
 import com.vmware.mangle.cassandra.model.tasks.TaskTrigger;
+import com.vmware.mangle.cassandra.model.tasks.TaskType;
 import com.vmware.mangle.services.dto.FaultEventSpec;
 import com.vmware.mangle.utils.constants.MetricProviderConstants;
 
@@ -40,6 +52,7 @@ public class PopulateFaultEventData<T extends Task<TaskSpec>> {
     private CommandExecutionFaultSpec commandExecutionFaultSpec;
     private T task;
     private TaskTrigger trigger;
+    private static final String SEPERATOR = " ; ";
 
     public PopulateFaultEventData(T task) {
         updateFaultSpecInstance(task.getTaskData());
@@ -66,7 +79,7 @@ public class PopulateFaultEventData<T extends Task<TaskSpec>> {
     }
 
     private boolean isTaskDataValid() {
-        log.info("Validating if the Task Data is valid before proceeding ");
+        log.debug("Validating if the Task Data is valid before proceeding ");
         if (commandExecutionFaultSpec.getEndpoint() == null) {
             log.error(
                     " Task data is not valid. The Task Data doesn't have endpoint information which is important to inject a fault");
@@ -85,8 +98,8 @@ public class PopulateFaultEventData<T extends Task<TaskSpec>> {
 
     private void updateFaultName() {
         log.debug("Updating the Mangle Fault Name: " + commandExecutionFaultSpec.getFaultName());
-        faultEventInfo.setFaultName(commandExecutionFaultSpec.getFaultName());
-
+        faultEventInfo.setFaultName(
+                commandExecutionFaultSpec.getFaultName() + MetricProviderConstants.HYPHEN + this.task.getTaskType());
     }
 
     private void updateFaultStartTime() {
@@ -102,12 +115,10 @@ public class PopulateFaultEventData<T extends Task<TaskSpec>> {
     }
 
     private void updateFaultEndTime() {
-        String faultTimeOut = commandExecutionFaultSpec.getTimeoutInMilliseconds();
-        if (null != faultTimeOut) {
-
+        Integer faultTimeOut = commandExecutionFaultSpec.getTimeoutInMilliseconds();
+        if (faultTimeOut != null && task.getTaskType() == TaskType.INJECTION) {
             if (task.getTaskStatus() == TaskStatus.COMPLETED) {
-                long faultTimeOutInMilis =
-                        CommonUtils.getDateObjectFor(trigger.getEndTime()).getTime() + Long.parseLong(faultTimeOut);
+                long faultTimeOutInMilis = CommonUtils.getDateObjectFor(trigger.getEndTime()).getTime() + faultTimeOut;
                 log.debug("Updating the Fault time out timestamp as : " + faultTimeOutInMilis);
                 faultEventInfo.setFaultEndTime(CommonUtils.getTime(faultTimeOutInMilis));
                 faultEventInfo.setFaultEndTimeInEpoch(faultTimeOutInMilis);
@@ -116,9 +127,10 @@ public class PopulateFaultEventData<T extends Task<TaskSpec>> {
         } else {
             log.debug("Can't update the time out time as Time Out is not specified in the fault spec");
         }
-        log.debug("The fault didn't run. Setting the end time as the trigger end time ");
-        faultEventInfo.setFaultEndTime(trigger.getEndTime());
-        faultEventInfo.setFaultEndTimeInEpoch(CommonUtils.getDateObjectFor(trigger.getEndTime()).getTime());
+        log.debug("The fault didn't run OR it's an Remediation task. Setting the end time as the current time ");
+        String endTime = CommonUtils.getTime(System.currentTimeMillis() + MetricProviderConstants.ONE_SECOND_IN_MILLIS);
+        faultEventInfo.setFaultEndTime(endTime);
+        faultEventInfo.setFaultEndTimeInEpoch(CommonUtils.getDateObjectFor(endTime).getTime());
     }
 
     private void updateFaultEventType() {
@@ -133,9 +145,13 @@ public class PopulateFaultEventData<T extends Task<TaskSpec>> {
     }
 
     private void updateFaultEventDescription() {
-        String description = "Fault " + commandExecutionFaultSpec.getFaultName() + " injected. ";
+        StringBuilder description = new StringBuilder(
+                commandExecutionFaultSpec.getFaultName() + " " + task.getTaskType() + " Submitted." + SEPERATOR);
+        if (task.getTaskType() == TaskType.INJECTION) {
+            description.append(updateTaskData());
+        }
         log.debug("Updating the event description as : " + description);
-        faultEventInfo.setFaultDescription(description);
+        faultEventInfo.setFaultDescription(description.toString());
     }
 
     private void updateTaskId() {
@@ -158,5 +174,110 @@ public class PopulateFaultEventData<T extends Task<TaskSpec>> {
             allTags.putAll(commandExecutionFaultSpec.getEndpoint().getTags());
         }
         faultEventInfo.setTags(allTags);
+    }
+
+    private String updateTaskData() {
+        StringBuilder taskData = new StringBuilder("");
+        if (task.getTaskData() instanceof CpuFaultSpec) {
+            taskData.append(getCpuFaultTaskData());
+        } else if (task.getTaskData() instanceof MemoryFaultSpec) {
+            taskData.append(getMemoryFaultTaskData());
+        } else if (task.getTaskData() instanceof DiskIOFaultSpec) {
+            taskData.append(getDiskIOFaultTaskData());
+        } else if (task.getTaskData() instanceof DiskSpaceSpec) {
+            taskData.append(getDiskSpaceFaultTaskData());
+        } else if (task.getTaskData() instanceof KillProcessFaultSpec) {
+            taskData.append(getKillProcessFaultTaskData());
+        } else if (task.getTaskData() instanceof K8SFaultSpec) {
+            taskData.append(getK8SFaultTaskData());
+        } else if (task.getTaskData() instanceof VMStateFaultSpec) {
+            taskData.append(getVMStateFaultTaskData());
+        } else if (task.getTaskData() instanceof VMNicFaultSpec) {
+            taskData.append(getVMNicFautltTaskData());
+        } else if (task.getTaskData() instanceof VMDiskFaultSpec) {
+            taskData.append(getVMDiskFautltTaskData());
+        } else if (task.getTaskData() instanceof DockerFaultSpec) {
+            taskData.append(getDockerFaultData());
+        } else {
+            log.debug("Couldn't find Fault type. Hence, not appending any fault task Data");
+        }
+        return taskData.toString();
+    }
+
+    private String getCpuFaultTaskData() {
+        StringBuilder taskData = new StringBuilder();
+        CpuFaultSpec cpuSpec = (CpuFaultSpec) task.getTaskData();
+        taskData.append("CPU " + MetricProviderConstants.LOAD_INJECTED + cpuSpec.getCpuLoad() + "%" + SEPERATOR);
+        if (!StringUtils.isEmpty(cpuSpec.getJvmProperties())) {
+            taskData.append("CPU load on process: " + cpuSpec.getJvmProperties().getJvmprocess() + SEPERATOR);
+        }
+        return taskData.toString();
+    }
+
+    private String getMemoryFaultTaskData() {
+        StringBuilder taskData = new StringBuilder();
+        MemoryFaultSpec memorySpec = (MemoryFaultSpec) task.getTaskData();
+        taskData.append(
+                "Memory " + MetricProviderConstants.LOAD_INJECTED + memorySpec.getMemoryLoad() + "%" + SEPERATOR);
+        if (!StringUtils.isEmpty(memorySpec.getJvmProperties())) {
+            taskData.append(
+                    "Memory is injected on process: " + memorySpec.getJvmProperties().getJvmprocess() + SEPERATOR);
+        }
+        return taskData.toString();
+    }
+
+    private String getDiskIOFaultTaskData() {
+        StringBuilder taskData = new StringBuilder("");
+        DiskIOFaultSpec spec = (DiskIOFaultSpec) task.getTaskData();
+        taskData.append(MetricProviderConstants.TARGET_DIRECTORY + spec.getTargetDir() + SEPERATOR);
+        taskData.append("IO Size: " + spec.getIoSize() + SEPERATOR);
+        return taskData.toString();
+    }
+
+    private String getDiskSpaceFaultTaskData() {
+        DiskSpaceSpec spec = (DiskSpaceSpec) task.getTaskData();
+        return MetricProviderConstants.TARGET_DIRECTORY + spec.getDirectoryPath() + SEPERATOR;
+    }
+
+    private String getKillProcessFaultTaskData() {
+        KillProcessFaultSpec spec = (KillProcessFaultSpec) task.getTaskData();
+        return "Process to be killed: " + spec.getProcessIdentifier() + SEPERATOR;
+    }
+
+    private String getK8SFaultTaskData() {
+        StringBuilder taskData = new StringBuilder("");
+        K8SFaultSpec spec = (K8SFaultSpec) task.getTaskData();
+        taskData.append("Target resource type: " + spec.getResourceType() + SEPERATOR);
+        taskData.append("Target K8S label: " + spec.getResourceLabels().toString() + SEPERATOR);
+        if (StringUtils.isEmpty(spec.getResourceName())) {
+            taskData.append("Target Resource Name: " + spec.getResourceName() + SEPERATOR);
+        }
+        return taskData.toString();
+    }
+
+    private String getVMStateFaultTaskData() {
+        VMStateFaultSpec taskData = (VMStateFaultSpec) task.getTaskData();
+        return MetricProviderConstants.TARGET_VM_TEXT + taskData.getVmName() + SEPERATOR;
+    }
+
+    private String getVMNicFautltTaskData() {
+        StringBuilder taskData = new StringBuilder("");
+        VMNicFaultSpec spec = (VMNicFaultSpec) task.getTaskData();
+        taskData.append(MetricProviderConstants.TARGET_VM_TEXT + spec.getVmName() + SEPERATOR);
+        taskData.append(MetricProviderConstants.VM_NIC_ID_TEXT + spec.getVmNicId() + SEPERATOR);
+        return taskData.toString();
+    }
+
+    private String getVMDiskFautltTaskData() {
+        StringBuilder taskData = new StringBuilder("");
+        VMDiskFaultSpec spec = (VMDiskFaultSpec) task.getTaskData();
+        taskData.append(MetricProviderConstants.TARGET_VM_TEXT + spec.getVmName() + SEPERATOR);
+        taskData.append(MetricProviderConstants.VM_DISK_ID_TEXT + spec.getVmDiskId() + SEPERATOR);
+        return taskData.toString();
+    }
+
+    private String getDockerFaultData() {
+        DockerFaultSpec spec = (DockerFaultSpec) task.getTaskData();
+        return MetricProviderConstants.TARGET_CONTAINER_TEXT + spec.getDockerArguments().getContainerName() + SEPERATOR;
     }
 }

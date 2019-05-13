@@ -23,7 +23,11 @@ import java.util.logging.Logger;
  *
  */
 public class ThreadUtils {
-    private static final Logger LOG = Logger.getLogger(CpuLoadGenerator.class.getName());
+    private static final Logger LOG = Logger.getLogger(ThreadUtils.class.getName());
+
+    private ThreadUtils() {
+        throw new java.lang.UnsupportedOperationException("This is a utility class and cannot be instantiated");
+    }
 
     public static List<Future<?>> triggerCpuLoadGenerator(int noOfThreads, long timeOut, int load) {
         List<Future<?>> futureList = new ArrayList<>();

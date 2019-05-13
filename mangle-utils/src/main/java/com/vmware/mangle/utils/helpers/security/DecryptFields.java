@@ -13,7 +13,7 @@ package com.vmware.mangle.utils.helpers.security;
 
 import java.lang.reflect.Field;
 
-import org.apache.log4j.Logger;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.util.ReflectionUtils;
 
 import com.vmware.mangle.model.enums.EncryptField;
@@ -22,10 +22,9 @@ import com.vmware.mangle.utils.exceptions.MangleSecurityException;
 /**
  * @author bkaranam
  *
- *
  */
+@Log4j2
 public class DecryptFields {
-    private static final Logger LOG = Logger.getLogger(DecryptFields.class);
 
     private DecryptFields() {
     }
@@ -50,8 +49,8 @@ public class DecryptFields {
                         ReflectionUtils.setField(field, source, decryptedValue);
                     }
                 } catch (MangleSecurityException e) {
-                    LOG.error("Decrypting field " + field.getName() + " failed with exception" + e.getMessage()
-                            + " so skipping decryption");
+                    log.error("Decrypting " + field.getName() + " field failed with exception. " + e.getMessage()
+                            + " Skipped decryption");
                 }
             }
         }

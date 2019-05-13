@@ -40,6 +40,7 @@ import com.vmware.mangle.cassandra.model.security.Privilege;
 import com.vmware.mangle.cassandra.model.security.Role;
 import com.vmware.mangle.cassandra.model.security.User;
 import com.vmware.mangle.model.response.DeleteOperationResponse;
+import com.vmware.mangle.model.response.ErrorDetails;
 import com.vmware.mangle.services.PrivilegeService;
 import com.vmware.mangle.services.RoleService;
 import com.vmware.mangle.services.controller.RoleController;
@@ -79,7 +80,7 @@ public class RoleControllerTest extends PowerMockTestCase {
     }
 
     /**
-     * Test method for {@link RoleController#getAllRoles()}.
+     * Test method for {@link RoleController#getAllRoles(List)}
      *
      */
     @Test
@@ -98,7 +99,7 @@ public class RoleControllerTest extends PowerMockTestCase {
     }
 
     /**
-     * Test method for {@link RoleController#getAllRoles()}.
+     * Test method for {@link RoleController#getAllRoles(List)}
      *
      */
     @SuppressWarnings("unchecked")
@@ -150,9 +151,8 @@ public class RoleControllerTest extends PowerMockTestCase {
 
         when(roleDeletionService.deleteRolesByNames(roleNames)).thenReturn(new DeleteOperationResponse());
 
-        ResponseEntity<DeleteOperationResponse> response = roleController.deleteRoles(roleNames);
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        Assert.assertEquals(response.getBody().getAssociations().size(), 0);
+        ResponseEntity<ErrorDetails> response = roleController.deleteRoles(roleNames);
+        Assert.assertEquals(response.getStatusCode(), HttpStatus.NO_CONTENT);
         Mockito.verify(roleDeletionService, times(1)).deleteRolesByNames(any());
     }
 
@@ -176,9 +176,9 @@ public class RoleControllerTest extends PowerMockTestCase {
 
         when(roleDeletionService.deleteRolesByNames(roleNames)).thenReturn(deleteOperationResponse);
 
-        ResponseEntity<DeleteOperationResponse> response = roleController.deleteRoles(roleNames);
+        ResponseEntity<ErrorDetails> response = roleController.deleteRoles(roleNames);
         Assert.assertEquals(response.getStatusCode(), HttpStatus.PRECONDITION_FAILED);
-        Assert.assertEquals(response.getBody().getAssociations().size(), 1);
+        Assert.assertEquals(((HashMap<String, List<String>>) response.getBody().getDetails()).size(), 1);
         Mockito.verify(roleDeletionService, times(1)).deleteRolesByNames(any());
     }
 

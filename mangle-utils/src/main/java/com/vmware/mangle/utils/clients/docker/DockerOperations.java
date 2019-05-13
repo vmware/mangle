@@ -13,11 +13,19 @@ package com.vmware.mangle.utils.clients.docker;
 
 import java.util.List;
 
+import javax.ws.rs.ProcessingException;
+
+import com.github.dockerjava.api.exception.NotModifiedException;
 import com.github.dockerjava.api.model.Container;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.StringUtils;
 
 import com.vmware.mangle.cassandra.model.tasks.commands.CommandExecutionResult;
-import com.vmware.mangle.utils.CommonUtils;
+import com.vmware.mangle.utils.RetryUtils;
+import com.vmware.mangle.utils.constants.Constants;
+import com.vmware.mangle.utils.constants.ErrorConstants;
+import com.vmware.mangle.utils.exceptions.MangleException;
+import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
 /**
  * This class is about the Docker Operations methods.
@@ -30,119 +38,180 @@ public class DockerOperations {
     private DockerOperations() {
     }
 
-    public static CommandExecutionResult dockerPause(CustomDockerClient customDockerClient, String containerName) {
+    public static CommandExecutionResult dockerPause(CustomDockerClient customDockerClient, String containerName)
+            throws MangleException {
         log.info("Inside the pause container method..");
         CommandExecutionResult executionResult = new CommandExecutionResult();
         String containerId = findContainerId(customDockerClient, containerName);
-        if (containerId != null) {
-            customDockerClient.getDockerClient().pauseContainerCmd(containerId).exec();
-            log.info("Sleeping for 20 seconds after pausing the container!");
-            CommonUtils.delayInMilliSeconds(20000);
-            log.info("Checking if the container is paused successfully");
-            if (isContainerPaused(customDockerClient, containerId)) {
-                executionResult.setCommandOutput("The container with : " + containerName + "is paused successfully");
-                executionResult.setExitCode(0);
-            }
-        } else {
-            executionResult.setCommandOutput("Pause container operation failed: " + containerName);
-            executionResult.setExitCode(1);
+        if (StringUtils.isEmpty(containerId)) {
+            return setContainerNotAvailable(executionResult, containerName);
         }
-
+        try {
+            customDockerClient.getDockerClient().pauseContainerCmd(containerId).exec();
+        } catch (Exception e) {
+            throw new MangleException(e.getMessage(), ErrorCode.PAUSE_CONTAINER_OPERATION_FAILED);
+        }
+        log.info("Checking if the container is paused successfully");
+        try {
+            executionResult = RetryUtils.retry(() -> {
+                CommandExecutionResult result = new CommandExecutionResult();
+                if (isContainerPaused(customDockerClient, containerId)) {
+                    result.setCommandOutput(Constants.CONTAINER_PAUSE_SUCCESS_MESSAGE + ":" + containerName);
+                    result.setExitCode(0);
+                    return result;
+                } else {
+                    throw new MangleException(ErrorConstants.PAUSE_CONTAINER_OPERATION_FAILED,
+                            ErrorCode.PAUSE_CONTAINER_OPERATION_FAILED);
+                }
+            }, new MangleException(ErrorConstants.PAUSE_CONTAINER_OPERATION_FAILED,
+                    ErrorCode.PAUSE_CONTAINER_OPERATION_FAILED), 4, 5);
+        } catch (MangleException exception) {
+            executionResult.setCommandOutput(exception.getMessage() + ":" + containerName);
+            executionResult.setExitCode(1);
+            return executionResult;
+        }
         return executionResult;
     }
 
-    public static CommandExecutionResult dockerUnPause(CustomDockerClient customDockerClient, String containerName) {
+    public static CommandExecutionResult dockerUnPause(CustomDockerClient customDockerClient, String containerName)
+            throws MangleException {
         log.info("Inside the unpause container method..");
         CommandExecutionResult executionResult = new CommandExecutionResult();
         String containerId = findContainerId(customDockerClient, containerName);
-        if (containerId != null) {
+        if (StringUtils.isEmpty(containerId)) {
+            return setContainerNotAvailable(executionResult, containerName);
+        }
+        try {
             customDockerClient.getDockerClient().unpauseContainerCmd(containerId).exec();
-            log.info("Sleeping for 20 seconds after unpausing the container!");
-            CommonUtils.delayInMilliSeconds(20000);
-            log.info("Checking if the container is unpaused successfully");
-            if (!isContainerPaused(customDockerClient, containerId)) {
-                executionResult.setCommandOutput("The container with : " + containerName + "is unpaused successfully");
-                executionResult.setExitCode(0);
-            }
-        } else {
-            executionResult.setCommandOutput("UnPause container operation failed: " + containerName);
+        } catch (Exception e) {
+            throw new MangleException(e.getMessage(), ErrorCode.UNPAUSE_CONTAINER_OPERATION_FAILED);
+        }
+        log.info("Checking if the container is unpaused successfully");
+        try {
+            executionResult = RetryUtils.retry(() -> {
+                CommandExecutionResult result = new CommandExecutionResult();
+                if (!isContainerPaused(customDockerClient, containerId)) {
+                    result.setCommandOutput(Constants.CONTAINER_UNPAUSE_SUCCESS_MESSAGE + ":" + containerName);
+                    result.setExitCode(0);
+                    return result;
+                } else {
+                    throw new MangleException(ErrorConstants.UNPAUSE_CONTAINER_OPERATION_FAILED,
+                            ErrorCode.UNPAUSE_CONTAINER_OPERATION_FAILED);
+                }
+            }, new MangleException(ErrorConstants.UNPAUSE_CONTAINER_OPERATION_FAILED,
+                    ErrorCode.UNPAUSE_CONTAINER_OPERATION_FAILED), 4, 5);
+        } catch (MangleException exception) {
+            executionResult.setCommandOutput(exception.getMessage() + ":" + containerName);
             executionResult.setExitCode(1);
+            return executionResult;
         }
         return executionResult;
     }
 
     public static CommandExecutionResult dockerStart(CustomDockerClient customDockerClient, String containerName,
-            String containerId) {
+            String containerId) throws MangleException {
         log.info("Inside the start container method..");
         CommandExecutionResult executionResult = new CommandExecutionResult();
-
-        if (containerId != null) {
+        if (StringUtils.isEmpty(containerId)) {
+            return setContainerNotAvailable(executionResult, containerName);
+        }
+        try {
             customDockerClient.getDockerClient().startContainerCmd(containerId).exec();
-            executionResult.setCommandOutput("The container with ID: " + containerId + " is started succesfully");
-            executionResult.setExitCode(0);
-            log.info("Sleeping for 20 seconds after stopping the container!");
-            CommonUtils.delayInMilliSeconds(20000);
-            log.info("Checking if the container is started successfully");
-            if (isContainerRunningByID(customDockerClient, containerName)) {
-                executionResult.setCommandOutput("The container : " + containerName + " is started succesfully");
-                executionResult.setExitCode(0);
+        } catch (NotModifiedException e) {
+            if (null == e.getMessage()) {
+                throw new MangleException(ErrorConstants.CONTAINER_IS_ALREADY_RUNNING,
+                        ErrorCode.CONTAINER_IS_ALREADY_RUNNING, containerName);
             }
-
-        } else {
-            executionResult.setCommandOutput("Couldnt get the containerID for the container");
+        } catch (Exception exception) {
+            throw new MangleException(exception.getMessage(), ErrorCode.START_CONTAINER_OPERATION_FAILED);
+        }
+        log.info("Checking if the container is started successfully");
+        try {
+            executionResult = RetryUtils.retry(() -> {
+                CommandExecutionResult result = new CommandExecutionResult();
+                if (isContainerRunningByName(customDockerClient, containerName)) {
+                    result.setCommandOutput(Constants.CONTAINER_START_SUCCESS_MESSAGE + ":" + containerName);
+                    result.setExitCode(0);
+                    return result;
+                } else {
+                    throw new MangleException(ErrorConstants.START_CONTAINER_OPERATION_FAILED,
+                            ErrorCode.START_CONTAINER_OPERATION_FAILED);
+                }
+            }, new MangleException(ErrorCode.START_CONTAINER_OPERATION_FAILED), 4, 5);
+        } catch (MangleException exception) {
+            executionResult.setCommandOutput(exception.getMessage() + ":" + containerName);
             executionResult.setExitCode(1);
+            return executionResult;
         }
         return executionResult;
     }
 
-    public static CommandExecutionResult dockerStop(CustomDockerClient customDockerClient, String containerName) {
+    public static CommandExecutionResult dockerStop(CustomDockerClient customDockerClient, String containerName)
+            throws MangleException {
         log.info("Inside the Stop container method..");
         CommandExecutionResult executionResult = new CommandExecutionResult();
         String containerId = findContainerId(customDockerClient, containerName);
-        if (containerId != null) {
+        if (StringUtils.isEmpty(containerId)) {
+            return setContainerNotAvailable(executionResult, containerName);
+        }
+        try {
             customDockerClient.getDockerClient().stopContainerCmd(containerId).exec();
-            log.info("Sleeping for 20 seconds after stopping the container!");
-            CommonUtils.delayInMilliSeconds(20000);
-            log.info("Checking if the container is stopped successfully");
-            if (!isContainerRunningByName(customDockerClient, containerName)) {
-                executionResult.setCommandOutput(containerId);
-                executionResult.setExitCode(0);
-            }
-
-        } else {
-            executionResult.setCommandOutput("Stop container operation failed: " + containerName);
+        } catch (Exception e) {
+            throw new MangleException(e.getMessage(), ErrorCode.STOP_CONTAINER_OPERATION_FAILED);
+        }
+        log.info("Checking if the container is stopped successfully");
+        try {
+            executionResult = RetryUtils.retry(() -> {
+                CommandExecutionResult result = new CommandExecutionResult();
+                if (!isContainerRunningByName(customDockerClient, containerName)) {
+                    result.setCommandOutput(containerId);
+                    result.setExitCode(0);
+                    return result;
+                } else {
+                    throw new MangleException(ErrorConstants.STOP_CONTAINER_OPERATION_FAILED,
+                            ErrorCode.STOP_CONTAINER_OPERATION_FAILED);
+                }
+            }, new MangleException(ErrorConstants.STOP_CONTAINER_OPERATION_FAILED,
+                    ErrorCode.STOP_CONTAINER_OPERATION_FAILED), 4, 5);
+        } catch (MangleException exception) {
+            executionResult.setCommandOutput(exception.getMessage() + ":" + containerName);
             executionResult.setExitCode(1);
+            return executionResult;
         }
         return executionResult;
     }
 
-    private static String findContainerId(CustomDockerClient customDockerClient, String containerName) {
-        List<Container> allContainers = customDockerClient.getDockerClient().listContainersCmd().exec();
-        String containerID = null;
-        outerLoop: for (Container eachContaier : allContainers) {
-            String[] names = eachContaier.getNames();
+    private static CommandExecutionResult setContainerNotAvailable(CommandExecutionResult executionResult,
+            String containerName) {
+        executionResult.setCommandOutput(ErrorConstants.CONTAINER_NOT_AVAILABLE + ":" + containerName);
+        executionResult.setExitCode(1);
+        return executionResult;
+    }
+
+
+    private static String findContainerId(CustomDockerClient customDockerClient, String containerName)
+            throws MangleException {
+        List<Container> allContainers = null;
+        try {
+            allContainers = customDockerClient.getDockerClient().listContainersCmd().exec();
+        } catch (ProcessingException e) {
+            throw new MangleException(ErrorConstants.DOCKER_CONNECTION_FAILURE, ErrorCode.DOCKER_CONNECTION_FAILURE,
+                    e.getCause().getMessage());
+        }
+        for (Container eachContainer : allContainers) {
+            String[] names = eachContainer.getNames();
             for (String each : names) {
-                if (each.contains(containerName)) {
-                    containerID = eachContaier.getId();
-                    break outerLoop;
+                if (each.substring(1).equals(containerName)) {
+                    return eachContainer.getId();
                 }
             }
         }
-        return containerID;
+        return null;
     }
 
-    private static boolean isContainerRunningByName(CustomDockerClient customDockerClient, String containerName) {
+    private static boolean isContainerRunningByName(CustomDockerClient customDockerClient, String containerName)
+            throws MangleException {
         return null != findContainerId(customDockerClient, containerName);
-    }
-
-    private static boolean isContainerRunningByID(CustomDockerClient customDockerClient, String containerID) {
-        List<Container> allContainers = customDockerClient.getDockerClient().listContainersCmd().exec();
-        for (Container eachContaier : allContainers) {
-            if (eachContaier.getId().contains(containerID)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private static boolean isContainerPaused(CustomDockerClient customDockerClient, String containerID) {
@@ -150,11 +219,10 @@ public class DockerOperations {
                 customDockerClient.getDockerClient().listContainersCmd().withStatusFilter("paused").exec();
         log.info("list of containers:" + allContainers);
         for (Container eachContainer : allContainers) {
-            if (eachContainer.getId().contains(containerID)) {
+            if (eachContainer.getId().equals(containerID)) {
                 return true;
             }
         }
         return false;
     }
-
 }

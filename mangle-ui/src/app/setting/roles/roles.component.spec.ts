@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { RolesComponent } from './roles.component';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
@@ -20,11 +20,11 @@ describe('RolesComponent', () => {
   let coreService: CoreService;
   let fixture: ComponentFixture<RolesComponent>;
 
-  let role_data: any = {"id":null,"role":"CUSTOM_ROLE","privileges":[{"name":"USER_READ_WRITE"}]};
-  let role_data_id: any = {"id":"with_id","role":"CUSTOM_ROLE","privileges":[{"name":"USER_READ_WRITE"}]};
-  let privilege_data: any = {"name":"USER_READ_WRITE"};
+  let role_data: any = { "id": null, "name": "CUSTOM_ROLE", "privilegeNames": ["USER_READ_WRITE"] };
+  let role_data_id: any = { "id": "with_id", "name": "CUSTOM_ROLE", "privilegeNames": ["USER_READ_WRITE"] };
+  let privilege_data: any = { "name": "USER_READ_WRITE" };
 
-  beforeEach(async(() => {
+  beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [
         BrowserAnimationsModule,
@@ -35,25 +35,22 @@ describe('RolesComponent', () => {
         ClarityModule,
         RouterTestingModule.withRoutes([{ path: 'roles', component: RolesComponent }])
       ],
-      declarations: [ RolesComponent, CoreComponent ],
+      declarations: [RolesComponent, CoreComponent],
       providers: [
         SettingService,
         CoreService
       ],
-      schemas: [ NO_ERRORS_SCHEMA ]
+      schemas: [NO_ERRORS_SCHEMA]
     })
-    .compileComponents();
-  }));
-
-  beforeEach(() => {
+      .compileComponents();
     fixture = TestBed.createComponent(RolesComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
     settingService = TestBed.get(SettingService);
-    spyOn(settingService, 'getRoleList').and.returnValue(of({"_embedded":{"roleList":[role_data]}}));
-    spyOn(settingService, 'getPrivilegeList').and.returnValue(of({"_embedded":{"privilegeList":[privilege_data]}}));
+    spyOn(settingService, 'getRoleList').and.returnValue(of({ "_embedded": { "roleList": [role_data] } }));
+    spyOn(settingService, 'getPrivilegeList').and.returnValue(of({ "_embedded": { "privilegeList": [privilege_data] } }));
     coreService = TestBed.get(CoreService);
-    spyOn(coreService, 'getMyDetails').and.returnValue(of({"name":"user@mangle.local"}));
+    spyOn(coreService, 'getMyDetails').and.returnValue(of({ "name": "user@mangle.local" }));
   });
 
   it('should create', () => {
@@ -68,11 +65,12 @@ describe('RolesComponent', () => {
 
   it('should get role list', () => {
     component.getRoleList();
-    expect(component.roleList[0].role).toBe("CUSTOM_ROLE");
+    expect(component.roleList[0].name).toBe("CUSTOM_ROLE");
     expect(settingService.getRoleList).toHaveBeenCalled();
   });
 
   it('should add or update role', () => {
+    component.currentSelectedPrivileges = ["USER_READ_WRITE"];
     component.roleFormData = role_data;
     //add role
     spyOn(settingService, 'addRole').and.returnValue(of(role_data_id));
@@ -90,7 +88,7 @@ describe('RolesComponent', () => {
 
   it('should delete role', () => {
     spyOn(settingService, 'deleteRole').and.returnValue(of({}));
-    spyOn(window, 'confirm').and.callFake(function () {return true;});
+    spyOn(window, 'confirm').and.callFake(function () { return true; });
     component.deleteRole(role_data);
     expect(component.successFlag).toBe(true);
     expect(settingService.deleteRole).toHaveBeenCalled();

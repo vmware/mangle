@@ -13,6 +13,7 @@ package com.vmware.mangle.cassandra.model.faults.specs;
 
 import java.io.Serializable;
 import java.util.Map;
+
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 

@@ -10,9 +10,9 @@
             <button type="button" class="btn btn-sm btn-secondary" (click)="populateLoggerForm({'key':null,'value':{'configuredLevel':null,'effectiveLevel':null}});loggerModal=true;addEdit='Add'"><clr-icon shape="plus"></clr-icon> Logger</button>
         </div>
     </clr-dg-action-bar>
-	<clr-dg-column>Logger Name</clr-dg-column>
-    <clr-dg-column>Configured Level</clr-dg-column>
-    <clr-dg-column>Effective Level</clr-dg-column>
+	<clr-dg-column [clrDgField]="'key'">Logger Name</clr-dg-column>
+    <clr-dg-column [clrDgField]="'value.configuredLevel'">Configured Level</clr-dg-column>
+    <clr-dg-column [clrDgField]="'value.effectiveLevel'">Effective Level</clr-dg-column>
     <clr-dg-row *clrDgItems="let logger of loggers | keyvalue" [clrDgItem]="logger">
         <clr-dg-action-overflow>
             <button class="action-item" (click)="populateLoggerForm(logger);loggerModal=true;addEdit='Edit'">Edit</button>
@@ -28,7 +28,7 @@
 		</clr-dg-pagination>
 	</clr-dg-footer>
 </clr-datagrid>
-<clr-modal [(clrModalOpen)]="loggerModal" [clrModalSize]="'lg'">
+<clr-modal [(clrModalOpen)]="loggerModal" [clrModalClosable]="false" [clrModalSize]="'lg'">
     <h3 class="modal-title">{{addEdit}} Logger</h3>
     <div class="modal-body">
         <form #loggerForm="ngForm" (ngSubmit)="updateLogger(loggerForm.value);loggerModal=false;" *ngIf="loggerFormData" ngNativeValidate>
@@ -60,7 +60,7 @@
                     </div>
                 </fieldset>
             </section>
-            <button type="button" class="btn btn-outline" (click)="loggerModal=false;">CANCEL</button>
+            <button type="button" class="btn btn-outline" (click)="loggerModal=false;ngOnInit();">CANCEL</button>
             <button type="submit" class="btn btn-primary">SUBMIT</button>
         </form>
     </div>
