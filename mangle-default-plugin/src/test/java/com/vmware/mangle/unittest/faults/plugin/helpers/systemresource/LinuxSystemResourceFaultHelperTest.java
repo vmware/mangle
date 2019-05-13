@@ -17,8 +17,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.DEFAULT_TEMP_DIR;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.LOAD_ARG;
+import static com.vmware.mangle.utils.constants.FaultConstants.DEFAULT_TEMP_DIR;
+import static com.vmware.mangle.utils.constants.FaultConstants.LOAD_ARG;
 
 import java.util.ArrayList;
 import java.util.Collections;

@@ -71,7 +71,7 @@ public class TaskSpecReadingConverterTest {
 
         Assert.assertEquals(task, tasksMockData.getDummyTask());
         verify(mappingCassandraConverter, times(1)).read(any(), anyString());
-        verify(row, times(1)).getString(anyString());
+        verify(row, times(2)).getString(anyString());
 
     }
 
@@ -85,7 +85,7 @@ public class TaskSpecReadingConverterTest {
 
         Assert.assertEquals(task, null);
         verify(mappingCassandraConverter, times(0)).read(any(), anyString());
-        verify(row, times(1)).getString(anyString());
+        verify(row, times(2)).getString(anyString());
 
     }
 

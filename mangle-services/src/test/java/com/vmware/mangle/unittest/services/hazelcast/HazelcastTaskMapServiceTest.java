@@ -70,7 +70,7 @@ public class HazelcastTaskMapServiceTest {
         mapService.setHazelcastInstance(hz);
         String result = mapService.addTaskToCache(key, value);
         Assert.assertEquals(result, key);
-        verify(map, times(1)).putIfAbsent(anyString(), anyString());
+        verify(map, times(1)).put(anyString(), anyString());
     }
 
     @Test
@@ -85,7 +85,7 @@ public class HazelcastTaskMapServiceTest {
 
         mapService.setHazelcastInstance(hz);
         mapService.updateTaskCache(key, value);
-        verify(map, times(1)).putIfAbsent(anyString(), anyString());
+        verify(map, times(0)).replace(anyString(), anyString());
     }
 
     @Test

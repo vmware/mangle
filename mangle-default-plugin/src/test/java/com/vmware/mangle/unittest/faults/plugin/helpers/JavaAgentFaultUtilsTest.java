@@ -11,16 +11,16 @@
 
 package com.vmware.mangle.unittest.faults.plugin.helpers;
 
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.DEFAULT_TEMP_DIR;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.FAULT_NAME_ARG;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.FI_ADD_INFO_FAULTID;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.GET_FAULT_COMMAND;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.GET_FAULT_COMMAND_WITH_PORT;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.LOAD_ARG;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.PID_AGENT_COMMAND_WITH_PORT;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.PORT_9090;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.REMEDIATION_COMMAND;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.REMEDIATION_COMMAND_WITH_PORT;
+import static com.vmware.mangle.utils.constants.FaultConstants.DEFAULT_TEMP_DIR;
+import static com.vmware.mangle.utils.constants.FaultConstants.FAULT_NAME_ARG;
+import static com.vmware.mangle.utils.constants.FaultConstants.FI_ADD_INFO_FAULTID;
+import static com.vmware.mangle.utils.constants.FaultConstants.GET_FAULT_COMMAND;
+import static com.vmware.mangle.utils.constants.FaultConstants.GET_FAULT_COMMAND_WITH_PORT;
+import static com.vmware.mangle.utils.constants.FaultConstants.LOAD_ARG;
+import static com.vmware.mangle.utils.constants.FaultConstants.PID_AGENT_COMMAND_WITH_PORT;
+import static com.vmware.mangle.utils.constants.FaultConstants.PORT_9090;
+import static com.vmware.mangle.utils.constants.FaultConstants.REMEDIATION_COMMAND;
+import static com.vmware.mangle.utils.constants.FaultConstants.REMEDIATION_COMMAND_WITH_PORT;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -33,7 +33,7 @@ public class HazelcastUtils {
      * Method to retrieve hazelcast cluster members list
      *
      */
-    public static List<String> getHazelcastMemberslist(String hazelcastMembers) {
+    public static List<String> getMembersList(String hazelcastMembers) {
         List<String> members = new ArrayList<>();
         if (!StringUtils.isEmpty(hazelcastMembers)) {
             StringTokenizer tokens = new StringTokenizer(hazelcastMembers, ",");
@@ -44,11 +44,11 @@ public class HazelcastUtils {
         return members;
     }
 
-    public static String getApplicationValidationToken(String hazelcastValidationToken) {
-        if (StringUtils.isEmpty(hazelcastValidationToken)) {
-            hazelcastValidationToken = UUID.randomUUID().toString();
+    public static String getApplicationValidationToken(String validationToken) {
+        if (StringUtils.isEmpty(validationToken)) {
+            validationToken = UUID.randomUUID().toString();
         }
-        return hazelcastValidationToken;
+        return validationToken;
     }
 
 }

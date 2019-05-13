@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="ERROR">
+	<Properties>
+		<Property name="baseDir">/var/opt/mangle-vc-adapter-tomcat/logs</Property>
+		<Property name="fileName">${baseDir}/mangle-vc-adapter.log</Property>
+		<Property name="fileNamePattern">${baseDir}/mangle-vc-adapter-%d{dd-MM-yyyy}-%i.log.gz</Property>
+		<Property name="logPattern">%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{20}.%M \(%line\) - %msg%n</Property>
+		<Property name="consolePattern">%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{20}.%M \(%line\) - %msg%n</Property>
+		<Property name="maxFileSize">100 MB</Property>
+		<Property name="maxHistory">100</Property>
+		<Property name="loggingLevel">INFO</Property>
+	</Properties>
+	<Appenders>
+		<Console name="Console" target="SYSTEM_OUT">
+			<PatternLayout pattern="${consolePattern}" />
+		</Console>
+		<RollingFile name="RollingFile" fileName="${fileName}"
+			filePattern="${fileNamePattern}">
+			<PatternLayout pattern="${logPattern}" />
+			<Policies>
+				<TimeBasedTriggeringPolicy />
+				<SizeBasedTriggeringPolicy
+					size="${maxFileSize}" />
+			</Policies>
+			<DefaultRolloverStrategy max="${maxHistory}">
+				<Delete basePath="${baseDir}" maxDepth="2">
+					<IfFileName glob="*/mangle-vc-adapter-*.log.gz" />
+					<IfLastModified age="60d">
+						<IfAny>
+							<IfAccumulatedFileSize exceeds="10 GB" />
+							<IfAccumulatedFileCount exceeds="10" />
+						</IfAny>
+					</IfLastModified>
+				</Delete>
+			</DefaultRolloverStrategy>
+		</RollingFile>
+	</Appenders>
+	<Loggers>
+		<Logger name="com.vmware.mangle" level="${loggingLevel}"
+			additivity="false">
+			<AppenderRef ref="Console" />
+			<AppenderRef ref="RollingFile" />
+		</Logger>
+		<Logger name="org.springframework" level="${loggingLevel}"
+			additivity="false">
+			<AppenderRef ref="Console" />
+			<AppenderRef ref="RollingFile" />
+		</Logger>
+		<Root level="${loggingLevel}">
+			<AppenderRef ref="Console" />
+			<AppenderRef ref="RollingFile" />
+		</Root>
+	</Loggers>
+</Configuration>

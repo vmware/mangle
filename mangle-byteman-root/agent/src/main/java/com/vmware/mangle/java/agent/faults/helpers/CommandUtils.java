@@ -21,7 +21,7 @@ import com.vmware.mangle.java.agent.faults.exception.FiaascoException;
 
 /**
  * This is a Utils class for Command related Operations
- * 
+ *
  * @author hkilari
  * @author bkaranam
  */
@@ -31,9 +31,13 @@ public class CommandUtils implements ICommandExecutor {
     private static final long WAIT_TIME_FOR_PROCESS_DESTROY = 60L;
     private static String LogMessage = "Executing Commmand:";
 
+    private CommandUtils() {
+        throw new java.lang.UnsupportedOperationException("This is a utility class and cannot be instantiated");
+    }
+
     /**
      * Method to run system command
-     * 
+     *
      * @param command
      * @return String : output as an string
      */
@@ -43,7 +47,7 @@ public class CommandUtils implements ICommandExecutor {
 
     /**
      * Method to run system command
-     * 
+     *
      * @param command
      * @return String : output as an string
      */
@@ -113,7 +117,7 @@ public class CommandUtils implements ICommandExecutor {
     /**
      * Utility Class to execute list of the commands Defined in Fault for Injection, Remediation and
      * Test Machine Preperation
-     * 
+     *
      * @param commandInfos
      */
     public static void runCommands(List<CommandInfo> commandInfos) throws FiaascoException {

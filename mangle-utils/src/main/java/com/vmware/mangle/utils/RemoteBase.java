@@ -16,7 +16,7 @@ import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.log4j.Logger;
+import lombok.extern.log4j.Log4j2;
 
 /**
  * @author bkaranam
@@ -26,6 +26,7 @@ import org.apache.log4j.Logger;
  */
 @Setter
 @Getter
+@Log4j2
 public class RemoteBase {
     private String host;
     private String userName;
@@ -33,9 +34,6 @@ public class RemoteBase {
     private int port;
     private int timeout;
     private String privateKey;
-
-    @SuppressWarnings("unused")
-    private static Logger log = Logger.getLogger(RemoteBase.class);
 
     public RemoteBase(String host, String userName, String password, int port) {
         setHost(host);

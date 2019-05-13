@@ -12,11 +12,8 @@
 package com.vmware.mangle.services;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
-import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -26,28 +23,21 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import com.vmware.mangle.cassandra.model.security.Privilege;
-import com.vmware.mangle.cassandra.model.security.Role;
 import com.vmware.mangle.cassandra.model.security.User;
-import com.vmware.mangle.cassandra.model.security.UserAuthentication;
-import com.vmware.mangle.utils.exceptions.MangleException;
 
 /**
  *
  *
  * @author chetanc
  */
-@Log4j2
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 
-    private UserAuthenticationService userAuthenticationService;
     private UserService userService;
 
     @Autowired
-    public CustomUserDetailsService(UserAuthenticationService service, UserService userService) {
-        this.userAuthenticationService = service;
+    public CustomUserDetailsService(UserService userService) {
         this.userService = userService;
-
     }
 
     /**
@@ -62,17 +52,11 @@ public class CustomUserDetailsService implements UserDetailsService {
      */
     @Override
     public UserDetails loadUserByUsername(String username) {
-        UserAuthentication userAuthentication;
+        User user = userService.getUserByName(username);
 
-        try {
-            userAuthentication = userAuthenticationService.getUserByUsername(username);
-        } catch (MangleException e) {
-            throw new UsernameNotFoundException(e.getMessage());
-        }
-
-        if (userAuthentication != null) {
+        if (user != null) {
             List<GrantedAuthority> authorities = getUserAuthority(username);
-            return buildUserForAuthentication(userAuthentication, authorities);
+            return buildUserForAuthentication(user, authorities);
         } else {
             throw new UsernameNotFoundException("username not found");
         }
@@ -94,24 +78,6 @@ public class CustomUserDetailsService implements UserDetailsService {
             for (Privilege privilege : privileges) {
                 authorities.add(new SimpleGrantedAuthority(privilege.getName()));
             }
-        } else {
-            User user = new User();
-            user.setName(username);
-            Set<Role> userRoles = new HashSet<>();
-            Role defaultRole = userService.getDefaultUserRole();
-            userRoles.add(defaultRole);
-            user.setRoles(userRoles);
-            Set<String> userRoleName = new HashSet<>();
-            userRoleName.add(defaultRole.getName());
-            user.setRoleNames(userRoleName);
-            try {
-                userService.createUser(user);
-            } catch (MangleException e) {
-                log.info(String.format("New local user creation failed for username %s", username));
-            }
-            for (Privilege privilege : defaultRole.getPrivileges()) {
-                authorities.add(new SimpleGrantedAuthority(privilege.getName()));
-            }
         }
         return authorities;
     }
@@ -123,8 +89,7 @@ public class CustomUserDetailsService implements UserDetailsService {
      * @param authorities
      * @return UserDetails object as required by the spring security
      */
-    private UserDetails buildUserForAuthentication(UserAuthentication user, List<GrantedAuthority> authorities) {
-        return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(),
-                authorities);
+    private UserDetails buildUserForAuthentication(User user, List<GrantedAuthority> authorities) {
+        return new org.springframework.security.core.userdetails.User(user.getName(), user.getPassword(), authorities);
     }
 }

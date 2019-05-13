@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import java.util.Stack;
+import java.util.UUID;
 
 import com.vmware.mangle.cassandra.model.faults.specs.TaskSpec;
 import com.vmware.mangle.cassandra.model.tasks.FaultTask;
@@ -40,6 +41,9 @@ public class TasksMockData<T extends TaskSpec> {
     private TaskInfo taskInfo;
     private Stack<TaskTrigger> taskTriggers;
     private T taskData;
+    private String id1 = UUID.randomUUID().toString();
+    private String id2 = UUID.randomUUID().toString();
+    private String id3 = UUID.randomUUID().toString();
 
     public TasksMockData(T taskData) {
         Properties properties = ReadProperty.readProperty(Constants.MOCKDATA_FILE);
@@ -70,7 +74,7 @@ public class TasksMockData<T extends TaskSpec> {
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public Task<T> getDummyTask() {
         Task<T> task = new FaultTask();
-        task.setId("1233456");
+        task.setId(id2);
         task.setScheduledTask(true);
         task.setTriggers(taskTriggers);
         task.setTaskName(taskName);
@@ -84,7 +88,7 @@ public class TasksMockData<T extends TaskSpec> {
     public List<Task<T>> getDummyTasks() {
         Task<T> task1 = getDummyTask();
         Task<T> task2 = getDummyTask();
-        task2.setId("1233457");
+        task2.setId(id3);
         return Arrays.asList(task1, task2);
     }
 

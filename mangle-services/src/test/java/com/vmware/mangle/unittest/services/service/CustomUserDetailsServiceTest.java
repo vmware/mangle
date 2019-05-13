@@ -13,7 +13,6 @@ package com.vmware.mangle.unittest.services.service;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -21,7 +20,6 @@ import static org.mockito.Mockito.when;
 import java.util.ArrayList;
 import java.util.List;
 
-import lombok.extern.log4j.Log4j2;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.security.core.GrantedAuthority;
@@ -36,24 +34,21 @@ import com.vmware.mangle.cassandra.model.security.Role;
 import com.vmware.mangle.cassandra.model.security.User;
 import com.vmware.mangle.cassandra.model.security.UserAuthentication;
 import com.vmware.mangle.services.CustomUserDetailsService;
-import com.vmware.mangle.services.UserAuthenticationService;
 import com.vmware.mangle.services.UserService;
 import com.vmware.mangle.services.mockdata.RolesMockData;
 import com.vmware.mangle.services.mockdata.UserAuthenticationServiceMockData;
 import com.vmware.mangle.services.mockdata.UserMockData;
 import com.vmware.mangle.utils.exceptions.MangleException;
-import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
 /**
  *
  *
  * @author chetanc
  */
-@Log4j2
 public class CustomUserDetailsServiceTest {
 
     @Mock
-    private UserAuthenticationService userAuthenticationService;
+    private UserService userV1Service;
 
     @Mock
     private UserService userService;
@@ -67,7 +62,7 @@ public class CustomUserDetailsServiceTest {
     @BeforeMethod
     public void initMocks() {
         MockitoAnnotations.initMocks(this);
-        customUserDetailsService = new CustomUserDetailsService(userAuthenticationService, userService);
+        customUserDetailsService = new CustomUserDetailsService(userService);
     }
 
     @Test
@@ -90,8 +85,8 @@ public class CustomUserDetailsServiceTest {
     public void testGetUserAuthorityCreateDummyUser() throws MangleException {
         Role role = rolesMockData.getDummy2Role();
         Role role1 = rolesMockData.getDummyRole();
-        User user = userMockData.getMockUser();
-        List<Privilege> privileges = new ArrayList<>();
+        User user = userMockData.getMockUser2();
+        List<Privilege> privileges = new ArrayList<>(role.getPrivileges());
 
         when(userService.getPrivilegeForUser(anyString())).thenReturn(privileges);
         when(userService.getDefaultUserRole()).thenReturn(role1);
@@ -100,25 +95,22 @@ public class CustomUserDetailsServiceTest {
         List<GrantedAuthority> authorities =
                 customUserDetailsService.getUserAuthority(authMockData.getDummyUser1().getUsername());
 
-        Assert.assertEquals(authorities.size(), 1);
+        Assert.assertEquals(authorities.size(), 2);
         verify(userService, times(1)).getPrivilegeForUser(anyString());
-        verify(userService, times(1)).getDefaultUserRole();
-        verify(userService, times(1)).createUser(any());
-
     }
 
     @Test
     public void testLoadUserByUsername() throws MangleException {
         Role role = rolesMockData.getDummy2Role();
         List<Privilege> privileges = new ArrayList<>(role.getPrivileges());
-        UserAuthentication authUser = authMockData.getDummyUser1();
+        User user = userMockData.getMockUser();
 
         when(userService.getPrivilegeForUser(anyString())).thenReturn(privileges);
-        when(userAuthenticationService.getUserByUsername(anyString())).thenReturn(authUser);
+        when(userService.getUserByName(anyString())).thenReturn(user);
 
-        UserDetails user = customUserDetailsService.loadUserByUsername(authUser.getUsername());
+        UserDetails userDetails = customUserDetailsService.loadUserByUsername(user.getName());
         Assert.assertNotNull(user);
-        verify(userAuthenticationService, times(1)).getUserByUsername(anyString());
+        verify(userService, times(1)).getUserByName(anyString());
         verify(userService, times(1)).getPrivilegeForUser(anyString());
         verify(userService, times(0)).getDefaultUserRole();
         verify(userService, times(0)).createUser(any());
@@ -126,15 +118,15 @@ public class CustomUserDetailsServiceTest {
 
     @Test(expectedExceptions = UsernameNotFoundException.class)
     public void testLoadUserByUsernameUserNull() throws MangleException {
-        UserAuthentication authUser = authMockData.getDummyUser1();
+        User user = userMockData.getMockUser();
 
-        when(userAuthenticationService.getUserByUsername(anyString())).thenReturn(null);
+        when(userService.getUserByName(anyString())).thenReturn(null);
 
         try {
-            UserDetails user = customUserDetailsService.loadUserByUsername(authUser.getUsername());
+            UserDetails userDetails = customUserDetailsService.loadUserByUsername(user.getName());
         } catch (Exception e) {
             Assert.assertTrue(e instanceof UsernameNotFoundException);
-            verify(userAuthenticationService, times(1)).getUserByUsername(anyString());
+            verify(userService, times(1)).getUserByName(anyString());
             verify(userService, times(0)).getPrivilegeForUser(anyString());
             verify(userService, times(0)).getDefaultUserRole();
             verify(userService, times(0)).createUser(any());
@@ -148,14 +140,13 @@ public class CustomUserDetailsServiceTest {
     public void testLoadUserByUserNameGetUserException() throws MangleException {
         UserAuthentication authUser = authMockData.getDummyUser1();
 
-        doThrow(new MangleException(ErrorCode.NO_RECORD_FOUND)).when(userAuthenticationService)
-                .getUserByUsername(anyString());
+        when(userService.getUserByName(anyString())).thenReturn(null);
 
         try {
             customUserDetailsService.loadUserByUsername(authUser.getUsername());
         } catch (Exception e) {
             Assert.assertTrue(e instanceof UsernameNotFoundException);
-            verify(userAuthenticationService, times(1)).getUserByUsername(anyString());
+            verify(userService, times(1)).getUserByName(anyString());
             verify(userService, times(0)).getPrivilegeForUser(anyString());
             verify(userService, times(0)).getDefaultUserRole();
             verify(userService, times(0)).createUser(any());

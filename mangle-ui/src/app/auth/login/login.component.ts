@@ -1,7 +1,8 @@
-import { Component, OnInit, NgZone } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../auth.service';
 import { ClrLoadingState } from '@clr/angular';
+import { MessageConstants } from 'src/app/common/message.constants';
 
 @Component({
   selector: 'app-login',
@@ -10,7 +11,7 @@ import { ClrLoadingState } from '@clr/angular';
 })
 export class LoginComponent implements OnInit {
 
-  constructor(private authService: AuthService, private route: ActivatedRoute, private router: Router, private ngZone: NgZone) { }
+  constructor(private authService: AuthService, private route: ActivatedRoute, private router: Router) { }
 
   public errorFlag = false;
   public alertMessage: string;
@@ -28,16 +29,14 @@ export class LoginComponent implements OnInit {
     this.authService.login(loginData).subscribe(
       res => {
         if (res.status === 200) {
-          this.ngZone.run(() => this.router.navigateByUrl('core')).then();
-          //this.ngZone.run(() => this.router.navigateByUrl('')).then();
-          //this.router.navigateByUrl('');
+          this.router.navigateByUrl('core');
           this.submitBtnState = ClrLoadingState.DEFAULT;
         }
       }, err => {
         if (err.error) {
-          this.alertMessage = 'Login unsuccessful. ' + err.error.message;
+          this.alertMessage = err.error.message;
         } else {
-          this.alertMessage = 'Invalid username or password.';
+          this.alertMessage = MessageConstants.AUTH_FAILED;
         }
         this.errorFlag = true;
         this.submitBtnState = ClrLoadingState.DEFAULT;

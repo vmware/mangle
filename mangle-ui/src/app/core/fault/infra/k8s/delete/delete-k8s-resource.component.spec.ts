@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -9,24 +9,28 @@ import { BrowserModule } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
 import { ClarityModule } from '@clr/angular';
 import { of } from 'rxjs';
-import { LoginComponent } from 'src/app/auth/login/login.component';
-import { CoreComponent } from 'src/app/core/core.component';
-import { CoreService } from 'src/app/core/core.service';
 import { EndpointService } from 'src/app/core/endpoint/endpoint.service';
-import { RequestsService } from 'src/app/core/requests/requests.service';
-import { ProcessedComponent } from 'src/app/core/requests/processed/processed.component';
 import { DeleteK8SResourceComponent } from './delete-k8s-resource.component';
 import { FaultService } from '../../../fault.service';
+import { Router } from '@angular/router';
 
 describe('DeleteK8SResourceComponent', () => {
     let component: DeleteK8SResourceComponent;
     let faultService: FaultService;
     let endpointService: EndpointService;
-    let coreService: CoreService;
-    let requestsService: RequestsService;
     let fixture: ComponentFixture<DeleteK8SResourceComponent>;
+    let router: Router;
 
-    beforeEach(async(() => {
+    let k8s_data: any = {
+        "endpointName": "endpointName",
+        "resourceType": "NODE",
+        "resourceName": "resourceName",
+        "resourceLabels": { "resource1": "resource1" },
+        "randomInjection": false,
+        "injectionHomeDir": "/tmp"
+    };
+
+    beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [
                 BrowserAnimationsModule,
@@ -35,30 +39,24 @@ describe('DeleteK8SResourceComponent', () => {
                 HttpClientModule,
                 CommonModule,
                 ClarityModule,
-                RouterTestingModule.withRoutes([{ path: 'delete-k8s-resource', component: DeleteK8SResourceComponent }, { path: 'core/requests', component: ProcessedComponent }, { path: 'login', component: LoginComponent }])
+                RouterTestingModule.withRoutes([{ path: 'delete-k8s-resource', component: DeleteK8SResourceComponent }])
             ],
-            declarations: [DeleteK8SResourceComponent, CoreComponent, LoginComponent, ProcessedComponent],
+            declarations: [DeleteK8SResourceComponent],
             providers: [
                 FaultService,
-                CoreService,
-                RequestsService
+                EndpointService
             ],
             schemas: [NO_ERRORS_SCHEMA]
         }).compileComponents();
-    }));
-
-    beforeEach(() => {
-        coreService = TestBed.get(CoreService);
-        spyOn(coreService, 'getMyDetails').and.returnValue(of({ "name": "user@mangle.local" }));
-        endpointService = TestBed.get(EndpointService);
-        spyOn(endpointService, 'getAllEndpoints').and.returnValue(of([]));
-        requestsService = TestBed.get(RequestsService);
-        spyOn(requestsService, 'getAllTasks').and.returnValue(of([]));
         fixture = TestBed.createComponent(DeleteK8SResourceComponent);
         component = fixture.componentInstance;
-        faultService = TestBed.get(FaultService);
-        spyOn(faultService, 'executeK8SDeleteResourceFault').and.returnValue(of([component.faultFormData]));
         fixture.detectChanges();
+        endpointService = TestBed.get(EndpointService);
+        spyOn(endpointService, 'getAllEndpoints').and.returnValue(of([]));
+        faultService = TestBed.get(FaultService);
+        spyOn(faultService, 'executeK8SDeleteResourceFault').and.returnValue(of([k8s_data]));
+        router = TestBed.get(Router);
+        spyOn(router, 'navigateByUrl');
     });
 
     it('should create', () => {
@@ -66,7 +64,8 @@ describe('DeleteK8SResourceComponent', () => {
     });
 
     it('should execute K8S delete resource fault', () => {
-        component.executeK8SDeleteResourceFault(component.faultFormData);
+        component.resourceLabelsData = { "resource1": "resource1" };
+        component.executeK8SDeleteResourceFault(k8s_data);
         expect(faultService.executeK8SDeleteResourceFault).toHaveBeenCalled();
     });
 

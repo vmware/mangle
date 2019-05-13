@@ -41,6 +41,7 @@ import com.vmware.mangle.services.tasks.helper.MockTaskHelper;
 import com.vmware.mangle.task.framework.helpers.AbstractTaskHelper;
 import com.vmware.mangle.task.framework.helpers.CommandInfoExecutionHelper;
 import com.vmware.mangle.utils.CommonUtils;
+import com.vmware.mangle.utils.constants.Constants;
 import com.vmware.mangle.utils.constants.URLConstants;
 import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.handler.CustomErrorMessage;
@@ -226,7 +227,7 @@ public class TaskExecutorTest extends PowerMockTestCase {
             task = mockTask.init(new CommandExecutionFaultSpec());
             mockTask.setCommandInfoExecutionHelper(new CommandInfoExecutionHelper());
             URLConstants.setMangleNodeStatus(MangleNodeStatus.PAUSE);
-            task.setTaskName("NodeStatusTask");
+            task.setTaskName(Constants.NODESTATUS_TASK_NAME);
             when(taskService.addOrUpdateTask(task)).thenReturn(null);
             when(pluginService.getExtension(task.getExtensionName())).thenReturn(getMockTaskHelper());
             doNothing().when(publisher).publishEvent(any());

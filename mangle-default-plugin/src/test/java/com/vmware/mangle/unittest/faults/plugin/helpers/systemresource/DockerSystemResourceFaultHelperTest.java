@@ -17,14 +17,12 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.DEFAULT_TEMP_DIR;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.LOAD_ARG;
+import static com.vmware.mangle.utils.constants.FaultConstants.DEFAULT_TEMP_DIR;
+import static com.vmware.mangle.utils.constants.FaultConstants.LOAD_ARG;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import lombok.extern.log4j.Log4j2;
 import org.mockito.Mock;
@@ -38,6 +36,7 @@ import com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.JVMAgentFaultSpec;
 import com.vmware.mangle.cassandra.model.tasks.SupportScriptInfo;
 import com.vmware.mangle.cassandra.model.tasks.commands.CommandInfo;
+import com.vmware.mangle.faults.plugin.helpers.KnownFailuresHelper;
 import com.vmware.mangle.faults.plugin.helpers.systemresource.DockerSystemResourceFaultHelper;
 import com.vmware.mangle.faults.plugin.helpers.systemresource.SystemResourceFaultUtils;
 import com.vmware.mangle.faults.plugin.mockdata.FaultsMockData;
@@ -171,6 +170,8 @@ public class DockerSystemResourceFaultHelperTest {
         injectionCmdInfo.setNoOfRetries(0);
         injectionCmdInfo.setRetryInterval(0);
         injectionCmdInfo.setTimeout(0);
+        injectionCmdInfo
+                .setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfSystemResourceFaultInjectionRequest());
         list.add(injectionCmdInfo);
         return list;
     }
@@ -184,9 +185,8 @@ public class DockerSystemResourceFaultHelperTest {
         remediationCmdInfo.setRetryInterval(0);
         remediationCmdInfo.setTimeout(0);
         remediationCmdInfo.setExpectedCommandOutputList(Collections.emptyList());
-        Map<String, String> knownFailureMap = new HashMap<>();
-        knownFailureMap.put("No such file or directory", "Fault has been remediated already");
-        remediationCmdInfo.setKnownFailureMap(knownFailureMap);
+        remediationCmdInfo
+                .setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfSystemResourceFaultRemediationRequest());
         list.add(remediationCmdInfo);
         return list;
     }

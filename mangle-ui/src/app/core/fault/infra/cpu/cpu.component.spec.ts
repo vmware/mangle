@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -11,22 +11,17 @@ import { ClarityModule } from '@clr/angular';
 import { of } from 'rxjs';
 import { CpuInfraComponent } from './cpu.component';
 import { FaultService } from '../../fault.service';
-import { LoginComponent } from 'src/app/auth/login/login.component';
-import { CoreComponent } from 'src/app/core/core.component';
-import { CoreService } from 'src/app/core/core.service';
 import { EndpointService } from 'src/app/core/endpoint/endpoint.service';
-import { RequestsService } from 'src/app/core/requests/requests.service';
-import { ProcessedComponent } from 'src/app/core/requests/processed/processed.component';
+import { Router } from '@angular/router';
 
 describe('CpuInfraComponent', () => {
     let component: CpuInfraComponent;
     let faultService: FaultService;
     let endpointService: EndpointService;
-    let coreService: CoreService;
-    let requestsService: RequestsService;
     let fixture: ComponentFixture<CpuInfraComponent>;
+    let router: Router;
 
-    beforeEach(async(() => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [
                 BrowserAnimationsModule,
@@ -35,30 +30,24 @@ describe('CpuInfraComponent', () => {
                 HttpClientModule,
                 CommonModule,
                 ClarityModule,
-                RouterTestingModule.withRoutes([{ path: 'cpu-infra', component: CpuInfraComponent }, { path: 'core/requests', component: ProcessedComponent }, { path: 'login', component: LoginComponent }])
+                RouterTestingModule.withRoutes([{ path: 'cpu-infra', component: CpuInfraComponent }])
             ],
-            declarations: [CpuInfraComponent, CoreComponent, LoginComponent, ProcessedComponent],
+            declarations: [CpuInfraComponent],
             providers: [
                 FaultService,
-                CoreService,
-                RequestsService
+                EndpointService
             ],
             schemas: [NO_ERRORS_SCHEMA]
         }).compileComponents();
-    }));
-
-    beforeEach(() => {
-        coreService = TestBed.get(CoreService);
-        spyOn(coreService, 'getMyDetails').and.returnValue(of({ "name": "user@mangle.local" }));
-        endpointService = TestBed.get(EndpointService);
-        spyOn(endpointService, 'getAllEndpoints').and.returnValue(of([]));
-        requestsService = TestBed.get(RequestsService);
-        spyOn(requestsService, 'getAllTasks').and.returnValue(of([]));
         fixture = TestBed.createComponent(CpuInfraComponent);
         component = fixture.componentInstance;
-        faultService = TestBed.get(FaultService);
-        spyOn(faultService, 'executeCpuFault').and.returnValue(of([component.faultFormData]));
         fixture.detectChanges();
+        endpointService = TestBed.get(EndpointService);
+        spyOn(endpointService, 'getAllEndpoints').and.returnValue(of([]));
+        faultService = TestBed.get(FaultService);
+        spyOn(faultService, 'executeCpuFault').and.returnValue(of({ "taskData": { "schedule": null } }));
+        router = TestBed.get(Router);
+        spyOn(router, 'navigateByUrl');
     });
 
     it('should create', () => {

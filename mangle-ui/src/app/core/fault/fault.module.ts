@@ -19,6 +19,7 @@ import { K8SResourceNotReadyComponent } from './infra/k8s/ready/k8s-resource-not
 import { VcenterDiskComponent } from './infra/vcenter/disk/vcenter-disk.component';
 import { VcenterNicComponent } from './infra/vcenter/nic/vcenter-nic.component';
 import { VcenterStateComponent } from './infra/vcenter/state/vcenter-state.component';
+import { CronComponent } from 'src/app/shared/cron/cron.component';
 
 @NgModule({
   declarations: [
@@ -34,7 +35,8 @@ import { VcenterStateComponent } from './infra/vcenter/state/vcenter-state.compo
     K8SResourceNotReadyComponent,
     VcenterDiskComponent,
     VcenterNicComponent,
-    VcenterStateComponent
+    VcenterStateComponent,
+    CronComponent
   ],
   imports: [
     BrowserAnimationsModule,

@@ -15,6 +15,7 @@ import com.datastax.driver.core.DataType.Name;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.springframework.data.cassandra.core.mapping.CassandraType;
 
 import com.vmware.mangle.services.enums.BytemanFaultType;
@@ -26,6 +27,7 @@ import com.vmware.mangle.services.enums.SysExitCodes;
  *
  */
 @Data
+@ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 @SuppressWarnings("squid:MaximumInheritanceDepth")
 public class KillJVMFaultSpec extends JVMCodeLevelFaultSpec {

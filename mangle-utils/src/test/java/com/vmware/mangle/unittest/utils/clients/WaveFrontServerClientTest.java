@@ -35,14 +35,16 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.vmware.mangle.cassandra.model.metricprovider.WaveFrontConnectionProperties;
-import com.vmware.mangle.metric.reporter.constants.MetricReporterTestConstants;
 import com.vmware.mangle.utils.clients.metricprovider.WaveFrontServerClient;
 import com.vmware.mangle.utils.clients.restclient.RestTemplateWrapper;
+import com.vmware.mangle.utils.exceptions.MangleException;
+import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
+import com.vmware.mangle.utils.mockdata.MetricProviderMock;
 
 /**
  * Unit Test Case for WaveFrontServerClient.
  *
- * @author kumargautam
+ * @author kumargautam, dbhat
  */
 @PrepareForTest(value = { WaveFrontServerClient.class })
 @PowerMockIgnore(value = { "javax.net.ssl.*" })
@@ -52,6 +54,7 @@ public class WaveFrontServerClientTest extends PowerMockTestCase {
     @Mock
     private WaveFrontServerClient restTemplateWrapper;
     private WaveFrontConnectionProperties waveFrontConnectionProperties;
+    private static String WAVEFRONT_VALID_INSTANCE = "https://try.wavefront.com";
 
     /**
      * @throws java.lang.Exception
@@ -60,8 +63,8 @@ public class WaveFrontServerClientTest extends PowerMockTestCase {
     public void setUpBeforeClass() throws Exception {
         MockitoAnnotations.initMocks(this);
         this.waveFrontConnectionProperties = new WaveFrontConnectionProperties();
-        this.waveFrontConnectionProperties.setWavefrontInstance(MetricReporterTestConstants.WAVEFRONT_INSTANCE);
-        this.waveFrontConnectionProperties.setWavefrontAPIToken(MetricReporterTestConstants.WAVEFRONT_API_TOKEN);
+        this.waveFrontConnectionProperties.setWavefrontInstance(MetricProviderMock.WAVEFRONT_INSTANCE);
+        this.waveFrontConnectionProperties.setWavefrontAPIToken(MetricProviderMock.WAVEFRONT_PROXY_PORT);
         this.waveFrontServerClientTest = new WaveFrontServerClient(waveFrontConnectionProperties);
     }
 
@@ -84,10 +87,12 @@ public class WaveFrontServerClientTest extends PowerMockTestCase {
     /**
      * Test method for
      * {@link com.vmware.mangle.WaveFrontServerClient.metricprovider.MangleWaveFrontServerClient#testConnection()}.
+     *
+     * @throws MangleException
      */
     @Test
     @SuppressWarnings("rawtypes")
-    public void testTestConnection() {
+    public void testTestConnection() throws MangleException {
         ResponseEntity responseEntity = mock(ResponseEntity.class);
         Method method = PowerMockito.method(RestTemplateWrapper.class, "get", String.class, Class.class);
         PowerMockito.replace(method).with((new InvocationHandler() {
@@ -99,7 +104,37 @@ public class WaveFrontServerClientTest extends PowerMockTestCase {
 
         when(responseEntity.getStatusCode()).thenReturn(HttpStatus.OK);
         Assert.assertTrue(waveFrontServerClientTest.testConnection());
-        verify(responseEntity, times(1)).getStatusCode();
+        verify(responseEntity, times(2)).getStatusCode();
+    }
+
+    @Test(description = "Validate Test Connection when invalid wavefront instance details are provided")
+    public void testConnectionInvalidInstance() throws MangleException {
+        WaveFrontConnectionProperties properties = new WaveFrontConnectionProperties();
+        properties.setWavefrontAPIToken("InvalidDummyToken");
+        properties.setWavefrontInstance("https://invalid.instance");
+        WaveFrontServerClient wfClient = new WaveFrontServerClient(properties);
+        boolean statusOfConnection = false;
+        try {
+            statusOfConnection = wfClient.testConnection();
+        } catch (MangleException me) {
+            Assert.assertFalse(statusOfConnection);
+            Assert.assertEquals(me.getErrorCode(), ErrorCode.UNABLE_TO_CONNECT_TO_WAVEFRONT_INSTANCE);
+        }
+    }
+
+    @Test(description = "Validate test connection for invalid Auth Key")
+    public void testConnectionInvalidAuthToken() {
+        WaveFrontConnectionProperties properties = new WaveFrontConnectionProperties();
+        properties.setWavefrontAPIToken("InvalidDummyToken");
+        properties.setWavefrontInstance(WAVEFRONT_VALID_INSTANCE);
+        WaveFrontServerClient wfClient = new WaveFrontServerClient(properties);
+        boolean statusOfConnection = false;
+        try {
+            statusOfConnection = wfClient.testConnection();
+        } catch (MangleException me) {
+            Assert.assertFalse(statusOfConnection);
+            Assert.assertEquals(me.getErrorCode(), ErrorCode.AUTH_FAILURE_TO_WAVEFRONT);
+        }
     }
 
 }

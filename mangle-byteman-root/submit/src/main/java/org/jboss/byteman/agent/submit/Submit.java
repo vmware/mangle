@@ -43,6 +43,10 @@ import java.util.regex.Pattern;
  * Note that this class is completely standalone and has no dependencies on any other Byteman class.
  * It can be shipped alone in a client jar to be used as a very small app.
  */
+/**
+ * @author Andrew Dinn
+ * @author hkilari
+ */
 public class Submit {
     public static final String DEFAULT_ADDRESS = "localhost";
     public static final int DEFAULT_PORT = 9091;
@@ -97,13 +101,9 @@ public class Submit {
             port = DEFAULT_PORT;
         }
 
-        if (out == null) {
-            out = System.out;
-        }
-
         this.address = address;
         this.port = port;
-        this.setOut(out);
+        this.setOut(out == null ? System.out : out);
     }
 
     /**
@@ -148,7 +148,7 @@ public class Submit {
 
     /**
      * Tells the Byteman agent to Inject a supported Fault.
-     * 
+     *
      * @param argsList
      *            List of arguments required for Fault Execution.
      *
@@ -184,6 +184,9 @@ public class Submit {
         case "-exit":
             str.append("TERMINATE\n");
             break;
+        case "-heapUsage":
+            str.append("HEAPUSAGE\n");
+            break;
         case "-threadDump":
             str.append("THREADDUMP\n");
             break;
@@ -195,6 +198,8 @@ public class Submit {
             break;
         case "-ping":
             str.append("PING\n");
+            break;
+        default:
             break;
         }
         str.append("ARGS");
@@ -323,7 +328,7 @@ public class Submit {
 
     /**
      * old version which returns a map rather than a list of scripts
-     * 
+     *
      * @return as above but as a map
      * @throws Exception
      *             if the request failed
@@ -663,7 +668,7 @@ public class Submit {
 
     /**
      * old version which uses a Map
-     * 
+     *
      * @param rules
      *            the rules to be added
      * @return the results of the deployment
@@ -755,7 +760,7 @@ public class Submit {
 
     /**
      * old version which uses a Map
-     * 
+     *
      * @param rules
      *            the rules to be deleted
      * @return the results of the deletion
@@ -1035,7 +1040,7 @@ public class Submit {
 
     /**
      * A main routine which submits requests to the Byteman agent utilizing the Java API.
-     * 
+     *
      * @param args
      *            see {@link #usage(PrintStream, int)} for a description of the allowed arguments
      */
@@ -1149,6 +1154,10 @@ public class Submit {
                 startIdx++;
                 optionCount++;
             } else if (args[startIdx].equals("-gf")) {
+                fiaascoAction = args[startIdx];
+                startIdx++;
+                optionCount++;
+            } else if (args[startIdx].equals("-heapUsage")) {
                 fiaascoAction = args[startIdx];
                 startIdx++;
                 optionCount++;
@@ -1318,6 +1327,7 @@ public class Submit {
         out.println("        -laf with no args list all Fiaasco Faults executed on JVM");
         out.println("        -gf with faultId list Execution details of Fault Asscoited with faultId");
         out.println("        -gaf with no args list Execution details of All Faults executed on JVM");
+        out.println("        -heapUsage with no args will print current Heap Usage of the target application");
         out.println("        -threadDump with path for saving the Thread Dump file");
         out.println("        -heapDump with path for saving the Heap Dump file");
         out.println(

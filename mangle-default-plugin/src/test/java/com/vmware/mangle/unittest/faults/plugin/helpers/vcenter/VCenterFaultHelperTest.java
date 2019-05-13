@@ -17,7 +17,10 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -33,6 +36,7 @@ import com.vmware.mangle.services.enums.VCenterStateFaults;
 import com.vmware.mangle.task.framework.endpoint.EndpointClientFactory;
 import com.vmware.mangle.utils.ICommandExecutor;
 import com.vmware.mangle.utils.clients.vcenter.VCenterClient;
+import com.vmware.mangle.utils.clients.vcenter.VCenterCommandExecutor;
 import com.vmware.mangle.utils.exceptions.MangleException;
 
 /**
@@ -40,6 +44,7 @@ import com.vmware.mangle.utils.exceptions.MangleException;
  *
  * @author chetanc
  */
+@PrepareForTest(value = { VCenterFaultHelper.class })
 public class VCenterFaultHelperTest {
 
     private FaultsMockData mockData = new FaultsMockData();
@@ -137,10 +142,12 @@ public class VCenterFaultHelperTest {
     }
 
     @Test
-    public void testGetExecutor() throws MangleException {
+    public void testGetExecutor() throws Exception {
         VMFaultSpec spec = mockData.getVMNicFaultSpec();
         VCenterFaultHelper helper = new VCenterFaultHelper(factory);
-
+        VCenterCommandExecutor vCenterCommandExecutor = Mockito.mock(VCenterCommandExecutor.class);
+        PowerMockito.whenNew(VCenterCommandExecutor.class).withArguments(any(VCenterClient.class))
+                .thenReturn(vCenterCommandExecutor);
         when(factory.getEndPointClient(any(), any())).thenReturn(vCenterClient);
 
         ICommandExecutor commandExecutor = helper.getExecutor(spec);

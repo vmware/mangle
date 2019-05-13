@@ -11,12 +11,14 @@
 
 package com.vmware.mangle.cassandra.model.faults.specs;
 
-import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.hibernate.validator.constraints.Range;
+import lombok.ToString;
 
 import com.vmware.mangle.services.enums.AgentFaultName;
 
@@ -26,17 +28,25 @@ import com.vmware.mangle.services.enums.AgentFaultName;
  *
  */
 @Data
+@ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 @SuppressWarnings("squid:MaximumInheritanceDepth")
 public class MemoryFaultSpec extends JVMAgentFaultSpec {
     private static final long serialVersionUID = 1L;
-    @ApiModelProperty(value = "String value between 1 to 100 representing memory usage %", example = "80")
-    @NotEmpty
-    @Range(min = 1, max = 100)
-    private String memoryLoad;
+    @ApiModelProperty(value = "Integer value between 1 to 100 representing memory usage %", example = "80")
+    @NotNull
+    @Min(1)
+    @Max(100)
+    private Integer memoryLoad;
 
     public MemoryFaultSpec() {
         setFaultName(AgentFaultName.INJECT_MEMORY_FAULT.getValue());
         setSpecType(this.getClass().getName());
+    }
+
+    @NotNull
+    @Override
+    public Integer getTimeoutInMilliseconds() {
+        return timeoutInMilliseconds;
     }
 }

@@ -54,7 +54,7 @@ public class ScheduledEventListenerTest {
     @Test
     public void testHandleSchedulerUpdatedEventCancelledSchedule() {
         String taskId = UUID.randomUUID().toString();
-        ScheduleUpdatedEvent event = new ScheduleUpdatedEvent(taskId, SchedulerStatus.CANCELLED);
+        ScheduleUpdatedEvent event = new ScheduleUpdatedEvent(taskId, SchedulerStatus.CANCELLED.name());
 
         when(taskCache.deleteFromTaskCache(taskId)).thenReturn(taskId);
 
@@ -67,7 +67,7 @@ public class ScheduledEventListenerTest {
     @Test
     public void testHandleSchedulerUpdatedEventActiveSchedule() {
         String taskId = UUID.randomUUID().toString();
-        ScheduleUpdatedEvent event = new ScheduleUpdatedEvent(taskId, SchedulerStatus.SCHEDULED);
+        ScheduleUpdatedEvent event = new ScheduleUpdatedEvent(taskId, SchedulerStatus.SCHEDULED.name());
 
         doNothing().when(taskCache).updateTaskCache(eq(taskId), any());
 
@@ -82,10 +82,10 @@ public class ScheduledEventListenerTest {
         String taskId = UUID.randomUUID().toString();
         ScheduleCreatedEvent event = new ScheduleCreatedEvent(taskId, SchedulerStatus.SCHEDULED);
 
-        doNothing().when(taskCache).updateTaskCache(eq(taskId), any());
+        when(taskCache.addTaskToCache(eq(taskId), any())).thenReturn(taskId);
 
         scheduleEventListener.handleSchedulerCreatedEvent(event);
 
-        verify(taskCache, times(1)).updateTaskCache(anyString(), any());
+        verify(taskCache, times(1)).addTaskToCache(anyString(), any());
     }
 }

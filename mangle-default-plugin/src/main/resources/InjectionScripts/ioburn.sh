@@ -24,6 +24,7 @@ then
     exit 0
 fi
 preRequisitescheck
+status
 injectFault
 }
 
@@ -57,18 +58,18 @@ readAndParseArgs(){
             help
         fi
     fi
-    
+
 }
 
 validateInputs(){
 
     if [ ! -d "$targetDir" ]; then
-        validationMessage="targetdir ${targetDir} is not present\n"
+        validationMessage="${targetDir} is not available"
     else
         touch $targetDir/mangle.txt > /dev/null 2>&1
         touchRetVal=$?
-        if [ $touchRetVal -ne 0 -a $touchRetVal -ne 1 -a $touchRetVal -ne 2 ]; then
-            validationMessage="targetdir ${targetDir} does not have write permission"
+        if [ $touchRetVal -ne 0 ]; then
+            validationMessage="The Provided user does not have permission on ${targetDir}"
         else
             rm -f $targetDir/mangle.txt > /dev/null 2>&1
         fi
@@ -76,8 +77,15 @@ validateInputs(){
     if [ -z $(echo $blockSize|grep -E "^[0-9]+$") ]
     then
         validationMessage="${validationMessage}blockSize value should be an integer\n"
+    else
+        targetDirDiskSize=$(df -B1 $targetDir | awk ' NR==2 { print $2 } ')
+        echo "targetDirDiskSize:"$targetDirDiskSize" bytes"
+        if [ $blockSize -gt $targetDirDiskSize ]
+        then
+           validationMessage="${validationMessage}Provide iosize less than maximum size of disk\n"
+        fi
     fi
-    
+
     if [ -z $(echo $timeout|grep -E "^[0-9]+$") ]
     then
         validationMessage="${validationMessage}timeout value should be an integer\n"
@@ -85,6 +93,7 @@ validateInputs(){
     if [ ! -z "$validationMessage" ]
     then
         printf "Validation Failed:$validationMessage"
+        cleanup
         exit $errorExitCode
     fi
 }
@@ -101,20 +110,31 @@ status(){
     statusCheckRetVal=$?
     if [ $statusCheckRetVal -eq 0 ]
     then
-        echo "Status: Inprogress"
+        echo "Diskio fault is already running.Wait until it completes if you want to inject again."
         exit $errorExitCode
     else
         echo "Status: Completed/NotRunning"
     fi
 }
 remediate(){
-    pgrep -f "loopburnio.sh" | xargs kill -9 > /dev/null 2>&1
     if [ -f $basedir/.ioburnOutput.properties ]
     then
         targetDir=$(echo $(cat $basedir/.ioburnOutput.properties | grep -iE "^targetDir" |xargs) |cut -d ':' -f2)
     fi
-    cleanup
-    echo "Remediated: ioburn injection"
+    processID=$(pgrep -f "loopburnio.sh")
+    if [ ! -z "$processID" ]
+    then
+        kill -STOP $processID > /dev/null 2>&1
+        pgrep -f "loopburnio.sh"|xargs -L 1 pgrep -P |xargs kill -9
+        kill -9 $processID > /dev/null 2>&1
+        cleanup
+        echo "Remediated: ioburn injection"
+        exit 0
+    else
+        echo "Diskio Fault already remediated"
+        cleanup
+        exit $errorExitCode
+    fi
 }
 
 cleanup(){
@@ -122,6 +142,8 @@ cleanup(){
   rm -rf $basedir/loopburnio.sh > /dev/null 2>&1
   rm -rf $basedir/ioburn.sh > /dev/null 2>&1
   rm -rf $basedir/.ioburnOutput.properties > /dev/null 2>&1
+  rm -rf $basedir/diskioFault.log > /dev/null 2>&1
+  rm -rf $basedir/diskIOFaultWatcher.sh > /dev/null 2>&1
 }
 
 preRequisitescheck()
@@ -184,16 +206,46 @@ injectFault(){
     currentTime=\$((\$(date +%s)))
     timelimit=\$((\$timelimit / 1000))
     check=\`expr \$currentTime - \$timelimit\`
+    echo "ioburn injection starting on "\$targetDir "for ":\$timelimit "seconds"
     while [ \$startTime -gt \$check ]
     do
         dd if=/dev/zero of=\$targetDir/burn bs=\$blockSize count=1024 > /dev/null 2>&1
         currentTime=\$((\$(date +%s)))
         check=\`expr \$currentTime - \$timelimit\`
     done
-    rm -rf \$targetDir/burn \$basedir/loopburnio.sh \$basedir/.ioburnOutput.properties \$basedir/ioburn.sh
+    echo "Autoremedition started"
+    rm -rf \$targetDir/burn > /dev/null 2>&1
+    rm -rf \$basedir/loopburnio.sh > /dev/null 2>&1
+    rm -rf \$basedir/.ioburnOutput.properties > /dev/null 2>&1
+    rm -rf \$basedir/ioburn.sh > /dev/null 2>&1
+    rm -rf \$basedir/diskioFault.log > /dev/null 2>&1
+    rm -rf \$basedir/diskIOFaultWatcher.sh > /dev/null 2>&1
+EOF
+  cat << EOF > $basedir/diskIOFaultWatcher.sh
+    timelimit=\$((\$1 / 1000))
+    targetDir=\$2
+    basedir=\$3
+    echo "sleeping for "\$timelimit "seconds"
+    sleep \$timelimit
+    processID=\$(pgrep -f "loopburnio.sh")
+    if [ ! -z "\$processID" ]
+    then
+       kill -STOP \$processID > /dev/null 2>&1
+       pgrep -f "loopburnio.sh"|xargs -L 1 pgrep -P |xargs kill -9
+       kill -9 \$processID > /dev/null 2>&1
+       rm -rf \$targetDir/burn > /dev/null 2>&1
+       rm -rf \$basedir/loopburnio.sh > /dev/null 2>&1
+       rm -rf \$basedir/.ioburnOutput.properties > /dev/null 2>&1
+       rm -rf \$basedir/ioburn.sh > /dev/null 2>&1
+       rm -rf \$basedir/diskioFault.log > /dev/null 2>&1
+       rm -rf \$basedir/diskIOFaultWatcher.sh > /dev/null 2>&1
+       echo "Alternate Remediation triggered"
+    fi
 EOF
   chmod 777 $basedir/loopburnio.sh
+  chmod 777 $basedir/diskIOFaultWatcher.sh
   sh $basedir/loopburnio.sh $targetDir $blockSize $timeout $basedir > $basedir/diskioFault.log 2>&1 &
+  sh $basedir/diskIOFaultWatcher.sh $timeout $targetDir $basedir > $basedir/diskioFault.log 2>&1 &
   echo "Triggered: ioburn injection"
   exit 0
 }

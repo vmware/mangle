@@ -33,7 +33,7 @@ import com.vmware.mangle.model.enums.EndpointType;
 public class RemoteMachineCredentials extends CredentialsSpec {
 
     private static final long serialVersionUID = 1L;
-    private String userName;
+    private String username;
 
     @EncryptField
     private String password;

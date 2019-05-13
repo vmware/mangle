@@ -40,6 +40,7 @@ public class TaskReadingConverter implements Converter<Row, Task<TaskSpec>> {
     @Override
     public Task<TaskSpec> convert(Row source) {
         String taskClass = source.getString("taskclass");
+        log.debug("Task Id : " + source.getString("id"));
         Task<TaskSpec> task = null;
         try {
             task = (Task<TaskSpec>) cassandraConverter.read(Class.forName(taskClass), source);

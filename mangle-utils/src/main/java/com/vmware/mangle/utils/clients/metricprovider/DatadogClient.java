@@ -20,6 +20,7 @@ import org.springframework.util.StringUtils;
 import com.vmware.mangle.cassandra.model.metricprovider.DatadogConnectionProperties;
 import com.vmware.mangle.utils.clients.restclient.RestTemplateWrapper;
 import com.vmware.mangle.utils.constants.Constants;
+import com.vmware.mangle.utils.constants.MetricProviderConstants;
 import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
@@ -90,17 +91,20 @@ public class DatadogClient extends RestTemplateWrapper implements MetricProvider
      * Validate test connection with Datadog using the specified tokens.
      *
      * @return boolean
+     * @throws MangleException
      */
     @Override
-    public boolean testConnection() {
+    public boolean testConnection() throws MangleException {
         log.debug("Validating test connection with Datadog using the specified tokens");
-        ResponseEntity<String> response =
-                (ResponseEntity<String>) this.get(Constants.DATADOG_VALIDATE_CONNECTION_API, String.class);
-        if (response == null) {
-            log.error("Test connection with Datadog has failed.");
-            return false;
+        ResponseEntity<String> response = (ResponseEntity<String>) this
+                .get(MetricProviderConstants.DATADOG_API_VALIDATE_API_APP_KEYS, String.class);
+        if (StringUtils.isEmpty(response)) {
+            throw new MangleException(ErrorCode.UNABLE_TO_CONNECT_TO_DATADOG_INSTANCE);
         }
         log.debug("Test connection completed and status: " + response.getStatusCode().value());
+        if (!(response.getStatusCode().value() == 200)) {
+            throw new MangleException(ErrorCode.AUTH_FAILURE_TO_DATADOG);
+        }
         return response.getStatusCode().value() == 200;
     }
 

@@ -1,8 +1,8 @@
-import { Component, OnInit, NgZone } from '@angular/core';
-import { CoreService } from 'src/app/core/core.service';
+import { Component, OnInit } from '@angular/core';
 import { SettingService } from 'src/app/setting/setting.service';
-import { AuthService } from '../auth.service';
 import { Router } from '@angular/router';
+import { MessageConstants } from 'src/app/common/message.constants';
+import { ClrLoadingState } from '@clr/angular';
 
 @Component({
     selector: 'app-password',
@@ -11,44 +11,50 @@ import { Router } from '@angular/router';
 })
 export class PasswordComponent implements OnInit {
 
-    constructor(private coreService: CoreService, private settingService: SettingService, private authService: AuthService, private router: Router, private ngZone: NgZone) { }
+    constructor(private settingService: SettingService, private router: Router) { }
 
     public errorFlag = false;
     public successFlag = false;
     public alertMessage: string;
+
+    public submitBtnState: ClrLoadingState = ClrLoadingState.DEFAULT;
+
     public loginModal: boolean = false;
 
-    public passwordFormData: any = { "username": null, "password": null };
+    public passwordFormData: any = {
+        "currentPassword": null,
+        "newPassword": null,
+        "rNewpassword": null
+    };
 
-    ngOnInit() {
-        this.getMyDetails();
-    }
-
-    public getMyDetails() {
-        this.coreService.getMyDetails().subscribe(
-            res => {
-                this.passwordFormData.username = res.name;
-            });
-    }
+    ngOnInit() { }
 
     public updatePassword(passwordFormValue) {
+        this.submitBtnState = ClrLoadingState.LOADING;
         this.errorFlag = false;
         this.successFlag = false;
-        this.settingService.updateLocalUser(passwordFormValue).subscribe(
-            res => {
-                this.alertMessage = 'Password updated successfully!';
-                this.successFlag = true;
-                this.authService.logout();
-                this.loginModal = true;
-            }, err => {
-                this.alertMessage = err.error.description;
-                this.errorFlag = true;
-            });
+        if (passwordFormValue.newPassword != passwordFormValue.rNewpassword) {
+            this.alertMessage = MessageConstants.PASSWORD_MISMATCH;
+            this.errorFlag = true;
+            this.submitBtnState = ClrLoadingState.DEFAULT;
+        } else {
+            delete passwordFormValue["rNewpassword"];
+            this.settingService.updatePassword(passwordFormValue).subscribe(
+                res => {
+                    this.alertMessage = MessageConstants.PASSWORD_UPDATED;
+                    this.successFlag = true;
+                    this.loginModal = true;
+                    this.submitBtnState = ClrLoadingState.DEFAULT;
+                }, err => {
+                    this.alertMessage = err.error.description;
+                    this.errorFlag = true;
+                    this.submitBtnState = ClrLoadingState.DEFAULT;
+                });
+        }
     }
 
     public loginAgain() {
-        this.ngZone.run(() => this.router.navigateByUrl('login')).then();
-        //this.router.navigateByUrl('login');
+        this.router.navigateByUrl('login');
     }
 
 }

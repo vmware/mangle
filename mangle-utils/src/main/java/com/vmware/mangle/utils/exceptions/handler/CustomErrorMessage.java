@@ -63,7 +63,7 @@ public class CustomErrorMessage {
 
     private String getErrorMessage(String errorCode, String errorMsg, Object[] args) {
         if (env != null && env.containsProperty(errorCode)) {
-            errorMsg = getErrorMessage(errorCode);
+            errorMsg = env.getProperty(errorCode);
         }
 
         if (StringUtils.isNotEmpty(errorMsg) && ArrayUtils.isNotEmpty(args)) {
@@ -73,7 +73,7 @@ public class CustomErrorMessage {
     }
 
     public String getErrorMessage(String errorCode) {
-        return env.getProperty(errorCode);
+        return formatErrorMessage(env.getProperty(errorCode));
     }
 
     /**
@@ -87,12 +87,16 @@ public class CustomErrorMessage {
      */
     public String formatErrorMessage(String errorMsg, Object... args) {
         StringBuilder msgBuilder = new StringBuilder(errorMsg);
-        for (int i = 0; i < args.length; i++) {
-            String regex = "{" + i + "}";
-            int index = msgBuilder.indexOf(regex);
-            if (index != -1) {
-                msgBuilder.replace(index, (index + regex.length()), String.valueOf(args[i]));
+        if (args.length > 0) {
+            for (int i = 0; i < args.length; i++) {
+                String regex = "{" + i + "}";
+                int index = msgBuilder.indexOf(regex);
+                if (index != -1) {
+                    msgBuilder.replace(index, (index + regex.length()), String.valueOf(args[i]));
+                }
             }
+        } else {
+            msgBuilder = new StringBuilder(errorMsg.replaceAll("\\{[0-9]{1,2}\\}", ""));
         }
         return msgBuilder.toString();
     }

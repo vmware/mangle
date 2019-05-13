@@ -65,7 +65,7 @@ public class VersioningModelController {
         List<Fault> faults = faultService.getAllFaults();
 
         Resources<Fault> faultResource = new Resources<>(faults);
-        Link link = linkTo(methodOn(UserController.class).getAllUsers()).withSelfRel();
+        Link link = linkTo(methodOn(UserManagementController.class).getAllUsers()).withSelfRel();
         faultResource.add(link);
 
         return ResponseEntity.ok(faultResource);
@@ -77,7 +77,7 @@ public class VersioningModelController {
         List<Fault> faults = faultService.getAllFaults();
         List<FaultV0> faultV0s = mappingService.map(faults, FaultV0.class);
         Resources<FaultV0> faultResource = new Resources<>(faultV0s);
-        Link link = linkTo(methodOn(UserController.class).getAllUsers()).withSelfRel();
+        Link link = linkTo(methodOn(UserManagementController.class).getAllUsers()).withSelfRel();
         faultResource.add(link);
 
         return ResponseEntity.ok(faultResource);
@@ -92,7 +92,7 @@ public class VersioningModelController {
     public ResponseEntity<Resource<Fault>> getFault(@PathVariable String faultName) {
         Fault fault = faultService.getFaultByName(faultName);
         Resource<Fault> faultResource = new Resource<>(fault);
-        Link link = linkTo(methodOn(UserController.class).getAllUsers()).withSelfRel();
+        Link link = linkTo(methodOn(UserManagementController.class).getAllUsers()).withSelfRel();
         faultResource.add(link);
 
         return ResponseEntity.ok(faultResource);
@@ -104,7 +104,7 @@ public class VersioningModelController {
         Fault fault = faultService.getFaultByName(faultName);
         FaultV0 faultV0 = mappingService.map(fault, FaultV0.class);
         Resource<FaultV0> faultResource = new Resource<>(faultV0);
-        Link link = linkTo(methodOn(UserController.class).getAllUsers()).withSelfRel();
+        Link link = linkTo(methodOn(UserManagementController.class).getAllUsers()).withSelfRel();
         faultResource.add(link);
 
         return ResponseEntity.ok(faultResource);

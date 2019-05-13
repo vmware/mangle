@@ -11,47 +11,61 @@
 
 package com.vmware.mangle.services.config;
 
+import java.util.List;
+
 import javax.validation.constraints.NotEmpty;
 
 import io.micrometer.wavefront.WavefrontConfig;
-import lombok.Data;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+
+import com.vmware.mangle.cassandra.model.metricprovider.MetricProviderSpec;
+import com.vmware.mangle.cassandra.model.metricprovider.WaveFrontConnectionProperties;
+import com.vmware.mangle.model.enums.MetricProviderType;
+import com.vmware.mangle.services.repository.MetricProviderRepository;
 
 /**
  * Configuration class for Mangle Wavefront
+ *
  * @author ashrimali
  */
 @Configuration
-@Data
 @NotEmpty
 public class MangleWavefrontConfig implements WavefrontConfig {
-    private String uri = "";
-    private String apiToken = "";
-    private String prefix = "";
-    private String source = "";
 
-    @Override
-    public String uri() {
-        return getUri();
-    }
-
-    @Override
-    public String apiToken() {
-        return getApiToken();
-    }
+    @Autowired
+    private MetricProviderRepository metricProviderRepository;
 
     @Override
     public String get(String key) {
+        List<MetricProviderSpec> wf =
+                this.metricProviderRepository.findByMetricProviderType(MetricProviderType.WAVEFRONT);
+        if (!wf.isEmpty()) {
+            WaveFrontConnectionProperties waveFrontConnectionProperties = wf.get(0).getWaveFrontConnectionProperties();
+
+            switch (key) {
+            case "wavefront.uri":
+                return waveFrontConnectionProperties.getWavefrontInstance();
+            case "wavefront.apiToken":
+                return waveFrontConnectionProperties.getWavefrontAPIToken();
+            case "wavefront.source":
+                return waveFrontConnectionProperties.getSource();
+            default:
+                break;
+            }
+        } else {
+            switch (key) {
+            case "wavefront.uri":
+                return String.valueOf("");
+            case "wavefront.apiToken":
+                return String.valueOf("DummyToken");
+            case "wavefront.source":
+                return String.valueOf("");
+            default:
+                break;
+            }
+        }
         return null;
     }
 
-    @Override
-    public String prefix() {
-        return getPrefix();
-    }
-
-    @Override
-    public String source() {
-        return getSource();
-    }
 }

@@ -13,11 +13,15 @@ package com.vmware.mangle.cassandra.model.faults.specs;
 
 import java.io.Serializable;
 
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import com.vmware.mangle.cassandra.model.tasks.DockerSpecificArguments;
 import com.vmware.mangle.cassandra.model.tasks.K8SSpecificArguments;
@@ -29,6 +33,7 @@ import com.vmware.mangle.services.enums.AgentFaultName;
  *         Api payload specification for Disk specific faults
  */
 @Data
+@ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 @JsonIgnoreProperties({ "timeoutinMilliseconds", "k8sArguments", "dockerArguments" })
 @SuppressWarnings("squid:MaximumInheritanceDepth")
@@ -41,17 +46,20 @@ public class DiskFUSEFaultSpec extends CommandExecutionFaultSpec implements Seri
     }
 
     @ApiModelProperty(value = "Latency time in Milliseconds, if Diskfaulttype value specified is disklatency ")
-    private String diskLatencyinMilliseconds;
+    @Min(0)
+    private Integer diskLatencyinMilliseconds;
     @ApiModelProperty(value = "Select the Diskfaulttype out of these specified ones", example = "disklatency,ioError,NOSPCError,QUOTAExceed,randomError")
     private String diskFaultType;
     @ApiModelProperty(value = "The directory of the charybdefs where the pythonclient for the invocation of fault is to be copied  ", example = "/root/disklatency/charybdefs/")
     private String diskFUSEFaultDirectory;
     @ApiModelProperty(value = "socketPort of the Remote destination VM from which the python client gets connected", example = "9090")
-    private String socketPort;
+    @Min(0)
+    @Max(65535)
+    private Integer socketPort;
 
     @JsonIgnore
     @Override
-    public void setTimeoutInMilliseconds(String timeoutinMilliseconds) {
+    public void setTimeoutInMilliseconds(Integer timeoutinMilliseconds) {
         super.setTimeoutInMilliseconds(timeoutinMilliseconds);
     }
 

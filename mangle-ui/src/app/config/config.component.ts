@@ -1,9 +1,8 @@
-import { Component, OnInit, NgZone } from '@angular/core';
-import { AuthService } from '../auth/auth.service';
-import { SettingService } from '../setting/setting.service';
+import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ConfigService } from './config.service';
 import { ClrLoadingState } from '@clr/angular';
+import { MessageConstants } from '../common/message.constants';
 
 @Component({
   selector: 'app-config',
@@ -15,11 +14,11 @@ export class ConfigComponent implements OnInit {
   public errorFlag = false;
   public alertMessage: string;
   public submitBtnState: ClrLoadingState = ClrLoadingState.DEFAULT;
-  public username: string = "admin@mangle.local";
+  public name: string = "admin@mangle.local";
   public oldPassword: string;
-  public userFormData: any = { "username": this.username, "oldPassword": null, "password": null, "rePassword": null };
+  public userFormData: any = { "name": this.name, "oldPassword": null, "password": null, "rePassword": null };
 
-  constructor(private authService: AuthService, private settingService: SettingService, private configService: ConfigService, private router: Router, private ngZone: NgZone) { }
+  constructor(private configService: ConfigService, private router: Router) { }
 
   ngOnInit() {
   }
@@ -28,37 +27,32 @@ export class ConfigComponent implements OnInit {
     this.errorFlag = false;
     this.submitBtnState = ClrLoadingState.LOADING;
     if (userFormValue.password != userFormValue.rePassword) {
-      this.alertMessage = "Retype password mismatch, Please try again.";
+      this.alertMessage = MessageConstants.PASSWORD_MISMATCH;
       this.errorFlag = true;
       this.submitBtnState = ClrLoadingState.DEFAULT;
     } else {
       this.oldPassword = userFormValue.oldPassword;
       delete userFormValue["oldPassword"];
       delete userFormValue["rePassword"];
-      this.settingService.updateLocalUserConfig(userFormValue, this.oldPassword).subscribe(
+      userFormValue.roleNames = ["ROLE_ADMIN"];
+      this.configService.updateLocalUserConfig(userFormValue, this.oldPassword).subscribe(
         res => {
           if (res.status === 200) {
-            this.setConfigStatus();
+            this.router.navigateByUrl('login');
             this.submitBtnState = ClrLoadingState.DEFAULT;
-            this.authService.logout();
-            this.ngZone.run(() => this.router.navigateByUrl('login')).then();
           } else {
-            this.alertMessage = 'Password was not updated.';
+            this.alertMessage = MessageConstants.PASSWORD_UPDATE_FAILED;
             this.errorFlag = true;
             this.submitBtnState = ClrLoadingState.DEFAULT;
           }
         }, err => {
           if (err.status == 401) {
-            this.alertMessage = 'Password was not updated, Please enter the correct old password.';
+            this.alertMessage = MessageConstants.OLD_PASSWORD_WRONG;
             this.errorFlag = true;
             this.submitBtnState = ClrLoadingState.DEFAULT;
           }
         });
     }
-  }
-
-  public setConfigStatus() {
-    return this.configService.setConfigStatus().subscribe();
   }
 
 }

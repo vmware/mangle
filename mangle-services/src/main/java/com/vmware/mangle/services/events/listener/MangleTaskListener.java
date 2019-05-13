@@ -58,7 +58,7 @@ public class MangleTaskListener {
     public void handleTaskModifiedEvent(TaskModifiedEvent event) {
         Task task = event.getTask();
         String taskId = task.getId();
-        log.debug("Listening to the event trigger by the modification of task status of task {} to {}" + taskId,
+        log.debug("Listening to the event trigger by the modification of task status of task {} to {}", taskId,
                 task.getTaskStatus());
         if (!task.isScheduledTask()) {
             if (task.getTaskStatus() == TaskStatus.FAILED || task.getTaskStatus() == TaskStatus.COMPLETED) {
@@ -73,7 +73,7 @@ public class MangleTaskListener {
     public void handleTaskCreatedEvent(TaskCreatedEvent event) {
         Task task = event.getTask();
         String taskId = task.getId();
-        log.debug("Listening to the event trigger by the Creation of task status of task {} to {}" + taskId,
+        log.debug("Listening to the event trigger by the Creation of task status of task {} to {}", taskId,
                 task.getTaskStatus());
         mapService.addTaskToCache(taskId, task.getTaskStatus().name());
     }
@@ -82,7 +82,7 @@ public class MangleTaskListener {
     public void handleTaskSubstageEvent(TaskSubstageEvent event) {
         Task task = event.getTask();
         String taskId = task.getId();
-        log.debug("Listening to the event trigger by the modification of task status of task {} to {}" + taskId,
+        log.debug("Listening to the event trigger by the modification of task status of task {} to {}", taskId,
                 task.getTaskStatus());
         try {
             taskService.addOrUpdateTask(task);
@@ -100,15 +100,15 @@ public class MangleTaskListener {
             PopulateFaultEventData populateFaultEventData = new PopulateFaultEventData(task);
             FaultEventSpec faultEventInfo = populateFaultEventData.getFaultEventSpec();
             if (faultEventInfo == null) {
-                log.error(" We don't have the valid data to send the event. Can't send the event");
+                log.error("Can not find valid data to send the event.");
                 return;
             }
             log.debug("TaskCompleted Event is generated and here are the details: " + faultEventInfo.toString());
             Notifier activeNotifier = metricProvider.getActiveNotificationProvider();
             if (activeNotifier == null) {
-                log.error(
-                        "We can't find an active metric provider. Please check if the metric providers are created and marked as Active");
-                log.error("Cannot send the events to Metric Provider");
+                log.warn(
+                        "Cannot find an active metric provider. Please check if the metric providers are created and marked as Active");
+                log.warn("Cannot send events to Metric Provider");
                 return;
             }
             activeNotifier.sendEvent(faultEventInfo);

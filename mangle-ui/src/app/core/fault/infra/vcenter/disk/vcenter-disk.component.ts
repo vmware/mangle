@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { CommonFault } from '../../../common.fault';
 import { FaultService } from '../../../fault.service';
 import { EndpointService } from 'src/app/core/endpoint/endpoint.service';
+import { ClrLoadingState } from '@clr/angular';
 
 @Component({
   selector: 'app-vcenter-disk',
@@ -11,43 +11,32 @@ import { EndpointService } from 'src/app/core/endpoint/endpoint.service';
 })
 export class VcenterDiskComponent implements OnInit {
 
-  public commonFault: CommonFault = new CommonFault();
-
   public errorFlag = false;
   public successFlag = false;
   public alertMessage: string;
 
-  public clockRanges: any;
-  public hourRanges: any;
-  public dateRages: any;
-  public dayRanges: any;
-  public cronType: string = "Minutes";
-
-  public disableSchedule: boolean = true;
-  public disableRun: boolean = false;
-
   public endpoints: any = [];
-  public diskFaultTypes: any = ["DISCONNECT_DISK", "CONNECT_DISK"];
+  public diskFaultTypes: any = ["DISCONNECT_DISK"];
+
+  public runBtnState: ClrLoadingState = ClrLoadingState.DEFAULT;
+
+  public tagsData: any = {};
 
   public faultFormData: any = {
     "endpointName": null,
     "fault": null,
     "vmDiskId": null,
-    "vmName": null,
-    "schedule": {
-      "cronExpression": null
-    }
+    "vmName": null
   };
+
+  public searchedEndpoints: any = [];
 
   constructor(private faultService: FaultService, private endpointService: EndpointService, private router: Router) {
 
   }
 
   ngOnInit() {
-    this.clockRanges = this.commonFault.getClockRanges();
-    this.hourRanges = this.commonFault.getHourRanges();
-    this.dateRages = this.commonFault.getDateRages();
-    this.dayRanges = this.commonFault.getDayRanges();
+    this.errorFlag = false;
     this.endpointService.getAllEndpoints().subscribe(
       res => {
         if (res.code) {
@@ -55,36 +44,64 @@ export class VcenterDiskComponent implements OnInit {
         } else {
           this.endpoints = res;
         }
+      }, err => {
+        this.endpoints = [];
+        this.alertMessage = err.error.description;
+        this.errorFlag = true;
       });
   }
 
-  public composeSchedule(scheduleFormVal) {
-    scheduleFormVal.cronType = this.cronType;
-    this.faultFormData.schedule.cronExpression = this.commonFault.getCronExpression(scheduleFormVal);
-    this.setSubmitButton();
+  public searchEndpoint(searchKeyWord) {
+    this.searchedEndpoints = [];
+    for (var i = 0; i < this.endpoints.length; i++) {
+      if (this.endpoints[i].name.indexOf(searchKeyWord) > -1) {
+        this.searchedEndpoints.push(this.endpoints[i]);
+      }
+    }
   }
 
-  setSubmitButton() {
-    if (this.faultFormData.schedule.cronExpression == "" || this.faultFormData.schedule.cronExpression == null) {
-      this.disableSchedule = true;
-      this.disableRun = false;
-    } else {
-      this.disableSchedule = false;
-      this.disableRun = true;
+  public setEndpointVal(endpointVal) {
+    this.faultFormData.endpointName = endpointVal;
+  }
+
+  public updateTags(tagsVal) {
+    this.tagsData[tagsVal.tagKey] = tagsVal.tagValue;
+  }
+
+  public removeTag(tagKeyToRemove) {
+    delete this.tagsData[tagKeyToRemove];
+  }
+
+  public displayEndpointFields(endpointNameVal) {
+    for (var i = 0; i < this.endpoints.length; i++) {
+      if (endpointNameVal == this.endpoints[i].name) {
+        if (this.endpoints[i].tags != null) {
+          this.tagsData = this.endpoints[i].tags;
+        } else {
+          this.tagsData = {};
+        }
+      }
     }
   }
 
   public executeVcenterDiskFault(faultData) {
+    this.runBtnState = ClrLoadingState.LOADING;
     this.errorFlag = false;
     this.successFlag = false;
+    if (this.tagsData != {}) {
+      faultData.tags = this.tagsData;
+    }
     this.faultService.executeVcenterDiskFault(faultData).subscribe(
       res => {
-        this.alertMessage = 'Fault triggred successfully!';
-        this.successFlag = true;
+        this.tagsData = {};
         this.router.navigateByUrl('core/requests');
       }, err => {
         this.alertMessage = err.error.description;
         this.errorFlag = true;
+        if (this.alertMessage === undefined) {
+          this.alertMessage = err.error.error;
+        }
+        this.runBtnState = ClrLoadingState.DEFAULT;
       });
   }
 

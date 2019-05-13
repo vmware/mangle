@@ -23,19 +23,20 @@ import com.vmware.mangle.cassandra.model.tasks.SupportScriptInfo;
 import com.vmware.mangle.cassandra.model.tasks.Task;
 import com.vmware.mangle.cassandra.model.tasks.TaskType;
 import com.vmware.mangle.faults.plugin.helpers.k8s.K8sFaultHelper;
+import com.vmware.mangle.faults.plugin.utils.TaskDescriptionUtils;
 import com.vmware.mangle.task.framework.helpers.AbstractCommandExecutionTaskHelper;
 import com.vmware.mangle.utils.ICommandExecutor;
 import com.vmware.mangle.utils.exceptions.MangleException;
 
 /**
- * Implementation of AbstractRemoteCommandExecutionTaskHelper to Support Injection of K8S specific faults
+ * Implementation of AbstractRemoteCommandExecutionTaskHelper to Support Injection of K8S specific
+ * faults
  *
  * @author bkaranam
  */
 @Extension(ordinal = 1)
 public class K8sSpecificFaultTaskHelper<T extends K8SFaultSpec> extends AbstractCommandExecutionTaskHelper<T> {
 
-    @Autowired
     private K8sFaultHelper k8sFaultHelper;
 
     @Override
@@ -47,6 +48,11 @@ public class K8sSpecificFaultTaskHelper<T extends K8SFaultSpec> extends Abstract
     @Override
     public Task<T> init(T k8sFaultSpec) {
         return init(k8sFaultSpec, null);
+    }
+
+    @Autowired
+    public void setK8sFaultHelper(K8sFaultHelper k8sFaultHelper) {
+        this.k8sFaultHelper = k8sFaultHelper;
     }
 
     @Override
@@ -75,8 +81,7 @@ public class K8sSpecificFaultTaskHelper<T extends K8SFaultSpec> extends Abstract
 
     @Override
     public String getDescription(Task<T> task) {
-        return "Executing Fault: " + task.getTaskData().getFaultName() + " on K8Sendpoint: "
-                + task.getTaskData().getEndpointName();
+        return TaskDescriptionUtils.getDescription(task);
     }
 
     @Override

@@ -107,7 +107,14 @@ public class FaultTaskFactory {
 
     public Task<TaskSpec> getRemediationTask(Task<TaskSpec> injectedTask, String taskId) throws MangleException {
         checkPreConditionOnRemediationRequest(injectedTask);
-        FaultSpec faultSpec = (FaultSpec) injectedTask.getTaskData();
+        FaultSpec faultSpec;
+
+        if (null != injectedTask.getTaskData() && injectedTask.getTaskData() instanceof K8SFaultTriggerSpec) {
+            faultSpec = ((K8SFaultTriggerSpec) injectedTask.getTaskData()).getFaultSpec();
+        } else {
+            faultSpec = (FaultSpec) injectedTask.getTaskData();
+        }
+
         return getTask(faultSpec, taskId);
     }
 

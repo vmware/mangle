@@ -12,6 +12,7 @@
 package com.vmware.mangle.unittest.services.service;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyList;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doNothing;
@@ -19,6 +20,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -35,6 +37,7 @@ import com.vmware.mangle.cassandra.model.security.ADAuthProviderDto;
 import com.vmware.mangle.services.ADAuthProviderService;
 import com.vmware.mangle.services.mockdata.AuthProviderMockData;
 import com.vmware.mangle.services.repository.ADAuthProviderRepository;
+import com.vmware.mangle.utils.exceptions.MangleException;
 
 /**
  * Testing AuthProviderService class
@@ -109,17 +112,21 @@ public class ADAuthProviderServiceTest extends PowerMockTestCase {
     }
 
     /**
-     * Test method for {@link ADAuthProviderService#removeADAuthProvider(String)}
+     * Test method for {@link ADAuthProviderService#removeADAuthProvider(List)}
      */
     @Test
-    public void removeADAuthProviderTest() {
+    public void removeADAuthProviderTest() throws MangleException {
         ADAuthProviderDto authObj = data.getADAuthProviderDto();
         log.info("Executing test: getAllADAuthProviderTest on ADAuthProviderService#removeADAuthProvider");
 
+        List<String> ids = new ArrayList<String>();
+        ids.add(authObj.getId());
+
+        when(repository.findByAdDomains(Arrays.asList(authObj.getId()))).thenReturn(Arrays.asList(authObj));
         doNothing().when(repository).deleteByAdDomain(any());
 
-        service.removeADAuthProvider(authObj.getId());
-        verify(repository, atLeastOnce()).deleteByAdDomain(any());
+        service.removeADAuthProvider(ids);
+        verify(repository, atLeastOnce()).deleteByAdDomainIn(anyList());
     }
 
     /**

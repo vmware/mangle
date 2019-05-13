@@ -12,24 +12,27 @@
 package com.vmware.mangle.unittest.services.service.deletionutils;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyList;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
-import java.util.UUID;
+import java.util.Set;
 
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import com.vmware.mangle.model.enums.OperationStatus;
+import com.vmware.mangle.cassandra.model.scheduler.SchedulerSpec;
 import com.vmware.mangle.services.deletionutils.SchedulerDeletionService;
+import com.vmware.mangle.services.mockdata.SchedulerControllerMockData;
 import com.vmware.mangle.services.repository.SchedulerRepository;
+import com.vmware.mangle.utils.exceptions.MangleException;
 
 /**
  *
@@ -42,6 +45,7 @@ public class SchedulerDeletionServiceTest {
     private SchedulerRepository schedulerRepository;
 
     private SchedulerDeletionService schedulerDeletionService;
+    private SchedulerControllerMockData mockData = new SchedulerControllerMockData();
 
     @BeforeMethod
     public void initMocks() {
@@ -50,23 +54,24 @@ public class SchedulerDeletionServiceTest {
     }
 
     @Test
-    public void testDeleteSchedulerDetailsByJobIds() {
-        String taskId = UUID.randomUUID().toString();
-        List<String> tasks = new ArrayList<>(Arrays.asList(taskId));
-        doNothing().when(schedulerRepository).deleteByIdIn(any());
+    public void testDeleteSchedulerDetailsByJobIds() throws MangleException {
+        List<String> tasks = new ArrayList<>();
+        Set<SchedulerSpec> schedulerSpecSet = new HashSet<>();
+        schedulerSpecSet.add(mockData.getMangleSchedulerSpec());
+        tasks.add(mockData.getMangleSchedulerSpec().getId());
 
-        OperationStatus status = schedulerDeletionService.deleteSchedulerDetailsByJobIds(tasks);
-        Assert.assertEquals(status, OperationStatus.SUCCESS);
+        doNothing().when(schedulerRepository).deleteByIdIn(any());
+        when(schedulerRepository.findByIds(anyList())).thenReturn(schedulerSpecSet);
+        schedulerDeletionService.deleteSchedulerDetailsByJobIds(tasks);
         verify(schedulerRepository, times(1)).deleteByIdIn(any());
     }
 
     @Test
-    public void testDeleteSchedulerDetailsByJobIdsEmptyTasks() {
+    public void testDeleteSchedulerDetailsByJobIdsEmptyTasks() throws MangleException {
         List<String> tasks = new ArrayList<>();
         doNothing().when(schedulerRepository).deleteByIdIn(any());
 
-        OperationStatus status = schedulerDeletionService.deleteSchedulerDetailsByJobIds(tasks);
-        Assert.assertEquals(status, OperationStatus.FAILED);
+        schedulerDeletionService.deleteSchedulerDetailsByJobIds(tasks);
         verify(schedulerRepository, times(0)).deleteByIdIn(any());
     }
 }

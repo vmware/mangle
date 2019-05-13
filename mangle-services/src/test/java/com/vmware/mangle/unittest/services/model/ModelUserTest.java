@@ -13,6 +13,7 @@ package com.vmware.mangle.unittest.services.model;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 import org.testng.Assert;
 import org.testng.annotations.BeforeTest;
@@ -29,6 +30,7 @@ import com.vmware.mangle.services.mockdata.ModelMockData;
  */
 public class ModelUserTest {
     private String username = "dummy_user";
+    private String pwd = UUID.randomUUID().toString();
 
     private ModelMockData modelMockData;
 
@@ -39,7 +41,7 @@ public class ModelUserTest {
 
     @Test
     public void testUserCreationSuccessfull() {
-        User user = new User(username, modelMockData.getMockRoles());
+        User user = new User(username, pwd, modelMockData.getMockRoles());
         Assert.assertEquals(2, user.getRoles().size());
         Role role = new Role();
         role.setName("ROLE_DUMMY");

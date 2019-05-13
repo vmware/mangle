@@ -14,13 +14,18 @@ package com.vmware.mangle.services;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import com.vmware.mangle.cassandra.model.security.ADAuthProviderDto;
 import com.vmware.mangle.services.repository.ADAuthProviderRepository;
+import com.vmware.mangle.utils.constants.ErrorConstants;
+import com.vmware.mangle.utils.exceptions.MangleException;
+import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
 /**
  * Acts as a wrapper over mongodb repository, and provide some default operations for Active
@@ -38,7 +43,7 @@ public class ADAuthProviderService {
     /**
      * returns the AD authentication provider matching the given adDomain
      *
-     * @param id
+     * @param adDomain
      * @return
      */
     public ADAuthProviderDto getADAuthProviderByAdDomain(String adDomain) {
@@ -84,10 +89,18 @@ public class ADAuthProviderService {
     /**
      * Deletes the instance of authentication provider whose id matches the input authProviderId
      *
-     * @param authProviderId
+     * @param authProviderIds
      */
-    public void removeADAuthProvider(String authProviderId) {
-        adAuthProviderRepository.deleteByAdDomain(authProviderId);
+    public void removeADAuthProvider(List<String> authProviderIds) throws MangleException {
+        List<ADAuthProviderDto> persistedAdProviders = adAuthProviderRepository.findByAdDomains(authProviderIds);
+        List<String> persistedAdProviderNames =
+                persistedAdProviders.stream().map(ADAuthProviderDto::getAdDomain).collect(Collectors.toList());
+        authProviderIds.removeAll(persistedAdProviderNames);
+        if (!CollectionUtils.isEmpty(authProviderIds)) {
+            throw new MangleException(ErrorCode.NO_RECORD_FOUND, ErrorConstants.AUTH_PROVIDER,
+                    authProviderIds.toString());
+        }
+        adAuthProviderRepository.deleteByAdDomainIn(persistedAdProviderNames);
     }
 
     /**

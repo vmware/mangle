@@ -31,7 +31,8 @@ public class AuthProviderMockData {
     private String id2;
     private String adUrl;
     private String newAdUrl;
-    private String adDomain;
+    private String adDomain1;
+    private String adDomain2;
 
     public AuthProviderMockData() {
         Properties properties = ReadProperty.readProperty(Constants.MOCKDATA_FILE);
@@ -40,21 +41,22 @@ public class AuthProviderMockData {
         this.id2 = UUID.randomUUID().toString();
         this.adUrl = properties.getProperty("adUrl1");
         this.newAdUrl = properties.getProperty("adUrl2");
-        this.adDomain = properties.getProperty("adDomain1");
+        this.adDomain1 = properties.getProperty("adDomain1");
+        this.adDomain2 = properties.getProperty("adDomain1");
     }
 
     public ADAuthProviderDto getADAuthProviderDto() {
         ADAuthProviderDto adAuthProviderDto = new ADAuthProviderDto();
-        adAuthProviderDto.setId(id1);
-        adAuthProviderDto.setAdDomain(adDomain);
+        adAuthProviderDto.setId(adDomain1);
+        adAuthProviderDto.setAdDomain(adDomain1);
         adAuthProviderDto.setAdUrl(adUrl);
         return adAuthProviderDto;
     }
 
     public ADAuthProviderDto getNewADAuthProviderDto() {
         ADAuthProviderDto adAuthProviderDto = new ADAuthProviderDto();
-        adAuthProviderDto.setId(id2);
-        adAuthProviderDto.setAdDomain(adDomain);
+        adAuthProviderDto.setId(adDomain2);
+        adAuthProviderDto.setAdDomain(adDomain2);
         adAuthProviderDto.setAdUrl(newAdUrl);
         return adAuthProviderDto;
     }

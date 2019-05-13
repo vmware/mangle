@@ -25,8 +25,8 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.vmware.mangle.metric.reporter.constants.MetricReporterTestConstants;
 import com.vmware.mangle.metric.reporter.helpers.metric.MetricsHelper;
+import com.vmware.mangle.unittest.metric.constants.MetricReporterTestConstants;
 
 /**
  * Unit Test Case for MetricsHelper.

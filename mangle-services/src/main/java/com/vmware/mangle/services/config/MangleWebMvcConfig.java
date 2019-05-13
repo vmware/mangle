@@ -53,12 +53,11 @@ public class MangleWebMvcConfig extends WebMvcConfigurationSupport {
     }
 
     private ApiInfo apiInfo() {
-        Contact contact = new Contact("ESO - Fault Injection Team",
-                "https://confluence.eng.vmware.com/display/ES/Fault+Injection", "es-blr-faultinjection@vmware.com");
+        Contact contact = new Contact("Mangle Team", "https://github.com/vmware/mangle", "mangle@vmware.com");
         return new ApiInfoBuilder().title("Mangle API Documentation")
                 .description("The API you'll ever need to work with Mangle").version("V1.0").contact(contact)
-                .license("Copyright © 2018 VMware, Inc. All rights reserved").licenseUrl("http://www.vmware.com/in")
-                .build();
+                .license("Copyright (c) 2016-2019 VMware, Inc. All Rights Reserved")
+                .licenseUrl("https://github.com/vmware/mangle/blob/master/LICENSE").build();
 
     }
 

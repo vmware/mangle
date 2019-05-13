@@ -36,7 +36,7 @@ public class CPUFault extends AbstractFault {
     public Map<String, String> getFaultSpecificArgs() {
         CpuFaultSpec localFaultSpec = (CpuFaultSpec) faultSpec;
         Map<String, String> specificArgs = new HashMap<>();
-        specificArgs.put(LOAD_ARG, localFaultSpec.getCpuLoad());
+        specificArgs.put(LOAD_ARG, String.valueOf(localFaultSpec.getCpuLoad()));
         return specificArgs;
     }
 }

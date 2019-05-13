@@ -53,8 +53,8 @@ public class PODClient {
 
     public List<String> getPods() {
         log.info("Getting all pod names as list");
-        return Arrays.asList(CommandUtils.runCommand(kubectl + GET_PODS_JSONPATH + GET_METADATA_NAME)
-                .getCommandOutput().split("\\s+"));
+        return Arrays.asList(CommandUtils.runCommand(kubectl + GET_PODS_JSONPATH + GET_METADATA_NAME).getCommandOutput()
+                .split("\\s+"));
     }
 
     public String getPod(String podName) {
@@ -80,7 +80,8 @@ public class PODClient {
             }
             CommonUtils.delayInSeconds(10);
         }
-        return StringUtils.isBlank(output) ? Arrays.asList() : Arrays.asList(output.trim().split("\\s+"));
+        return StringUtils.isBlank(output) || output.contains("error") ? Arrays.asList()
+                : Arrays.asList(output.trim().split("\\s+"));
     }
 
     /**
@@ -91,9 +92,8 @@ public class PODClient {
      */
     public List<String> getPodIpsWithLabels(String labels) {
         log.info("Getting all pod ips labeled as:" + labels);
-        String output =
-                CommandUtils.runCommand(kubectl + String.format(GET_ALLPOD_IPS_USING_LABELS, labels))
-                        .getCommandOutput();
+        String output = CommandUtils.runCommand(kubectl + String.format(GET_ALLPOD_IPS_USING_LABELS, labels))
+                .getCommandOutput();
         return StringUtils.isBlank(output) ? Arrays.asList() : Arrays.asList(output.trim().split("\\s+"));
     }
 
@@ -105,9 +105,8 @@ public class PODClient {
      */
     public List<String> getPodNodeNamesWithLabels(String labels) {
         log.info("Getting all pod Node Names labeled as:" + labels);
-        String output =
-                CommandUtils.runCommand(kubectl + String.format(GET_ALLPOD_NODES_USING_LABELS, labels))
-                        .getCommandOutput();
+        String output = CommandUtils.runCommand(kubectl + String.format(GET_ALLPOD_NODES_USING_LABELS, labels))
+                .getCommandOutput();
         return StringUtils.isBlank(output) ? Arrays.asList() : Arrays.asList(output.trim().split("\\s+"));
     }
 
@@ -118,8 +117,7 @@ public class PODClient {
      */
     public Map<String, String> getPodandNodeMap() {
         log.info("Creating map of Pod and Node of kubernetes cluster");
-        String[] commandOutput =
-                CommandUtils.runCommand(kubectl + GET_PODNODE_MAP).getCommandOutput().split("\\s+");
+        String[] commandOutput = CommandUtils.runCommand(kubectl + GET_PODNODE_MAP).getCommandOutput().split("\\s+");
         Map<String, String> nodeMap = new HashMap<>();
         for (String mapString : commandOutput) {
             String[] mapStrings = mapString.split(":");
@@ -178,8 +176,8 @@ public class PODClient {
         if (null == podList || podList.isEmpty()) {
             return false;
         }
-        String output = CommandUtils.runCommand(kubectl + String.format(RESTART_PODS_WITH_LABELS, label))
-                .getCommandOutput();
+        String output =
+                CommandUtils.runCommand(kubectl + String.format(RESTART_PODS_WITH_LABELS, label)).getCommandOutput();
         if (!(output.contains(POD_DELETED_SUCCESS_MESSAGE))) {
             return false;
         }
@@ -204,8 +202,7 @@ public class PODClient {
         if (null == output || output.contains("not found")) {
             return false;
         }
-        output = CommandUtils.runCommand(kubectl + String.format(RESTART_POD_WITH_NAME, podName))
-                .getCommandOutput();
+        output = CommandUtils.runCommand(kubectl + String.format(RESTART_POD_WITH_NAME, podName)).getCommandOutput();
         if (!(output.contains(POD_DELETED_SUCCESS_MESSAGE))) {
             return false;
         }
@@ -236,9 +233,8 @@ public class PODClient {
         if (null == getPodCommandOutput || getPodCommandOutput.contains("not found")) {
             return "";
         }
-        CommandExecutionResult memoryLimitCommandOutput = CommandUtils.runCommand(
-                kubectl + " get pod " + podName + " -o=jsonpath='{.spec.containers[?(@.name==\"" + container
-                        + "\")].resources.limits.memory}'");
+        CommandExecutionResult memoryLimitCommandOutput = CommandUtils.runCommand(kubectl + " get pod " + podName
+                + " -o=jsonpath='{.spec.containers[?(@.name==\"" + container + "\")].resources.limits.memory}'");
         log.info("Memory Limit for container " + container + " is " + memoryLimitCommandOutput);
         return memoryLimitCommandOutput.getCommandOutput();
     }

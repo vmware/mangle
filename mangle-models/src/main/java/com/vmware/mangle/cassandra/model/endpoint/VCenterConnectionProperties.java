@@ -13,13 +13,15 @@ package com.vmware.mangle.cassandra.model.endpoint;
 
 import java.io.Serializable;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
+
 import com.datastax.driver.core.DataType;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import org.springframework.data.cassandra.core.mapping.CassandraType;
 import org.springframework.data.cassandra.core.mapping.UserDefinedType;
-
 
 /**
  * VCenter Connection Properties model class
@@ -33,10 +35,12 @@ public class VCenterConnectionProperties implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @ApiModelProperty(value = "VCenter Server IP or Hostname")
+    @NotEmpty
     private String hostname;
 
     @CassandraType(type = DataType.Name.UDT, userTypeName = "vCenterAdapterProperties")
     @ApiModelProperty(value = "VCenter adapter URL that will delegate fault injection to vc(\"http://IP:PORT\")")
+    @Valid
     private VCenterAdapterProperties vCenterAdapterProperties;
 
 }

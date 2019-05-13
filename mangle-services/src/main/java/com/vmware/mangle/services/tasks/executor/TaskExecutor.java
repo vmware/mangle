@@ -32,6 +32,7 @@ import org.springframework.util.CollectionUtils;
 
 import com.vmware.mangle.cassandra.model.faults.specs.MultiTaskSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.TaskSpec;
+import com.vmware.mangle.cassandra.model.tasks.FaultTask;
 import com.vmware.mangle.cassandra.model.tasks.FaultTriggeringTask;
 import com.vmware.mangle.cassandra.model.tasks.RemediableTask;
 import com.vmware.mangle.cassandra.model.tasks.Task;
@@ -47,11 +48,14 @@ import com.vmware.mangle.services.TaskService;
 import com.vmware.mangle.services.enums.MangleNodeStatus;
 import com.vmware.mangle.services.events.task.TaskCompletedEvent;
 import com.vmware.mangle.services.events.task.TaskModifiedEvent;
+import com.vmware.mangle.services.helpers.FaultInjectionHelper;
 import com.vmware.mangle.services.scheduler.Scheduler;
 import com.vmware.mangle.task.framework.helpers.AbstractTaskHelper;
 import com.vmware.mangle.task.framework.skeletons.ITaskHelper;
 import com.vmware.mangle.task.framework.skeletons.TaskRunner;
 import com.vmware.mangle.utils.CommonUtils;
+import com.vmware.mangle.utils.constants.Constants;
+import com.vmware.mangle.utils.constants.KnownFailureConstants;
 import com.vmware.mangle.utils.constants.URLConstants;
 import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.MangleTaskException;
@@ -97,6 +101,10 @@ public class TaskExecutor<T extends Task<? extends TaskSpec>> implements TaskRun
     @Autowired
     private PluginService pluginService;
 
+    @Autowired
+    private FaultInjectionHelper faultInjectionHelper;
+
+    private String node;
 
     /**
      * Constructor.
@@ -108,7 +116,7 @@ public class TaskExecutor<T extends Task<? extends TaskSpec>> implements TaskRun
 
     public Task<? extends TaskSpec> submitTask(final T task) throws MangleException {
         Object taskData = task.getTaskData();
-        if (TaskType.INJECTION.equals(task.getTaskType())
+        if ((TaskType.INJECTION.equals(task.getTaskType()) || task.getTaskName().startsWith(Constants.NODESTATUS_TASK_NAME))
                 && TaskSpec.class.isAssignableFrom(task.getTaskData().getClass())
                 && null != ((TaskSpec) taskData).getSchedule()) {
             return scheduleTask(task);
@@ -116,8 +124,11 @@ public class TaskExecutor<T extends Task<? extends TaskSpec>> implements TaskRun
             log.info(String.format(TaskExecutionMessages.TASK_EXECUTION_START_MESSAGE, task.getTaskName()));
             try {
                 execute(task);
-            } catch (InterruptedException | MangleException e) {
+            } catch (MangleException e) {
                 throw new MangleException(e, ErrorCode.TASK_EXECUTION_FAILED, task.getId(), task);
+            } catch (InterruptedException e) {
+                log.error(e);
+                Thread.currentThread().interrupt();
             }
             return task;
         }
@@ -188,8 +199,8 @@ public class TaskExecutor<T extends Task<? extends TaskSpec>> implements TaskRun
                 }
                 for (Object childTask : ((FaultTriggeringTask) task).getTaskObjmap().values()) {
                     try {
-                        log.info("Submitting Child Tasks for Execution...");
-                        submitTask((T) childTask);
+                        log.info("Submitting Child Task {} for Execution...", ((FaultTask) childTask).getId());
+                        faultInjectionHelper.saveTask((Task<? extends TaskSpec>) childTask);
                     } catch (MangleException e) {
                         log.error("", e);
                     }
@@ -200,6 +211,7 @@ public class TaskExecutor<T extends Task<? extends TaskSpec>> implements TaskRun
     }
 
     private void runTask(final ITaskHelper itask, T task) {
+        Thread.currentThread().setName(task.getTaskName());
         try {
             runningTasksLock.lock();
             taskStartCondition.signal();
@@ -208,6 +220,7 @@ public class TaskExecutor<T extends Task<? extends TaskSpec>> implements TaskRun
         }
         try {
             TaskTrigger trigger = task.getTriggers().peek();
+            trigger.setNode(node);
             updateTaskInfo(task, TaskStatus.IN_PROGRESS, trigger.getTaskFailureReason(), 0);
             itask.run(task);
         } catch (final MangleException e) {
@@ -216,7 +229,7 @@ public class TaskExecutor<T extends Task<? extends TaskSpec>> implements TaskRun
             log.error(TaskExecutionMessages.TASK_EXECUTION_FAILED_MESSAGE + msg, e);
             updateTaskInfo(task, TaskStatus.FAILED, msg, 100);
         } catch (final Exception e) {
-            log.error("Task execution failed. Reason: ", e);
+            log.error(TaskExecutionMessages.TASK_EXECUTION_FAILED_MESSAGE, e);
             updateTaskInfo(task, TaskStatus.FAILED, e.getMessage(), 100);
         } finally {
             complete(task);
@@ -331,7 +344,9 @@ public class TaskExecutor<T extends Task<? extends TaskSpec>> implements TaskRun
             } else {
                 updateTaskInfo(task, trigger.getTaskStatus(), trigger.getTaskFailureReason(), 100);
             }
-            if (task.getTaskType() == TaskType.REMEDIATION && trigger.getTaskStatus() == TaskStatus.COMPLETED) {
+            if (task.getTaskType() == TaskType.REMEDIATION && (trigger.getTaskStatus() == TaskStatus.COMPLETED
+                    || (trigger.getTaskStatus() == TaskStatus.FAILED && trigger.getTaskFailureReason()
+                            .contains(KnownFailureConstants.FAULT_ALREADY_REMEDIATED)))) {
                 updateRemediationFieldOfTask(task);
             }
 
@@ -401,6 +416,10 @@ public class TaskExecutor<T extends Task<? extends TaskSpec>> implements TaskRun
     private boolean validateNodeStatus(T task) {
         return !((URLConstants.getMangleNodeCurrentStatus().equals(MangleNodeStatus.PAUSE)
                 || URLConstants.getMangleNodeCurrentStatus().equals(MangleNodeStatus.MAINTENANCE_MODE))
-                && !task.getTaskName().startsWith("NodeStatusTask"));
+                && !task.getTaskName().startsWith(Constants.NODESTATUS_TASK_NAME));
+    }
+
+    public void setNode(String node) {
+        this.node = node;
     }
 }

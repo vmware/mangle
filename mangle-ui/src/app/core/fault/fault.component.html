@@ -1,28 +1,11 @@
 <div class="main-container">
 		<div class="content-container">
-			<div class="content-area">
+			<div class="content-area height-1200">
 				<router-outlet></router-outlet>
 			</div>
 			<clr-vertical-nav [clrVerticalNavCollapsible]="faultCollapsible">
 				<clr-vertical-nav-group routerLinkActive="active">
-					<clr-icon shape="application" clrVerticalNavIcon></clr-icon>Application Faults
-					<clr-vertical-nav-group-children *clrIfExpanded="true">
-						<a clrVerticalNavLink [routerLink]="['cpu']" routerLinkActive="active">CPU</a>
-						<a clrVerticalNavLink [routerLink]="['memory']" routerLinkActive="active">Memory</a>
-						<a clrVerticalNavLink><font color="#A9B6BE">File Handler</font></a>
-						<a clrVerticalNavLink><font color="#A9B6BE">Kill JVM</font></a>
-						<a clrVerticalNavLink><font color="#A9B6BE">Kill Java Thread</font></a>
-						<a clrVerticalNavLink><font color="#A9B6BE">Java Exception</font></a>
-						<a clrVerticalNavLink><font color="#A9B6BE">Mock Java Method Return</font></a>
-						<a clrVerticalNavLink><font color="#A9B6BE">Java Method Latency</font></a>
-						<a clrVerticalNavLink><font color="#A9B6BE">Spring Service Exception</font></a>
-						<a clrVerticalNavLink><font color="#A9B6BE">Spring Service Latency</font></a>
-						<a clrVerticalNavLink><font color="#A9B6BE">Segmentation Fault</font></a>
-						<a clrVerticalNavLink><font color="#A9B6BE">Denial of Service Attack</font></a>
-					</clr-vertical-nav-group-children>
-				</clr-vertical-nav-group>
-				<clr-vertical-nav-group routerLinkActive="active">
-					<clr-icon shape="cloud" clrVerticalNavIcon></clr-icon>Infra Faults
+					<clr-icon shape="cloud" clrVerticalNavIcon></clr-icon>Infrastructure Faults
 					<clr-vertical-nav-group-children *clrIfExpanded="false">
 						<a clrVerticalNavLink [routerLink]="['cpu-infra']" routerLinkActive="active">CPU</a>
 						<a clrVerticalNavLink [routerLink]="['memory-infra']" routerLinkActive="active">Memory</a>
@@ -57,14 +40,22 @@
 						<a clrVerticalNavLink><font color="#A9B6BE">DB Connection Leak</font></a>
 						<a clrVerticalNavLink><font color="#A9B6BE">DB Transaction Error</font></a>
 						<a clrVerticalNavLink><font color="#A9B6BE">DB Transaction Latency</font></a>
-						<a clrVerticalNavLink><font color="#A9B6BE">Docker Faults</font></a>
-						<a clrVerticalNavLink><font color="#A9B6BE">Delete Resource - K8S</font></a>
-						<a clrVerticalNavLink><font color="#A9B6BE">Resource Not Ready - K8S</font></a>
-						<a clrVerticalNavLink><font color="#A9B6BE">Disk Fault - vCenter</font></a>
-						<a clrVerticalNavLink><font color="#A9B6BE">NIC Fault - vCenter</font></a>
-						<a clrVerticalNavLink><font color="#A9B6BE">VM State - vCenter</font></a>
-						<a clrVerticalNavLink><font color="#A9B6BE">Xenon Service Latency</font></a>
-						<a clrVerticalNavLink><font color="#A9B6BE">Xenon Response Mocking</font></a>
+					</clr-vertical-nav-group-children>
+				</clr-vertical-nav-group>
+				<clr-vertical-nav-group routerLinkActive="active">
+					<clr-icon shape="application" clrVerticalNavIcon></clr-icon>Application Faults
+					<clr-vertical-nav-group-children *clrIfExpanded="false">
+						<a clrVerticalNavLink [routerLink]="['cpu']" routerLinkActive="active">CPU</a>
+						<a clrVerticalNavLink [routerLink]="['memory']" routerLinkActive="active">Memory</a>
+						<a clrVerticalNavLink><font color="#A9B6BE">File Handler</font></a>
+						<a clrVerticalNavLink><font color="#A9B6BE">Kill JVM</font></a>
+						<a clrVerticalNavLink><font color="#A9B6BE">Java Exception</font></a>
+						<a clrVerticalNavLink><font color="#A9B6BE">Mock Java Method Return</font></a>
+						<a clrVerticalNavLink><font color="#A9B6BE">Java Method Latency</font></a>
+						<a clrVerticalNavLink><font color="#A9B6BE">Spring Service Exception</font></a>
+						<a clrVerticalNavLink><font color="#A9B6BE">Spring Service Latency</font></a>
+						<a clrVerticalNavLink><font color="#A9B6BE">Segmentation Fault</font></a>
+						<a clrVerticalNavLink><font color="#A9B6BE">Denial of Service Attack</font></a>
 					</clr-vertical-nav-group-children>
 				</clr-vertical-nav-group>
 			</clr-vertical-nav>

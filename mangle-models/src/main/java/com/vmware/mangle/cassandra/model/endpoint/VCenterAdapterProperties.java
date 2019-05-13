@@ -13,6 +13,8 @@ package com.vmware.mangle.cassandra.model.endpoint;
 
 import java.io.Serializable;
 
+import javax.validation.constraints.NotEmpty;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import org.springframework.data.cassandra.core.mapping.UserDefinedType;
@@ -28,9 +30,16 @@ public class VCenterAdapterProperties implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    @NotEmpty
     private String vcAdapterUrl;
+    @NotEmpty
     private String username;
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @NotEmpty
     private String password;
+
+    public void setVcAdapterUrl(String vcAdapterUrl) {
+        this.vcAdapterUrl = vcAdapterUrl.endsWith("/") ? vcAdapterUrl : vcAdapterUrl + "/";
+    }
 
 }

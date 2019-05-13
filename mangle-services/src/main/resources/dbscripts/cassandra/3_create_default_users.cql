@@ -1,2 +1,2 @@
 --Changeset kumargautam:Default users
-INSERT INTO user JSON '{"id":"5bb71fc82ff9a91aa88ebee1_admin","name":"admin@mangle.local","roleNames":["ROLE_ADMIN"]}';
+INSERT INTO user JSON '{"id":"5bb71fc82ff9a91aa88ebee1_admin","name":"admin@mangle.local","password":"$2a$10$93B/8pkk.Dl0z8Cfh6EW0uQnUkpjMCjS7sUtB9R0TA2ZthFd6jdtC","roleNames":["ROLE_ADMIN"]}';

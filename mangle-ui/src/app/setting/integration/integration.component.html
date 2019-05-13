@@ -9,14 +9,16 @@
 		<clr-icon shape="plus"></clr-icon> Monitoring Tool <clr-icon shape="caret down"></clr-icon>
 	</button>
 	<clr-dropdown-menu *clrIfOpen>
-		<button type="button" (click)="wavefrontModal=true;addEdit='Add';populateWavefrontForm(wavefrontDefaultValues);"
+		<button type="button" (click)="populateWavefrontForm(wavefrontDefaultValues);wavefrontModal=true;addEdit='Add';"
 			clrDropdownItem>Wavefront</button>
-		<button type="button" (click)="datadogModal=true;addEdit='Add';populateDatadogForm(datadogDefaultValues);"
+		<button type="button" (click)="populateDatadogForm(datadogDefaultValues);datadogModal=true;addEdit='Add';"
 			clrDropdownItem>Datadog</button>
 	</clr-dropdown-menu>
 </clr-dropdown>&nbsp;&nbsp;
-<button type="button" [clrLoading]="updateBtnState" class="btn btn-sm btn-secondary"
-	(click)="updateMetricCollectionStatus(true);">Enable Metric Collection</button>
+<button class="btn btn-sm btn-link" [clrLoading]="collectionBtnState" (click)="updateMetricCollectionStatus();"
+	[disabled]="metricProviderList.length == 0">
+	<input type="radio" name="metricColl" [checked]="metricCollectionStatus" /> Send Metrics
+</button>
 <clr-datagrid [clrDgLoading]="isLoading">
 	<clr-dg-column>Name</clr-dg-column>
 	<clr-dg-column>Type</clr-dg-column>
@@ -28,14 +30,12 @@
 				*ngIf="mp.metricProviderType == 'WAVEFRONT'">Edit</button>
 			<button class="action-item" (click)="populateDatadogForm(mp);datadogModal=true;addEdit='Edit';"
 				*ngIf="mp.metricProviderType == 'DATADOG'">Edit</button>
-			<button class="action-item" (click)="deleteMetricProvider(mp)">Delete</button>
+			<button class="action-item" (click)="deleteMetricProvider(mp);">Delete</button>
 		</clr-dg-action-overflow>
 		<clr-dg-cell>{{mp.name}}</clr-dg-cell>
 		<clr-dg-cell>{{mp.metricProviderType}}</clr-dg-cell>
 		<clr-dg-cell>
-			<button class="btn btn-sm" *ngIf="mp.isActive==false"
-				(click)="updateMetricProviderStatus(mp);">Enable</button><span class="label"
-				*ngIf="mp.isActive==true">Enabled</span>
+			<input type="radio" name="mp.name" [checked]="mp.isActive" (click)="updateMetricProviderStatus(mp);" />
 		</clr-dg-cell>
 		<clr-dg-cell>
 			<span *ngIf="mp.metricProviderType == 'DATADOG'">https://app.datadoghq.com</span>
@@ -50,12 +50,16 @@
 		</clr-dg-pagination>
 	</clr-dg-footer>
 </clr-datagrid>
-<clr-modal [(clrModalOpen)]="wavefrontModal">
+<clr-modal [(clrModalOpen)]="wavefrontModal" [clrModalClosable]="false">
 	<h3 class="modal-title">{{addEdit}} Wavefront</h3>
 	<div class="modal-body" *ngIf="wavefrontFormData">
-		<form #wavefrontForm="ngForm"
-			(ngSubmit)="addOrUpdateMetricProviders(wavefrontForm.value);wavefrontModal=false;wavefrontForm.reset();"
-			ngNativeValidate>
+		<clr-alert *ngIf="testErrorFlag" [clrAlertType]="'danger'">
+			<div class="alert-item">{{testAlertMessage}}</div>
+		</clr-alert>
+		<clr-alert *ngIf="testSuccessFlag" [clrAlertType]="'success'">
+			<div class="alert-item">{{testAlertMessage}}</div>
+		</clr-alert>
+		<form #wavefrontForm="ngForm" #nativeWavefrontForm (ngSubmit)="addOrUpdateMetricProviders(wavefrontForm.value);wavefrontModal=false;wavefrontForm.reset();" ngNativeValidate>
 			<section class="form-block">
 				<div class="form-group">
 					<input type="text" name="id" [(ngModel)]="wavefrontFormData.id" [hidden]="true">
@@ -66,7 +70,9 @@
 				</div>
 				<div class="form-group">
 					<label for="name">Name</label>
-					<input type="text" name="name" [(ngModel)]="wavefrontFormData.name" [required]="addEdit == 'Add'"
+					<input type="text" name="name" pattern="^[A-Za-z0-9-_.]+$"
+						title="alphanumeric and special characters (_ - .) are allowed"
+						[(ngModel)]="wavefrontFormData.name" [required]="addEdit == 'Add'"
 						[readonly]="addEdit == 'Edit'">
 				</div>
 				<fieldset ngModelGroup="waveFrontConnectionProperties">
@@ -81,24 +87,9 @@
 							[(ngModel)]="wavefrontFormData.waveFrontConnectionProperties.wavefrontAPIToken" required>
 					</div>
 					<div class="form-group">
-						<label for="waveFrontProxy">Wavefront Proxy Host</label>
-						<input type="text" name="waveFrontProxy"
-							[(ngModel)]="wavefrontFormData.waveFrontConnectionProperties.waveFrontProxy" required>
-					</div>
-					<div class="form-group">
-						<label for="waveFrontProxyPort">Wavefront Proxy Port</label>
-						<input type="number" name="waveFrontProxyPort"
-							[(ngModel)]="wavefrontFormData.waveFrontConnectionProperties.waveFrontProxyPort" required>
-					</div>
-					<div class="form-group">
 						<label for="source">Source</label>
 						<input type="text" name="source"
 							[(ngModel)]="wavefrontFormData.waveFrontConnectionProperties.source" required>
-					</div>
-					<div class="form-group">
-						<label for="prefix">Prefix</label>
-						<input type="text" name="prefix"
-							[(ngModel)]="wavefrontFormData.waveFrontConnectionProperties.prefix" required>
 					</div>
 					<div class="form-group">
 						<label for="tags">Static Tags</label>
@@ -110,17 +101,25 @@
 					</div>
 				</fieldset>
 			</section>
-			<button type="button" class="btn btn-outline" (click)="wavefrontModal=false;">CANCEL</button>
-			<button type="submit" class="btn btn-primary">SUBMIT</button>
+			<button type="button" class="btn btn-outline"
+				(click)="wavefrontModal=false;wavefrontForm.reset();ngOnInit();">CANCEL</button>
+			<button type="button" class="btn btn-outline" [clrLoading]="testBtnState"
+				(click)="testConnection(nativeWavefrontForm.reportValidity(), wavefrontForm.value);">TEST
+				CONNECTION</button>
+			<button type="submit" class="btn btn-primary" [disabled]="!testSuccessFlag">SUBMIT</button>
 		</form>
 	</div>
 </clr-modal>
-<clr-modal [(clrModalOpen)]="datadogModal" [clrModalSize]="'lg'">
+<clr-modal [(clrModalOpen)]="datadogModal" [clrModalClosable]="false">
 	<h3 class="modal-title">{{addEdit}} Datadog</h3>
 	<div class="modal-body" *ngIf="datadogFormData">
-		<form #datadogForm="ngForm"
-			(ngSubmit)="addOrUpdateMetricProviders(datadogForm.value);datadogModal=false;datadogForm.reset();"
-			ngNativeValidate>
+		<clr-alert *ngIf="testErrorFlag" [clrAlertType]="'danger'">
+			<div class="alert-item">{{testAlertMessage}}</div>
+		</clr-alert>
+		<clr-alert *ngIf="testSuccessFlag" [clrAlertType]="'success'">
+			<div class="alert-item">{{testAlertMessage}}</div>
+		</clr-alert>
+		<form #datadogForm="ngForm" #nativeDatadogForm (ngSubmit)="addOrUpdateMetricProviders(datadogForm.value);datadogModal=false;datadogForm.reset();" ngNativeValidate>
 			<section class="form-block">
 				<div class="form-group">
 					<input type="text" name="id" [(ngModel)]="datadogFormData.id" [hidden]="true">
@@ -131,8 +130,9 @@
 				</div>
 				<div class="form-group">
 					<label for="name">Name</label>
-					<input type="text" name="name" [(ngModel)]="datadogFormData.name" [required]="addEdit == 'Add'"
-						[readonly]="addEdit == 'Edit'">
+					<input type="text" name="name" pattern="^[A-Za-z0-9-_.]+$"
+						title="alphanumeric and special characters (_ - .) are allowed"
+						[(ngModel)]="datadogFormData.name" [required]="addEdit == 'Add'" [readonly]="addEdit == 'Edit'">
 				</div>
 				<fieldset ngModelGroup="datadogConnectionProperties">
 					<div class="form-group">
@@ -155,8 +155,12 @@
 					</div>
 				</fieldset>
 			</section>
-			<button type="button" class="btn btn-outline" (click)="datadogModal=false;">CANCEL</button>
-			<button type="submit" class="btn btn-primary">SUBMIT</button>
+			<button type="button" class="btn btn-outline"
+				(click)="datadogModal=false;datadogForm.reset();ngOnInit();">CANCEL</button>
+			<button type="button" class="btn btn-outline" [clrLoading]="testBtnState"
+				(click)="testConnection(nativeDatadogForm.reportValidity(), datadogForm.value);">TEST
+				CONNECTION</button>
+			<button type="submit" class="btn btn-primary" [disabled]="!testSuccessFlag">SUBMIT</button>
 		</form>
 	</div>
 </clr-modal>

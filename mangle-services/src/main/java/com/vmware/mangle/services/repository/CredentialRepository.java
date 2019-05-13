@@ -41,6 +41,9 @@ public interface CredentialRepository extends CassandraRepository<CredentialsSpe
     @AllowFiltering
     Optional<CredentialsSpec> findByName(String endpointName);
 
+    @Query("select * from CredentialsSpec WHERE name IN ?0")
+    List<CredentialsSpec> findByNames(Collection<String> credentialNames);
+
     @AllowFiltering
     List<CredentialsSpec> findByType(EndpointType endPointType);
 

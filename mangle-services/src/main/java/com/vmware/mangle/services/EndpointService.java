@@ -24,6 +24,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import com.vmware.mangle.cassandra.model.endpoint.CredentialsSpec;
+import com.vmware.mangle.cassandra.model.endpoint.DockerCertificates;
 import com.vmware.mangle.cassandra.model.endpoint.EndpointSpec;
 import com.vmware.mangle.model.enums.EndpointType;
 import com.vmware.mangle.services.repository.EndpointRepository;
@@ -44,23 +45,25 @@ import com.vmware.mangle.utils.helpers.security.EncryptFields;
 public class EndpointService {
     private EndpointRepository endpointRepository;
     private CredentialService credentialService;
+    private EndpointCertificatesService certificatesService;
     private EndpointClientFactory endpointClientFactory;
 
     @Autowired
     public EndpointService(EndpointRepository endpointRepository, CredentialService credentialService,
-            EndpointClientFactory endpointClientFactory) {
+            EndpointClientFactory endpointClientFactory, EndpointCertificatesService certificatesService) {
         this.endpointRepository = endpointRepository;
         this.credentialService = credentialService;
         this.endpointClientFactory = endpointClientFactory;
+        this.certificatesService = certificatesService;
     }
 
     public List<EndpointSpec> getAllEndpoints() {
-        log.info("Geting all Endpoints...");
+        log.info("Retrieving all Endpoints...");
         return endpointRepository.findAll();
     }
 
     public EndpointSpec getEndpointByName(String endpointName) throws MangleException {
-        log.info("Geting endpoint by name : " + endpointName);
+        log.info("Retrieving endpoint by name : " + endpointName);
         if (endpointName != null && !endpointName.isEmpty()) {
             Optional<EndpointSpec> optional = endpointRepository.findByName(endpointName);
             if (optional.isPresent()) {
@@ -94,35 +97,32 @@ public class EndpointService {
     public EndpointSpec updateEndpointByEndpointName(String name, EndpointSpec endpointSpec) throws MangleException {
         log.info("Updating Endpoint by Endpoint name : " + name);
         if (name != null && endpointSpec != null) {
-            EndpointSpec dbEndpointSpec;
             Optional<EndpointSpec> optional = endpointRepository.findByName(name);
-            validateEndpointBeforeSave(endpointSpec, optional.orElse(null));
-            if (optional.isPresent()) {
-                dbEndpointSpec = optional.get();
-            } else {
+            if (!optional.isPresent()) {
                 throw new MangleRuntimeException(ErrorCode.NO_RECORD_FOUND, ErrorConstants.ENDPOINT_NAME, name);
             }
-
-            dbEndpointSpec.setName(endpointSpec.getName());
-            dbEndpointSpec.setCredentialsName(endpointSpec.getCredentialsName());
-            dbEndpointSpec.setEndPointType(endpointSpec.getEndPointType());
-            dbEndpointSpec.setDockerConnectionProperties(endpointSpec.getDockerConnectionProperties());
-            dbEndpointSpec.setAwsConnectionProperties(endpointSpec.getAwsConnectionProperties());
-            dbEndpointSpec.setRemoteMachineConnectionProperties(endpointSpec.getRemoteMachineConnectionProperties());
-            dbEndpointSpec.setK8sConnectionProperties(endpointSpec.getK8sConnectionProperties());
-            dbEndpointSpec.setTags(endpointSpec.getTags());
-            return endpointRepository.save(dbEndpointSpec);
+            validateEndpointBeforeSave(endpointSpec, optional.orElse(null));
+            return endpointRepository.save(endpointSpec);
         } else {
-            log.error(ErrorConstants.ENDPOINT_ID + ErrorConstants.FIELD_VALUE_EMPTY);
-            throw new MangleException(ErrorCode.FIELD_VALUE_EMPTY, ErrorConstants.ENDPOINT_ID);
+            log.error(ErrorConstants.ENDPOINT_NAME + ErrorConstants.FIELD_VALUE_EMPTY);
+            throw new MangleException(ErrorCode.FIELD_VALUE_EMPTY, ErrorConstants.ENDPOINT_NAME);
         }
     }
 
     public boolean testEndpointConnection(EndpointSpec endpoint) throws MangleException {
         log.info("Start execution of testEndpointConnection() method");
+        validateCredentialsName(endpoint);
+        validateEndpointConnectionProperties(endpoint);
         CredentialsSpec credentialsSpec = null;
         if (!StringUtils.isEmpty(endpoint.getCredentialsName())) {
             credentialsSpec = credentialService.getCredentialByName(endpoint.getCredentialsName());
+        }
+        if (endpoint.getEndPointType() == EndpointType.DOCKER
+                && StringUtils.hasText(endpoint.getDockerConnectionProperties().getCertificatesName())) {
+            DockerCertificates certificatesSpec = (DockerCertificates) certificatesService
+                    .getCertificatesByName(endpoint.getDockerConnectionProperties().getCertificatesName());
+
+            endpoint.getDockerConnectionProperties().setCertificatesSpec(certificatesSpec);
         }
         return endpointClientFactory.getEndPointClient(credentialsSpec, endpoint).testConnection();
     }
@@ -183,6 +183,44 @@ public class EndpointService {
         if (dbEndpointSpec != null && !endpointSpec.getEndPointType().equals(dbEndpointSpec.getEndPointType())) {
             throw new MangleException(ErrorCode.DUPLICATE_RECORD_FOR_ENDPOINT, endpointSpec.getName(),
                     dbEndpointSpec.getEndPointType());
+        }
+    }
+
+    /**
+     * @param endpoint
+     * @throws MangleException
+     */
+    private void validateCredentialsName(EndpointSpec endpoint) throws MangleException {
+        if (endpoint.getEndPointType() != EndpointType.DOCKER && !StringUtils.hasText(endpoint.getCredentialsName())) {
+            throw new MangleException(ErrorCode.FIELD_VALUE_EMPTY, ErrorConstants.CREDENTIAL_NAME);
+        }
+    }
+
+    /**
+     * @param endpoint
+     * @throws MangleException
+     */
+    private void validateEndpointConnectionProperties(EndpointSpec endpoint) throws MangleException {
+        if (getConnectionProperties(endpoint) == null) {
+            throw new MangleException(ErrorCode.PROVIDE_CONNECTION_PROPERTIES_FOR_ENDPOINT, endpoint.getEndPointType());
+        }
+    }
+
+    /**
+     * @param endpoint
+     */
+    private Object getConnectionProperties(EndpointSpec endpoint) {
+        switch (endpoint.getEndPointType()) {
+        case DOCKER:
+            return endpoint.getDockerConnectionProperties();
+        case K8S_CLUSTER:
+            return endpoint.getK8sConnectionProperties();
+        case MACHINE:
+            return endpoint.getRemoteMachineConnectionProperties();
+        case VCENTER:
+            return endpoint.getVCenterConnectionProperties();
+        default:
+            return null;
         }
     }
 }

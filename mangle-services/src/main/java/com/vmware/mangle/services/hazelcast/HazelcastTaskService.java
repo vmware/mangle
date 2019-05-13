@@ -23,22 +23,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec;
-import com.vmware.mangle.cassandra.model.faults.specs.K8SFaultTriggerSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.TaskSpec;
 import com.vmware.mangle.cassandra.model.scheduler.SchedulerSpec;
 import com.vmware.mangle.cassandra.model.tasks.Task;
 import com.vmware.mangle.cassandra.model.tasks.TaskStatus;
-import com.vmware.mangle.model.enums.EndpointType;
 import com.vmware.mangle.model.enums.SchedulerStatus;
-import com.vmware.mangle.services.CredentialService;
-import com.vmware.mangle.services.EndpointService;
+import com.vmware.mangle.model.task.MangleNodeStatusDto;
 import com.vmware.mangle.services.SchedulerService;
 import com.vmware.mangle.services.TaskService;
-import com.vmware.mangle.services.helpers.FaultTaskFactory;
+import com.vmware.mangle.services.helpers.FaultInjectionHelper;
+import com.vmware.mangle.services.scheduler.Scheduler;
 import com.vmware.mangle.services.tasks.executor.TaskExecutor;
 import com.vmware.mangle.utils.constants.URLConstants;
 import com.vmware.mangle.utils.exceptions.MangleException;
+import com.vmware.mangle.utils.exceptions.MangleRuntimeException;
 
 /**
  *
@@ -77,13 +75,10 @@ public class HazelcastTaskService {
     private SchedulerService schedulerService;
 
     @Autowired
-    EndpointService endpointService;
+    FaultInjectionHelper injectionHelper;
 
     @Autowired
-    CredentialService credentialService;
-
-    @Autowired
-    FaultTaskFactory faultTaskFactory;
+    Scheduler scheduler;
 
     @Setter
     private HazelcastInstance hazelcastInstance;
@@ -98,7 +93,7 @@ public class HazelcastTaskService {
      *             If the endpoint/credentials for the task to be executed is not found
      */
     public void triggerTask(String taskId) throws MangleException {
-        log.debug("Re-triggering the fault with the id: {} on the current node", taskId);
+        log.trace("Re-triggering the fault with the id: {} on the current node", taskId);
 
         Task<?> persistedData = taskService.getTaskById(taskId);
         boolean triggerTask = true;
@@ -114,7 +109,8 @@ public class HazelcastTaskService {
         } else if (persistedData.isScheduledTask()) {
             SchedulerSpec schedularSpec = schedulerService.getSchedulerDetailsById(persistedData.getId());
             if (!(schedularSpec.getStatus() == SchedulerStatus.SCHEDULED
-                    || schedularSpec.getStatus() == SchedulerStatus.INITIALIZING)) {
+                    || schedularSpec.getStatus() == SchedulerStatus.INITIALIZING)
+                    && !scheduler.isTaskAlreadyScheduled(taskId)) {
                 log.debug(
                         "Scheduled task {} has finished execution with the status {}, will be removed from the cluster cache",
                         taskId, schedularSpec.getStatus().name());
@@ -132,18 +128,57 @@ public class HazelcastTaskService {
 
     private void submitTask(Task<?> task) throws MangleException {
         String taskId = task.getId();
-        updateFaultSpec(task.getTaskData());
-        log.info("Submitting task to concurrent task runner");
-        concurrentTaskRunner.submitTask(task);
-        log.info("Submitted task to concurrent task runner");
-        addTaskToClusterNodeCache(taskId);
+        try {
+            if (!(task.getTaskData() instanceof MangleNodeStatusDto)) {
+                updateFaultSpec(task.getTaskData());
+            }
+            log.debug("Submitting task to concurrent task runner");
+            concurrentTaskRunner.submitTask(task);
+            log.info("Submitted task to concurrent task runner");
+            addTaskToClusterNodeCache(taskId);
+        } catch (MangleException | MangleRuntimeException e) {
+            if (task.isScheduledTask()) {
+                schedulerService.updateSchedulerStatus(taskId, SchedulerStatus.SCHEDULE_FAILED);
+            }
+            task.setTaskStatus(TaskStatus.FAILED);
+            task.setTaskFailureReason(e.getMessage());
+            taskService.addOrUpdateTask(task);
+        }
+    }
+
+    public boolean isScheduledTask(String taskId) {
+        Task<?> persistedData = null;
+        try {
+            persistedData = taskService.getTaskById(taskId);
+        } catch (MangleException e) {
+            return false;
+        }
+        return persistedData.isScheduledTask();
+    }
+
+    public void cleanUpTask(String taskId, String taskStatus) throws MangleException {
+        Task<TaskSpec> task = taskService.getTaskById(taskId);
+        if (task.isScheduledTask()) {
+            log.debug("Triggering cleanup for the schedule job {}", taskId);
+            scheduler.removeSchedule(taskId, taskStatus);
+            removeTaskFromClusterNodeCache(taskId);
+        }
+    }
+
+    public void cleanUpTaskForMigration(String taskId) throws MangleException {
+        Task<TaskSpec> task = taskService.getTaskById(taskId);
+        if (task.isScheduledTask() && scheduler.removeSchedule(taskId)) {
+            log.debug("cleaned up schedule job {} as part of the migration event from the node {}", taskId,
+                    hazelcastInstance.getCluster().getLocalMember().getAddress());
+            removeTaskFromClusterNodeCache(taskId);
+        }
     }
 
     private void addTaskToClusterNodeCache(String taskId) {
         Member currentInstance = hazelcastInstance.getCluster().getLocalMember();
         log.debug("Added task to the mangle cluster node {} for execution", currentInstance.getAddress());
         String host = currentInstance.getUuid();
-        IMap<String, Set<String>> nodeToTaskMapping = hazelcastInstance.getMap("nodeTasks");
+        IMap<String, Set<String>> nodeToTaskMapping = hazelcastInstance.getMap(URLConstants.HAZELCAST_NODE_TASKS_MAP);
         Set<String> tasks = new HashSet<>();
         if (nodeToTaskMapping.containsKey(host)) {
             tasks = nodeToTaskMapping.get(host);
@@ -155,24 +190,22 @@ public class HazelcastTaskService {
         }
     }
 
-    private CommandExecutionFaultSpec updateFaultSpec(TaskSpec spec) throws MangleException {
-        log.debug("Constructing fault execution spec for the task {}", spec.getId());
-        CommandExecutionFaultSpec commandExecutionFaultSpec;
-
-        if (spec instanceof K8SFaultTriggerSpec) {
-            commandExecutionFaultSpec = ((K8SFaultTriggerSpec) spec).getFaultSpec();
-        } else {
-            commandExecutionFaultSpec = (CommandExecutionFaultSpec) spec;
+    public void removeTaskFromClusterNodeCache(String taskId) {
+        Member currentInstance = hazelcastInstance.getCluster().getLocalMember();
+        log.debug("Removing task from the mangle cluster node {}'s execution context", currentInstance.getAddress());
+        String host = currentInstance.getUuid();
+        IMap<String, Set<String>> nodeToTaskMapping = hazelcastInstance.getMap(URLConstants.HAZELCAST_NODE_TASKS_MAP);
+        Set<String> tasks;
+        if (nodeToTaskMapping.containsKey(host)) {
+            tasks = nodeToTaskMapping.get(host);
+            tasks.remove(taskId);
+            nodeToTaskMapping.put(host, tasks);
+            log.trace("Removed task from the mangle cluster node {}'s execution context", currentInstance.getAddress());
         }
-
-        commandExecutionFaultSpec
-                .setEndpoint(endpointService.getEndpointByName(commandExecutionFaultSpec.getEndpointName()));
-        if (commandExecutionFaultSpec.getEndpoint().getEndPointType() != EndpointType.DOCKER) {
-            commandExecutionFaultSpec.setCredentials(credentialService
-                    .getCredentialByName(commandExecutionFaultSpec.getEndpoint().getCredentialsName()));
-        }
-
-        return commandExecutionFaultSpec;
     }
 
+    private void updateFaultSpec(TaskSpec spec) throws MangleException {
+        log.debug("Constructing fault execution spec for the task {}", spec.getId());
+        injectionHelper.updateFaultSpec(spec);
+    }
 }

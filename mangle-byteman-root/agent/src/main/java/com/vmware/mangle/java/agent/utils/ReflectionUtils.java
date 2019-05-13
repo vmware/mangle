@@ -23,6 +23,10 @@ public class ReflectionUtils {
 
     private static final Logger LOG = Logger.getLogger(ReflectionUtils.class.getName());
 
+    private ReflectionUtils() {
+        throw new java.lang.UnsupportedOperationException("This is a utility class and cannot be instantiated");
+    }
+
     private static Method getMethod(Class<?> cls, String methodName, Class<?>[] params) {
         try {
             return cls.getDeclaredMethod(methodName, params);

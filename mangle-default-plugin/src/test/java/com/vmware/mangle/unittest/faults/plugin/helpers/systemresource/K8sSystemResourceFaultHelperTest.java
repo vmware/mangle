@@ -16,11 +16,12 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import static com.vmware.mangle.utils.constants.FaultConstants.FAULT_NAME_ARG;
+import static com.vmware.mangle.utils.constants.FaultConstants.TIMEOUT_IN_MILLI_SEC_ARG;
+
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import lombok.extern.log4j.Log4j2;
 import org.mockito.Mock;
@@ -35,7 +36,7 @@ import com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.JVMAgentFaultSpec;
 import com.vmware.mangle.cassandra.model.tasks.SupportScriptInfo;
 import com.vmware.mangle.cassandra.model.tasks.commands.CommandInfo;
-import com.vmware.mangle.faults.plugin.helpers.FaultConstants;
+import com.vmware.mangle.faults.plugin.helpers.KnownFailuresHelper;
 import com.vmware.mangle.faults.plugin.helpers.systemresource.K8sSystemResourceFaultHelper;
 import com.vmware.mangle.faults.plugin.helpers.systemresource.SystemResourceFaultUtils;
 import com.vmware.mangle.faults.plugin.mockdata.FaultsMockData;
@@ -81,8 +82,9 @@ public class K8sSystemResourceFaultHelperTest {
         try {
             JVMAgentFaultSpec cpuFaultSpec = faultsMockData.getK8SCPUFaultSpec();
             cpuFaultSpec.setJvmProperties(null);
-            Mockito.when(endpointClientFactory.getEndPointClient(cpuFaultSpec.getCredentials(),
-                    cpuFaultSpec.getEndpoint())).thenReturn(kubernetesCommandLineClient);
+            Mockito.when(
+                    endpointClientFactory.getEndPointClient(cpuFaultSpec.getCredentials(), cpuFaultSpec.getEndpoint()))
+                    .thenReturn(kubernetesCommandLineClient);
             executor = k8sSystemResourceFaultHelper.getExecutor(cpuFaultSpec);
         } catch (MangleException e) {
             log.error("testGetExecutor failed with Exception: ", e);
@@ -95,8 +97,9 @@ public class K8sSystemResourceFaultHelperTest {
     public void testGetInjectionCommandInfoListforCPUFault() {
         try {
             CommandExecutionFaultSpec cpuFaultSpec = getTestFaultSpecForCPUFault();
-            Mockito.when(endpointClientFactory.getEndPointClient(cpuFaultSpec.getCredentials(),
-                    cpuFaultSpec.getEndpoint())).thenReturn(kubernetesCommandLineClient);
+            Mockito.when(
+                    endpointClientFactory.getEndPointClient(cpuFaultSpec.getCredentials(), cpuFaultSpec.getEndpoint()))
+                    .thenReturn(kubernetesCommandLineClient);
             List<CommandInfo> injectionCommands =
                     k8sSystemResourceFaultHelper.getInjectionCommandInfoList(cpuFaultSpec);
             log.info(RestTemplateWrapper.objectToJson(injectionCommands));
@@ -111,8 +114,8 @@ public class K8sSystemResourceFaultHelperTest {
 
     private CommandExecutionFaultSpec getTestFaultSpecForCPUFault() {
         CommandExecutionFaultSpec cpuFaultSpec = faultsMockData.getK8SCPUFaultSpec();
-        cpuFaultSpec.getArgs().put(FaultConstants.FAULT_NAME_ARG, "cpuFault");
-        cpuFaultSpec.getArgs().put(FaultConstants.TIMEOUT_IN_MILLI_SEC_ARG, "20000");
+        cpuFaultSpec.getArgs().put(FAULT_NAME_ARG, "cpuFault");
+        cpuFaultSpec.getArgs().put(TIMEOUT_IN_MILLI_SEC_ARG, "20000");
         cpuFaultSpec.getK8sArguments().setPodInAction("testPod");
         return cpuFaultSpec;
     }
@@ -121,8 +124,8 @@ public class K8sSystemResourceFaultHelperTest {
     public void testGetRemediationCommandInfoListForCPUFault() {
         CommandExecutionFaultSpec cpuFaultSpec = getTestFaultSpecForCPUFault();
 
-        Mockito.when(endpointClientFactory.getEndPointClient(cpuFaultSpec.getCredentials(),
-                cpuFaultSpec.getEndpoint())).thenReturn(kubernetesCommandLineClient);
+        Mockito.when(endpointClientFactory.getEndPointClient(cpuFaultSpec.getCredentials(), cpuFaultSpec.getEndpoint()))
+                .thenReturn(kubernetesCommandLineClient);
         try {
             List<CommandInfo> remediationCommands =
                     k8sSystemResourceFaultHelper.getRemediationcommandInfoList(cpuFaultSpec);
@@ -142,10 +145,8 @@ public class K8sSystemResourceFaultHelperTest {
         remediationCommand.setCommand(
                 "exec -it testPod -c testContainer -- /bin/sh /testDirectory/cpuburn.sh --operation=remediate");
         remediationCommand.setIgnoreExitValueCheck(false);
-        Map<String, String> knownFailureMap = new HashMap<>();
-        knownFailureMap.put("No such file or directory",
-                "Fault has been remediated already");
-        remediationCommand.setKnownFailureMap(knownFailureMap);
+        remediationCommand
+                .setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfSystemResourceFaultRemediationRequest());
         remediationCommand.setNoOfRetries(0);
         remediationCommand.setExpectedCommandOutputList(Collections.emptyList());
         remediationCommand.setRetryInterval(0);
@@ -173,10 +174,11 @@ public class K8sSystemResourceFaultHelperTest {
         copyCommand.setNoOfRetries(0);
         copyCommand.setRetryInterval(0);
         copyCommand.setTimeout(0);
+        copyCommand.setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfSystemResourceK8SCopyRequest());
+
 
         CommandInfo makeExecutableCommand = new CommandInfo();
-        makeExecutableCommand
-                .setCommand("exec -it testPod -c testContainer -- chmod -R u+x /testDirectory/cpuburn.sh");
+        makeExecutableCommand.setCommand("exec -it testPod -c testContainer -- chmod -R u+x /testDirectory/cpuburn.sh");
         makeExecutableCommand.setIgnoreExitValueCheck(false);
         makeExecutableCommand.setNoOfRetries(0);
         makeExecutableCommand.setRetryInterval(0);
@@ -189,6 +191,8 @@ public class K8sSystemResourceFaultHelperTest {
         injectionCommand.setNoOfRetries(0);
         injectionCommand.setRetryInterval(0);
         injectionCommand.setTimeout(0);
+        injectionCommand
+                .setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfSystemResourceFaultInjectionRequest());
 
         list.add(copyCommand);
         list.add(makeExecutableCommand);

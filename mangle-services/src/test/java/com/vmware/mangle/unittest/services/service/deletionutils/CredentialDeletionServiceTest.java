@@ -12,6 +12,7 @@
 package com.vmware.mangle.unittest.services.service.deletionutils;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyList;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
@@ -19,6 +20,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.mockito.Mock;
@@ -69,7 +71,7 @@ public class CredentialDeletionServiceTest {
         when(endpointService.getEndpointsByCredentialName(anyString())).thenReturn(new ArrayList<>());
         List<String> credentialList = new ArrayList<>();
         credentialList.add(credentialsSpec.getName());
-
+        when(credentialRepository.findByNames(anyList())).thenReturn(Collections.singletonList(credentialsSpec));
         DeleteOperationResponse actualResult = credentialDeletionService.deleteCredentialsByNames(credentialList);
         verify(credentialRepository, times(1)).deleteByNameIn(any());
         Assert.assertEquals(actualResult.getAssociations().size(), 0);

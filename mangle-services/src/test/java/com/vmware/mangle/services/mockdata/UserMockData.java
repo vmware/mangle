@@ -13,6 +13,7 @@ package com.vmware.mangle.services.mockdata;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import com.vmware.mangle.cassandra.model.security.Privilege;
@@ -30,11 +31,12 @@ public class UserMockData {
     private static final String USER2 = "DUMMY_USER2@" + Constants.LOCAL_DOMAIN_NAME;
     private static final String ROLE_ADMIN = "ROLE_ADMIN";
     private static final String ROLE_USER = "ROLE_USER";
+    private static final String pwd = UUID.randomUUID().toString();
 
     private RolesMockData rolesMockData = new RolesMockData();
 
     public User getMockUser() {
-        User user = new User(USER1, getDummyRole());
+        User user = new User(USER1, pwd, getDummyRole());
         return user;
     }
 
@@ -60,20 +62,20 @@ public class UserMockData {
     public User getMockUser2() {
         Role role = new Role();
         role.setName(ROLE_ADMIN);
-        User user = new User(USER2, role);
+        User user = new User(USER2, pwd, role);
         return user;
     }
 
 
     public User getMockUser3() {
-        User user = new User(USER1, getDummyRole3());
+        User user = new User(USER1, pwd, getDummyRole3());
         return user;
     }
 
     public User getUpdateMockUser() {
         Role role = new Role();
         role.setName(ROLE_USER);
-        User user = new User(USER1, role);
+        User user = new User(USER1, pwd, role);
         return user;
     }
 }

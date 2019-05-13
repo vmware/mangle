@@ -11,12 +11,14 @@
 
 package com.vmware.mangle.cassandra.model.faults.specs;
 
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.hibernate.validator.constraints.Range;
+import lombok.ToString;
 
 import com.vmware.mangle.services.enums.AgentFaultName;
 
@@ -26,6 +28,7 @@ import com.vmware.mangle.services.enums.AgentFaultName;
  *
  */
 @Data
+@ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 @SuppressWarnings("squid:MaximumInheritanceDepth")
 public class DiskIOFaultSpec extends CommandExecutionFaultSpec {
@@ -34,19 +37,19 @@ public class DiskIOFaultSpec extends CommandExecutionFaultSpec {
     @NotEmpty
     @ApiModelProperty("Directory path on which I/O operations are targeted")
     private String targetDir;
-    @Range(min = 0)
-    @NotEmpty
-    @ApiModelProperty(value = "IO block size. Provide 0 to consider default value 8192000", example = "0")
-    private String ioSize;
+    @ApiModelProperty(value = "IO size in bytes. Provide 0 to consider default value 8192000", example = "0")
+    @NotNull
+    @Min(0)
+    private Integer ioSize;
 
     public DiskIOFaultSpec() {
         setFaultName(AgentFaultName.INJECT_DISK_IO_FAULT.getValue());
         setSpecType(this.getClass().getName());
     }
 
-    @NotEmpty
+    @NotNull
     @Override
-    public String getTimeoutInMilliseconds() {
+    public Integer getTimeoutInMilliseconds() {
         return timeoutInMilliseconds;
     }
 }

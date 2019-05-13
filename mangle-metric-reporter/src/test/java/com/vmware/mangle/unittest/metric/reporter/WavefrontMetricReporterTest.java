@@ -42,8 +42,8 @@ import org.testng.annotations.Test;
 import com.vmware.mangle.cassandra.model.metricprovider.WaveFrontConnectionProperties;
 import com.vmware.mangle.metric.reporter.WavefrontMetricReporter;
 import com.vmware.mangle.metric.reporter.common.Metric;
-import com.vmware.mangle.metric.reporter.constants.MetricReporterTestConstants;
 import com.vmware.mangle.metric.reporter.helpers.metric.MetricsHelper;
+import com.vmware.mangle.unittest.metric.constants.MetricReporterTestConstants;
 
 /**
  * Unit Test Case for WavefrontMetricReporter.
@@ -81,14 +81,20 @@ public class WavefrontMetricReporterTest extends PowerMockTestCase {
         WaveFrontConnectionProperties waveFrontConnectionProperties = new WaveFrontConnectionProperties();
         waveFrontConnectionProperties.setWavefrontInstance(MetricReporterTestConstants.WAVEFRONT_INSTANCE);
         waveFrontConnectionProperties.setWavefrontAPIToken(MetricReporterTestConstants.WAVEFRONT_API_TOKEN);
-        waveFrontConnectionProperties.setWaveFrontProxy(MetricReporterTestConstants.WAVEFRONT_PROXY);
-        waveFrontConnectionProperties.setWaveFrontProxyPort(MetricReporterTestConstants.WAVEFRONT_PROXY_PORT);
         waveFrontConnectionProperties.setSource(MetricReporterTestConstants.WAVEFRONT_SOURCE);
         HashMap<String, String> staticTags = new HashMap<>();
         staticTags.put(MetricReporterTestConstants.WAVEFRONT_STATIC_TAG_KEY,
                 MetricReporterTestConstants.WAVEFRONT_STATIC_TAG_VALUE);
         waveFrontConnectionProperties.setStaticTags(staticTags);
         return waveFrontConnectionProperties;
+    }
+
+    private String getWavefrontProxyHost() {
+        return MetricReporterTestConstants.WAVEFRONT_PROXY;
+    }
+
+    private int getWavefrontProxyPort() {
+        return MetricReporterTestConstants.WAVEFRONT_PROXY_PORT;
     }
 
     /**
@@ -119,9 +125,8 @@ public class WavefrontMetricReporterTest extends PowerMockTestCase {
     @Test
     public void testSendMetricStringDoubleMapOfStringString() throws Exception {
         PowerMockito.whenNew(Wavefront.class).withArguments(anyString(), anyInt()).thenReturn(wavefront);
-        this.wavefrontMetricReporter = new WavefrontMetricReporter(waveFrontConnectionProperties.getWaveFrontProxy(),
-                waveFrontConnectionProperties.getWaveFrontProxyPort(), waveFrontConnectionProperties.getSource(),
-                waveFrontConnectionProperties.getStaticTags());
+        this.wavefrontMetricReporter = new WavefrontMetricReporter(getWavefrontProxyHost(), getWavefrontProxyPort(),
+                waveFrontConnectionProperties.getSource(), waveFrontConnectionProperties.getStaticTags());
         PowerMockito.verifyNew(Wavefront.class, times(1)).withArguments(anyString(), anyInt());
         PowerMockito.mockStatic(MetricsHelper.class);
         PowerMockito.when(MetricsHelper.getDoubleEquivalent(any(Object.class))).thenReturn(75.5);
@@ -146,9 +151,8 @@ public class WavefrontMetricReporterTest extends PowerMockTestCase {
     @Test(description = "Test is to verify IOException failure, while sending metric to wavefront")
     public void testSendMetricStringDoubleMapOfStringString1() throws Exception {
         PowerMockito.whenNew(Wavefront.class).withArguments(anyString(), anyInt()).thenReturn(wavefront);
-        this.wavefrontMetricReporter = new WavefrontMetricReporter(waveFrontConnectionProperties.getWaveFrontProxy(),
-                waveFrontConnectionProperties.getWaveFrontProxyPort(), waveFrontConnectionProperties.getSource(),
-                waveFrontConnectionProperties.getStaticTags());
+        this.wavefrontMetricReporter = new WavefrontMetricReporter(getWavefrontProxyHost(), getWavefrontProxyPort(),
+                waveFrontConnectionProperties.getSource(), waveFrontConnectionProperties.getStaticTags());
         PowerMockito.verifyNew(Wavefront.class, times(1)).withArguments(anyString(), anyInt());
         PowerMockito.mockStatic(MetricsHelper.class);
         PowerMockito.when(MetricsHelper.getDoubleEquivalent(any(Object.class))).thenReturn(75.5);
@@ -171,9 +175,8 @@ public class WavefrontMetricReporterTest extends PowerMockTestCase {
     @Test(description = "Test is to verify the failure during the transmission of metric to wavefront, when the metric value is invalid")
     public void testSendMetricStringDoubleMapOfStringString2() throws Exception {
         PowerMockito.whenNew(Wavefront.class).withArguments(anyString(), anyInt()).thenReturn(wavefront);
-        this.wavefrontMetricReporter = new WavefrontMetricReporter(waveFrontConnectionProperties.getWaveFrontProxy(),
-                waveFrontConnectionProperties.getWaveFrontProxyPort(), waveFrontConnectionProperties.getSource(),
-                waveFrontConnectionProperties.getStaticTags());
+        this.wavefrontMetricReporter = new WavefrontMetricReporter(getWavefrontProxyHost(), getWavefrontProxyPort(),
+                waveFrontConnectionProperties.getSource(), waveFrontConnectionProperties.getStaticTags());
         PowerMockito.verifyNew(Wavefront.class, times(1)).withArguments(anyString(), anyInt());
         PowerMockito.mockStatic(MetricsHelper.class);
         PowerMockito.when(MetricsHelper.getDoubleEquivalent(any(Object.class))).thenReturn(75.5);
@@ -196,9 +199,8 @@ public class WavefrontMetricReporterTest extends PowerMockTestCase {
     @Test(description = "Test to verify the successful transmission of metric to wavefront")
     public void testSendMetric() throws Exception {
         PowerMockito.whenNew(Wavefront.class).withArguments(anyString(), anyInt()).thenReturn(wavefront);
-        this.wavefrontMetricReporter = new WavefrontMetricReporter(waveFrontConnectionProperties.getWaveFrontProxy(),
-                waveFrontConnectionProperties.getWaveFrontProxyPort(), waveFrontConnectionProperties.getSource(),
-                waveFrontConnectionProperties.getStaticTags());
+        this.wavefrontMetricReporter = new WavefrontMetricReporter(getWavefrontProxyHost(), getWavefrontProxyPort(),
+                waveFrontConnectionProperties.getSource(), waveFrontConnectionProperties.getStaticTags());
         PowerMockito.verifyNew(Wavefront.class, times(1)).withArguments(anyString(), anyInt());
         PowerMockito.mockStatic(MetricsHelper.class);
         PowerMockito.when(MetricsHelper.getDoubleEquivalent(any(Object.class))).thenReturn(75.5);
@@ -224,9 +226,8 @@ public class WavefrontMetricReporterTest extends PowerMockTestCase {
     @Test(description = "Test is to verify failure with IOException Failure while transmission of metric to wavefront fails with false output")
     public void testSendMetric1() throws Exception {
         PowerMockito.whenNew(Wavefront.class).withArguments(anyString(), anyInt()).thenReturn(wavefront);
-        this.wavefrontMetricReporter = new WavefrontMetricReporter(waveFrontConnectionProperties.getWaveFrontProxy(),
-                waveFrontConnectionProperties.getWaveFrontProxyPort(), waveFrontConnectionProperties.getSource(),
-                waveFrontConnectionProperties.getStaticTags());
+        this.wavefrontMetricReporter = new WavefrontMetricReporter(getWavefrontProxyHost(), getWavefrontProxyPort(),
+                waveFrontConnectionProperties.getSource(), waveFrontConnectionProperties.getStaticTags());
         PowerMockito.verifyNew(Wavefront.class, times(1)).withArguments(anyString(), anyInt());
         PowerMockito.mockStatic(MetricsHelper.class);
         PowerMockito.when(MetricsHelper.getDoubleEquivalent(any(Object.class))).thenReturn(75.5);
@@ -252,9 +253,8 @@ public class WavefrontMetricReporterTest extends PowerMockTestCase {
     @Test(description = "Test is to verify the failure of transmission of metric to wavefront when the given metric value is not valid ")
     public void testSendMetricMetric2() throws Exception {
         PowerMockito.whenNew(Wavefront.class).withArguments(anyString(), anyInt()).thenReturn(wavefront);
-        this.wavefrontMetricReporter = new WavefrontMetricReporter(waveFrontConnectionProperties.getWaveFrontProxy(),
-                waveFrontConnectionProperties.getWaveFrontProxyPort(), waveFrontConnectionProperties.getSource(),
-                waveFrontConnectionProperties.getStaticTags());
+        this.wavefrontMetricReporter = new WavefrontMetricReporter(getWavefrontProxyHost(), getWavefrontProxyPort(),
+                waveFrontConnectionProperties.getSource(), waveFrontConnectionProperties.getStaticTags());
         PowerMockito.verifyNew(Wavefront.class, times(1)).withArguments(anyString(), anyInt());
         PowerMockito.mockStatic(MetricsHelper.class);
         PowerMockito.when(MetricsHelper.getDoubleEquivalent(any(Object.class))).thenReturn(75.5);
@@ -278,9 +278,8 @@ public class WavefrontMetricReporterTest extends PowerMockTestCase {
     @Test(description = "Test to verify the successful transmission of metric to wavefront")
     public void testSendMetrics() throws Exception {
         PowerMockito.whenNew(Wavefront.class).withArguments(anyString(), anyInt()).thenReturn(wavefront);
-        this.wavefrontMetricReporter = new WavefrontMetricReporter(waveFrontConnectionProperties.getWaveFrontProxy(),
-                waveFrontConnectionProperties.getWaveFrontProxyPort(), waveFrontConnectionProperties.getSource(),
-                waveFrontConnectionProperties.getStaticTags());
+        this.wavefrontMetricReporter = new WavefrontMetricReporter(getWavefrontProxyHost(), getWavefrontProxyPort(),
+                waveFrontConnectionProperties.getSource(), waveFrontConnectionProperties.getStaticTags());
         PowerMockito.verifyNew(Wavefront.class, times(1)).withArguments(anyString(), anyInt());
         PowerMockito.mockStatic(MetricsHelper.class);
         PowerMockito.when(MetricsHelper.getDoubleEquivalent(any(Object.class))).thenReturn(75.5);
@@ -308,9 +307,8 @@ public class WavefrontMetricReporterTest extends PowerMockTestCase {
     @Test(description = "Test to verify failure, when user tries to send an empty list as a metric value to the wavefront")
     public void testSendMetrics1() throws Exception {
         PowerMockito.whenNew(Wavefront.class).withArguments(anyString(), anyInt()).thenReturn(wavefront);
-        this.wavefrontMetricReporter = new WavefrontMetricReporter(waveFrontConnectionProperties.getWaveFrontProxy(),
-                waveFrontConnectionProperties.getWaveFrontProxyPort(), waveFrontConnectionProperties.getSource(),
-                waveFrontConnectionProperties.getStaticTags());
+        this.wavefrontMetricReporter = new WavefrontMetricReporter(getWavefrontProxyHost(), getWavefrontProxyPort(),
+                waveFrontConnectionProperties.getSource(), waveFrontConnectionProperties.getStaticTags());
         PowerMockito.verifyNew(Wavefront.class, times(1)).withArguments(anyString(), anyInt());
         List<Metric> metricList = new ArrayList<>();
         Metric metric = new Metric(MetricReporterTestConstants.CPU_USAGE, 75.5, (HashMap<String, String>) pointTags,
@@ -331,9 +329,8 @@ public class WavefrontMetricReporterTest extends PowerMockTestCase {
     @Test(description = "Test to verify the failure of transmission of metric to wavefront when the metric value is invalid")
     public void testSendMetrics2() throws Exception {
         PowerMockito.whenNew(Wavefront.class).withArguments(anyString(), anyInt()).thenReturn(wavefront);
-        this.wavefrontMetricReporter = new WavefrontMetricReporter(waveFrontConnectionProperties.getWaveFrontProxy(),
-                waveFrontConnectionProperties.getWaveFrontProxyPort(), waveFrontConnectionProperties.getSource(),
-                waveFrontConnectionProperties.getStaticTags());
+        this.wavefrontMetricReporter = new WavefrontMetricReporter(getWavefrontProxyHost(), getWavefrontProxyPort(),
+                waveFrontConnectionProperties.getSource(), waveFrontConnectionProperties.getStaticTags());
         PowerMockito.verifyNew(Wavefront.class, times(1)).withArguments(anyString(), anyInt());
         PowerMockito.mockStatic(MetricsHelper.class);
         PowerMockito.when(MetricsHelper.getDoubleEquivalent(any(Object.class))).thenReturn(75.5);
@@ -359,9 +356,8 @@ public class WavefrontMetricReporterTest extends PowerMockTestCase {
     @Test(description = "Test to validate the correct metric value, which should either be double, integer, string or float and metric name which shouldn't contain any special characters and should be in the format of <string>.<string>")
     public void testValidateMetric() throws Exception {
         PowerMockito.whenNew(Wavefront.class).withArguments(anyString(), anyInt()).thenReturn(wavefront);
-        this.wavefrontMetricReporter = new WavefrontMetricReporter(waveFrontConnectionProperties.getWaveFrontProxy(),
-                waveFrontConnectionProperties.getWaveFrontProxyPort(), waveFrontConnectionProperties.getSource(),
-                waveFrontConnectionProperties.getStaticTags());
+        this.wavefrontMetricReporter = new WavefrontMetricReporter(getWavefrontProxyHost(), getWavefrontProxyPort(),
+                waveFrontConnectionProperties.getSource(), waveFrontConnectionProperties.getStaticTags());
         PowerMockito.verifyNew(Wavefront.class, times(1)).withArguments(anyString(), anyInt());
         PowerMockito.mockStatic(MetricsHelper.class);
         PowerMockito.when(MetricsHelper.isAValidMetricName(anyString())).thenReturn(true);
@@ -384,9 +380,8 @@ public class WavefrontMetricReporterTest extends PowerMockTestCase {
     @Test(description = "Test to verify failure when the given metric name is in improper format. Metric name which shouldn't contain any special characters and should be in the format of <string>.<string>")
     public void testValidateMetric1() throws Exception {
         PowerMockito.whenNew(Wavefront.class).withArguments(anyString(), anyInt()).thenReturn(wavefront);
-        this.wavefrontMetricReporter = new WavefrontMetricReporter(waveFrontConnectionProperties.getWaveFrontProxy(),
-                waveFrontConnectionProperties.getWaveFrontProxyPort(), waveFrontConnectionProperties.getSource(),
-                waveFrontConnectionProperties.getStaticTags());
+        this.wavefrontMetricReporter = new WavefrontMetricReporter(getWavefrontProxyHost(), getWavefrontProxyPort(),
+                waveFrontConnectionProperties.getSource(), waveFrontConnectionProperties.getStaticTags());
         PowerMockito.verifyNew(Wavefront.class, times(1)).withArguments(anyString(), anyInt());
         PowerMockito.mockStatic(MetricsHelper.class);
         PowerMockito.when(MetricsHelper.isAValidMetricName(anyString())).thenReturn(false);
@@ -406,9 +401,8 @@ public class WavefrontMetricReporterTest extends PowerMockTestCase {
     @Test(description = "Test to verify failure when the given metric is not in the acceptable format, metric value should either be double, integer, string or float")
     public void testValidateMetric2() throws Exception {
         PowerMockito.whenNew(Wavefront.class).withArguments(anyString(), anyInt()).thenReturn(wavefront);
-        this.wavefrontMetricReporter = new WavefrontMetricReporter(waveFrontConnectionProperties.getWaveFrontProxy(),
-                waveFrontConnectionProperties.getWaveFrontProxyPort(), waveFrontConnectionProperties.getSource(),
-                waveFrontConnectionProperties.getStaticTags());
+        this.wavefrontMetricReporter = new WavefrontMetricReporter(getWavefrontProxyHost(), getWavefrontProxyPort(),
+                waveFrontConnectionProperties.getSource(), waveFrontConnectionProperties.getStaticTags());
         PowerMockito.verifyNew(Wavefront.class, times(1)).withArguments(anyString(), anyInt());
         PowerMockito.mockStatic(MetricsHelper.class);
         PowerMockito.when(MetricsHelper.isAValidMetricName(anyString())).thenReturn(true);
@@ -431,29 +425,25 @@ public class WavefrontMetricReporterTest extends PowerMockTestCase {
     @Test(description = "verify the getWaveFrontProxy method")
     public void testGetWavefrontProxy() throws Exception {
         PowerMockito.whenNew(Wavefront.class).withArguments(anyString(), anyInt()).thenReturn(wavefront);
-        this.wavefrontMetricReporter = new WavefrontMetricReporter(waveFrontConnectionProperties.getWaveFrontProxy(),
-                waveFrontConnectionProperties.getWaveFrontProxyPort(), waveFrontConnectionProperties.getSource(),
-                waveFrontConnectionProperties.getStaticTags());
+        this.wavefrontMetricReporter = new WavefrontMetricReporter(getWavefrontProxyHost(), getWavefrontProxyPort(),
+                waveFrontConnectionProperties.getSource(), waveFrontConnectionProperties.getStaticTags());
         PowerMockito.verifyNew(Wavefront.class, times(1)).withArguments(anyString(), anyInt());
         String actualResult = wavefrontMetricReporter.getWavefrontProxy();
-        Assert.assertEquals(actualResult, waveFrontConnectionProperties.getWaveFrontProxy());
+        Assert.assertEquals(actualResult, getWavefrontProxyHost());
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.reporter.WavefrontMetricReporter#getMetricSource()}.
+     * Test method for {@link com.vmware.mangle.reporter.WavefrontMetricReporter#getMetricSource()}.
      *
      * @throws Exception
      */
     @Test(description = "verify the getMetricSource method")
     public void testGetMetricSource() throws Exception {
         PowerMockito.whenNew(Wavefront.class).withArguments(anyString(), anyInt()).thenReturn(wavefront);
-        this.wavefrontMetricReporter = new WavefrontMetricReporter(waveFrontConnectionProperties.getWaveFrontProxy(),
-                waveFrontConnectionProperties.getWaveFrontProxyPort(), waveFrontConnectionProperties.getSource(),
-                waveFrontConnectionProperties.getStaticTags());
+        this.wavefrontMetricReporter = new WavefrontMetricReporter(getWavefrontProxyHost(), getWavefrontProxyPort(),
+                waveFrontConnectionProperties.getSource(), waveFrontConnectionProperties.getStaticTags());
         PowerMockito.verifyNew(Wavefront.class, times(1)).withArguments(anyString(), anyInt());
         String actualResult = wavefrontMetricReporter.getMetricSource();
         Assert.assertEquals(actualResult, waveFrontConnectionProperties.getSource());
     }
-
 }

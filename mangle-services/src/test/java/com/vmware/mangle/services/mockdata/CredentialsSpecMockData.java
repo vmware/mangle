@@ -13,7 +13,6 @@ package com.vmware.mangle.services.mockdata;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -95,10 +94,8 @@ public class CredentialsSpecMockData {
             log.info("k8sConfigFile Path : " + file.getAbsolutePath());
             multipartFile = new MockMultipartFile(file.getName(), new FileInputStream(file));
             k8sCredentials.setKubeConfig(multipartFile.getBytes());
-        } catch (FileNotFoundException e) {
-            log.error("k8sConfigFile " + e);
         } catch (IOException e) {
-            log.error("k8sConfigFile " + e);
+            log.error(e.getMessage());
         }
         return k8sCredentials;
     }
@@ -106,7 +103,7 @@ public class CredentialsSpecMockData {
     public RemoteMachineCredentials getRMCredentialsData() {
         RemoteMachineCredentials rmCredentials = new RemoteMachineCredentials();
         rmCredentials.setName(rmName);
-        rmCredentials.setUserName(rmUserName);
+        rmCredentials.setUsername(rmUserName);
         rmCredentials.setPassword(rmPassword);
         MultipartFile multipartFile;
         try {
@@ -114,10 +111,8 @@ public class CredentialsSpecMockData {
             multipartFile = new MockMultipartFile(path.getFileName().toString(),
                     new FileInputStream(new File(rmPrivateKeyFile)));
             rmCredentials.setPrivateKey(multipartFile.getBytes());
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error(e.getMessage());
         }
         return rmCredentials;
     }

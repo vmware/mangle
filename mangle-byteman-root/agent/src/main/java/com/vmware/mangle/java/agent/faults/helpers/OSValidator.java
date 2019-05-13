@@ -16,8 +16,11 @@ package com.vmware.mangle.java.agent.faults.helpers;
  *
  */
 public class OSValidator {
-
     private static String OS = System.getProperty("os.name").toLowerCase();
+
+    private OSValidator() {
+        throw new java.lang.UnsupportedOperationException("This is a utility class and cannot be instantiated");
+    }
 
     public static boolean isWindows() {
 

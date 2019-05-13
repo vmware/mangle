@@ -11,17 +11,19 @@
 
 package com.vmware.mangle.unittest.faults.plugin.helpers.byteman;
 
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.AGENT_NAME;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.DEFAULT_TEMP_DIR;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.EXTRACT_AGENT_COMMAND;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.FI_ADD_INFO_FAULTID;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.GET_FAULT_COMMAND_WITH_PORT;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.LOAD_ARG;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.PID_AGENT_COMMAND_WITH_PORT;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.PID_ATTACH_MXBEANS_COMMAND_WITH_PORT;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.PORT_9091;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.REMEDIATION_COMMAND_WITH_PORT;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.SUBMIT_COMMAND_WITH_PORT;
+import static com.vmware.mangle.utils.constants.FaultConstants.AGENT_JAR_EXTENSION;
+import static com.vmware.mangle.utils.constants.FaultConstants.AGENT_NAME;
+import static com.vmware.mangle.utils.constants.FaultConstants.DEFAULT_TEMP_DIR;
+import static com.vmware.mangle.utils.constants.FaultConstants.EXTRACT_AGENT_COMMAND;
+import static com.vmware.mangle.utils.constants.FaultConstants.FI_ADD_INFO_FAULTID;
+import static com.vmware.mangle.utils.constants.FaultConstants.FORWARD_SLASH;
+import static com.vmware.mangle.utils.constants.FaultConstants.GET_FAULT_COMMAND_WITH_PORT;
+import static com.vmware.mangle.utils.constants.FaultConstants.LOAD_ARG;
+import static com.vmware.mangle.utils.constants.FaultConstants.PID_AGENT_COMMAND_WITH_PORT;
+import static com.vmware.mangle.utils.constants.FaultConstants.PID_ATTACH_MXBEANS_COMMAND_WITH_PORT;
+import static com.vmware.mangle.utils.constants.FaultConstants.PORT_9091;
+import static com.vmware.mangle.utils.constants.FaultConstants.REMEDIATION_COMMAND_WITH_PORT;
+import static com.vmware.mangle.utils.constants.FaultConstants.SUBMIT_COMMAND_WITH_PORT;
 
 import java.util.List;
 
@@ -66,7 +68,8 @@ public class LinuxBytemanFaultHelperTest {
     public void setUpBeforeClass() throws Exception {
         MockitoAnnotations.initMocks(this);
         faultsMockData = new FaultsMockData();
-        linuxBytemanFaultHelper = new LinuxBytemanFaultHelper(endpointClientFactory);
+        linuxBytemanFaultHelper = new LinuxBytemanFaultHelper();
+        linuxBytemanFaultHelper.setEndpointClientFactory(endpointClientFactory);
     }
 
     @Test
@@ -74,8 +77,9 @@ public class LinuxBytemanFaultHelperTest {
         ICommandExecutor executor = null;
         try {
             CommandExecutionFaultSpec cpuFaultSpec = faultsMockData.getLinuxCpuJvmAgentFaultSpec();
-            Mockito.when(endpointClientFactory.getEndPointClient(cpuFaultSpec.getCredentials(),
-                    cpuFaultSpec.getEndpoint())).thenReturn(sshUtils);
+            Mockito.when(
+                    endpointClientFactory.getEndPointClient(cpuFaultSpec.getCredentials(), cpuFaultSpec.getEndpoint()))
+                    .thenReturn(sshUtils);
             executor = linuxBytemanFaultHelper.getExecutor(cpuFaultSpec);
         } catch (MangleException e) {
             log.error("testGetExecutor failed with Exception: ", e);
@@ -88,16 +92,16 @@ public class LinuxBytemanFaultHelperTest {
     public void testGetJVMAgentInjectionCommandInfoList() {
         try {
             CommandExecutionFaultSpec cpuFaultSpec = faultsMockData.getLinuxCpuJvmAgentFaultSpec();
-            Mockito.when(endpointClientFactory.getEndPointClient(cpuFaultSpec.getCredentials(),
-                    cpuFaultSpec.getEndpoint())).thenReturn(sshUtils);
+            Mockito.when(
+                    endpointClientFactory.getEndPointClient(cpuFaultSpec.getCredentials(), cpuFaultSpec.getEndpoint()))
+                    .thenReturn(sshUtils);
             List<CommandInfo> injectionCommands = linuxBytemanFaultHelper.getInjectionCommandInfoList(cpuFaultSpec);
             log.info(RestTemplateWrapper.objectToJson(injectionCommands));
             Assert.assertTrue(injectionCommands.size() > 0);
-            Assert.assertEquals(String.format(PID_ATTACH_MXBEANS_COMMAND_WITH_PORT, DEFAULT_TEMP_DIR, PORT_9091, null),
-                    injectionCommands.get(2).getCommand());
-            Assert.assertEquals(
-                    String.format(PID_AGENT_COMMAND_WITH_PORT, DEFAULT_TEMP_DIR, PORT_9091, LOAD_ARG + " 80"),
-                    injectionCommands.get(3).getCommand());
+            Assert.assertEquals(injectionCommands.get(2).getCommand(), String
+                    .format(PID_ATTACH_MXBEANS_COMMAND_WITH_PORT, DEFAULT_TEMP_DIR + FORWARD_SLASH, PORT_9091, null));
+            Assert.assertEquals(injectionCommands.get(3).getCommand(), String.format(PID_AGENT_COMMAND_WITH_PORT,
+                    DEFAULT_TEMP_DIR + FORWARD_SLASH, PORT_9091, LOAD_ARG + " 80"));
         } catch (MangleException e) {
             log.error("testGetInjectionCommandInfoListForCPUJVMAgentFault failed with Exception: ", e);
             Assert.assertTrue(false);
@@ -109,16 +113,14 @@ public class LinuxBytemanFaultHelperTest {
     @Test
     public void testGetJVMAgentRemediationCommandInfoList() {
         CommandExecutionFaultSpec cpuFaultSpec = faultsMockData.getLinuxCpuJvmAgentFaultSpec();
-        Mockito.when(endpointClientFactory.getEndPointClient(cpuFaultSpec.getCredentials(),
-                cpuFaultSpec.getEndpoint())).thenReturn(sshUtils);
+        Mockito.when(endpointClientFactory.getEndPointClient(cpuFaultSpec.getCredentials(), cpuFaultSpec.getEndpoint()))
+                .thenReturn(sshUtils);
         List<CommandInfo> remediationCommands = linuxBytemanFaultHelper.getRemediationCommandInfoList(cpuFaultSpec);
         log.info(RestTemplateWrapper.objectToJson(remediationCommands));
-        Assert.assertEquals(
-                String.format(REMEDIATION_COMMAND_WITH_PORT, DEFAULT_TEMP_DIR, PORT_9091, FI_ADD_INFO_FAULTID),
-                remediationCommands.get(0).getCommand());
-        Assert.assertEquals(
-                String.format(GET_FAULT_COMMAND_WITH_PORT, DEFAULT_TEMP_DIR, PORT_9091, FI_ADD_INFO_FAULTID),
-                remediationCommands.get(1).getCommand());
+        Assert.assertEquals(remediationCommands.get(0).getCommand(), String.format(REMEDIATION_COMMAND_WITH_PORT,
+                DEFAULT_TEMP_DIR + FORWARD_SLASH, PORT_9091, FI_ADD_INFO_FAULTID));
+        Assert.assertEquals(remediationCommands.get(1).getCommand(), String.format(GET_FAULT_COMMAND_WITH_PORT,
+                DEFAULT_TEMP_DIR + FORWARD_SLASH, PORT_9091, FI_ADD_INFO_FAULTID));
 
     }
 
@@ -126,24 +128,22 @@ public class LinuxBytemanFaultHelperTest {
     @Test
     public void testGetJVMCodeLevelInjectionCommandInfoList() {
         try {
-            JVMCodeLevelFaultSpec springServiceExceptionFaultSpec =
-                    faultsMockData.getLinuxJvmCodelevelFaultSpec();
-            Mockito.when(endpointClientFactory.getEndPointClient(
-                    springServiceExceptionFaultSpec.getCredentials(), springServiceExceptionFaultSpec.getEndpoint()))
-                    .thenReturn(sshUtils);
+            JVMCodeLevelFaultSpec springServiceExceptionFaultSpec = faultsMockData.getLinuxJvmCodelevelFaultSpec();
+            Mockito.when(endpointClientFactory.getEndPointClient(springServiceExceptionFaultSpec.getCredentials(),
+                    springServiceExceptionFaultSpec.getEndpoint())).thenReturn(sshUtils);
             List<CommandInfo> injectionCommands =
                     linuxBytemanFaultHelper.getInjectionCommandInfoList(springServiceExceptionFaultSpec);
             log.info(RestTemplateWrapper.objectToJson(injectionCommands));
             Assert.assertTrue(injectionCommands.size() > 0);
-            Assert.assertEquals(
-                    String.format(EXTRACT_AGENT_COMMAND, DEFAULT_TEMP_DIR, "byteman-download-3.0.10-full.tar.gz"),
-                    injectionCommands.get(0).getCommand());
+            Assert.assertEquals(injectionCommands.get(0).getCommand(),
+                    String.format(EXTRACT_AGENT_COMMAND, DEFAULT_TEMP_DIR + "/", AGENT_NAME + AGENT_JAR_EXTENSION));
             Assert.assertEquals(injectionCommands.get(1).getCommand(), "chmod -R 777 " + DEFAULT_TEMP_DIR + "/"
                     + AGENT_NAME + ";chmod -R 777 " + DEFAULT_TEMP_DIR + "/" + AGENT_NAME + "/*");
-            Assert.assertTrue(injectionCommands.get(2).getCommand()
-                    .contains(String.format(PID_ATTACH_MXBEANS_COMMAND_WITH_PORT, DEFAULT_TEMP_DIR, PORT_9091, null)));
-            Assert.assertTrue(injectionCommands.get(4).getCommand().toString().contains(String
-                    .format(SUBMIT_COMMAND_WITH_PORT, DEFAULT_TEMP_DIR, PORT_9091, DEFAULT_TEMP_DIR + "/123456;.btm")));
+            Assert.assertTrue(injectionCommands.get(2).getCommand().contains(String
+                    .format(PID_ATTACH_MXBEANS_COMMAND_WITH_PORT, DEFAULT_TEMP_DIR + FORWARD_SLASH, PORT_9091, null)));
+            Assert.assertTrue(
+                    injectionCommands.get(4).getCommand().toString().contains(String.format(SUBMIT_COMMAND_WITH_PORT,
+                            DEFAULT_TEMP_DIR + FORWARD_SLASH, PORT_9091, DEFAULT_TEMP_DIR + "/123456;.btm")));
         } catch (MangleException e) {
             log.error("testGetRemediationCommandInfoListForSpringServiceFault failed with Exception: ", e);
             Assert.assertTrue(false);
@@ -159,16 +159,18 @@ public class LinuxBytemanFaultHelperTest {
         List<CommandInfo> remediationCommands =
                 linuxBytemanFaultHelper.getRemediationCommandInfoList(springServiceExceptionFaultSpec);
         log.info(RestTemplateWrapper.objectToJson(remediationCommands));
+        log.info(String.format(SUBMIT_COMMAND_WITH_PORT, DEFAULT_TEMP_DIR, PORT_9091,
+                "-u " + DEFAULT_TEMP_DIR + "/123456;.btm"));
         Assert.assertTrue(remediationCommands.get(0).getCommand().contains(String.format(SUBMIT_COMMAND_WITH_PORT,
-                DEFAULT_TEMP_DIR, PORT_9091, "-u " + DEFAULT_TEMP_DIR + "/123456;.btm")));
+                DEFAULT_TEMP_DIR + FORWARD_SLASH, PORT_9091, "-u " + DEFAULT_TEMP_DIR + "/123456;.btm")));
     }
 
     @Test
     void testGetAgentFaultInjectionScripts() {
         CommandExecutionFaultSpec cpuFaultSpec = faultsMockData.getLinuxCpuJvmAgentFaultSpec();
         List<SupportScriptInfo> supportScripts = linuxBytemanFaultHelper.getAgentFaultInjectionScripts(cpuFaultSpec);
-        Assert.assertEquals("byteman-download-3.0.10-full.tar.gz", supportScripts.get(0).getScriptFileName());
-        Assert.assertEquals(DEFAULT_TEMP_DIR, supportScripts.get(0).getTargetDirectoryPath());
+        Assert.assertEquals(supportScripts.get(0).getScriptFileName(), AGENT_NAME + AGENT_JAR_EXTENSION);
+        Assert.assertEquals(supportScripts.get(0).getTargetDirectoryPath(), DEFAULT_TEMP_DIR + FORWARD_SLASH);
     }
 
 }

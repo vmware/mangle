@@ -1,0 +1,62 @@
+<clr-alert *ngIf="errorFlag" [clrAlertType]="'danger'">
+    <div class="alert-item">{{alertMessage}}</div>
+</clr-alert>
+<clr-alert *ngIf="successFlag" [clrAlertType]="'success'">
+    <div class="alert-item">{{alertMessage}}</div>
+</clr-alert>
+<clr-dropdown>
+    <button type="button" class="btn btn-sm btn-secondary" clrDropdownTrigger>
+        <clr-icon shape="plus"></clr-icon> Certificates <clr-icon shape="caret down"></clr-icon>
+    </button>
+    <clr-dropdown-menu *clrIfOpen>
+        <button type="button" (click)="populateCertificateForm({'id':null,'name':null});dockerCertificates=true;addEdit='Add';" clrDropdownItem>Docker</button>
+    </clr-dropdown-menu>
+</clr-dropdown>
+<clr-datagrid [clrDgLoading]="isLoading">
+	<clr-dg-column [clrDgField]="'name'">Certificates Name</clr-dg-column>
+    <clr-dg-column [clrDgField]="'type'">Endpoint Type</clr-dg-column>
+    <clr-dg-row *clrDgItems="let certificateVal of certificates" [clrDgItem]="certificateVal">
+        <clr-dg-action-overflow>
+            <button class="action-item" (click)="deleteCertificates(certificateVal);">Delete</button>
+            <button class="action-item" (click)="populateCertificateForm(certificateVal);dockerCertificates=true;addEdit='Edit';">Edit</button>
+        </clr-dg-action-overflow>
+		<clr-dg-cell>{{certificateVal.name}}</clr-dg-cell>
+		<clr-dg-cell>{{certificateVal.type}}</clr-dg-cell>
+    </clr-dg-row>
+	<clr-dg-footer>
+		<clr-dg-pagination #pagination [clrDgPageSize]="10">
+			<clr-dg-page-size [clrPageSizeOptions]="[10,20,50,100]">Certificates per page</clr-dg-page-size>
+			{{pagination.firstItem + 1}} - {{pagination.lastItem + 1}} of {{pagination.totalItems}} credentials
+		</clr-dg-pagination>
+	</clr-dg-footer>
+</clr-datagrid>
+<clr-modal [(clrModalOpen)]="dockerCertificates" [clrModalClosable]="false">
+    <h3 class="modal-title">Upload Docker Certificates</h3>
+    <div class="modal-body">
+        <form #dockerCertificatesForm="ngForm" (ngSubmit)="addUpdateDockerCertificates(dockerCertificatesForm.value);dockerCertificates=false;dockerCertificatesForm.reset();" *ngIf="certificatesFormData" ngNativeValidate>
+            <section class="form-block">
+                <div class="form-group">
+                    <input type="text" name="id" [(ngModel)]="certificatesFormData.id" [hidden]="true">
+                </div>
+                <div class="form-group">
+                    <label for="name">Name</label>
+                    <input type="text" name="name" pattern="^[A-Za-z0-9-_.]+$" title="alphanumeric and special characters (_ - .) are allowed" [(ngModel)]="certificatesFormData.name" [required]="addEdit == 'Add'" [readonly]="addEdit == 'Edit'">
+                </div>
+                <div class="form-group">
+                    <label for="caCert">CA Certificate</label>
+                    <input type="file" name="caCert" (change)="getDockerCaCertFile($event)" ngModel required>
+                </div>
+                <div class="form-group">
+                    <label for="serverCert">Server Certificate</label>
+                    <input type="file" name="serverCert" (change)="getDockerServerCertFile($event)" ngModel required>
+                </div>
+                <div class="form-group">
+                    <label for="privateKey">PrivateKey</label>
+                    <input type="file" name="privateKey" (change)="getDockerPrivateKeyFile($event)" ngModel required>
+                </div>
+            </section>
+            <button type="button" class="btn btn-outline" (click)="dockerCertificates=false;dockerCertificatesForm.reset();ngOnInit();">CANCEL</button>
+            <button type="submit" class="btn btn-primary">SUBMIT</button>
+        </form>
+    </div>
+</clr-modal>

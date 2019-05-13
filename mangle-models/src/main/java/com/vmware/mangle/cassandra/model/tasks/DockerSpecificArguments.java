@@ -12,6 +12,7 @@
 package com.vmware.mangle.cassandra.model.tasks;
 
 import java.io.Serializable;
+import javax.validation.constraints.NotEmpty;
 
 import lombok.Data;
 import org.springframework.data.cassandra.core.mapping.UserDefinedType;
@@ -26,5 +27,6 @@ import org.springframework.data.cassandra.core.mapping.UserDefinedType;
 public class DockerSpecificArguments implements Serializable {
 
     private static final long serialVersionUID = 1L;
+    @NotEmpty
     private String containerName;
 }

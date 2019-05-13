@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.vmware.mangle.cassandra.model.faults.specs.CpuFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.DiskIOFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.DockerFaultSpec;
-import com.vmware.mangle.cassandra.model.faults.specs.K8SFaultSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.K8SDeleteResourceFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.K8SResourceNotReadyFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.KillProcessFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.MemoryFaultSpec;
@@ -67,13 +67,14 @@ public class FaultInjectionController {
     public ResponseEntity<Task<TaskSpec>> injectCPUFault(@Validated @RequestBody CpuFaultSpec faultSpec)
             throws MangleException {
         faultInjectionHelper.validateSpec(faultSpec);
+        faultInjectionHelper.validateEndpointTypeSpecificArguments(faultSpec);
         return new ResponseEntity<>(new CPUFault(faultSpec).invokeFault(faultInjectionHelper), HttpStatus.OK);
     }
 
     @ApiOperation(value = "API to trigger injecting a K8S Specifc fault", nickname = "deleteK8SResourceFault")
     @PostMapping(value = "/k8s/delete-resource", produces = "application/json")
-    public ResponseEntity<Task<TaskSpec>> deleteK8SResourceFault(@Validated @RequestBody K8SFaultSpec faultSpec)
-            throws MangleException {
+    public ResponseEntity<Task<TaskSpec>> deleteK8SResourceFault(
+            @Validated @RequestBody K8SDeleteResourceFaultSpec faultSpec) throws MangleException {
         faultInjectionHelper.validateSpec(faultSpec);
         return new ResponseEntity<>(new DeleteK8SResourceFault(faultSpec).invokeFault(faultInjectionHelper),
                 HttpStatus.OK);
@@ -88,10 +89,10 @@ public class FaultInjectionController {
                 HttpStatus.OK);
     }
 
-    @ApiOperation(value = "API to remediate an injected fault", nickname = "remediateFault")
-    @DeleteMapping(value = "/{taskId}", produces = "application/json")
-    public ResponseEntity<Task<TaskSpec>> remediateFault(@PathVariable String taskId) throws MangleException {
-        Task<TaskSpec> task = faultInjectionHelper.triggerRemediation(taskId);
+    @ApiOperation(value = "API to remediate an injected fault - taskId/taskName", nickname = "remediateFault")
+    @DeleteMapping(value = "/{taskIdentifier}", produces = "application/json")
+    public ResponseEntity<Task<TaskSpec>> remediateFault(@PathVariable String taskIdentifier) throws MangleException {
+        Task<TaskSpec> task = faultInjectionHelper.triggerRemediation(taskIdentifier);
         return new ResponseEntity<>(task, HttpStatus.OK);
     }
 
@@ -101,6 +102,7 @@ public class FaultInjectionController {
     public ResponseEntity<Task<TaskSpec>> injectDockerFault(@Validated @RequestBody DockerFaultSpec faultSpec)
             throws MangleException {
         faultInjectionHelper.validateSpec(faultSpec);
+        faultInjectionHelper.validateEndpointTypeSpecificArguments(faultSpec);
         return new ResponseEntity<>(new DockerFault(faultSpec).invokeFault(faultInjectionHelper), HttpStatus.OK);
     }
 
@@ -133,6 +135,7 @@ public class FaultInjectionController {
     public ResponseEntity<Task<TaskSpec>> injectMemoryFault(@Validated @RequestBody MemoryFaultSpec faultSpec)
             throws MangleException {
         faultInjectionHelper.validateSpec(faultSpec);
+        faultInjectionHelper.validateEndpointTypeSpecificArguments(faultSpec);
         return new ResponseEntity<>(new MemoryFault(faultSpec).invokeFault(faultInjectionHelper), HttpStatus.OK);
     }
 
@@ -141,6 +144,7 @@ public class FaultInjectionController {
     public ResponseEntity<Task<TaskSpec>> injectDiskIOFault(@Validated @RequestBody DiskIOFaultSpec faultSpec)
             throws MangleException {
         faultInjectionHelper.validateSpec(faultSpec);
+        faultInjectionHelper.validateEndpointTypeSpecificArguments(faultSpec);
         return new ResponseEntity<>(new DiskIOFault(faultSpec).invokeFault(faultInjectionHelper), HttpStatus.OK);
     }
 
@@ -148,7 +152,8 @@ public class FaultInjectionController {
     @PostMapping(value = "/kill-process", produces = "application/json")
     public ResponseEntity<Task<TaskSpec>> injectKillProcessFault(@Validated @RequestBody KillProcessFaultSpec faultSpec)
             throws MangleException {
-        faultInjectionHelper.validateSpec(faultSpec);
+        faultInjectionHelper.validateKillProcessFaultSpec(faultSpec);
+        faultInjectionHelper.validateEndpointTypeSpecificArguments(faultSpec);
         return new ResponseEntity<>(new KillProcessFault(faultSpec).invokeFault(faultInjectionHelper), HttpStatus.OK);
     }
 }

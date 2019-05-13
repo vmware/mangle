@@ -25,7 +25,7 @@ import com.vmware.mangle.utils.constants.Constants;
 import com.vmware.mangle.utils.constants.MetricProviderConstants;
 
 /**
- * @author ashrimali
+ * @author ashrimali, dbhat
  *
  */
 public class MetricProviderMockData {
@@ -58,16 +58,12 @@ public class MetricProviderMockData {
      */
     public WaveFrontConnectionProperties getWavefrontConnectionProperties() {
         WaveFrontConnectionProperties waveFrontConnectionProperties = new WaveFrontConnectionProperties();
-        waveFrontConnectionProperties.setPrefix(this.properties.getProperty("wavefrontPrefix"));
         Map<String, String> staticTags = new HashMap<String, String>();
         staticTags.put(this.properties.getProperty("waveFrontStaticTagKey"),
                 this.properties.getProperty("waveFrontStaticTagValue"));
         waveFrontConnectionProperties.setStaticTags(staticTags);
         waveFrontConnectionProperties.setWavefrontAPIToken(this.properties.getProperty("wavefrontAPIToken"));
-        waveFrontConnectionProperties.setWaveFrontProxy(this.properties.getProperty("waveFrontProxy"));
         waveFrontConnectionProperties.setWavefrontInstance(this.properties.getProperty("wavefrontInstance"));
-        waveFrontConnectionProperties
-                .setWaveFrontProxyPort(Integer.parseInt(this.properties.getProperty("waveFrontProxyPort")));
         return waveFrontConnectionProperties;
     }
 

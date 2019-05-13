@@ -23,9 +23,8 @@ import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
 /**
- *
- *
  * @author hkilari
+ * @author bkaranam
  */
 @Log4j2
 public class RetryUtilsTest {
@@ -48,14 +47,18 @@ public class RetryUtilsTest {
         public Object call() throws Exception {
             log.info("Incrementing Counter");
             counter++;
-            throw new Exception();
+            throw new Exception("RetryTest");
         }
     }
 
     private void incrementCounterWithException() throws Exception {
+        incrementCounterWithException("retrytest");
+    }
+
+    private void incrementCounterWithException(String exceptionMessage) throws Exception {
         log.info("Incrementing Counter");
         counter++;
-        throw new Exception();
+        throw new Exception(exceptionMessage);
     }
 
     private void incrementCounter() {
@@ -70,7 +73,7 @@ public class RetryUtilsTest {
         RetryUtils.retry(() -> {
             incrementCounterWithException();
         }, exception, 3, 1L);
-        Assert.assertEquals(3, counter);
+        Assert.assertEquals(counter, 3);
     }
 
     @Test
@@ -80,7 +83,7 @@ public class RetryUtilsTest {
         RetryUtils.retry(() -> {
             incrementCounter();
         }, exception);
-        Assert.assertEquals(1, counter);
+        Assert.assertEquals(counter, 1);
     }
 
     @Test
@@ -88,7 +91,15 @@ public class RetryUtilsTest {
         log.info("Executing RetryUtils on DummyCallable");
         Throwable exception = new Throwable();
         RetryUtils.retry(new CallableExample(), exception);
-        Assert.assertEquals(1, counter);
+        Assert.assertEquals(counter, 1);
+    }
+
+    @Test
+    public void testRetryWithCallableAndRetryCount() throws MangleException {
+        log.info("Executing RetryUtils on DummyCallable");
+        Throwable exception = new Throwable();
+        RetryUtils.retry(new CallableExample(), exception, 2, 1L);
+        Assert.assertEquals(counter, 1);
     }
 
     @Test
@@ -96,10 +107,24 @@ public class RetryUtilsTest {
         log.info("Executing RetryUtils on DummyCallable");
         Throwable exception = new Throwable();
         try {
-            RetryUtils.retry(new CallableExampleWithException(), exception, 3, 1L);
+            RetryUtils.retry(new CallableExampleWithException(), exception, 2, 1L);
         } catch (MangleException e) {
             Assert.assertEquals(e.getErrorCode(), ErrorCode.RETRY_LOGICS_FAILED);
         }
-        Assert.assertEquals(3, counter);
+        Assert.assertEquals(counter, 2);
+    }
+
+    @Test
+    public void testRetryWithExceptionFAILEDMessage() {
+        log.info("Executing RetryUtils on DummyCallable");
+        Throwable exception = new Throwable();
+        try {
+            RetryUtils.retry(() -> {
+                incrementCounterWithException("FAILED:Retry");
+            }, exception, 2, 1L);
+        } catch (MangleException e) {
+            Assert.assertEquals(e.getErrorCode(), ErrorCode.RETRY_LOGICS_FAILED);
+            Assert.assertEquals(counter, 1);
+        }
     }
 }

@@ -18,6 +18,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.vmware.mangle.utils.constants.ErrorConstants;
 import com.vmware.mangle.utils.constants.URLConstants;
 
 /**
@@ -36,7 +37,11 @@ public class HazelcastTaskCache implements HazelcastInstanceAware {
 
     public String addTaskToCache(String key, String value) {
         log.debug("Adding key {} with the value {} to the map", key, value);
-        taskMap.putIfAbsent(key, value);
+        if (!taskMap.containsKey(key)) {
+            taskMap.put(key, value);
+        } else if (taskMap.containsKey(key) && !taskMap.get(key).equals(value)) {
+            updateTaskCache(key, value);
+        }
         return key;
     }
 
@@ -45,7 +50,7 @@ public class HazelcastTaskCache implements HazelcastInstanceAware {
         if (taskMap.containsKey(taskId)) {
             taskMap.replace(taskId, taskStatus);
         } else {
-            addTaskToCache(taskId, taskStatus);
+            log.fatal(ErrorConstants.UNEXPECTED_TASK_UPDATE_EVENT);
         }
     }
 

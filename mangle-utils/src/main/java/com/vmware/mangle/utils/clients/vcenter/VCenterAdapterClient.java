@@ -11,17 +11,18 @@
 
 package com.vmware.mangle.utils.clients.vcenter;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.codec.binary.Base64;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 
 import com.vmware.mangle.cassandra.model.endpoint.VCenterAdapterProperties;
-import com.vmware.mangle.utils.CommonUtils;
+import com.vmware.mangle.model.vcenter.VCenterAdapterHealthStatus;
 import com.vmware.mangle.utils.clients.restclient.RestTemplateWrapper;
+import com.vmware.mangle.utils.constants.ErrorConstants;
+import com.vmware.mangle.utils.constants.VCenterConstants;
 import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
@@ -50,26 +51,23 @@ public class VCenterAdapterClient extends RestTemplateWrapper {
     public void setDefaultHeaders() {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set(AUTHORIZATION, VC_AUTH_BASIC
-                + new String(Base64.encodeBase64((vCenterAdapterProperties.getUsername() + ":" + vCenterAdapterProperties.getPassword()).getBytes())));
+        headers.set(AUTHORIZATION, VC_AUTH_BASIC + new String(Base64.encodeBase64(
+                (vCenterAdapterProperties.getUsername() + ":" + vCenterAdapterProperties.getPassword()).getBytes())));
         setHeaders(headers);
     }
 
     public boolean testConnection() throws MangleException {
-        boolean returnValue = false;
-        URL aURL;
-        try {
-            aURL = new URL(getBaseUrl());
-            if (CommonUtils.isServerListening(aURL.getHost(), aURL.getPort())) {
-                returnValue = true;
-            } else {
-                log.debug(
-                        "Failed to communicate with the vCenter Adapter, Please verify that the vCenter adapter is active and running");
-            }
-        } catch (MalformedURLException e) {
-            log.error("Invalid vCenter adapter URL provided : {}", getBaseUrl());
-            throw new MangleException(ErrorCode.INVALID_URL, getBaseUrl());
+        ResponseEntity<VCenterAdapterHealthStatus> testConnectionResponse =
+                (ResponseEntity<VCenterAdapterHealthStatus>) get(VCenterConstants.VC_ADAPTER_HEALTH_CHECK,
+                        VCenterAdapterHealthStatus.class);
+        if (null != testConnectionResponse && testConnectionResponse.getStatusCode() == HttpStatus.OK
+                && testConnectionResponse.getBody() != null
+                && testConnectionResponse.getBody().getStatus().equals("UP")) {
+            return true;
+        } else {
+            log.error(ErrorConstants.VCENTER_ADAPTER_CLIENT_UNREACHABLE);
+            throw new MangleException(String.format(ErrorConstants.VCENTER_ADAPTER_CLIENT_UNREACHABLE, getBaseUrl()) ,
+                    ErrorCode.VCENTER_ADAPTER_CLIENT_UNREACHABLE);
         }
-        return returnValue;
     }
 }

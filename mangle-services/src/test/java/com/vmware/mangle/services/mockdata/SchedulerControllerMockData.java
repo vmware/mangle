@@ -17,8 +17,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import com.vmware.mangle.cassandra.model.scheduler.ScheduledTaskStatus;
 import com.vmware.mangle.cassandra.model.scheduler.SchedulerInfo;
+import com.vmware.mangle.cassandra.model.scheduler.SchedulerRequestStatus;
 import com.vmware.mangle.cassandra.model.scheduler.SchedulerSpec;
 import com.vmware.mangle.model.enums.SchedulerStatus;
 import com.vmware.mangle.utils.ReadProperty;
@@ -69,33 +69,34 @@ public class SchedulerControllerMockData {
         return jobIds;
     }
 
-    public Map<String, ScheduledTaskStatus> getCancelledScheduledStatusMap() {
+    public Map<String, SchedulerRequestStatus> getCancelledScheduledStatusMap() {
         return getScheduledStatusMap(SchedulerStatus.CANCELLED, JOB_CANCELLED_MESSAGE);
 
     }
 
-    public Map<String, ScheduledTaskStatus> getPausedScheduledStatusMap() {
+    public Map<String, SchedulerRequestStatus> getPausedScheduledStatusMap() {
         return getScheduledStatusMap(SchedulerStatus.PAUSED, JOB_PAUSED_MESSAGE);
 
     }
 
-    public Map<String, ScheduledTaskStatus> getResumedScheduledStatusMap() {
+    public Map<String, SchedulerRequestStatus> getResumedScheduledStatusMap() {
         return getScheduledStatusMap(SchedulerStatus.SCHEDULED, JOB_RESUMED_MESSAGE);
 
     }
 
-    private Map<String, ScheduledTaskStatus> getScheduledStatusMap(SchedulerStatus schedulerStatus, String jobMessage) {
-        Map<String, ScheduledTaskStatus> scheduledStatusMap = new HashMap<>();
-        ScheduledTaskStatus scheduledTaskStatus = new ScheduledTaskStatus();
-        scheduledTaskStatus.setStatus(schedulerStatus);
-        scheduledTaskStatus.setMessage(jobMessage);
-        scheduledStatusMap.put(this.jobIds.get(0), scheduledTaskStatus);
-        scheduledStatusMap.put(this.jobIds.get(1), scheduledTaskStatus);
+    private Map<String, SchedulerRequestStatus> getScheduledStatusMap(SchedulerStatus schedulerStatus,
+            String jobMessage) {
+        Map<String, SchedulerRequestStatus> scheduledStatusMap = new HashMap<>();
+        SchedulerRequestStatus schedulerRequestStatus = new SchedulerRequestStatus();
+        schedulerRequestStatus.setMessage(jobMessage);
+        scheduledStatusMap.put(this.jobIds.get(0), schedulerRequestStatus);
+        scheduledStatusMap.put(this.jobIds.get(1), schedulerRequestStatus);
         return scheduledStatusMap;
     }
 
     public SchedulerSpec getMangleSchedulerSpec() {
         SchedulerSpec schedulerSpec = new SchedulerSpec();
+        schedulerSpec.setId(jobId1);
         schedulerSpec.setCronExpression(this.cronExpression);
         schedulerSpec.setDescription(this.description);
         schedulerSpec.setStatus(SchedulerStatus.CANCELLED);

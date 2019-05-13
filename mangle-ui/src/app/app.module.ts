@@ -13,9 +13,10 @@ import { ConfigModule } from './config/config.module';
 import { AuthModule } from './auth/auth.module';
 import { CoreModule } from './core/core.module';
 import { HomeModule } from './home/home.module';
-import { SharedModule } from './shared/shared.module';
 import { SettingModule } from './setting/setting.module';
 import { LocationStrategy, HashLocationStrategy } from '@angular/common';
+import { PagesModule } from './pages/pages.module';
+import { AuthGuardService } from './auth-guard.service';
 
 @NgModule({
   declarations: [
@@ -33,11 +34,12 @@ import { LocationStrategy, HashLocationStrategy } from '@angular/common';
     AuthModule,
     CoreModule,
     HomeModule,
-    SharedModule,
+    PagesModule,
     SettingModule
   ],
   providers: [
     ConfigGuardService,
+    AuthGuardService,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: InterceptorService,

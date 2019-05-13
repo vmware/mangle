@@ -63,6 +63,8 @@ public class VCenterClientTest extends PowerMockTestCase {
     @Test
     public void testTestConnection() throws Exception {
         mockStatic(VMOperations.class);
+
+        when(vCenterAdapterClient.testConnection()).thenReturn(true);
         when(VMOperations.testConnection(any(), any())).thenReturn(true);
         whenNew(VCenterAdapterClient.class).withAnyArguments().thenReturn(vCenterAdapterClient);
         vCenterClient = new VCenterClient("", "", "", vCenterAdapterProperties);

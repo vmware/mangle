@@ -84,7 +84,7 @@ public class K8SResourceNotReadyFaultTest {
                 "Executing test: testConstructorwithUnsupportedEndpoint on K8SResourceNotReadyFault#K8SResourceNotReadyFault");
         try {
             K8SResourceNotReadyFaultSpec faultSpec = faultsMockData.getK8SResourceNotReadyFaultSpec();
-            faultSpec.setEndpoint(new EndpointMockData().awsEndpointMockData());
+            faultSpec.setEndpoint(new EndpointMockData().rmEndpointMockData());
             new K8SResourceNotReadyFault(faultSpec);
         } catch (MangleException e) {
             Assert.assertEquals(e.getErrorCode(), ErrorCode.UNSUPPORTED_ENDPOINT);

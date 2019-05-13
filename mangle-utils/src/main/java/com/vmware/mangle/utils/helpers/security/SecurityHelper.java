@@ -17,13 +17,14 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
+
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
@@ -87,14 +88,13 @@ public class SecurityHelper {
      * @throws MangleSecurityException
      */
 
-    public static String encrypt(String plainText, String salt, String passwordForSalt)
-            throws MangleSecurityException {
+    public static String encrypt(String plainText, String salt, String passwordForSalt) throws MangleSecurityException {
         SecretKeySpec secret = new SecretKeySpec(generateSecretKey(salt, passwordForSalt).getEncoded(),
                 SecurityConstants.SECRETKEY_ALGORITHM);
         Cipher cipher;
         try {
             cipher = Cipher.getInstance(SecurityConstants.CIPHER_ALGORITHM);
-            cipher.init(Cipher.ENCRYPT_MODE, secret, new IvParameterSpec(new byte[16]));
+            cipher.init(Cipher.ENCRYPT_MODE, secret, new GCMParameterSpec(128, new byte[16]));
             return new Base64().encodeAsString(cipher.doFinal(plainText.getBytes()));
         } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException
                 | BadPaddingException | InvalidAlgorithmParameterException e) {
@@ -130,7 +130,7 @@ public class SecurityHelper {
         if (!encryptedText.matches(SecurityConstants.STORABLE_ENCRYPTED_TEXT_FORMAT.replaceAll("%d", "\\\\d\\*")
                 .replaceAll("%s", ".\\*"))) {
             throw new MangleSecurityException(
-                    "Please make sure text provided as a input encrypted using Mangle's default format");
+                    "Text provided as input cannot be decrypted using Mangle's default format.");
         }
         int firstIndex = encryptedText.indexOf('&') + 1;
         int lastIndex = encryptedText.lastIndexOf('&');
@@ -170,7 +170,7 @@ public class SecurityHelper {
             SecretKeySpec secret = new SecretKeySpec(generateSecretKey(salt, passwordForSalt).getEncoded(),
                     SecurityConstants.SECRETKEY_ALGORITHM);
             Cipher cipher = Cipher.getInstance(SecurityConstants.CIPHER_ALGORITHM);
-            cipher.init(Cipher.DECRYPT_MODE, secret, new IvParameterSpec(new byte[16]));
+            cipher.init(Cipher.DECRYPT_MODE, secret, new GCMParameterSpec(128, new byte[16]));
             byte[] decryptedTextBytes = cipher.doFinal(encryptedTextBytes);
             return new String(decryptedTextBytes);
         } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException

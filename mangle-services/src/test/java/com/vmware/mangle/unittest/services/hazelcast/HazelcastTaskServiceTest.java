@@ -13,6 +13,7 @@ package com.vmware.mangle.unittest.services.hazelcast;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -47,8 +48,10 @@ import com.vmware.mangle.services.EndpointService;
 import com.vmware.mangle.services.SchedulerService;
 import com.vmware.mangle.services.TaskService;
 import com.vmware.mangle.services.hazelcast.HazelcastTaskService;
+import com.vmware.mangle.services.helpers.FaultInjectionHelper;
 import com.vmware.mangle.services.helpers.FaultTaskFactory;
 import com.vmware.mangle.services.mockdata.HazelcastMockData;
+import com.vmware.mangle.services.scheduler.Scheduler;
 import com.vmware.mangle.services.tasks.executor.TaskExecutor;
 import com.vmware.mangle.utils.exceptions.MangleException;
 
@@ -78,7 +81,13 @@ public class HazelcastTaskServiceTest {
     private FaultTaskFactory faultTaskFactory;
 
     @Mock
+    private Scheduler scheduler;
+
+    @Mock
     private HazelcastInstance instance;
+
+    @Mock
+    private FaultInjectionHelper injectionHelper;
 
     private HazelcastMockData mockData = new HazelcastMockData();
 
@@ -119,13 +128,11 @@ public class HazelcastTaskServiceTest {
         when(member.getAddress()).thenReturn(address);
         when(instance.getMap(any())).thenReturn(map);
         when(map.get(memberId)).thenReturn(currentNodeTasks);
-
+        doNothing().when(injectionHelper).updateFaultSpec(any());
         hazelcastTaskService.triggerTask(taskId);
 
         verify(taskService, times(1)).getTaskById(anyString());
         verify(concurrentTaskRunner, times(1)).submitTask(any());
-        verify(endpointService, times(1)).getEndpointByName(anyString());
-        verify(credentialService, times(1)).getCredentialByName(anyString());
 
         verify(instance, times(1)).getCluster();
         verify(cluster, times(1)).getLocalMember();
@@ -168,8 +175,6 @@ public class HazelcastTaskServiceTest {
 
         verify(taskService, times(1)).getTaskById(anyString());
         verify(concurrentTaskRunner, times(1)).submitTask(any());
-        verify(endpointService, times(1)).getEndpointByName(anyString());
-        verify(credentialService, times(1)).getCredentialByName(anyString());
 
         verify(instance, times(1)).getCluster();
         verify(cluster, times(1)).getLocalMember();
@@ -224,6 +229,7 @@ public class HazelcastTaskServiceTest {
         when(taskService.getTaskById(taskId)).thenReturn(task);
         when(instance.getMap(anyString())).thenReturn(map);
         when(schedulerService.getSchedulerDetailsById(anyString())).thenReturn(schedulerSpec);
+        when(scheduler.isTaskAlreadyScheduled(taskId)).thenReturn(false);
 
         hazelcastTaskService.triggerTask(taskId);
 

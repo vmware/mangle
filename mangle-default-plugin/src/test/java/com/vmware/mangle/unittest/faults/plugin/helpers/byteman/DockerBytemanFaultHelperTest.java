@@ -11,21 +11,30 @@
 
 package com.vmware.mangle.unittest.faults.plugin.helpers.byteman;
 
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.AGENT_NAME;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.DEFAULT_TEMP_DIR;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.FI_ADD_INFO_FAULTID;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.GET_FAULT_COMMAND;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.PID_ATTACH_MXBEANS_COMMAND_WITH_PORT;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.PORT_9091;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.REMEDIATION_COMMAND_WITH_PORT;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.SUBMIT_COMMAND_WITH_PORT;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
+import static org.testng.Assert.assertEquals;
 
+import static com.vmware.mangle.utils.constants.FaultConstants.AGENT_NAME;
+import static com.vmware.mangle.utils.constants.FaultConstants.DEFAULT_TEMP_DIR;
+import static com.vmware.mangle.utils.constants.FaultConstants.FI_ADD_INFO_FAULTID;
+import static com.vmware.mangle.utils.constants.FaultConstants.FORWARD_SLASH;
+import static com.vmware.mangle.utils.constants.FaultConstants.GET_FAULT_COMMAND_WITH_PORT;
+import static com.vmware.mangle.utils.constants.FaultConstants.PID_ATTACH_MXBEANS_COMMAND_WITH_PORT;
+import static com.vmware.mangle.utils.constants.FaultConstants.PORT_9091;
+import static com.vmware.mangle.utils.constants.FaultConstants.REMEDIATION_COMMAND_WITH_PORT;
+import static com.vmware.mangle.utils.constants.FaultConstants.SUBMIT_COMMAND_WITH_PORT;
+
+import java.io.File;
 import java.util.List;
 
 import lombok.extern.log4j.Log4j2;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.testng.PowerMockTestCase;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -33,25 +42,32 @@ import org.testng.annotations.Test;
 import com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.JVMCodeLevelFaultSpec;
 import com.vmware.mangle.cassandra.model.tasks.SupportScriptInfo;
+import com.vmware.mangle.cassandra.model.tasks.commands.CommandExecutionResult;
 import com.vmware.mangle.cassandra.model.tasks.commands.CommandInfo;
 import com.vmware.mangle.faults.plugin.helpers.JavaAgentFaultUtils;
 import com.vmware.mangle.faults.plugin.helpers.byteman.DockerBytemanFaultHelper;
 import com.vmware.mangle.faults.plugin.helpers.docker.DockerCommandUtils;
 import com.vmware.mangle.faults.plugin.mockdata.FaultsMockData;
+import com.vmware.mangle.faults.plugin.utils.PluginUtils;
 import com.vmware.mangle.task.framework.endpoint.EndpointClientFactory;
+import com.vmware.mangle.utils.CommandUtils;
+import com.vmware.mangle.utils.ConstantsUtils;
 import com.vmware.mangle.utils.ICommandExecutor;
 import com.vmware.mangle.utils.clients.docker.CustomDockerClient;
 import com.vmware.mangle.utils.clients.restclient.RestTemplateWrapper;
 import com.vmware.mangle.utils.exceptions.MangleException;
+import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
 /**
  * Test Class for DockerBytemanFaultHelper
  *
  * @author rpraveen
+ * @author jayasankarr
  *
  */
 @Log4j2
-public class DockerBytemanFaultHelperTest {
+@PrepareForTest(value = { CommandUtils.class, ConstantsUtils.class })
+public class DockerBytemanFaultHelperTest extends PowerMockTestCase {
 
     @Mock
     EndpointClientFactory endpointClientFactory;
@@ -62,10 +78,19 @@ public class DockerBytemanFaultHelperTest {
     JavaAgentFaultUtils javaAgentFaultUtils;
 
     @Mock
+    PluginUtils pluginUtils;
+
+    @Mock
     DockerCommandUtils dockerCommandUtils;
 
     @Mock
     ICommandExecutor commandExecutor;
+
+    @Mock
+    File file;
+
+    @Mock
+    CommandExecutionResult result;
 
     private DockerBytemanFaultHelper dockerBytemanFaultHelper;
     private FaultsMockData faultsMockData = new FaultsMockData();
@@ -74,7 +99,9 @@ public class DockerBytemanFaultHelperTest {
     public void setUpBeforeClass() throws Exception {
         MockitoAnnotations.initMocks(this);
         faultsMockData = new FaultsMockData();
-        dockerBytemanFaultHelper = new DockerBytemanFaultHelper(endpointClientFactory, javaAgentFaultUtils);
+        dockerBytemanFaultHelper = new DockerBytemanFaultHelper();
+        dockerBytemanFaultHelper.setEndpointClientFactory(endpointClientFactory);
+        dockerBytemanFaultHelper.setJavaAgentFaultUtils(javaAgentFaultUtils);
     }
 
     @Test
@@ -128,21 +155,20 @@ public class DockerBytemanFaultHelperTest {
     @Test
     public void testGetJVMCodeLevelInjectionCommandInfoList() {
         try {
-            JVMCodeLevelFaultSpec springServiceExceptionFaultSpec =
-                    faultsMockData.getDockerJvmCodelevelFaultSpec();
-            Mockito.when(
-                    endpointClientFactory.getEndPointClient(null, springServiceExceptionFaultSpec.getEndpoint()))
+            JVMCodeLevelFaultSpec springServiceExceptionFaultSpec = faultsMockData.getDockerJvmCodelevelFaultSpec();
+            Mockito.when(endpointClientFactory.getEndPointClient(null, springServiceExceptionFaultSpec.getEndpoint()))
                     .thenReturn(customDockerClient);
             List<CommandInfo> injectionCommands =
                     dockerBytemanFaultHelper.getInjectionCommandInfoList(springServiceExceptionFaultSpec);
             log.info(RestTemplateWrapper.objectToJson(injectionCommands));
             Assert.assertTrue(injectionCommands.size() > 0);
             Assert.assertTrue(injectionCommands.get(0).getCommand().toString().contains(".btm"));
-            Assert.assertTrue(injectionCommands.get(1).getCommand()
-                    .contains(String.format(PID_ATTACH_MXBEANS_COMMAND_WITH_PORT, DEFAULT_TEMP_DIR, PORT_9091, null)));
+            Assert.assertTrue(injectionCommands.get(1).getCommand().contains(String
+                    .format(PID_ATTACH_MXBEANS_COMMAND_WITH_PORT, DEFAULT_TEMP_DIR + FORWARD_SLASH, PORT_9091, null)));
 
-            Assert.assertTrue(injectionCommands.get(2).getCommand().toString().contains(String
-                    .format(SUBMIT_COMMAND_WITH_PORT, DEFAULT_TEMP_DIR, PORT_9091, DEFAULT_TEMP_DIR + "/123456;.btm")));
+            Assert.assertTrue(
+                    injectionCommands.get(2).getCommand().toString().contains(String.format(SUBMIT_COMMAND_WITH_PORT,
+                            DEFAULT_TEMP_DIR + FORWARD_SLASH, PORT_9091, DEFAULT_TEMP_DIR + "/123456;.btm")));
         } catch (MangleException e) {
             log.error("testGetJVMCodeLevelInjectionCommandInfoListForSpringServiceFault failed with Exception: ", e);
             Assert.assertTrue(false);
@@ -151,28 +177,18 @@ public class DockerBytemanFaultHelperTest {
 
     @Test
     public void testGetJVMAgentRemediationCommandInfoList() {
-        String remediation =
-                String.format(REMEDIATION_COMMAND_WITH_PORT, DEFAULT_TEMP_DIR, PORT_9091, FI_ADD_INFO_FAULTID);
-        String getFault = String.format(GET_FAULT_COMMAND, DEFAULT_TEMP_DIR, FI_ADD_INFO_FAULTID);
-
         try {
             CommandExecutionFaultSpec cpuFaultSpec = faultsMockData.getDockerCpuJvmAgentFaultSpec();
             Mockito.when(endpointClientFactory.getEndPointClient(null, cpuFaultSpec.getEndpoint()))
                     .thenReturn(customDockerClient);
-
-            Mockito.when(javaAgentFaultUtils.buildRemediationCommand(cpuFaultSpec.getInjectionHomeDir(), PORT_9091))
-                    .thenReturn(remediation);
-
-            Mockito.when(javaAgentFaultUtils.buildGetFaultCommand(cpuFaultSpec.getInjectionHomeDir(), PORT_9091))
-                    .thenReturn(getFault);
-
+            dockerBytemanFaultHelper.setJavaAgentFaultUtils(new JavaAgentFaultUtils());
             List<CommandInfo> remediationCommands =
                     dockerBytemanFaultHelper.getRemediationCommandInfoList(cpuFaultSpec);
             log.info(RestTemplateWrapper.objectToJson(remediationCommands));
-            Assert.assertEquals(remediationCommands.get(0).getCommand().toString(),
-                    String.format(REMEDIATION_COMMAND_WITH_PORT, DEFAULT_TEMP_DIR, PORT_9091, FI_ADD_INFO_FAULTID));
-            Assert.assertEquals(remediationCommands.get(1).getCommand().toString(),
-                    String.format(GET_FAULT_COMMAND, DEFAULT_TEMP_DIR, FI_ADD_INFO_FAULTID));
+            Assert.assertEquals(remediationCommands.get(0).getCommand().toString(), String.format(
+                    REMEDIATION_COMMAND_WITH_PORT, DEFAULT_TEMP_DIR + FORWARD_SLASH, PORT_9091, FI_ADD_INFO_FAULTID));
+            Assert.assertEquals(remediationCommands.get(1).getCommand().toString(), String.format(
+                    GET_FAULT_COMMAND_WITH_PORT, DEFAULT_TEMP_DIR + FORWARD_SLASH, PORT_9091, FI_ADD_INFO_FAULTID));
         } catch (MangleException e) {
             log.error("testGetJVMCodeLevelInjectionCommandInfoListForSpringServiceFault failed with Exception: ", e);
             Assert.assertTrue(false);
@@ -183,16 +199,14 @@ public class DockerBytemanFaultHelperTest {
     @Test
     public void testGetJVMCodeLevelRemediationCommandInfoList() {
         try {
-            JVMCodeLevelFaultSpec springServiceExceptionFaultSpec =
-                    faultsMockData.getDockerJvmCodelevelFaultSpec();
-            Mockito.when(
-                    endpointClientFactory.getEndPointClient(null, springServiceExceptionFaultSpec.getEndpoint()))
+            JVMCodeLevelFaultSpec springServiceExceptionFaultSpec = faultsMockData.getDockerJvmCodelevelFaultSpec();
+            Mockito.when(endpointClientFactory.getEndPointClient(null, springServiceExceptionFaultSpec.getEndpoint()))
                     .thenReturn(customDockerClient);
             List<CommandInfo> remediationCommands =
                     dockerBytemanFaultHelper.getRemediationCommandInfoList(springServiceExceptionFaultSpec);
             log.info(RestTemplateWrapper.objectToJson(remediationCommands));
             Assert.assertTrue(remediationCommands.get(0).getCommand().contains(String.format(SUBMIT_COMMAND_WITH_PORT,
-                    DEFAULT_TEMP_DIR, PORT_9091, "-u " + DEFAULT_TEMP_DIR + "/123456;.btm")));
+                    DEFAULT_TEMP_DIR + FORWARD_SLASH, PORT_9091, "-u " + DEFAULT_TEMP_DIR + "/123456;.btm")));
         } catch (MangleException e) {
             log.error("testGetJVMCodeLevelRemediationCommandInfoListForSpringServiceFault failed with Exception: ", e);
             Assert.assertTrue(false);
@@ -204,7 +218,40 @@ public class DockerBytemanFaultHelperTest {
         CommandExecutionFaultSpec cpuFaultSpec = faultsMockData.getDockerCpuJvmAgentFaultSpec();
         List<SupportScriptInfo> supportScripts = dockerBytemanFaultHelper.getAgentFaultInjectionScripts(cpuFaultSpec);
         Assert.assertEquals(AGENT_NAME, supportScripts.get(0).getScriptFileName());
-        Assert.assertEquals(DEFAULT_TEMP_DIR, supportScripts.get(0).getTargetDirectoryPath());
+        Assert.assertEquals(DEFAULT_TEMP_DIR + FORWARD_SLASH, supportScripts.get(0).getTargetDirectoryPath());
     }
 
+    @Test
+    void testCheckTaskPrerequisites() throws Exception {
+        PowerMockito.mockStatic(ConstantsUtils.class);
+        PowerMockito.when(ConstantsUtils.getMangleSupportScriptDirectory()).thenReturn("target" + File.separator);
+        dockerBytemanFaultHelper.setPluginUtils(new PluginUtils());
+        Mockito.doNothing().when(pluginUtils).copyFileFromJarToDestination(any(), any());
+        PowerMockito.mockStatic(CommandUtils.class);
+        PowerMockito.when(CommandUtils.runCommand(any(), anyInt())).thenReturn(result);
+        Mockito.when(file.exists()).thenReturn(false);
+        Mockito.when(result.getExitCode()).thenReturn(0);
+        dockerBytemanFaultHelper.checkTaskSpecificPrerequisites();
+    }
+
+    @Test
+    void testCheckTaskPrerequisitesWithAgentExtractionFailed() throws Exception {
+        boolean exceptionCalled = false;
+        PowerMockito.mockStatic(ConstantsUtils.class);
+        PowerMockito.when(ConstantsUtils.getMangleSupportScriptDirectory()).thenReturn("target" + File.separator);
+        dockerBytemanFaultHelper.setPluginUtils(new PluginUtils());
+        Mockito.doNothing().when(pluginUtils).copyFileFromJarToDestination(any(), any());
+        PowerMockito.mockStatic(CommandUtils.class);
+        PowerMockito.when(CommandUtils.runCommand(any(), anyInt())).thenReturn(result);
+        Mockito.when(file.exists()).thenReturn(false);
+        Mockito.when(result.getExitCode()).thenReturn(1);
+        try {
+            dockerBytemanFaultHelper.checkTaskSpecificPrerequisites();
+        } catch (MangleException e) {
+            exceptionCalled = true;
+            assertEquals(e.getErrorCode(), ErrorCode.AGENT_EXTRACTION_FAILED);
+        }
+        Assert.assertTrue(exceptionCalled, "Extraction failed exception is not invoked");
+
+    }
 }

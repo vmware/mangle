@@ -23,6 +23,10 @@ import java.nio.charset.Charset;
  */
 public class IOUtils {
 
+    private IOUtils() {
+        throw new java.lang.UnsupportedOperationException("This is a utility class and cannot be instantiated");
+    }
+
     public static String getStringFromInputStream(InputStream inputStream) throws IOException {
         BufferedReader br = null;
         StringBuffer sb = new StringBuffer();

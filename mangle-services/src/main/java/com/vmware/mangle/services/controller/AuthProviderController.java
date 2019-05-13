@@ -39,7 +39,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.vmware.mangle.cassandra.model.security.ADAuthProviderDto;
 import com.vmware.mangle.services.ADAuthProviderService;
-import com.vmware.mangle.services.UserAuthenticationService;
+import com.vmware.mangle.services.UserService;
 import com.vmware.mangle.services.config.ADAuthProvider;
 import com.vmware.mangle.utils.constants.ErrorConstants;
 import com.vmware.mangle.utils.exceptions.MangleException;
@@ -62,7 +62,7 @@ public class AuthProviderController extends ResourceSupport {
     ADAuthProvider adAuthProvider;
 
     @Autowired
-    UserAuthenticationService userAuthenticationService;
+    UserService userService;
 
     /**
      * Gets all the AD providers that are configured in mangle
@@ -70,7 +70,7 @@ public class AuthProviderController extends ResourceSupport {
     @ApiOperation(value = "API to get all the AD Authentication providers configured", nickname = "getAuthenticationProvider")
     @GetMapping(value = "/ad-auth-providers", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Resources<ADAuthProviderDto>> getAllADAuthProviders() {
-        log.info("Starting execution of getAllADAuthProviders method...");
+        log.info("Received request to retrieve all configured authentication providers...");
         List<ADAuthProviderDto> authProviderDtos = adAuthProviderService.getAllADAuthProvider();
 
         Resources<ADAuthProviderDto> authResource = new Resources<>(authProviderDtos);
@@ -93,8 +93,7 @@ public class AuthProviderController extends ResourceSupport {
     @PutMapping(value = "/ad-auth-providers", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Resource<ADAuthProviderDto>> updateADAuthProvider(
             @RequestBody ADAuthProviderDto adAuthProviderDto) throws MangleException {
-        log.info(String.format("Starting execution of updateADAuthProvider method for adAuthProvider %s",
-                adAuthProviderDto.getAdUrl()));
+        log.info("Received request to update authentication provider");
 
         ADAuthProviderDto persisted =
                 adAuthProviderService.getADAuthProviderByAdDomain(adAuthProviderDto.getAdDomain());
@@ -122,7 +121,8 @@ public class AuthProviderController extends ResourceSupport {
 
         /* throw exception if the connection to the AD failed*/
         if (!isSuccessfullAdded) {
-            log.error("Failed to connect to the authentication provider, configuration of authprovider failed");
+            log.error(
+                    "Authentication Provider configuration failed. Reason: Failed to Connect to the Authentication Provider");
             throw new MangleException(ErrorConstants.AUTHENTICATION_TEST_CONNECTION_FAILED,
                     ErrorCode.AUTH_TEST_CONNECTION_FAILED);
         }
@@ -150,8 +150,7 @@ public class AuthProviderController extends ResourceSupport {
     @PostMapping(value = "/ad-auth-providers", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Resource<ADAuthProviderDto>> addADAuthProvider(
             @RequestBody ADAuthProviderDto adAuthProviderDto) throws MangleException {
-        log.info(String.format("Starting execution of addADAuthProvider method for adAuthProvider %s",
-                adAuthProviderDto.getAdUrl()));
+        log.info("Received request to add authentication provider");
         /*
          * Check if there is an entry in the database to update
          * exception if there isn't one with the id
@@ -167,8 +166,8 @@ public class AuthProviderController extends ResourceSupport {
 
         /* throw exception if the connection to the AD failed*/
         if (!isSuccessfullAdded) {
-            log.error("Failed to connect to the authentication provider, configuration of authprovider failed");
-            adAuthProviderService.removeADAuthProvider(adAuthProviderDto.getId());
+            log.error(
+                    "Authentication Provider configuration failed. Reason:  Failed to Connect to the Authentication Provider");
             throw new MangleException(ErrorConstants.AUTHENTICATION_TEST_CONNECTION_FAILED,
                     ErrorCode.AUTH_TEST_CONNECTION_FAILED);
         }
@@ -189,24 +188,24 @@ public class AuthProviderController extends ResourceSupport {
      */
     @ApiOperation(value = "API to delete the AD authentication provider", nickname = "addAuthenticationProvider")
     @DeleteMapping(value = "/ad-auth-providers", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> removeADAuthProvider(@RequestParam List<String> domainNames) {
-        log.info(String.format("Starting execution of removeADAuthProvider method for adAuthProviders %s",
-                domainNames.toString()));
+    public ResponseEntity removeADAuthProvider(@RequestParam List<String> domainNames)
+            throws MangleException {
+        log.info(String.format("Received request to remove AD Authentication Providers: %s", domainNames.toString()));
+        adAuthProviderService.removeADAuthProvider(domainNames);
         for (String domainName : domainNames) {
-            adAuthProviderService.removeADAuthProvider(domainName);
             adAuthProvider.removeAdAuthProvider(domainName);
         }
 
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        return new ResponseEntity(HttpStatus.NO_CONTENT);
     }
 
     @ApiOperation(value = "API to get all the domains contained in the application", nickname = "retrieveAllDomains")
     @GetMapping(value = "/domains", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Resources<String>> getAlldomains() {
-        log.info("Retrieving domains configured in the application");
+        log.info("Received request to retrieve all Authentication Provider Domains.");
         Set<String> domains = new HashSet<>();
         domains.addAll(adAuthProviderService.getAllDomains());
-        domains.add(userAuthenticationService.getDefaultDomainName());
+        domains.add(userService.getDefaultDomainName());
 
         Resources<String> resources = new Resources<>(domains);
         Link link = linkTo(methodOn(AuthProviderController.class).getAlldomains()).withSelfRel();

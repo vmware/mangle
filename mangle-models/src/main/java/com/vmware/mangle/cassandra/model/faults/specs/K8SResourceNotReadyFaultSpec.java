@@ -14,6 +14,7 @@ package com.vmware.mangle.cassandra.model.faults.specs;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import com.vmware.mangle.services.enums.K8SFaultName;
 
@@ -22,6 +23,7 @@ import com.vmware.mangle.services.enums.K8SFaultName;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
 @SuppressWarnings("squid:MaximumInheritanceDepth")
 public class K8SResourceNotReadyFaultSpec extends K8SFaultSpec {
     private static final long serialVersionUID = 1L;
@@ -32,10 +34,5 @@ public class K8SResourceNotReadyFaultSpec extends K8SFaultSpec {
     public K8SResourceNotReadyFaultSpec() {
         setFaultName(K8SFaultName.NOTREADY_RESOURCE.name());
         setSpecType(this.getClass().getName());
-    }
-
-    @Override
-    public String toString() {
-        return getFaultName() + ":" + super.toString();
     }
 }

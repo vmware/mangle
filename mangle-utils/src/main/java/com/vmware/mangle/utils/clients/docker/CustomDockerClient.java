@@ -23,6 +23,8 @@ import java.util.List;
 import java.util.Map;
 
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLHandshakeException;
+import javax.ws.rs.ProcessingException;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.ExecCreateCmd;
@@ -35,15 +37,21 @@ import com.github.dockerjava.api.model.ContainerNetworkSettings;
 import com.github.dockerjava.api.model.ContainerPort;
 import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
+import com.github.dockerjava.core.DefaultDockerClientConfig.Builder;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.SSLConfig;
 import com.github.dockerjava.core.command.ExecStartResultCallback;
 import com.github.dockerjava.core.command.PullImageResultCallback;
 import lombok.extern.log4j.Log4j2;
+import org.apache.http.ProtocolException;
+import org.apache.http.client.ClientProtocolException;
+import org.springframework.util.StringUtils;
 
 import com.vmware.mangle.cassandra.model.tasks.commands.CommandExecutionResult;
 import com.vmware.mangle.utils.clients.endpoint.EndpointClient;
+import com.vmware.mangle.utils.constants.ErrorConstants;
 import com.vmware.mangle.utils.exceptions.MangleException;
+import com.vmware.mangle.utils.exceptions.MangleRuntimeException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 import com.vmware.mangle.utils.helpers.security.CertificateHelper;
 
@@ -63,18 +71,28 @@ public class CustomDockerClient implements EndpointClient {
         return dockerClient;
     }
 
-    public CustomDockerClient(String dockerHost, String dockerPort, boolean tlsEnabled) {
+    public CustomDockerClient(String dockerHost, int dockerPort, boolean tlsEnabled, String dockerCertPath) {
         DockerClientConfig dockerClientConfig = DefaultDockerClientConfig.createDefaultConfigBuilder()
                 .withDockerHost("tcp://" + dockerHost + ":" + dockerPort).build();
         if (tlsEnabled) {
-            dockerClientConfig = DefaultDockerClientConfig.createDefaultConfigBuilder()
-                    .withDockerHost("tcp://" + dockerHost + ":" + dockerPort).withDockerTlsVerify(true)
-                    .withCustomSslConfig(getCustomDockerSSLConfig(dockerHost)).build();
+            Builder builder = DefaultDockerClientConfig.createDefaultConfigBuilder()
+                    .withDockerHost("tcp://" + dockerHost + ":" + dockerPort).withDockerTlsVerify(true);
+            if (StringUtils.hasText(dockerCertPath)) {
+                builder.withDockerCertPath(dockerCertPath);
+            } else {
+                builder.withCustomSslConfig(getCustomDockerSSLConfig(dockerHost));
+            }
+            dockerClientConfig = builder.build();
         }
-        this.dockerClient = DockerClientBuilder.getInstance(dockerClientConfig).build();
+        try {
+            this.dockerClient = DockerClientBuilder.getInstance(dockerClientConfig).build();
+        } catch (DockerClientException e) {
+            log.warn(e.getMessage());
+            throw new MangleRuntimeException(e, ErrorCode.IO_EXCEPTION, e.getCause().getMessage());
+        }
     }
 
-    public ExecCreateCmd execCreateCmdByContainerName(String containerName) {
+    public ExecCreateCmd execCreateCmdByContainerName(String containerName) throws MangleException {
         String containerID = findContainerId(containerName);
         return dockerClient.execCreateCmd(containerID);
     }
@@ -83,31 +101,45 @@ public class CustomDockerClient implements EndpointClient {
         return dockerClient.execCreateCmd(containerId);
     }
 
-    public CommandExecutionResult execCommandInContainerByName(String containerName, String cmnd) {
+    public CommandExecutionResult execCommandInContainerByName(String containerName, String cmnd)
+            throws MangleException {
         return execCommandInContainerByID(findContainerId(containerName), cmnd);
     }
 
-    public CommandExecutionResult execCommandInContainerByID(String containerId, String cmnd) {
+    public CommandExecutionResult execCommandInContainerByID(String containerId, String cmnd) throws MangleException {
         CommandExecutionResult commandExecutionResult = new CommandExecutionResult();
         String[] command = { "bash", "-c", cmnd };
-        ExecCreateCmdResponse exec = dockerClient.execCreateCmd(containerId).withCmd(command).withTty(false)
-                .withAttachStdin(true).withAttachStdout(true).withAttachStderr(true).exec();
+        ExecCreateCmdResponse exec = null;
+        try {
+            exec = dockerClient.execCreateCmd(containerId).withCmd(command).withTty(false).withAttachStdin(true)
+                    .withAttachStdout(true).withAttachStderr(true).exec();
+        } catch (ProcessingException e) {
+            throw new MangleException(ErrorConstants.DOCKER_CONNECTION_FAILURE, ErrorCode.DOCKER_CONNECTION_FAILURE,
+                    e.getMessage());
+        }
+
         OutputStream outputStream = new ByteArrayOutputStream();
+        OutputStream errorStream = new ByteArrayOutputStream();
         String output = null;
         try {
-            dockerClient.execStartCmd(exec.getId()).withDetach(false).withTty(true)
-                    .exec(new ExecStartResultCallback(outputStream, System.err)).awaitCompletion();
+            dockerClient.execStartCmd(exec.getId()).withDetach(false).withTty(false)
+                    .exec(new ExecStartResultCallback(outputStream, errorStream)).awaitCompletion();
             output = outputStream.toString();
+
+            if (!StringUtils.isEmpty(errorStream.toString())) {
+                output = output + errorStream.toString();
+            }
             InspectExecResponse inspectExecResponse = execInspectCommand(exec);
             commandExecutionResult.setExitCode(inspectExecResponse.getExitCode().intValue());
             commandExecutionResult.setCommandOutput(output);
-        } catch (InterruptedException interreuptedException) {
-
-            log.warn("Exception executing command {} on container {}" + command + containerId + interreuptedException);
-            commandExecutionResult.setCommandOutput(interreuptedException.getMessage());
+        } catch (InterruptedException interruptedException) {
+            log.warn("Command {} execution on container {} failed with {}", command, containerId, interruptedException);
+            commandExecutionResult.setCommandOutput(interruptedException.getMessage());
             commandExecutionResult.setExitCode(500);
             Thread.currentThread().interrupt();
-            return commandExecutionResult;
+        } catch (Exception e) {
+            throw new MangleException(ErrorConstants.DOCKER_CONNECTION_FAILURE, ErrorCode.DOCKER_CONNECTION_FAILURE,
+                    e.getMessage());
         }
         return commandExecutionResult;
     }
@@ -125,7 +157,7 @@ public class CustomDockerClient implements EndpointClient {
         return dockerClient.inspectExecCmd(execCreationID.getId()).exec();
     }
 
-    public void stopContainerByName(String containerName) {
+    public void stopContainerByName(String containerName) throws MangleException {
         log.info("Stoping the container: " + containerName);
         String containerID = findContainerId(containerName);
         stopContainerById(containerID);
@@ -136,7 +168,7 @@ public class CustomDockerClient implements EndpointClient {
         dockerClient.stopContainerCmd(containerId).exec();
     }
 
-    public void startContainerByName(String containerName) {
+    public void startContainerByName(String containerName) throws MangleException {
         log.info("Starting the container: " + containerName);
         String containerID = findContainerId(containerName);
         startContainerById(containerID);
@@ -147,7 +179,7 @@ public class CustomDockerClient implements EndpointClient {
         dockerClient.startContainerCmd(containerId).exec();
     }
 
-    public void stopAndDeleteContainerByName(String containerName) {
+    public void stopAndDeleteContainerByName(String containerName) throws MangleException {
         log.info("Stoping and deleting the container: " + containerName);
         String containerID = findContainerId(containerName);
         stopAndDeleteContainerByID(containerID);
@@ -167,7 +199,7 @@ public class CustomDockerClient implements EndpointClient {
         }
     }
 
-    public String[][] listProcessesContainerByName(String containerName) {
+    public String[][] listProcessesContainerByName(String containerName) throws MangleException {
         log.info("List processes running inside a container: " + containerName);
         String containerID = findContainerId(containerName);
         return listProcessesContainerByID(containerID);
@@ -178,11 +210,11 @@ public class CustomDockerClient implements EndpointClient {
         return dockerClient.topContainerCmd(containerID).exec().getProcesses();
     }
 
-    public void deleteAllMatchingContainer(String containerName) {
+    public void deleteAllMatchingContainer(String containerName) throws MangleException {
         if (isContainerRunningByName(containerName)) {
             List<String> containers = matchAllRunningContainer(containerName);
             for (String container : containers) {
-                stopAndDeleteContainerByName(container);
+                stopAndDeleteContainerByName(container.substring(1));
             }
         }
     }
@@ -203,17 +235,27 @@ public class CustomDockerClient implements EndpointClient {
         dockerClient.pullImageCmd(imageName).exec(new PullImageResultCallback()).awaitSuccess();
     }
 
-    public String findContainerId(String containerName) {
-        List<Container> allContainers = dockerClient.listContainersCmd().exec();
+    public String findContainerId(String containerName) throws MangleException {
+        List<Container> allContainers = null;
+        try {
+            allContainers = dockerClient.listContainersCmd().exec();
+        } catch (ProcessingException e) {
+            throw new MangleException(ErrorConstants.DOCKER_CONNECTION_FAILURE, ErrorCode.DOCKER_CONNECTION_FAILURE,
+                    e.getMessage());
+        }
         String containerID = null;
         outerLoop: for (Container eachContaier : allContainers) {
             String[] names = eachContaier.getNames();
             for (String each : names) {
-                if (each.contains(containerName)) {
+                if (each.substring(1).equals(containerName)) {
                     containerID = eachContaier.getId();
                     break outerLoop;
                 }
             }
+        }
+        if (StringUtils.isEmpty(containerID)) {
+            throw new MangleException(ErrorConstants.CONTAINER_NOT_AVAILABLE, ErrorCode.CONTAINER_NOT_AVAILABLE,
+                    containerName);
         }
         return containerID;
     }
@@ -224,7 +266,7 @@ public class CustomDockerClient implements EndpointClient {
         for (Container eachContaier : allContainers) {
             String[] names = eachContaier.getNames();
             for (String each : names) {
-                if (each.contains(containerName)) {
+                if (each.substring(1).equals(containerName)) {
                     container = eachContaier;
                     break;
                 }
@@ -233,14 +275,14 @@ public class CustomDockerClient implements EndpointClient {
         return container;
     }
 
-    public boolean isContainerRunningByName(String containerName) {
+    public boolean isContainerRunningByName(String containerName) throws MangleException {
         return null != findContainerId(containerName);
     }
 
     public boolean isContainerRunningByID(String containerID) {
         List<Container> allContainers = dockerClient.listContainersCmd().exec();
         for (Container eachContaier : allContainers) {
-            if (eachContaier.getId().contains(containerID)) {
+            if (eachContaier.getId().equals(containerID)) {
                 return true;
             }
         }
@@ -250,7 +292,7 @@ public class CustomDockerClient implements EndpointClient {
     public boolean isContainerPaused(String containerID) {
         List<Container> allContainers = dockerClient.listContainersCmd().withStatusFilter("paused").exec();
         for (Container eachContaier : allContainers) {
-            if (eachContaier.getId().contains(containerID)) {
+            if (eachContaier.getId().equals(containerID)) {
                 return true;
             }
         }
@@ -263,7 +305,7 @@ public class CustomDockerClient implements EndpointClient {
         for (int i = 0; i < allContainers.size(); i++) {
             String[] names = allContainers.get(i).getNames();
             for (String each : names) {
-                if (each.contains(containerName)) {
+                if (each.substring(1).equals(containerName)) {
                     runningContainers.add(each);
                 }
             }
@@ -310,11 +352,15 @@ public class CustomDockerClient implements EndpointClient {
             log.error("File copy to container:" + containerId + " is failed with exception "
                     + notFoundException.getMessage());
             throw new MangleException(notFoundException, ErrorCode.DIRECTORY_NOT_FOUND, destFilePath);
+        } catch (ProcessingException processingException) {
+            if (processingException.getMessage().contains("org.apache.http.client.ClientProtocolException")) {
+                throw new MangleException(processingException, ErrorCode.DIRECTORY_NOT_FOUND, destFilePath);
+            }
         }
         return true;
     }
 
-    public String getDockerIPByName(String containerName) {
+    public String getDockerIPByName(String containerName) throws MangleException {
         String containerID = findContainerId(containerName);
         return getDockerIP(containerID);
     }
@@ -343,13 +389,30 @@ public class CustomDockerClient implements EndpointClient {
     }
 
     @Override
-    public boolean testConnection() {
+    public boolean testConnection() throws MangleException {
         try {
             this.dockerClient.pingCmd().exec();
             return true;
-        } catch (RuntimeException exception) {
-            log.error(exception);
-            return false;
+        } catch (ProcessingException exception) {
+            if (exception.getCause() instanceof SSLHandshakeException) {
+                if (exception.getCause().getMessage().contains(ErrorConstants.DOCKER_BAD_CERTIFICATE)) {
+                    throw new MangleException(ErrorCode.DOCKER_BAD_CERTIFICATE_ERROR);
+                }
+                throw new MangleException(ErrorCode.DOCKER_TLS_VERIFY_ENABLED_ERROR);
+            }
+            if (exception.getCause() instanceof ClientProtocolException
+                    && exception.getCause().getCause() instanceof ProtocolException) {
+                throw new MangleException(ErrorCode.DOCKER_TLS_ENABLED_ERROR);
+            }
+            if (exception.getCause() instanceof IllegalArgumentException
+                    && exception.getCause().getMessage().contains(ErrorConstants.DOCKER_HOST_NAME_NULL)) {
+                throw new MangleException(ErrorCode.DOCKER_INVALID_HOSTNAME_OR_PORT);
+            }
+
+            throw new MangleException(exception.getCause().getMessage(), ErrorCode.DOCKER_CONNECTION_FAILURE,
+                    exception.getCause().getMessage());
+        } catch (DockerClientException clientException) {
+            throw new MangleException(ErrorCode.DOCKER_CONNECTION_FAILURE);
         }
     }
 

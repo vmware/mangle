@@ -11,17 +11,18 @@
 
 package com.vmware.mangle.faults.plugin.tasks.helpers;
 
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.FAULT_NAME_ARG;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.FAULT_TYPE;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.JAVA_HOME_PATH;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.LONG_LASTING_ARG;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.PROCESS;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.TASK_ID;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.TIMEOUT_IN_MILLI_SEC_ARG;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.USER;
 import static com.vmware.mangle.services.dto.AgentRuleConstants.CLASS_NAME;
 import static com.vmware.mangle.services.dto.AgentRuleConstants.METHOD_NAME;
 import static com.vmware.mangle.services.dto.AgentRuleConstants.RULE_EVENT;
+import static com.vmware.mangle.utils.constants.FaultConstants.AGENT_NAME;
+import static com.vmware.mangle.utils.constants.FaultConstants.FAULT_NAME_ARG;
+import static com.vmware.mangle.utils.constants.FaultConstants.FAULT_TYPE;
+import static com.vmware.mangle.utils.constants.FaultConstants.JAVA_HOME_PATH;
+import static com.vmware.mangle.utils.constants.FaultConstants.LONG_LASTING_ARG;
+import static com.vmware.mangle.utils.constants.FaultConstants.PROCESS;
+import static com.vmware.mangle.utils.constants.FaultConstants.TASK_ID;
+import static com.vmware.mangle.utils.constants.FaultConstants.TIMEOUT_IN_MILLI_SEC_ARG;
+import static com.vmware.mangle.utils.constants.FaultConstants.USER;
 
 import java.io.File;
 import java.util.HashMap;
@@ -44,6 +45,7 @@ import com.vmware.mangle.cassandra.model.tasks.TaskType;
 import com.vmware.mangle.faults.plugin.helpers.byteman.BytemanFaultHelper;
 import com.vmware.mangle.faults.plugin.helpers.byteman.BytemanFaultHelperFactory;
 import com.vmware.mangle.faults.plugin.utils.PluginUtils;
+import com.vmware.mangle.faults.plugin.utils.TaskDescriptionUtils;
 import com.vmware.mangle.model.enums.EndpointType;
 import com.vmware.mangle.task.framework.endpoint.EndpointClientFactory;
 import com.vmware.mangle.task.framework.helpers.AbstractRemoteCommandExecutionTaskHelper;
@@ -51,25 +53,38 @@ import com.vmware.mangle.utils.ConstantsUtils;
 import com.vmware.mangle.utils.ICommandExecutor;
 import com.vmware.mangle.utils.clients.docker.CustomDockerClient;
 import com.vmware.mangle.utils.clients.ssh.SSHUtils;
-import com.vmware.mangle.utils.constants.Constants;
 import com.vmware.mangle.utils.exceptions.MangleException;
 
 /**
- * Implementation of AbstractRemoteCommandExecutionTaskHelper to Support Injection of Faults Provided by
- * Byteman.
+ * Implementation of AbstractRemoteCommandExecutionTaskHelper to Support Injection of Faults
+ * Provided by Byteman.
  *
  * @author bkaranam
  */
 @Extension(ordinal = 1)
 @Log4j2
-public class BytemanFaultTaskHelper<T extends CommandExecutionFaultSpec> extends AbstractRemoteCommandExecutionTaskHelper<T> {
+public class BytemanFaultTaskHelper<T extends CommandExecutionFaultSpec>
+        extends AbstractRemoteCommandExecutionTaskHelper<T> {
     private BytemanFaultHelper bytemanFaultHelper;
-    @Autowired(required = true)
-    private EndpointClientFactory endpointClientFactory;
-    @Autowired
     private BytemanFaultHelperFactory bytemanFaultHelperFactory;
-    @Autowired
     private PluginUtils pluginUtils;
+    private EndpointClientFactory endpointClientFactory;
+
+
+    @Autowired(required = true)
+    public void setPluginUtils(PluginUtils pluginUtils) {
+        this.pluginUtils = pluginUtils;
+    }
+
+    @Autowired(required = true)
+    public void setBytemanFaultHelperFactory(BytemanFaultHelperFactory bytemanFaultHelperFactory) {
+        this.bytemanFaultHelperFactory = bytemanFaultHelperFactory;
+    }
+
+    @Autowired(required = true)
+    private void setEndpointClientFactory(EndpointClientFactory endpointClientFactory) {
+        this.endpointClientFactory = endpointClientFactory;
+    }
 
     public Task<T> init(T faultSpec) throws MangleException {
         return init(faultSpec, null);
@@ -81,8 +96,7 @@ public class BytemanFaultTaskHelper<T extends CommandExecutionFaultSpec> extends
         bytemanFaultHelper = bytemanFaultHelperFactory.getHelper(taskData.getEndpoint());
         if (task.getTaskType().equals(TaskType.INJECTION)
                 && CollectionUtils.isEmpty(taskData.getInjectionCommandInfoList())) {
-            taskData.setInjectionCommandInfoList(
-                    bytemanFaultHelper.getInjectionCommandInfoList(task.getTaskData()));
+            taskData.setInjectionCommandInfoList(bytemanFaultHelper.getInjectionCommandInfoList(task.getTaskData()));
             taskData.setRemediationCommandInfoList(
                     bytemanFaultHelper.getRemediationCommandInfoList(task.getTaskData()));
         }
@@ -101,8 +115,7 @@ public class BytemanFaultTaskHelper<T extends CommandExecutionFaultSpec> extends
 
     @Override
     public String getDescription(Task<T> task) {
-        return "Executing Fault: " + task.getTaskData().getFaultName() + " on endpoint:"
-                + task.getTaskData().getEndpointName() + ". More Details: " + task.getTaskData();
+        return TaskDescriptionUtils.getDescription(task);
     }
 
     @Override
@@ -119,8 +132,7 @@ public class BytemanFaultTaskHelper<T extends CommandExecutionFaultSpec> extends
     protected void prepareEndpoint(Task<T> task, List<SupportScriptInfo> listOfFaultInjectionScripts)
             throws MangleException {
         EndpointSpec endpoint = task.getTaskData().getEndpoint();
-        if (listOfFaultInjectionScripts != null && !listOfFaultInjectionScripts.isEmpty()
-                && task.getTaskType() != TaskType.REMEDIATION
+        if (!CollectionUtils.isEmpty(listOfFaultInjectionScripts) && task.getTaskType() != TaskType.REMEDIATION
                 && endpoint.getEndPointType().equals(EndpointType.MACHINE)) {
             for (SupportScriptInfo faultInjectionScriptInfo : listOfFaultInjectionScripts) {
                 String filePath = ConstantsUtils.getMangleSupportScriptDirectory() + File.separator
@@ -128,19 +140,16 @@ public class BytemanFaultTaskHelper<T extends CommandExecutionFaultSpec> extends
                 pluginUtils.copyScriptFileToMangleDirectory(faultInjectionScriptInfo);
                 SSHUtils sshUtils = (SSHUtils) (endpointClientFactory
                         .getEndPointClient(task.getTaskData().getCredentials(), task.getTaskData().getEndpoint()));
-
                 sshUtils.putFile(filePath, faultInjectionScriptInfo.getTargetDirectoryPath());
                 log.info("Copied support script file: " + faultInjectionScriptInfo.getScriptFileName()
                         + " to remote machine");
                 commandInfoExecutionHelper.makeExecutable(getExecutor(task), faultInjectionScriptInfo);
             }
         }
-        if (listOfFaultInjectionScripts != null && !listOfFaultInjectionScripts.isEmpty()
-                && task.getTaskType() != TaskType.REMEDIATION
+        if (!CollectionUtils.isEmpty(listOfFaultInjectionScripts) && task.getTaskType() != TaskType.REMEDIATION
                 && endpoint.getEndPointType().equals(EndpointType.DOCKER)) {
             for (SupportScriptInfo faultInjectionScriptInfo : listOfFaultInjectionScripts) {
-                String filePath = ConstantsUtils.getMangleSupportScriptDirectory() + File.separator
-                        + Constants.JVM_AGENT_JAR;
+                String filePath = ConstantsUtils.getMangleSupportScriptDirectory() + File.separator + AGENT_NAME;
                 pluginUtils.copyScriptFileToMangleDirectory(faultInjectionScriptInfo);
 
                 CustomDockerClient customDockerClient = (CustomDockerClient) (endpointClientFactory
@@ -165,7 +174,7 @@ public class BytemanFaultTaskHelper<T extends CommandExecutionFaultSpec> extends
         args.put(FAULT_NAME_ARG, taskData.getFaultName());
         args.put(LONG_LASTING_ARG, "false");
         args.put(JAVA_HOME_PATH, taskData.getJvmProperties().getJavaHomePath());
-        args.put(TIMEOUT_IN_MILLI_SEC_ARG, taskData.getTimeoutInMilliseconds());
+        args.put(TIMEOUT_IN_MILLI_SEC_ARG, String.valueOf(taskData.getTimeoutInMilliseconds()));
         if (taskData instanceof JVMCodeLevelFaultSpec) {
             args.put(CLASS_NAME, ((JVMCodeLevelFaultSpec) taskData).getClassName());
             args.put(METHOD_NAME, ((JVMCodeLevelFaultSpec) taskData).getMethodName());

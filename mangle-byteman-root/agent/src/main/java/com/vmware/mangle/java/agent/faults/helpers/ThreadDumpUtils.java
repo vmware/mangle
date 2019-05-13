@@ -22,7 +22,7 @@ import java.util.logging.Logger;
 
 /**
  * Utility Class to capture thread Dump of Java Application
- * 
+ *
  * @author hkilari
  *
  */

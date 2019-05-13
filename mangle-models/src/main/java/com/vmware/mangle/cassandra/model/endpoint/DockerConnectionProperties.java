@@ -13,10 +13,19 @@ package com.vmware.mangle.cassandra.model.endpoint;
 
 import java.io.Serializable;
 
-import io.swagger.annotations.ApiModel;
-import lombok.Data;
-import org.springframework.data.cassandra.core.mapping.UserDefinedType;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import lombok.Data;
+import org.springframework.data.annotation.Transient;
+import org.springframework.data.cassandra.core.mapping.Column;
+import org.springframework.data.cassandra.core.mapping.UserDefinedType;
 
 /**
  * Docker Connection Properties
@@ -28,7 +37,26 @@ import org.springframework.data.cassandra.core.mapping.UserDefinedType;
 @Data
 public class DockerConnectionProperties implements Serializable {
     private static final long serialVersionUID = 1L;
+
+    @ApiModelProperty(value = "Docker HostName.")
+    @NotEmpty
     private String dockerHostname;
-    private String dockerPort;
-    private boolean tlsEnabled;
+
+    @NotNull
+    @ApiModelProperty(value = "Docker Port.If not specified, default to '2375' port.")
+    @Min(0)
+    @Max(65535)
+    private Integer dockerPort = 2375;
+
+    @NotNull
+    @ApiModelProperty(value = "Specify if tls enabled is true or false")
+    @JsonProperty(defaultValue = "false")
+    private Boolean tlsEnabled = false;
+
+    @Column
+    private String certificatesName;
+
+    @JsonIgnore
+    @Transient
+    protected transient DockerCertificates certificatesSpec;
 }

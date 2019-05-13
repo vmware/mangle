@@ -11,8 +11,13 @@
 
 package com.vmware.mangle.services;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import com.datastax.driver.core.PagingState;
@@ -24,10 +29,14 @@ import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Component;
 
 import com.vmware.mangle.cassandra.model.faults.specs.TaskSpec;
-import com.vmware.mangle.cassandra.model.tasks.FaultTask;
+import com.vmware.mangle.cassandra.model.tasks.RemediableTask;
 import com.vmware.mangle.cassandra.model.tasks.Task;
+import com.vmware.mangle.cassandra.model.tasks.TaskInfo;
 import com.vmware.mangle.cassandra.model.tasks.TaskStatus;
+import com.vmware.mangle.cassandra.model.tasks.TaskTrigger;
+import com.vmware.mangle.services.constants.CommonConstants;
 import com.vmware.mangle.services.repository.TaskRepository;
+import com.vmware.mangle.utils.constants.Constants;
 import com.vmware.mangle.utils.constants.ErrorConstants;
 import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.MangleRuntimeException;
@@ -50,12 +59,12 @@ public class TaskService {
     }
 
     public List<Task<TaskSpec>> getAllTasks() {
-        log.info("Geting all Tasks...");
+        log.info("Retrieving all Tasks...");
         return taskRepository.findAll();
     }
 
     public Task<TaskSpec> getTaskById(String taskId) throws MangleException {
-        log.info("Geting task by id : " + taskId);
+        log.info("Retrieving task by id : " + taskId);
         if (!StringUtils.isEmpty(taskId)) {
             Optional<Task<TaskSpec>> optional = taskRepository.findById(taskId);
             if (optional.isPresent()) {
@@ -73,7 +82,7 @@ public class TaskService {
     @SuppressWarnings("unchecked")
     public Task<TaskSpec> addOrUpdateTask(Task<?> task) throws MangleException {
         if (task != null) {
-            log.debug("Adding/Updating Task with Id : " + task.getId());
+            log.debug("Creating Task with Id : " + task.getId());
             return taskRepository.save(task);
         } else {
             log.error(ErrorConstants.TASK + ErrorConstants.FIELD_VALUE_EMPTY);
@@ -82,7 +91,7 @@ public class TaskService {
     }
 
     public Slice<Task<TaskSpec>> getTaskBasedOnPage(int page, int size) {
-        log.info("Geting requested page for Tasks...");
+        log.info("Retrieving requested page for Tasks...");
         if (page == 1) {
             return taskRepository.findAll(CassandraPageRequest.of(page - 1, size));
         } else {
@@ -106,7 +115,7 @@ public class TaskService {
             log.error("id and isRemediated should not be empty or null");
             throw new MangleException(ErrorCode.FIELD_VALUE_EMPTY, ErrorConstants.TASK);
         } else {
-            FaultTask<?> dbTask = (FaultTask<?>) getTaskById(id);
+            RemediableTask<?> dbTask = (RemediableTask<?>) getTaskById(id);
             dbTask.setRemediated(isRemediated);
             return addOrUpdateTask(dbTask);
         }
@@ -118,7 +127,7 @@ public class TaskService {
     }
 
     public List<Task<TaskSpec>> getTaskByIsScheduledTask(boolean isScheduledTask) throws MangleException {
-        log.info("Geting task by isScheduledTask : " + isScheduledTask);
+        log.info("Retrieving task by isScheduledTask : " + isScheduledTask);
         List<Task<TaskSpec>> tasks = taskRepository.findByIsScheduledTask(isScheduledTask);
         if (tasks != null && !tasks.isEmpty()) {
             return tasks;
@@ -141,7 +150,48 @@ public class TaskService {
 
     public List<Task<TaskSpec>> getInProgressTasks() {
         List<Task<TaskSpec>> tasks = taskRepository.findAll();
-        return tasks.stream().filter(task -> task.getTaskStatus() == TaskStatus.IN_PROGRESS)
+        return tasks.stream().filter(task -> (task.getTaskStatus() == TaskStatus.IN_PROGRESS || task.getTaskStatus() == TaskStatus.INITIALIZING))
                 .collect(Collectors.toList());
+    }
+
+    public Task<TaskSpec> getTaskByTaskName(String taskName) {
+        log.debug("Retrieving task by task name: {}", taskName);
+        Task<TaskSpec> task = taskRepository.findByTaskName(taskName);
+        if (task == null) {
+            throw new MangleRuntimeException(ErrorCode.NO_RECORD_FOUND, ErrorConstants.TASK_NAME, taskName);
+        }
+        return taskRepository.findByTaskName(taskName);
+    }
+
+    /**
+     * Method is used to clean-up the in-progress tasks which trigger duration with in specified
+     * Threshold time.
+     *
+     * @param taskCleanupThreshold
+     * @throws ParseException
+     * @throws MangleException
+     */
+    @SuppressWarnings({ "deprecation" })
+    public String cleanupInprogressTasks(long taskCleanupThreshold) throws ParseException, MangleException {
+        log.debug("Received request to clean-up the in-progress tasks...");
+        List<String> taskIds = new ArrayList<>();
+        for (Task<TaskSpec> task : getInProgressTasks()) {
+            TaskTrigger trigger = task.getTriggers().peek();
+            long diffInMinutes = TimeUnit.MILLISECONDS.toMinutes(System.currentTimeMillis()
+                    - ((new SimpleDateFormat(Constants.DEFAULT_DATE_FORMAT)).parse(trigger.getStartTime()).getTime()));
+            if (diffInMinutes < taskCleanupThreshold) {
+                trigger.setTaskStatus(TaskStatus.FAILED);
+                trigger.setEndTime(new Date(System.currentTimeMillis()).toGMTString());
+                TaskInfo taskInfo = new TaskInfo();
+                taskInfo.setPercentageCompleted(100);
+                taskInfo.setTaskStatus(TaskStatus.FAILED);
+                trigger.setMangleTaskInfo(taskInfo);
+                trigger.setTaskFailureReason(CommonConstants.TASK_FAILURE_REASON_FOR_CLEANUP);
+                addOrUpdateTask(task);
+                taskIds.add(task.getId());
+            }
+        }
+        return taskIds.isEmpty() ? CommonConstants.NO_INPROGRESS_TASK_FOR_CLEANUP
+                : String.format(CommonConstants.INPROGRESS_TASK_FOR_CLEANUP, taskIds);
     }
 }

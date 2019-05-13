@@ -12,6 +12,8 @@
 package com.vmware.mangle.cassandra.model.tasks;
 
 import java.io.Serializable;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.annotations.ApiModelProperty;
@@ -31,11 +33,14 @@ public class K8SSpecificArguments implements Serializable {
 
     private static final long serialVersionUID = 1L;
     @ApiModelProperty(value = "Value for Label with key as app of the pod")
+    @NotEmpty
     private String podLabels;
     @ApiModelProperty(value = "Target container name")
+    @NotEmpty
     private String containerName;
 
     @ApiModelProperty(value = "Enable/Disable Random injection", example = "true")
+    @NotNull
     private Boolean enableRandomInjection = true;
     @JsonIgnore
     private String podInAction;

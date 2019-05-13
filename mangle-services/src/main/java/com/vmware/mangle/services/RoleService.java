@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import com.vmware.mangle.cassandra.model.security.Privilege;
 import com.vmware.mangle.cassandra.model.security.Role;
@@ -99,7 +100,7 @@ public class RoleService {
 
         if (MangleScopeEnum.MANGLE_DEFAULT == persistedRole.getType()) {
             log.error(String.format("Default role %s cannot be deleted", role.getName()));
-            throw new MangleException(ErrorConstants.DEFAULT_ROLE_DELETE, ErrorCode.DEFAULT_ROLE_DELETE);
+            throw new MangleException(ErrorConstants.DEFAULT_ROLE_DELETE_FAIL, ErrorCode.DEFAULT_ROLE_DELETE);
         }
 
         return roleRepository.save(persistedRole);
@@ -107,6 +108,11 @@ public class RoleService {
 
     public Role createRole(Role role) throws MangleException {
         log.info("Creating role: " + role.getName());
+
+        if (CollectionUtils.isEmpty(role.getPrivilegeNames())) {
+            throw new MangleException(ErrorConstants.CUSTOM_ROLE_CREATION_FAILED_NO_PRVILEGES,
+                    ErrorCode.CUSTOM_ROLE_CREATION_FAILED_NO_PRVILEGES, role.getName());
+        }
 
         Set<Privilege> privileges = getPersitentPrivileges(role.getPrivilegeNames());
         role.setPrivileges(privileges);

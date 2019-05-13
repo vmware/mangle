@@ -30,7 +30,6 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import com.vmware.mangle.cassandra.model.tasks.TaskStatus;
 import com.vmware.mangle.cassandra.model.tasks.commands.CommandExecutionResult;
 import com.vmware.mangle.model.response.VCenterAdapterResponse;
 import com.vmware.mangle.model.response.VCenterOperationTaskQueryResponse;
@@ -39,6 +38,7 @@ import com.vmware.mangle.model.vcenter.VMDisk;
 import com.vmware.mangle.utils.clients.vcenter.VCenterAdapterClient;
 import com.vmware.mangle.utils.clients.vcenter.VCenterClient;
 import com.vmware.mangle.utils.clients.vcenter.VMOperations;
+import com.vmware.mangle.utils.constants.VCenterConstants;
 import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
@@ -93,13 +93,14 @@ public class VMOperationsTest extends PowerMockTestCase {
     }
 
     @Test
-    public void powerOffVMTest() {
+    public void powerOffVMTest() throws MangleException {
         VCenterAdapterResponse vCenterAdapterResponse = new VCenterAdapterResponse();
         VCenterOperationTaskQueryResponse taskQueryResponse = new VCenterOperationTaskQueryResponse(
-                UUID.randomUUID().toString(), TaskStatus.COMPLETED.name(), "", null);
+                UUID.randomUUID().toString(), VCenterConstants.TASK_STATUS_COMPLETED, "", null);
         ResponseEntity responseEntity = new ResponseEntity(vCenterAdapterResponse, HttpStatus.OK);
         ResponseEntity pollResponse = new ResponseEntity(taskQueryResponse, HttpStatus.OK);
 
+        when(vCenterAdapterClient.testConnection()).thenReturn(true);
         when(vCenterClient.getVCenterAdapterClient()).thenReturn(vCenterAdapterClient);
         when(vCenterAdapterClient.post(anyString(), anyString(), eq(VCenterAdapterResponse.class)))
                 .thenReturn(responseEntity);
@@ -113,7 +114,8 @@ public class VMOperationsTest extends PowerMockTestCase {
     }
 
     @Test
-    public void powerOffVMTestFailure() {
+    public void powerOffVMTestFailure() throws MangleException {
+        when(vCenterAdapterClient.testConnection()).thenReturn(true);
         when(vCenterClient.getVCenterAdapterClient()).thenReturn(vCenterAdapterClient);
         doThrow(IOException.class).when(vCenterAdapterClient).post(anyString(), anyString(),
                 eq(VCenterAdapterResponse.class));
@@ -125,13 +127,14 @@ public class VMOperationsTest extends PowerMockTestCase {
     }
 
     @Test
-    public void powerOffVMTestFailureTaskFail() {
+    public void powerOffVMTestFailureTaskFail() throws MangleException {
         VCenterAdapterResponse vCenterAdapterResponse = new VCenterAdapterResponse();
-        VCenterOperationTaskQueryResponse taskQueryResponse =
-                new VCenterOperationTaskQueryResponse(UUID.randomUUID().toString(), TaskStatus.FAILED.name(), "", null);
+        VCenterOperationTaskQueryResponse taskQueryResponse = new VCenterOperationTaskQueryResponse(
+                UUID.randomUUID().toString(), VCenterConstants.TASK_STATUS_FAILED, "", null);
         ResponseEntity responseEntity = new ResponseEntity(vCenterAdapterResponse, HttpStatus.OK);
         ResponseEntity pollResponse = new ResponseEntity(taskQueryResponse, HttpStatus.BAD_REQUEST);
 
+        when(vCenterAdapterClient.testConnection()).thenReturn(true);
         when(vCenterClient.getVCenterAdapterClient()).thenReturn(vCenterAdapterClient);
         when(vCenterAdapterClient.post(anyString(), anyString(), eq(VCenterAdapterResponse.class)))
                 .thenReturn(responseEntity);
@@ -145,13 +148,14 @@ public class VMOperationsTest extends PowerMockTestCase {
     }
 
     @Test
-    public void powerOnVMTest() {
+    public void powerOnVMTest() throws MangleException {
         VCenterAdapterResponse vCenterAdapterResponse = new VCenterAdapterResponse();
         VCenterOperationTaskQueryResponse taskQueryResponse = new VCenterOperationTaskQueryResponse(
-                UUID.randomUUID().toString(), TaskStatus.COMPLETED.name(), "", null);
+                UUID.randomUUID().toString(), VCenterConstants.TASK_STATUS_COMPLETED, "", null);
         ResponseEntity responseEntity = new ResponseEntity(vCenterAdapterResponse, HttpStatus.OK);
         ResponseEntity pollResponse = new ResponseEntity(taskQueryResponse, HttpStatus.OK);
 
+        when(vCenterAdapterClient.testConnection()).thenReturn(true);
         when(vCenterClient.getVCenterAdapterClient()).thenReturn(vCenterAdapterClient);
         when(vCenterAdapterClient.post(anyString(), anyString(), eq(VCenterAdapterResponse.class)))
                 .thenReturn(responseEntity);
@@ -165,11 +169,11 @@ public class VMOperationsTest extends PowerMockTestCase {
     }
 
     @Test
-    public void powerOnVMTestFailure() {
+    public void powerOnVMTestFailure() throws MangleException {
         when(vCenterClient.getVCenterAdapterClient()).thenReturn(vCenterAdapterClient);
         doThrow(IOException.class).when(vCenterAdapterClient).post(anyString(), anyString(),
                 eq(VCenterAdapterResponse.class));
-
+        when(vCenterAdapterClient.testConnection()).thenReturn(true);
         CommandExecutionResult result = VMOperations.powerOnVM(vCenterClient, "VM_NAME");
         Assert.assertEquals(result.getExitCode(), 1);
         verify(vCenterAdapterClient, times(1)).post(anyString(), anyString(), eq(VCenterAdapterResponse.class));
@@ -177,13 +181,13 @@ public class VMOperationsTest extends PowerMockTestCase {
     }
 
     @Test
-    public void powerOnVMTestFailureTaskFail() {
+    public void powerOnVMTestFailureTaskFail() throws MangleException {
         VCenterAdapterResponse vCenterAdapterResponse = new VCenterAdapterResponse();
-        VCenterOperationTaskQueryResponse taskQueryResponse =
-                new VCenterOperationTaskQueryResponse(UUID.randomUUID().toString(), TaskStatus.FAILED.name(), "", null);
+        VCenterOperationTaskQueryResponse taskQueryResponse = new VCenterOperationTaskQueryResponse(
+                UUID.randomUUID().toString(), VCenterConstants.TASK_STATUS_FAILED, "", null);
         ResponseEntity responseEntity = new ResponseEntity(vCenterAdapterResponse, HttpStatus.OK);
         ResponseEntity pollResponse = new ResponseEntity(taskQueryResponse, HttpStatus.BAD_REQUEST);
-
+        when(vCenterAdapterClient.testConnection()).thenReturn(true);
         when(vCenterClient.getVCenterAdapterClient()).thenReturn(vCenterAdapterClient);
         when(vCenterAdapterClient.post(anyString(), anyString(), eq(VCenterAdapterResponse.class)))
                 .thenReturn(responseEntity);
@@ -197,13 +201,13 @@ public class VMOperationsTest extends PowerMockTestCase {
     }
 
     @Test
-    public void suspendVMTest() {
+    public void suspendVMTest() throws MangleException {
         VCenterAdapterResponse vCenterAdapterResponse = new VCenterAdapterResponse();
         VCenterOperationTaskQueryResponse taskQueryResponse = new VCenterOperationTaskQueryResponse(
-                UUID.randomUUID().toString(), TaskStatus.COMPLETED.name(), "", null);
+                UUID.randomUUID().toString(), VCenterConstants.TASK_STATUS_COMPLETED, "", null);
         ResponseEntity responseEntity = new ResponseEntity(vCenterAdapterResponse, HttpStatus.OK);
         ResponseEntity pollResponse = new ResponseEntity(taskQueryResponse, HttpStatus.OK);
-
+        when(vCenterAdapterClient.testConnection()).thenReturn(true);
         when(vCenterClient.getVCenterAdapterClient()).thenReturn(vCenterAdapterClient);
         when(vCenterAdapterClient.post(anyString(), anyString(), eq(VCenterAdapterResponse.class)))
                 .thenReturn(responseEntity);
@@ -217,11 +221,11 @@ public class VMOperationsTest extends PowerMockTestCase {
     }
 
     @Test
-    public void suspendVMTestFailure() {
+    public void suspendVMTestFailure() throws MangleException {
         when(vCenterClient.getVCenterAdapterClient()).thenReturn(vCenterAdapterClient);
         doThrow(IOException.class).when(vCenterAdapterClient).post(anyString(), anyString(),
                 eq(VCenterAdapterResponse.class));
-
+        when(vCenterAdapterClient.testConnection()).thenReturn(true);
         CommandExecutionResult result = VMOperations.suspendVM(vCenterClient, "VM_NAME");
         Assert.assertEquals(result.getExitCode(), 1);
         verify(vCenterAdapterClient, times(1)).post(anyString(), anyString(), eq(VCenterAdapterResponse.class));
@@ -229,13 +233,13 @@ public class VMOperationsTest extends PowerMockTestCase {
     }
 
     @Test
-    public void suspendVMTestFailureTaskFail() {
+    public void suspendVMTestFailureTaskFail() throws MangleException {
         VCenterAdapterResponse vCenterAdapterResponse = new VCenterAdapterResponse();
-        VCenterOperationTaskQueryResponse taskQueryResponse =
-                new VCenterOperationTaskQueryResponse(UUID.randomUUID().toString(), TaskStatus.FAILED.name(), "", null);
+        VCenterOperationTaskQueryResponse taskQueryResponse = new VCenterOperationTaskQueryResponse(
+                UUID.randomUUID().toString(), VCenterConstants.TASK_STATUS_FAILED, "", null);
         ResponseEntity responseEntity = new ResponseEntity(vCenterAdapterResponse, HttpStatus.OK);
         ResponseEntity pollResponse = new ResponseEntity(taskQueryResponse, HttpStatus.BAD_REQUEST);
-
+        when(vCenterAdapterClient.testConnection()).thenReturn(true);
         when(vCenterClient.getVCenterAdapterClient()).thenReturn(vCenterAdapterClient);
         when(vCenterAdapterClient.post(anyString(), anyString(), eq(VCenterAdapterResponse.class)))
                 .thenReturn(responseEntity);
@@ -249,65 +253,65 @@ public class VMOperationsTest extends PowerMockTestCase {
     }
 
     @Test
-    public void guestRebootVMTest() {
+    public void guestRebootVMTest() throws MangleException {
         VCenterAdapterResponse vCenterAdapterResponse = new VCenterAdapterResponse();
         VCenterOperationTaskQueryResponse taskQueryResponse = new VCenterOperationTaskQueryResponse(
-                UUID.randomUUID().toString(), TaskStatus.COMPLETED.name(), "", null);
+                UUID.randomUUID().toString(), VCenterConstants.TASK_STATUS_COMPLETED, "", null);
         ResponseEntity responseEntity = new ResponseEntity(vCenterAdapterResponse, HttpStatus.OK);
         ResponseEntity pollResponse = new ResponseEntity(taskQueryResponse, HttpStatus.OK);
-
+        when(vCenterAdapterClient.testConnection()).thenReturn(true);
         when(vCenterClient.getVCenterAdapterClient()).thenReturn(vCenterAdapterClient);
         when(vCenterAdapterClient.post(anyString(), anyString(), eq(VCenterAdapterResponse.class)))
                 .thenReturn(responseEntity);
         when(vCenterAdapterClient.get(anyString(), eq(VCenterOperationTaskQueryResponse.class)))
                 .thenReturn(pollResponse);
 
-        CommandExecutionResult result = VMOperations.guestRebootVM(vCenterClient, "VM_NAME");
+        CommandExecutionResult result = VMOperations.resetVM(vCenterClient, "VM_NAME");
         Assert.assertEquals(result.getExitCode(), 0);
         verify(vCenterAdapterClient, times(1)).post(anyString(), anyString(), eq(VCenterAdapterResponse.class));
         verify(vCenterAdapterClient, times(1)).get(anyString(), eq(VCenterOperationTaskQueryResponse.class));
     }
 
     @Test
-    public void guestRebootVMTestFailure() {
+    public void guestRebootVMTestFailure() throws MangleException {
         when(vCenterClient.getVCenterAdapterClient()).thenReturn(vCenterAdapterClient);
         doThrow(IOException.class).when(vCenterAdapterClient).post(anyString(), anyString(),
                 eq(VCenterAdapterResponse.class));
-
-        CommandExecutionResult result = VMOperations.guestRebootVM(vCenterClient, "VM_NAME");
+        when(vCenterAdapterClient.testConnection()).thenReturn(true);
+        CommandExecutionResult result = VMOperations.resetVM(vCenterClient, "VM_NAME");
         Assert.assertEquals(result.getExitCode(), 1);
         verify(vCenterAdapterClient, times(1)).post(anyString(), anyString(), eq(VCenterAdapterResponse.class));
         verify(vCenterAdapterClient, times(0)).get(anyString(), eq(VCenterOperationTaskQueryResponse.class));
     }
 
     @Test
-    public void guestRebootVMTestFailureTaskFail() {
+    public void guestRebootVMTestFailureTaskFail() throws MangleException {
         VCenterAdapterResponse vCenterAdapterResponse = new VCenterAdapterResponse();
-        VCenterOperationTaskQueryResponse taskQueryResponse =
-                new VCenterOperationTaskQueryResponse(UUID.randomUUID().toString(), TaskStatus.FAILED.name(), "", null);
+        VCenterOperationTaskQueryResponse taskQueryResponse = new VCenterOperationTaskQueryResponse(
+                UUID.randomUUID().toString(), VCenterConstants.TASK_STATUS_FAILED, "", null);
         ResponseEntity responseEntity = new ResponseEntity(vCenterAdapterResponse, HttpStatus.OK);
         ResponseEntity pollResponse = new ResponseEntity(taskQueryResponse, HttpStatus.BAD_REQUEST);
-
+        when(vCenterAdapterClient.testConnection()).thenReturn(true);
         when(vCenterClient.getVCenterAdapterClient()).thenReturn(vCenterAdapterClient);
         when(vCenterAdapterClient.post(anyString(), anyString(), eq(VCenterAdapterResponse.class)))
                 .thenReturn(responseEntity);
         when(vCenterAdapterClient.get(anyString(), eq(VCenterOperationTaskQueryResponse.class)))
                 .thenReturn(pollResponse);
 
-        CommandExecutionResult result = VMOperations.guestRebootVM(vCenterClient, "VM_NAME");
+        CommandExecutionResult result = VMOperations.resetVM(vCenterClient, "VM_NAME");
         Assert.assertEquals(result.getExitCode(), 1);
         verify(vCenterAdapterClient, times(1)).post(anyString(), anyString(), eq(VCenterAdapterResponse.class));
         verify(vCenterAdapterClient, times(1)).get(anyString(), eq(VCenterOperationTaskQueryResponse.class));
     }
 
     @Test
-    public void disconnectNicFromVMTest() {
+    public void disconnectNicFromVMTest() throws MangleException {
         VCenterAdapterResponse vCenterAdapterResponse = new VCenterAdapterResponse();
         VCenterOperationTaskQueryResponse taskQueryResponse = new VCenterOperationTaskQueryResponse(
-                UUID.randomUUID().toString(), TaskStatus.COMPLETED.name(), "", null);
+                UUID.randomUUID().toString(), VCenterConstants.TASK_STATUS_COMPLETED, "", null);
         ResponseEntity responseEntity = new ResponseEntity(vCenterAdapterResponse, HttpStatus.OK);
         ResponseEntity pollResponse = new ResponseEntity(taskQueryResponse, HttpStatus.OK);
-
+        when(vCenterAdapterClient.testConnection()).thenReturn(true);
         when(vCenterClient.getVCenterAdapterClient()).thenReturn(vCenterAdapterClient);
         when(vCenterAdapterClient.post(anyString(), anyString(), eq(VCenterAdapterResponse.class)))
                 .thenReturn(responseEntity);
@@ -321,11 +325,11 @@ public class VMOperationsTest extends PowerMockTestCase {
     }
 
     @Test
-    public void disconnectNicFromVMTestFailure() {
+    public void disconnectNicFromVMTestFailure() throws MangleException {
         when(vCenterClient.getVCenterAdapterClient()).thenReturn(vCenterAdapterClient);
         doThrow(IOException.class).when(vCenterAdapterClient).post(anyString(), anyString(),
                 eq(VCenterAdapterResponse.class));
-
+        when(vCenterAdapterClient.testConnection()).thenReturn(true);
         CommandExecutionResult result = VMOperations.disconnectNicFromVM(vCenterClient, "VM_NAME", "NIC_ID");
         Assert.assertEquals(result.getExitCode(), 1);
         verify(vCenterAdapterClient, times(1)).post(anyString(), anyString(), eq(VCenterAdapterResponse.class));
@@ -333,13 +337,13 @@ public class VMOperationsTest extends PowerMockTestCase {
     }
 
     @Test
-    public void disconnectNicFromVMTestFailureTaskFail() {
+    public void disconnectNicFromVMTestFailureTaskFail() throws MangleException {
         VCenterAdapterResponse vCenterAdapterResponse = new VCenterAdapterResponse();
-        VCenterOperationTaskQueryResponse taskQueryResponse =
-                new VCenterOperationTaskQueryResponse(UUID.randomUUID().toString(), TaskStatus.FAILED.name(), "", null);
+        VCenterOperationTaskQueryResponse taskQueryResponse = new VCenterOperationTaskQueryResponse(
+                UUID.randomUUID().toString(), VCenterConstants.TASK_STATUS_FAILED, "", null);
         ResponseEntity responseEntity = new ResponseEntity(vCenterAdapterResponse, HttpStatus.OK);
         ResponseEntity pollResponse = new ResponseEntity(taskQueryResponse, HttpStatus.BAD_REQUEST);
-
+        when(vCenterAdapterClient.testConnection()).thenReturn(true);
         when(vCenterClient.getVCenterAdapterClient()).thenReturn(vCenterAdapterClient);
         when(vCenterAdapterClient.post(anyString(), anyString(), eq(VCenterAdapterResponse.class)))
                 .thenReturn(responseEntity);
@@ -353,13 +357,13 @@ public class VMOperationsTest extends PowerMockTestCase {
     }
 
     @Test
-    public void addNicFromVMTest() {
+    public void addNicFromVMTest() throws MangleException {
         VCenterAdapterResponse vCenterAdapterResponse = new VCenterAdapterResponse();
         VCenterOperationTaskQueryResponse taskQueryResponse = new VCenterOperationTaskQueryResponse(
-                UUID.randomUUID().toString(), TaskStatus.COMPLETED.name(), "", null);
+                UUID.randomUUID().toString(), VCenterConstants.TASK_STATUS_COMPLETED, "", null);
         ResponseEntity responseEntity = new ResponseEntity(vCenterAdapterResponse, HttpStatus.OK);
         ResponseEntity pollResponse = new ResponseEntity(taskQueryResponse, HttpStatus.OK);
-
+        when(vCenterAdapterClient.testConnection()).thenReturn(true);
         when(vCenterClient.getVCenterAdapterClient()).thenReturn(vCenterAdapterClient);
         when(vCenterAdapterClient.post(anyString(), anyString(), eq(VCenterAdapterResponse.class)))
                 .thenReturn(responseEntity);
@@ -373,11 +377,11 @@ public class VMOperationsTest extends PowerMockTestCase {
     }
 
     @Test
-    public void addNicFromVMTestFailure() {
+    public void addNicFromVMTestFailure() throws MangleException {
         when(vCenterClient.getVCenterAdapterClient()).thenReturn(vCenterAdapterClient);
         doThrow(IOException.class).when(vCenterAdapterClient).post(anyString(), anyString(),
                 eq(VCenterAdapterResponse.class));
-
+        when(vCenterAdapterClient.testConnection()).thenReturn(true);
         CommandExecutionResult result = VMOperations.addNicFromVM(vCenterClient, "VM_NAME", "NIC_ID");
         Assert.assertEquals(result.getExitCode(), 1);
         verify(vCenterAdapterClient, times(1)).post(anyString(), anyString(), eq(VCenterAdapterResponse.class));
@@ -385,13 +389,13 @@ public class VMOperationsTest extends PowerMockTestCase {
     }
 
     @Test
-    public void addNicFromVMTestFailureTaskFail() {
+    public void addNicFromVMTestFailureTaskFail() throws MangleException {
         VCenterAdapterResponse vCenterAdapterResponse = new VCenterAdapterResponse();
-        VCenterOperationTaskQueryResponse taskQueryResponse =
-                new VCenterOperationTaskQueryResponse(UUID.randomUUID().toString(), TaskStatus.FAILED.name(), "", null);
+        VCenterOperationTaskQueryResponse taskQueryResponse = new VCenterOperationTaskQueryResponse(
+                UUID.randomUUID().toString(), VCenterConstants.TASK_STATUS_FAILED, "", null);
         ResponseEntity responseEntity = new ResponseEntity(vCenterAdapterResponse, HttpStatus.OK);
         ResponseEntity pollResponse = new ResponseEntity(taskQueryResponse, HttpStatus.BAD_REQUEST);
-
+        when(vCenterAdapterClient.testConnection()).thenReturn(true);
         when(vCenterClient.getVCenterAdapterClient()).thenReturn(vCenterAdapterClient);
         when(vCenterAdapterClient.post(anyString(), anyString(), eq(VCenterAdapterResponse.class)))
                 .thenReturn(responseEntity);
@@ -405,7 +409,7 @@ public class VMOperationsTest extends PowerMockTestCase {
     }
 
     @Test
-    public void disconnectDiskFromVMTest() {
+    public void disconnectDiskFromVMTest() throws MangleException {
         VCenterAdapterResponse vCenterAdapterResponse = new VCenterAdapterResponse();
         VMDisk vmDisk = new VMDisk();
         VMDisk.Backing backing = vmDisk.new Backing();
@@ -413,10 +417,10 @@ public class VMOperationsTest extends PowerMockTestCase {
         backing.setType("VMDK");
         vmDisk.setBacking(backing);
         VCenterOperationTaskQueryResponse taskQueryResponse = new VCenterOperationTaskQueryResponse(
-                UUID.randomUUID().toString(), TaskStatus.COMPLETED.name(), "", vmDisk);
+                UUID.randomUUID().toString(), VCenterConstants.TASK_STATUS_COMPLETED, "", vmDisk);
         ResponseEntity responseEntity = new ResponseEntity(vCenterAdapterResponse, HttpStatus.OK);
         ResponseEntity pollResponse = new ResponseEntity(taskQueryResponse, HttpStatus.OK);
-
+        when(vCenterAdapterClient.testConnection()).thenReturn(true);
         when(vCenterClient.getVCenterAdapterClient()).thenReturn(vCenterAdapterClient);
         when(vCenterAdapterClient.post(anyString(), anyString(), eq(VCenterAdapterResponse.class)))
                 .thenReturn(responseEntity);
@@ -430,11 +434,11 @@ public class VMOperationsTest extends PowerMockTestCase {
     }
 
     @Test
-    public void disconnectDiskFromVMTestFailure() {
+    public void disconnectDiskFromVMTestFailure() throws MangleException {
         when(vCenterClient.getVCenterAdapterClient()).thenReturn(vCenterAdapterClient);
         doThrow(IOException.class).when(vCenterAdapterClient).post(anyString(), anyString(),
                 eq(VCenterAdapterResponse.class));
-
+        when(vCenterAdapterClient.testConnection()).thenReturn(true);
         CommandExecutionResult result = VMOperations.disconnectDiskFromVM(vCenterClient, "VM_NAME", "DISK_ID");
         Assert.assertEquals(result.getExitCode(), 1);
         verify(vCenterAdapterClient, times(1)).post(anyString(), anyString(), eq(VCenterAdapterResponse.class));
@@ -442,7 +446,7 @@ public class VMOperationsTest extends PowerMockTestCase {
     }
 
     @Test
-    public void disconnectDiskFromVMTestFailureTaskFail() {
+    public void disconnectDiskFromVMTestFailureTaskFail() throws MangleException {
         VCenterAdapterResponse vCenterAdapterResponse = new VCenterAdapterResponse();
         VMDisk vmDisk = new VMDisk();
         VMDisk.Backing backing = vmDisk.new Backing();
@@ -450,10 +454,10 @@ public class VMOperationsTest extends PowerMockTestCase {
         backing.setType("VMDK");
         vmDisk.setBacking(backing);
         VCenterOperationTaskQueryResponse taskQueryResponse = new VCenterOperationTaskQueryResponse(
-                UUID.randomUUID().toString(), TaskStatus.FAILED.name(), "", vmDisk);
+                UUID.randomUUID().toString(), VCenterConstants.TASK_STATUS_FAILED, "", vmDisk);
         ResponseEntity responseEntity = new ResponseEntity(vCenterAdapterResponse, HttpStatus.OK);
         ResponseEntity pollResponse = new ResponseEntity(taskQueryResponse, HttpStatus.BAD_REQUEST);
-
+        when(vCenterAdapterClient.testConnection()).thenReturn(true);
         when(vCenterClient.getVCenterAdapterClient()).thenReturn(vCenterAdapterClient);
         when(vCenterAdapterClient.post(anyString(), anyString(), eq(VCenterAdapterResponse.class)))
                 .thenReturn(responseEntity);
@@ -471,10 +475,10 @@ public class VMOperationsTest extends PowerMockTestCase {
     public void addDiskFromVMTest() throws MangleException {
         VCenterAdapterResponse vCenterAdapterResponse = new VCenterAdapterResponse();
         VCenterOperationTaskQueryResponse taskQueryResponse = new VCenterOperationTaskQueryResponse(
-                UUID.randomUUID().toString(), TaskStatus.COMPLETED.name(), "", null);
+                UUID.randomUUID().toString(), VCenterConstants.TASK_STATUS_COMPLETED, "", null);
         ResponseEntity responseEntity = new ResponseEntity(vCenterAdapterResponse, HttpStatus.OK);
         ResponseEntity pollResponse = new ResponseEntity(taskQueryResponse, HttpStatus.OK);
-
+        when(vCenterAdapterClient.testConnection()).thenReturn(true);
         when(vCenterClient.getVCenterAdapterClient()).thenReturn(vCenterAdapterClient);
         when(vCenterAdapterClient.post(anyString(), anyString(), eq(VCenterAdapterResponse.class)))
                 .thenReturn(responseEntity);
@@ -490,11 +494,11 @@ public class VMOperationsTest extends PowerMockTestCase {
     @Test
     public void addDiskFromVMTestFailureTaskFail() throws MangleException {
         VCenterAdapterResponse vCenterAdapterResponse = new VCenterAdapterResponse();
-        VCenterOperationTaskQueryResponse taskQueryResponse =
-                new VCenterOperationTaskQueryResponse(UUID.randomUUID().toString(), TaskStatus.FAILED.name(), "", null);
+        VCenterOperationTaskQueryResponse taskQueryResponse = new VCenterOperationTaskQueryResponse(
+                UUID.randomUUID().toString(), VCenterConstants.TASK_STATUS_FAILED, "", null);
         ResponseEntity responseEntity = new ResponseEntity(vCenterAdapterResponse, HttpStatus.OK);
         ResponseEntity pollResponse = new ResponseEntity(taskQueryResponse, HttpStatus.BAD_REQUEST);
-
+        when(vCenterAdapterClient.testConnection()).thenReturn(true);
         when(vCenterClient.getVCenterAdapterClient()).thenReturn(vCenterAdapterClient);
         when(vCenterAdapterClient.post(anyString(), anyString(), eq(VCenterAdapterResponse.class)))
                 .thenReturn(responseEntity);

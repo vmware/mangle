@@ -4,19 +4,20 @@
 
    This product is licensed to you under the Apache License, Version 2.0 (the "License").
    You may not use this product except in compliance with the License.
- 
+
    This product may include a number of subcomponents with separate copyright notices
    and license terms. Your use of these subcomponents is subject to the terms and
    conditions of the subcomponent's license, as noted in the LICENSE file.
 -->
 <project
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
-	xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>com.vmware.mangle</groupId>
 		<artifactId>mangle-root</artifactId>
-		<version>0.0.1</version>
+		<version>1.0.0</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
@@ -35,7 +36,7 @@
 		<plugin.class>com.vmware.mangle.faults.plugin.DefaultPlugin</plugin.class>
 		<parent.project.basedir>${project.basedir}/..</parent.project.basedir>
 		<mangle.tomcat.dir>${env.MANGLE_TOMCAT_PLUGIN_DIR}</mangle.tomcat.dir>
-		</properties>
+	</properties>
 
 	<dependencies>
 		<dependency>
@@ -46,7 +47,14 @@
 			<groupId>com.vmware.mangle</groupId>
 			<artifactId>mangle-task-framework</artifactId>
 		</dependency>
-
+		<dependency>
+			<groupId>org.powermock</groupId>
+			<artifactId>powermock-module-testng</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.powermock</groupId>
+			<artifactId>powermock-module-junit4</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>io.github.sskorol</groupId>
 			<artifactId>test-data-supplier</artifactId>
@@ -69,10 +77,6 @@
 		<dependency>
 			<groupId>org.powermock</groupId>
 			<artifactId>powermock-api-support</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.powermock</groupId>
-			<artifactId>powermock-module-testng</artifactId>
 		</dependency>
 	</dependencies>
 

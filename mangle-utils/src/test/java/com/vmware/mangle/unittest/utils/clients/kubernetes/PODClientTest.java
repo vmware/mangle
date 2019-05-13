@@ -49,6 +49,7 @@ public class PODClientTest extends PowerMockTestCase {
     public void init() {
         PowerMockito.mockStatic(CommandUtils.class);
         client = KubernetesCommandLineClient.getClient();
+
     }
 
     @Test(description = "retrieve the pods using the pod client")
@@ -70,13 +71,6 @@ public class PODClientTest extends PowerMockTestCase {
         when(CommandUtils.runCommand(anyString())).thenReturn(CommandResultUtils.getCommandResult(podNames));
         List<String> result = client.getPODClient().getPodsWithLabels("saas");
         Assert.assertEquals(result.size(), 4);
-    }
-
-    @Test(description = "retrieve the pods that match the given labels, should return empty list if there doesn't exist any pod matching the label")
-    public void testGetPodsWithLabels2() {
-        when(CommandUtils.runCommand(anyString())).thenReturn(CommandResultUtils.getCommandResult(""));
-        List<String> result = client.getPODClient().getPodsWithLabels("saas");
-        Assert.assertEquals(result.size(), 0);
     }
 
     @Test(description = "retrieve the ips of the pods that have the given matching label")

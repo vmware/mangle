@@ -45,8 +45,9 @@ public class StreamGobbler extends Thread {
             InputStreamReader isr = new InputStreamReader(is);
             BufferedReader br = new BufferedReader(isr);
             String line = null;
-            while ((line = br.readLine()) != null)
+            while ((line = br.readLine()) != null) {
                 outputBuffer.append(line + "\n");
+            }
         } catch (IOException ioe) {
             outputBuffer.append(ioe.getMessage());
         }

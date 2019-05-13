@@ -25,6 +25,7 @@ then
 fi
 
 preRequisitescheck
+status
 injectFault
 }
 
@@ -79,6 +80,7 @@ validateInputs(){
     if [ ! -z "$validationMessage" ]
     then
         printf "$validationMessage"
+        cleanup
         exit $errorExitCode
     fi
 }
@@ -133,7 +135,7 @@ status(){
     statusCheckRetVal=$?
     if [ $statusCheckRetVal -eq 0 ]
     then
-        echo "Status: Inprogress"
+        echo "CPU fault is already running.Wait until it completes if you want to inject again."
         exit $errorExitCode
     else
         echo "Status: Completed/NotRunning"
@@ -141,15 +143,21 @@ status(){
 }
 
 remediate(){
-    parentProcessIDs=$(pgrep -f "cpuspikescript.sh")
-    if [ ! -z "$parentProcessIDs" ]
+    parentProcessID=$(pgrep -f "cpuspikescript.sh")
+    if [ ! -z "$parentProcessID" ]
     then
         #Pausing the parent process
         pgrep -f "cpuspikescript.sh" |xargs -L 1 kill -STOP
         #Killing all the child processes created by parent process
         pgrep -f "cpuspikescript.sh" |xargs -L 1 pgrep -P |xargs kill -9 > /dev/null 2>&1
         #Killing the parent process
-        kill -9 $parentProcessIDs > /dev/null 2>&1
+        kill -9 $parentProcessID > /dev/null 2>&1
+        cleanup
+        exit 0
+    else
+        echo "CPU Fault already remediated"
+        cleanup
+        exit $errorExitCode
     fi
     cleanup
     echo "Remediated: Cpu injection"
@@ -158,7 +166,8 @@ remediate(){
 cleanup(){
     rm -rf $basedirectory/cpuspikescript.sh  > /dev/null 2>&1
     rm -rf $basedirectory/command.sh  > /dev/null 2>&1
-    rm -rf $basedirectory/$0  > /dev/null 2>&1
+    rm -rf $basedirectory/cpuburn.sh  > /dev/null 2>&1
+    rm -rf $basedirectory/cpuFault_Core* > /dev/null 2>&1
 }
 
 injectFault(){
@@ -170,6 +179,7 @@ injectFault(){
         cat << EOF > $basedirectory/cpuspikescript.sh
             #!/bin/sh
             $commandToStressCpu
+            echo "Injected 100 percentage cpu"
             sleep $(awk "BEGIN {print $timeout/1000}")
             kill -9 \$!
 EOF
@@ -182,6 +192,7 @@ EOF
         timelimit=\$2
         timelimit=\$((\$timelimit / 1000))
         check=\`expr \$currentTime - \$timelimit\`
+        echo "Injecting "\$load "percentage load for ":\$timelimit
         while [ \$startTime -gt \$check ]
         do
             $commandToStressCpu
@@ -195,6 +206,7 @@ EOF
 EOF
     fi
     cat << EOF >> $basedirectory/cpuspikescript.sh
+        echo "Autoremedition started"
         rm -rf $basedirectory/command.sh > /dev/null 2>&1
         rm -rf $basedirectory/cpuburn.sh  > /dev/null 2>&1
         rm -rf $basedirectory/cpuspikescript.sh  > /dev/null 2>&1

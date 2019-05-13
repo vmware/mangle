@@ -16,12 +16,14 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
+import com.vmware.mangle.cassandra.model.endpoint.EndpointSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.FaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.K8SFaultTriggerSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.TaskSpec;
@@ -56,7 +58,7 @@ public class EndpointDeletionService {
     }
 
     public boolean deleteEndpointByName(String endpointName) throws MangleException {
-        log.info("Deleting Credentials by names : " + endpointName);
+        log.info("Deleting Endpoint by names : " + endpointName);
         if (endpointName != null && !endpointName.isEmpty()) {
             endpointRepository.deleteByName(endpointName);
             return true;
@@ -67,15 +69,25 @@ public class EndpointDeletionService {
     }
 
     public DeleteOperationResponse deleteEndpointByNames(List<String> endpointNames) throws MangleException {
-        log.info("Deleting Credentials by names : " + endpointNames);
-        if (endpointNames != null && !endpointNames.isEmpty()) {
+        log.info("Deleting endpoints by names : " + endpointNames);
+        if (!CollectionUtils.isEmpty(endpointNames)) {
+            List<EndpointSpec> persistedEndpointSpecs = endpointRepository.findByNames(endpointNames);
+            List<String> persistedendpointNames =
+                    persistedEndpointSpecs.stream().map(EndpointSpec::getName).collect(Collectors.toList());
+            endpointNames.removeAll(persistedendpointNames);
+            if (!endpointNames.isEmpty()) {
+                throw new MangleException(ErrorCode.NO_RECORD_FOUND, ErrorConstants.ENDPOINT_NAME,
+                        persistedendpointNames.toString());
+            }
+
+
             DeleteOperationResponse response = new DeleteOperationResponse();
             response.setAssociations(processEndpointDeletionPrecheck(endpointNames));
             if (response.getAssociations().size() > 0) {
                 return response;
             }
 
-            endpointRepository.deleteByNameIn(endpointNames);
+            endpointRepository.deleteByNameIn(persistedendpointNames);
             return response;
         } else {
             log.error(ErrorConstants.ENDPOINT_NAME + ErrorConstants.FIELD_VALUE_EMPTY);

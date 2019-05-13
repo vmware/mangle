@@ -11,6 +11,7 @@
 
 package com.vmware.mangle.services;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
@@ -21,6 +22,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.cassandra.core.query.CassandraPageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
+import org.springframework.util.FileCopyUtils;
+import org.springframework.util.FileSystemUtils;
+import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.vmware.mangle.cassandra.model.endpoint.CredentialsSpec;
@@ -28,6 +33,8 @@ import com.vmware.mangle.cassandra.model.endpoint.K8SCredentials;
 import com.vmware.mangle.cassandra.model.endpoint.RemoteMachineCredentials;
 import com.vmware.mangle.model.enums.EndpointType;
 import com.vmware.mangle.services.repository.CredentialRepository;
+import com.vmware.mangle.utils.CommonUtils;
+import com.vmware.mangle.utils.clients.kubernetes.KubernetesCommandLineClient;
 import com.vmware.mangle.utils.constants.ErrorConstants;
 import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.MangleRuntimeException;
@@ -51,13 +58,13 @@ public class CredentialService {
     }
 
     public List<CredentialsSpec> getAllCredentials() {
-        log.info("Geting all Credential...");
+        log.debug("Received request to get all Credential...");
         return credentialRepository.findAll();
     }
 
     public CredentialsSpec getCredentialByName(String name) throws MangleException {
-        log.info("Geting Credential by name : " + name);
-        if (name != null && !name.isEmpty()) {
+        log.debug("Received request to get Credential by name : {}", name);
+        if (StringUtils.hasText(name)) {
             Optional<CredentialsSpec> optional = credentialRepository.findByName(name);
             if (optional.isPresent()) {
                 return optional.get();
@@ -72,7 +79,7 @@ public class CredentialService {
     }
 
     public List<CredentialsSpec> getAllCredentialByType(EndpointType endPointType) throws MangleException {
-        log.info("Geting Credential by type : " + endPointType);
+        log.debug("Received request to get Credential by type : {}", endPointType);
         if (endPointType != null) {
             List<CredentialsSpec> results = credentialRepository.findByType(endPointType);
             if (results != null && !results.isEmpty()) {
@@ -88,13 +95,16 @@ public class CredentialService {
     }
 
     public CredentialsSpec addOrUpdateCredentials(CredentialsSpec credentialsSpec) throws MangleException {
-        log.info("Adding/Updating Credentials...");
-        if (credentialsSpec != null) {
-            log.info("Adding/Updating Credentials with credential name : " + credentialsSpec.getName());
+        log.debug("Received request to Add Credentials...");
+        if (credentialsSpec != null && containsLetterOrDigit(credentialsSpec.getName())) {
+            log.debug("Adding Credentials with credential name : {}", credentialsSpec.getName());
+            validateCredentialsBeforeSave(credentialsSpec,
+                    credentialRepository.findByName(credentialsSpec.getName()).orElse(null));
             return credentialRepository.save((CredentialsSpec) EncryptFields.encrypt(credentialsSpec));
         } else {
             log.error(ErrorConstants.CREDENTIALS_SPEC + ErrorConstants.FIELD_VALUE_EMPTY);
-            throw new MangleException(ErrorCode.FIELD_VALUE_EMPTY, ErrorConstants.CREDENTIALS_SPEC);
+            throw new MangleException(ErrorCode.CREDENTIAL_NAME_NOT_VALID,
+                    (credentialsSpec != null ? credentialsSpec.getName() : null));
         }
     }
 
@@ -110,11 +120,29 @@ public class CredentialService {
         }
     }
 
+    public void validateK8SConfigFile(MultipartFile file) throws MangleException {
+        if (null != file) {
+            File temp = null;
+            try {
+                temp = File.createTempFile(file.getOriginalFilename(), ".config");
+                FileCopyUtils.copy(file.getBytes(), temp);
+                KubernetesCommandLineClient.validateConfigFile(temp.getAbsolutePath());
+            } catch (IOException e) {
+                throw new MangleException(ErrorCode.IO_EXCEPTION, e.getMessage());
+            } finally {
+                if (null != temp && temp.exists()) {
+                    FileSystemUtils.deleteRecursively(temp);
+                }
+            }
+
+        }
+    }
+
     public RemoteMachineCredentials generateRemoteMachineCredentialsSpec(String id, String name, String username,
             String password, MultipartFile privateKey) throws IOException {
         RemoteMachineCredentials remoteMachineCredentials = new RemoteMachineCredentials();
         remoteMachineCredentials.setName(name);
-        remoteMachineCredentials.setUserName(username);
+        remoteMachineCredentials.setUsername(username);
         remoteMachineCredentials.setPassword(password);
         if (null != privateKey) {
             remoteMachineCredentials.setPrivateKey(privateKey.getBytes());
@@ -140,7 +168,7 @@ public class CredentialService {
     }
 
     public Slice<CredentialsSpec> getCredentialsBasedOnPage(int page, int size) {
-        log.info("Geting requested page for Credentials...");
+        log.debug("Received request to get page for Credentials...");
         if (page == 1) {
             return credentialRepository.findAll(CassandraPageRequest.of(page - 1, size));
         } else {
@@ -161,5 +189,73 @@ public class CredentialService {
     public int getTotalPages(Slice<CredentialsSpec> slice) {
         long totalCount = credentialRepository.count();
         return slice.getSize() == 0 ? 1 : (int) Math.ceil((double) totalCount / (double) slice.getSize());
+    }
+
+    /**
+     * @param credentialsSpec
+     * @return
+     * @throws MangleException
+     */
+    public CredentialsSpec updateCredential(CredentialsSpec credentialsSpec) throws MangleException {
+        log.debug("Received request to update Credential");
+        if (credentialsSpec != null && containsLetterOrDigit(credentialsSpec.getName())) {
+            log.debug("Updating Credentials with credential name : {}", credentialsSpec.getName());
+            Optional<CredentialsSpec> optional = credentialRepository.findByName(credentialsSpec.getName());
+            if (!optional.isPresent()) {
+                throw new MangleRuntimeException(ErrorCode.NO_RECORD_FOUND, ErrorConstants.CREDENTIAL_NAME,
+                        credentialsSpec.getName());
+            }
+            validateCredentialsBeforeSave(credentialsSpec, optional.orElse(null));
+            return credentialRepository.save((CredentialsSpec) EncryptFields.encrypt(credentialsSpec));
+        } else {
+            log.error(ErrorConstants.CREDENTIAL_NAME + ErrorConstants.FIELD_VALUE_EMPTY);
+            throw new MangleException(ErrorCode.CREDENTIAL_NAME_NOT_VALID,
+                    (credentialsSpec != null ? credentialsSpec.getName() : null));
+        }
+    }
+
+    /**
+     * @param credentialsSpec
+     * @throws MangleException
+     */
+    private void validateCredentialsBeforeSave(CredentialsSpec credentialsSpec, CredentialsSpec dbCredentialsSpec) {
+        if (dbCredentialsSpec != null && !credentialsSpec.getType().equals(dbCredentialsSpec.getType())) {
+            throw new MangleRuntimeException(ErrorCode.DUPLICATE_RECORD_FOR_CREDENTIAL, credentialsSpec.getName(),
+                    dbCredentialsSpec.getType());
+        }
+    }
+
+    /**
+     * Method is used to check weather given <code>string</code> contains at-least one valid
+     * character.
+     *
+     * @param str
+     * @return true if given <code>string</code> contains at-least one letter or digit otherwise
+     *         false.
+     */
+    private boolean containsLetterOrDigit(String str) {
+        boolean flag = false;
+        if (str != null && !"null".equals(str)) {
+            for (int i = 0; i < str.length(); i++) {
+                if (Character.isLetterOrDigit(str.charAt(i))) {
+                    flag = true;
+                    break;
+                }
+            }
+            if (flag) {
+                flag = CommonUtils.validateName(str);
+            }
+        }
+        return flag;
+    }
+
+    /**
+     * @param password
+     * @param privateKey
+     */
+    public void validatePasswordOrPrivateKeyNotNull(String password, MultipartFile privateKey) {
+        if (!StringUtils.hasText(password) && ObjectUtils.isEmpty(privateKey)) {
+            throw new MangleRuntimeException(ErrorCode.RM_CREDENTIAL_WITH_NEITHER_PASSWORD_NOR_PRIVATEKEY);
+        }
     }
 }

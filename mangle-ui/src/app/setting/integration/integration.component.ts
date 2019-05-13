@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { MetricProviderService } from './metric-provider.service';
 import { ClrLoadingState } from '@clr/angular';
+import { MessageConstants } from 'src/app/common/message.constants';
 
 @Component({
     selector: 'app-integration',
@@ -9,21 +10,27 @@ import { ClrLoadingState } from '@clr/angular';
 })
 export class IntegrationComponent implements OnInit {
 
-    public metricProviderList: any;
+    public metricProviderList: any = [];
 
     public isLoading: boolean = true;
     public alertMessage: String;
     public successFlag: boolean;
     public errorFlag: boolean;
 
+    public testAlertMessage: String;
+    public testSuccessFlag: boolean;
+    public testErrorFlag: boolean;
+
     public addEdit: string;
 
     public wavefrontFormData: any;
     public datadogFormData: any;
 
-    public tagsData: any = {};
+    public metricCollectionStatus: boolean = false;
+    public collectionBtnState: ClrLoadingState = ClrLoadingState.DEFAULT;
+    public testBtnState: ClrLoadingState = ClrLoadingState.DEFAULT;
 
-    public updateBtnState: ClrLoadingState = ClrLoadingState.DEFAULT;
+    public tagsData: any = {};
 
     public wavefrontDefaultValues: any = {
         "id": null,
@@ -32,11 +39,8 @@ export class IntegrationComponent implements OnInit {
         "waveFrontConnectionProperties": {
             "wavefrontInstance": null,
             "wavefrontAPIToken": null,
-            "waveFrontProxy": null,
-            "waveFrontProxyPort": 0,
             "source": null,
-            "staticTags": null,
-            "prefix": null
+            "staticTags": null
         },
         "isActive": false
     };
@@ -57,9 +61,12 @@ export class IntegrationComponent implements OnInit {
 
     ngOnInit() {
         this.getMetricProviders();
+        this.getMetricCollectionStatus();
     }
 
     public populateWavefrontForm(wavefrontData) {
+        this.testErrorFlag = false;
+        this.testSuccessFlag = false;
         if (wavefrontData.waveFrontConnectionProperties.staticTags != null) {
             this.tagsData = wavefrontData.waveFrontConnectionProperties.staticTags;
         } else {
@@ -69,6 +76,8 @@ export class IntegrationComponent implements OnInit {
     }
 
     public populateDatadogForm(datadogData) {
+        this.testErrorFlag = false;
+        this.testSuccessFlag = false;
         if (datadogData.datadogConnectionProperties.staticTags != null) {
             this.tagsData = datadogData.datadogConnectionProperties.staticTags;
         } else {
@@ -87,7 +96,6 @@ export class IntegrationComponent implements OnInit {
                 } else {
                     this.metricProviderList = res;
                     this.getActiveMetricProvider();
-                    //this.isLoading = false;
                 }
             }, err => {
                 this.metricProviderList = [];
@@ -98,13 +106,36 @@ export class IntegrationComponent implements OnInit {
         );
     }
 
+    public testConnection(isFormValid, metricProvider) {
+        if (isFormValid) {
+            this.testBtnState = ClrLoadingState.LOADING;
+            this.testErrorFlag = false;
+            this.testSuccessFlag = false;
+            this.isLoading = true;
+            this.metricProviderService.testConnection(metricProvider).subscribe(
+                res => {
+                    this.testAlertMessage = MessageConstants.TEST_CONNECTION;
+                    this.testSuccessFlag = true;
+                    this.isLoading = false;
+                    this.testBtnState = ClrLoadingState.DEFAULT;
+                }, err => {
+                    this.testAlertMessage = err.error.description;
+                    this.testErrorFlag = true;
+                    this.isLoading = false;
+                    this.testBtnState = ClrLoadingState.DEFAULT;
+                });
+        }
+    }
+
     public addOrUpdateMetricProviders(metricProvider) {
         delete metricProvider["isActive"];
         if (this.tagsData != {} && metricProvider.metricProviderType == "WAVEFRONT") {
             metricProvider.waveFrontConnectionProperties.staticTags = this.tagsData;
+            metricProvider.metricProviderType = "WAVEFRONT";
         }
         if (this.tagsData != {} && metricProvider.metricProviderType == "DATADOG") {
             metricProvider.datadogConnectionProperties.staticTags = this.tagsData;
+            metricProvider.metricProviderType = "DATADOG";
         }
         if (metricProvider.id == null) {
             this.addMetricProvider(metricProvider);
@@ -121,7 +152,7 @@ export class IntegrationComponent implements OnInit {
         this.metricProviderService.addMetricProvider(metricProvider).subscribe(
             res => {
                 this.getMetricProviders();
-                this.alertMessage = 'Metric Provider added successfully!';
+                this.alertMessage = metricProvider.name + MessageConstants.METRIC_PROVIDER_ADD;
                 this.successFlag = true;
                 this.isLoading = false;
             }, err => {
@@ -139,7 +170,7 @@ export class IntegrationComponent implements OnInit {
         this.metricProviderService.updateMetricProvider(metricProvider).subscribe(
             res => {
                 this.getMetricProviders();
-                this.alertMessage = 'Metric Provider updated successfully!';
+                this.alertMessage = metricProvider.name + MessageConstants.METRIC_PROVIDER_UPDATE;
                 this.successFlag = true;
                 this.isLoading = false;
             }, err => {
@@ -153,12 +184,12 @@ export class IntegrationComponent implements OnInit {
     public deleteMetricProvider(metricProvider) {
         this.errorFlag = false;
         this.successFlag = false;
-        if (confirm('Do you want to delete: ' + metricProvider.name + ' metric provider?')) {
+        if (confirm(MessageConstants.DELETE_CONFIRM + metricProvider.name + MessageConstants.QUESTION_MARK)) {
             this.isLoading = true;
             this.metricProviderService.deleteMetricProvider(metricProvider.name).subscribe(
                 res => {
                     this.getMetricProviders();
-                    this.alertMessage = metricProvider.name + ' metric provider deleted successfully!';
+                    this.alertMessage = metricProvider.name + MessageConstants.METRIC_PROVIDER_DELETE;
                     this.successFlag = true;
                     this.isLoading = false;
                 }, err => {
@@ -200,7 +231,7 @@ export class IntegrationComponent implements OnInit {
         this.metricProviderService.updateMetricProviderStatus(metricProvider.name).subscribe(
             res => {
                 this.getMetricProviders();
-                this.alertMessage = 'Metric provider status updated successfully!';
+                this.alertMessage = metricProvider.name + MessageConstants.METRIC_PROVIDER_STATUS_UPDATE;
                 this.successFlag = true;
                 this.isLoading = false;
             }, err => {
@@ -211,19 +242,31 @@ export class IntegrationComponent implements OnInit {
             });
     }
 
-    public updateMetricCollectionStatus(status) {
-        this.updateBtnState = ClrLoadingState.LOADING;
+    public updateMetricCollectionStatus() {
+        this.collectionBtnState = ClrLoadingState.LOADING;
         this.errorFlag = false;
         this.successFlag = false;
-        this.metricProviderService.updateMetricCollectionStatus(status).subscribe(
+        this.metricProviderService.updateMetricCollectionStatus(!this.metricCollectionStatus).subscribe(
             res => {
-                this.alertMessage = 'Update metric collection status successfull!';
+                this.alertMessage = MessageConstants.METRIC_PROVIDER_COLLECTION_UPDATE;
                 this.successFlag = true;
-                this.updateBtnState = ClrLoadingState.DEFAULT;
+                this.getMetricCollectionStatus();
+                this.collectionBtnState = ClrLoadingState.DEFAULT;
             }, err => {
                 this.alertMessage = err.error.description;
                 this.errorFlag = true;
-                this.updateBtnState = ClrLoadingState.DEFAULT;
+                this.getMetricCollectionStatus();
+                this.collectionBtnState = ClrLoadingState.DEFAULT;
+            });
+    }
+
+    public getMetricCollectionStatus() {
+        this.metricCollectionStatus = false;
+        this.metricProviderService.getMetricCollectionStatus().subscribe(
+            res => {
+                this.metricCollectionStatus = res.resultStatus;
+            }, err => {
+                this.metricCollectionStatus = false;
             });
     }
 

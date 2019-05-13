@@ -20,17 +20,31 @@ import com.vmware.mangle.cassandra.model.endpoint.EndpointSpec;
 /**
  * @author jayasankarr
  *
- *         Factory class to get the helper class for system resource fault tasks, it takes
- *         endpoint as an optional argument.
+ *         Factory class to get the helper class for system resource fault tasks, it takes endpoint
+ *         as an optional argument.
  */
 @Component
 public class SystemResourceFaultHelperFactory {
-    @Autowired
+
     private LinuxSystemResourceFaultHelper linuxSystemResourceFaultHelper;
-    @Autowired
     private K8sSystemResourceFaultHelper k8sSystemResourceFaultHelper;
-    @Autowired
     private DockerSystemResourceFaultHelper dockerSystemResourceFaultHelper;
+
+    @Autowired
+    public void setLinuxSystemResourceFaultHelper(LinuxSystemResourceFaultHelper linuxSystemResourceFaultHelper) {
+        this.linuxSystemResourceFaultHelper = linuxSystemResourceFaultHelper;
+    }
+
+    @Autowired
+    public void setK8sSystemResourceFaultHelper(K8sSystemResourceFaultHelper k8sSystemResourceFaultHelper) {
+        this.k8sSystemResourceFaultHelper = k8sSystemResourceFaultHelper;
+    }
+
+    @Autowired
+    public void setDockerSystemResourceFaultHelper(DockerSystemResourceFaultHelper dockerSystemResourceFaultHelper) {
+        this.dockerSystemResourceFaultHelper = dockerSystemResourceFaultHelper;
+    }
+
 
     public SystemResourceFaultHelper getHelper(@NonNull EndpointSpec endpoint) {
         switch (endpoint.getEndPointType()) {

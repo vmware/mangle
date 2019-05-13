@@ -64,7 +64,7 @@ public class CPUFaultTest {
             Assert.assertTrue(false);
         }
         Assert.assertEquals(cpuFault.getFaultSpec().getArgs().size(), 1);
-        Assert.assertEquals(cpuFault.getFaultSpec().getArgs().get("__load"), faultSpec.getCpuLoad());
+        Assert.assertEquals(cpuFault.getFaultSpec().getArgs().get("__load"), String.valueOf(faultSpec.getCpuLoad()));
     }
 
     /**

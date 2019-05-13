@@ -42,20 +42,21 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import com.vmware.mangle.cassandra.model.endpoint.AWSCredentials;
 import com.vmware.mangle.cassandra.model.endpoint.CredentialsSpec;
 import com.vmware.mangle.cassandra.model.endpoint.EndpointSpec;
 import com.vmware.mangle.cassandra.model.endpoint.K8SCredentials;
 import com.vmware.mangle.cassandra.model.endpoint.RemoteMachineCredentials;
 import com.vmware.mangle.cassandra.model.endpoint.VCenterCredentials;
 import com.vmware.mangle.model.enums.EndpointType;
-import com.vmware.mangle.model.enums.OperationStatus;
 import com.vmware.mangle.model.response.DeleteOperationResponse;
+import com.vmware.mangle.model.response.ErrorDetails;
 import com.vmware.mangle.services.CredentialService;
+import com.vmware.mangle.services.EndpointCertificatesService;
 import com.vmware.mangle.services.EndpointService;
 import com.vmware.mangle.services.EventService;
 import com.vmware.mangle.services.controller.EndpointController;
 import com.vmware.mangle.services.deletionutils.CredentialDeletionService;
+import com.vmware.mangle.services.deletionutils.EndpointCertificatesDeletionService;
 import com.vmware.mangle.services.deletionutils.EndpointDeletionService;
 import com.vmware.mangle.services.events.web.CustomEventPublisher;
 import com.vmware.mangle.services.mockdata.CredentialsSpecMockData;
@@ -76,6 +77,11 @@ public class EndpointControllerTest {
     @Mock
     private CredentialService credentialService;
 
+    @Mock
+    private EndpointCertificatesService certificatesService;
+
+    @Mock
+    private EndpointCertificatesDeletionService certificatesDeletionService;
 
     @InjectMocks
     private CustomEventPublisher publisher;
@@ -104,7 +110,7 @@ public class EndpointControllerTest {
         MockitoAnnotations.initMocks(this);
         publisher = new CustomEventPublisher(applicationEventPublisher, eventService);
         controller = new EndpointController(endpointService, credentialService, publisher, endpointDeletionService,
-                credentialDeletionService);
+                credentialDeletionService, certificatesService, certificatesDeletionService);
         when(eventService.save(any())).then(new ReturnsArgumentAt(0));
     }
 
@@ -198,8 +204,7 @@ public class EndpointControllerTest {
 
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.controller.EndpointController#addEndpoint(EndpointSpec)}
+     * Test method for {@link EndpointController#addEndpoint(EndpointSpec)}
      *
      */
     @Test
@@ -214,8 +219,7 @@ public class EndpointControllerTest {
 
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.controller.EndpointController#addEndpoint(EndpointSpec)}
+     * Test method for {@link EndpointController#addEndpoint(EndpointSpec)}
      *
      */
     @Test(expectedExceptions = MangleException.class)
@@ -233,7 +237,7 @@ public class EndpointControllerTest {
 
     /**
      * Test method for
-     * {@link com.vmware.mangle.controller.EndpointController#addCredentials(String, String, String, String, MultipartFile)}
+     * {@link EndpointController#addCredentials(String, String, String, String, MultipartFile)}
      */
     @Test
     public void testAddCredentials() throws MangleException, IOException {
@@ -246,17 +250,19 @@ public class EndpointControllerTest {
         when(credentialService.addOrUpdateCredentials(any())).thenReturn(credentialsSpec);
         when(credentialService.generateRemoteMachineCredentialsSpec(anyString(), anyString(), anyString(), anyString(),
                 any())).thenReturn(remoteMachineCredentials);
+        doNothing().when(certificatesService).validateRemoteMachinePrivateKey(any());
         ResponseEntity<CredentialsSpec> responseEntity =
                 controller.addCredentials(spec.getId(), spec.getName(), username, pwd, privateKey);
         Assert.assertEquals(responseEntity.getStatusCode(), HttpStatus.OK);
         verify(credentialService, times(1)).addOrUpdateCredentials(any());
+        verify(certificatesService, times(1)).validateRemoteMachinePrivateKey(any());
         verify(credentialService, times(1)).generateRemoteMachineCredentialsSpec(anyString(), anyString(), anyString(),
                 anyString(), any());
     }
 
     /**
      * Test method for
-     * {@link com.vmware.mangle.controller.EndpointController#addCredentials(String, String, String, String, MultipartFile)}
+     * {@link EndpointController#addCredentials(String, String, String, String, MultipartFile)}
      */
     @Test(expectedExceptions = MangleException.class)
     public void testAddCredentialsException() throws MangleException, IOException {
@@ -276,22 +282,22 @@ public class EndpointControllerTest {
         }
     }
 
+
     /**
-     * Test method for
-     * {@link com.vmware.mangle.controller.EndpointController#addCredentials(AWSCredentials)}
+     * Test method for {@link EndpointController#addCredentials(AWSCredentials)}
      */
-    @Test
+    //Will be uncommented when we started supporting AWS endpoint
+    /*@Test
     public void testAddCredentialsAWS() throws MangleException {
         CredentialsSpec credentialsSpec = credentialsSpecMockData.getAWSCredentialsData();
         when(credentialService.addOrUpdateCredentials(any())).thenReturn(credentialsSpec);
         ResponseEntity<CredentialsSpec> responseEntity = controller.addCredentials((AWSCredentials) credentialsSpec);
         Assert.assertEquals(responseEntity.getStatusCode(), HttpStatus.OK);
         Assert.assertEquals(responseEntity.getBody(), credentialsSpec);
-    }
+    }*/
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.controller.EndpointController#addCredentials(VCenterCredentials)}
+     * Test method for {@link EndpointController#addCredentials(VCenterCredentials)}
      *
      */
     @Test
@@ -305,23 +311,20 @@ public class EndpointControllerTest {
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.controller.EndpointController#deleteEndpointsByNames(List)}
+     * Test method for {@link EndpointController#deleteEndpointsByNames(List)}
      */
     @Test
     public void testDeleteEndpointsByNames() throws MangleException {
         EndpointSpec spec = mockData.getVCenterEndpointSpecMock();
         ArrayList<String> list = new ArrayList<>(Arrays.asList(spec.getName()));
         when(endpointDeletionService.deleteEndpointByNames(any())).thenReturn(new DeleteOperationResponse());
-        ResponseEntity<DeleteOperationResponse> responseEntity = controller.deleteEndpointsByNames(list);
-        Assert.assertEquals(responseEntity.getStatusCode(), HttpStatus.OK);
-        Assert.assertEquals(responseEntity.getBody().getResult(), OperationStatus.SUCCESS);
+        ResponseEntity<ErrorDetails> responseEntity = controller.deleteEndpointsByNames(list);
+        Assert.assertEquals(responseEntity.getStatusCode(), HttpStatus.NO_CONTENT);
         verify(endpointDeletionService, times(1)).deleteEndpointByNames(any());
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.controller.EndpointController#deleteEndpointsByNames(List)}
+     * Test method for {@link EndpointController#deleteEndpointsByNames(List)}
      */
     @Test
     public void testDeleteEndpointsByNamesFailed() throws MangleException {
@@ -334,29 +337,26 @@ public class EndpointControllerTest {
 
 
         when(endpointDeletionService.deleteEndpointByNames(any())).thenReturn(response);
-        ResponseEntity<DeleteOperationResponse> responseEntity = controller.deleteEndpointsByNames(list);
+        ResponseEntity<ErrorDetails> responseEntity = controller.deleteEndpointsByNames(list);
         Assert.assertEquals(responseEntity.getStatusCode(), HttpStatus.PRECONDITION_FAILED);
-        Assert.assertEquals(responseEntity.getBody().getResult(), OperationStatus.FAILED);
         verify(endpointDeletionService, times(1)).deleteEndpointByNames(any());
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.controller.EndpointController#deleteCredentials(List)}
+     * Test method for {@link EndpointController#deleteCredentials(List)}
      */
     @Test
     public void testDeleteCredentials() throws MangleException {
         CredentialsSpec spec = credentialsSpecMockData.getAWSCredentialsData();
         ArrayList<String> list = new ArrayList<>(Arrays.asList(spec.getName()));
         when(credentialDeletionService.deleteCredentialsByNames(any())).thenReturn(new DeleteOperationResponse());
-        ResponseEntity<DeleteOperationResponse> responseEntity = controller.deleteCredentials(list);
-        Assert.assertEquals(responseEntity.getStatusCode(), HttpStatus.OK);
+        ResponseEntity<ErrorDetails> responseEntity = controller.deleteCredentials(list);
+        Assert.assertEquals(responseEntity.getStatusCode(), HttpStatus.NO_CONTENT);
         verify(credentialDeletionService, times(1)).deleteCredentialsByNames(any());
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.controller.EndpointController#deleteCredentials(List)}
+     * Test method for {@link EndpointController#deleteCredentials(List)}
      */
     @Test
     public void testDeleteCredentialsFailedDeletion() throws MangleException {
@@ -371,14 +371,13 @@ public class EndpointControllerTest {
         response.setAssociations(associations);
 
         when(credentialDeletionService.deleteCredentialsByNames(any())).thenReturn(response);
-        ResponseEntity<DeleteOperationResponse> responseEntity = controller.deleteCredentials(list);
+        ResponseEntity<ErrorDetails> responseEntity = controller.deleteCredentials(list);
         Assert.assertEquals(responseEntity.getStatusCode(), HttpStatus.PRECONDITION_FAILED);
         verify(credentialDeletionService, times(1)).deleteCredentialsByNames(any());
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.controller.EndpointController#testConnection(String)}
+     * Test method for {@link EndpointController#testConnection(String)}
      */
     @Test
     public void testTestConnection() throws MangleException {
@@ -391,8 +390,7 @@ public class EndpointControllerTest {
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.controller.EndpointController#testConnection(String)}
+     * Test method for {@link EndpointController#testConnection(String)}
      */
     @Test(expectedExceptions = MangleException.class)
     public void testTestConnectionException() throws MangleException {
@@ -405,8 +403,7 @@ public class EndpointControllerTest {
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.controller.EndpointController#testConnection(EndpointSpec)}
+     * Test method for {@link EndpointController#testConnection(String)}
      */
     @Test
     public void testEndpointTestConnectionByName() throws MangleException {
@@ -418,8 +415,7 @@ public class EndpointControllerTest {
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.controller.EndpointController#endpointTestConnection(EndpointSpec)}
+     * Test method for {@link EndpointController#endpointTestConnection(EndpointSpec)}
      */
     @Test(expectedExceptions = MangleException.class)
     public void testendpointTestConnection() throws MangleException {
@@ -462,6 +458,7 @@ public class EndpointControllerTest {
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void testGetCredentialsBasedOnPage() {
         CredentialsSpec spec = credentialsSpecMockData.getAWSCredentialsData();
@@ -477,6 +474,7 @@ public class EndpointControllerTest {
         verify(page, times(1)).getContent();
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void testGetEndpointsBasedOnPage() {
         EndpointSpec spec = mockData.getVCenterEndpointSpecMock();
@@ -513,5 +511,90 @@ public class EndpointControllerTest {
             verify(endpointService, times(1)).testEndpointConnection(any());
             throw e;
         }
+    }
+
+    /**
+     * Test method for
+     * {@link EndpointController#updateCredentials(String, String, String, String, MultipartFile)}
+     */
+    @Test
+    public void testUpdateRemoteMachineCredentials() throws MangleException {
+        RemoteMachineCredentials credentialsSpec = credentialsSpecMockData.getRMCredentialsData();
+        when(credentialService.updateCredential(any())).thenReturn(credentialsSpec);
+        ResponseEntity<CredentialsSpec> responseEntity = controller.updateCredentials(credentialsSpec.getId(),
+                credentialsSpec.getName(), credentialsSpec.getUsername(), credentialsSpec.getPassword(), null);
+        Assert.assertEquals(responseEntity.getStatusCode(), HttpStatus.OK);
+        Assert.assertEquals(responseEntity.getBody(), credentialsSpec);
+        verify(credentialService, times(1)).updateCredential(any());
+    }
+
+    /**
+     * Test method for
+     * {@link EndpointController#updateCredentials(String, String, String, String, MultipartFile)}
+     *
+     * @throws IOException
+     */
+    @Test
+    public void testUpdateRemoteMachineCredentialsForIOException() throws IOException {
+        MultipartFile privateKey = Mockito.mock(MultipartFile.class);
+        doThrow(new IOException()).when(credentialService).generateRemoteMachineCredentialsSpec(anyString(),
+                anyString(), anyString(), anyString(), any());
+        RemoteMachineCredentials credentialsSpec = credentialsSpecMockData.getRMCredentialsData();
+        try {
+            controller.updateCredentials(credentialsSpec.getId(), credentialsSpec.getName(),
+                    credentialsSpec.getUsername(), credentialsSpec.getPassword(), privateKey);
+        } catch (MangleException e) {
+            Assert.assertEquals(e.getErrorCode(), ErrorCode.FILE_SIZE_EXCEEDED);
+            verify(credentialService, times(1)).generateRemoteMachineCredentialsSpec(anyString(), anyString(),
+                    anyString(), anyString(), any());
+        }
+    }
+
+    /**
+     * Test method for {@link EndpointController#updateCredentials(String, MultipartFile, String)}
+     */
+    @Test
+    public void testUpdateK8SCredentials() throws MangleException {
+        MultipartFile kubeConfig = Mockito.mock(MultipartFile.class);
+        K8SCredentials credentialsSpec = credentialsSpecMockData.getk8SCredentialsData();
+        when(credentialService.updateCredential(any())).thenReturn(credentialsSpec);
+        ResponseEntity<CredentialsSpec> responseEntity =
+                controller.updateCredentials(credentialsSpec.getId(), kubeConfig, credentialsSpec.getName());
+        Assert.assertEquals(responseEntity.getStatusCode(), HttpStatus.OK);
+        Assert.assertEquals(responseEntity.getBody(), credentialsSpec);
+        verify(credentialService, times(1)).updateCredential(any());
+    }
+
+    /**
+     * Test method for {@link EndpointController#updateCredentials(String, MultipartFile, String)}
+     *
+     * @throws IOException
+     */
+    @Test
+    public void testUpdateK8SCredentialsForIOException() throws IOException {
+        MultipartFile kubeConfig = Mockito.mock(MultipartFile.class);
+        doThrow(new IOException()).when(credentialService).generateK8SCredentialsSpec(anyString(), anyString(), any());
+        K8SCredentials credentialsSpec = credentialsSpecMockData.getk8SCredentialsData();
+        try {
+            controller.updateCredentials(credentialsSpec.getId(), kubeConfig, credentialsSpec.getName());
+        } catch (MangleException e) {
+            Assert.assertEquals(e.getErrorCode(), ErrorCode.FILE_SIZE_EXCEEDED);
+            verify(credentialService, times(1)).generateK8SCredentialsSpec(anyString(), anyString(), any());
+        }
+    }
+
+    /**
+     * Test method for {@link EndpointController#updateCredentials(VCenterCredentials)}
+     *
+     * @throws MangleException
+     */
+    @Test
+    public void testUpdateVCenterCredentials() throws MangleException {
+        VCenterCredentials credentialsSpec = credentialsSpecMockData.getVCenterCredentialsData();
+        when(credentialService.updateCredential(any())).thenReturn(credentialsSpec);
+        ResponseEntity<CredentialsSpec> responseEntity = controller.updateCredentials(credentialsSpec);
+        Assert.assertEquals(responseEntity.getStatusCode(), HttpStatus.OK);
+        Assert.assertEquals(responseEntity.getBody(), credentialsSpec);
+        verify(credentialService, times(1)).updateCredential(any());
     }
 }

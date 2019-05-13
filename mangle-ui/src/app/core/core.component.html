@@ -17,6 +17,15 @@
 				</clr-dropdown-menu>
 			</clr-dropdown>
 			<a class="nav-link nav-icon" href="#" [routerLink]="['setting']" routerLinkActive="active" *ngIf="isAdminUser"><clr-icon shape="cog"></clr-icon></a>
+			<clr-dropdown>
+				<button class="nav-text" clrDropdownTrigger>
+					<clr-icon shape="help" size="24"></clr-icon>
+				</button>
+				<clr-dropdown-menu *clrIfOpen clrPosition="bottom-right">
+					<a href="swagger-ui.html" target="_blank" clrDropdownItem>API Documentation</a>
+					<a href="https://vmware-1.gitbook.io/mangle/sre-developers-and-users" target="_blank" clrDropdownItem>User Guide</a>
+				</clr-dropdown-menu>
+			</clr-dropdown>
 		</div>
     </header>
     <nav class="subnav">

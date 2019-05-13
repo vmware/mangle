@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { DockerComponent } from './docker.component';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
@@ -11,21 +11,17 @@ import { BrowserModule } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
 import { ClarityModule } from '@clr/angular';
 import { of } from 'rxjs';
-import { CoreService } from '../../core.service';
 import { CoreComponent } from '../../core.component';
-import { LoginComponent } from 'src/app/auth/login/login.component';
 
 describe('DockerComponent', () => {
   let component: DockerComponent;
   let endpointService: EndpointService;
-  let coreService: CoreService;
   let fixture: ComponentFixture<DockerComponent>;
 
   let ep_data: any = { "id": null, "name": "docker_ep", "endPointType": "DOCKER", "dockerConnectionProperties": { "dockerHostname": "0.0.0.0", "dockerPort": "2375", "tlsEnabled": false } };
   let ep_data_id: any = { "id": "with_id", "name": "docker_ep", "endPointType": "DOCKER", "dockerConnectionProperties": { "dockerHostname": "0.0.0.0", "dockerPort": "2375", "tlsEnabled": false } };
 
-  beforeEach(async(() => {
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = 2147483647;
+  beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [
         BrowserAnimationsModule,
@@ -34,22 +30,16 @@ describe('DockerComponent', () => {
         HttpClientModule,
         CommonModule,
         ClarityModule,
-        RouterTestingModule.withRoutes([{ path: 'docker', component: DockerComponent }, { path: 'login', component: LoginComponent }])
+        RouterTestingModule.withRoutes([{ path: 'docker', component: DockerComponent }])
       ],
-      declarations: [DockerComponent, CoreComponent, LoginComponent],
+      declarations: [DockerComponent, CoreComponent],
       providers: [
-        EndpointService,
-        CoreService
+        EndpointService
       ],
       schemas: [NO_ERRORS_SCHEMA]
     }).compileComponents();
-  }));
-
-  beforeEach(() => {
     endpointService = TestBed.get(EndpointService);
     spyOn(endpointService, 'getEndpoints').and.returnValue(of([ep_data]));
-    coreService = TestBed.get(CoreService);
-    spyOn(coreService, 'getMyDetails').and.returnValue(of({ "name": "user@mangle.local" }));
     fixture = TestBed.createComponent(DockerComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
@@ -97,10 +87,16 @@ describe('DockerComponent', () => {
 
   it('should test endpoint connection', () => {
     spyOn(endpointService, 'testEndpointConnection').and.returnValue(of(ep_data));
-    component.testEndpointConnection(ep_data);
+    component.testEndpointConnection(true, ep_data);
     expect(component.successFlag).toBe(true);
     expect(component.disableSubmit).toBe(false);
     expect(endpointService.testEndpointConnection).toHaveBeenCalled();
+  });
+
+  it('should get certificates', () => {
+    spyOn(endpointService, 'getCertificates').and.returnValue(of([]));
+    component.getCertificates();
+    expect(endpointService.getCertificates).toHaveBeenCalled();
   });
 
 });

@@ -17,6 +17,7 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 /**
  * @author bkaranam
@@ -24,6 +25,7 @@ import lombok.EqualsAndHashCode;
  *
  */
 @Data
+@ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 public class DiskFillFaultSpec extends FaultSpec {
 

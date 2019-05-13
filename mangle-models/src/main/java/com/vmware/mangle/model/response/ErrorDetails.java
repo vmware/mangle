@@ -14,6 +14,7 @@ package com.vmware.mangle.model.response;
 import java.util.Date;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * Error Details bean.
@@ -21,12 +22,13 @@ import lombok.Data;
  * @author kumargautam
  */
 @Data
+@NoArgsConstructor
 public class ErrorDetails {
 
     private Date timestamp;
     private String code;
     private String description;
-    private String details;
+    private Object details;
 
     public ErrorDetails(Date timestamp, String code, String description, String details) {
         super();

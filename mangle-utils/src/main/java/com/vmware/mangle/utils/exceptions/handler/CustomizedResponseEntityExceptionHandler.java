@@ -13,8 +13,10 @@ package com.vmware.mangle.utils.exceptions.handler;
 
 import java.util.Date;
 
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.cassandra.CassandraConnectionFailureException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -193,5 +195,21 @@ public class CustomizedResponseEntityExceptionHandler extends ResponseEntityExce
         ErrorDetails errorDetails = new ErrorDetails(new Date(), errorCode, errorMsg, request.getDescription(false));
         headers.add(ErrorConstants.REQUEST_FAILED_MESSAGE_HEADER, ErrorConstants.ERROR_MSG);
         return new ResponseEntity<>(errorDetails, headers, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(CassandraConnectionFailureException.class)
+    public final ResponseEntity<ErrorDetails> handleCassandraConnectionFailureException(
+            CassandraConnectionFailureException exception, WebRequest request) {
+        String errorMsg = exception.getMessage();
+        log.error(errorMsg);
+        if (exception.getCause() instanceof NoHostAvailableException) {
+            NoHostAvailableException hostAvailableException = (NoHostAvailableException) exception.getCause();
+            errorMsg = hostAvailableException.getCustomMessage(Integer.MAX_VALUE, true, false);
+        }
+        ErrorDetails errorDetails =
+                new ErrorDetails(new Date(), ErrorCode.DB_ERROR.getCode(), errorMsg, request.getDescription(false));
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(ErrorConstants.REQUEST_FAILED_MESSAGE_HEADER, ErrorConstants.ERROR_MSG);
+        return new ResponseEntity<>(errorDetails, headers, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

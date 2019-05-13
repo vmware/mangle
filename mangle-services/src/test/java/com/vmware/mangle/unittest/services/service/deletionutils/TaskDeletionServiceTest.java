@@ -19,6 +19,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -27,14 +28,19 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import com.vmware.mangle.cassandra.model.faults.specs.TaskSpec;
 import com.vmware.mangle.cassandra.model.scheduler.SchedulerSpec;
+import com.vmware.mangle.cassandra.model.tasks.Task;
 import com.vmware.mangle.model.response.DeleteOperationResponse;
 import com.vmware.mangle.services.SchedulerService;
 import com.vmware.mangle.services.deletionutils.TaskDeletionService;
+import com.vmware.mangle.services.mockdata.FaultsMockData;
 import com.vmware.mangle.services.mockdata.SchedulerControllerMockData;
+import com.vmware.mangle.services.mockdata.TasksMockData;
 import com.vmware.mangle.services.repository.TaskRepository;
 import com.vmware.mangle.utils.constants.ErrorConstants;
 import com.vmware.mangle.utils.exceptions.MangleException;
@@ -49,12 +55,19 @@ import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 public class TaskDeletionServiceTest {
 
     private SchedulerControllerMockData schedulerMockData = new SchedulerControllerMockData();
+    private FaultsMockData faultsMockData = new FaultsMockData();
+    private TasksMockData tasksMockData;
     @Mock
     private SchedulerService schedulerService;
     @Mock
     private TaskRepository taskRepository;
 
     private TaskDeletionService taskDeletionService;
+
+    @BeforeClass
+    public void initTaskMockData() {
+        tasksMockData = new TasksMockData(faultsMockData.getVMNicFaultSpec());
+    }
 
     @BeforeMethod
     public void initMocks() {
@@ -81,11 +94,13 @@ public class TaskDeletionServiceTest {
 
     @Test
     public void testDeleteTaskByIdsNoActiveSchedule() throws MangleException {
-        String taskId = UUID.randomUUID().toString();
-        List<String> tasks = new ArrayList<>(Arrays.asList(taskId));
+        List<String> tasks = new ArrayList<>();
         List<SchedulerSpec> schedulerSpecs = new ArrayList<>();
+        Task<TaskSpec> task = tasksMockData.getDummyTask();
+        tasks.add(task.getId());
 
         when(schedulerService.getActiveSchedulesForIds(tasks)).thenReturn(schedulerSpecs);
+        when(taskRepository.findByIds(tasks)).thenReturn(Collections.singletonList(task));
         doNothing().when(taskRepository).deleteByIdIn(any());
 
         DeleteOperationResponse response = taskDeletionService.deleteTasksByIds(tasks);

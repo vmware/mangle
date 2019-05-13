@@ -21,6 +21,7 @@ import com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec;
 import com.vmware.mangle.cassandra.model.tasks.SupportScriptInfo;
 import com.vmware.mangle.cassandra.model.tasks.commands.CommandInfo;
 import com.vmware.mangle.cassandra.model.tasks.commands.CommandOutputProcessingInfo;
+import com.vmware.mangle.faults.plugin.helpers.KnownFailuresHelper;
 import com.vmware.mangle.services.enums.VCenterDiskFaults;
 import com.vmware.mangle.services.enums.VCenterNicFaults;
 import com.vmware.mangle.services.enums.VCenterStateFaults;
@@ -30,7 +31,6 @@ import com.vmware.mangle.utils.CommonUtils;
 import com.vmware.mangle.utils.ICommandExecutor;
 import com.vmware.mangle.utils.clients.vcenter.VCenterClient;
 import com.vmware.mangle.utils.clients.vcenter.VCenterCommandExecutor;
-import com.vmware.mangle.utils.exceptions.MangleException;
 
 /**
  * @author chetanc
@@ -48,12 +48,12 @@ public class VCenterFaultHelper implements ICommandExecutionFaultHelper {
     }
 
     @Override
-    public void checkTaskSpecificPrerequisites() throws MangleException {
+    public void checkTaskSpecificPrerequisites() {
         //           No prerequitsites for the VCenter related faults
     }
 
     @Override
-    public ICommandExecutor getExecutor(CommandExecutionFaultSpec vmFaultSpec) throws MangleException {
+    public ICommandExecutor getExecutor(CommandExecutionFaultSpec vmFaultSpec) {
         return new VCenterCommandExecutor((VCenterClient) endpointClientFactory
                 .getEndPointClient(vmFaultSpec.getCredentials(), vmFaultSpec.getEndpoint()));
     }
@@ -65,10 +65,11 @@ public class VCenterFaultHelper implements ICommandExecutionFaultHelper {
 
     @Override
     public List<CommandInfo> getInjectionCommandInfoList(ICommandExecutor executor,
-            CommandExecutionFaultSpec vmFaultSpec) throws MangleException {
+            CommandExecutionFaultSpec vmFaultSpec) {
         List<CommandInfo> commandInfoList = new ArrayList<>();
         CommandInfo commandInfo = new CommandInfo();
         commandInfo.setCommand(buildInjectionCommand(vmFaultSpec));
+        commandInfo.setKnownFailureMap(KnownFailuresHelper.getKnownFailureOfVCenterFaultInjectionRequest());
         commandInfo.setIgnoreExitValueCheck(false);
         commandInfoList.add(commandInfo);
 
@@ -84,12 +85,13 @@ public class VCenterFaultHelper implements ICommandExecutionFaultHelper {
 
     @Override
     public List<CommandInfo> getRemediationCommandInfoList(ICommandExecutor executor,
-            CommandExecutionFaultSpec vmFaultSpec) throws MangleException {
+            CommandExecutionFaultSpec vmFaultSpec) {
         List<CommandInfo> commandInfoList = new ArrayList<>();
         String remediationCommand = buildRemediationCommand(vmFaultSpec);
         if (remediationCommand != null) {
             CommandInfo commandInfo = new CommandInfo();
             commandInfo.setCommand(remediationCommand);
+            commandInfo.setKnownFailureMap(KnownFailuresHelper.getKnownFailureOfVCenterFaultRemediationRequest());
             commandInfo.setIgnoreExitValueCheck(false);
             commandInfoList.add(commandInfo);
         }

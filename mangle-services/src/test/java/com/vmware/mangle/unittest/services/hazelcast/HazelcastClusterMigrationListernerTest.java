@@ -117,9 +117,9 @@ public class HazelcastClusterMigrationListernerTest {
 
         verify(newOwner, times(1)).getUuid();
         verify(newOwner, times(4)).getAddress();
-        verify(cluster, times(2)).getLocalMember();
+        verify(cluster, times(3)).getLocalMember();
 
-        verify(hazelcastInstance, times(2)).getCluster();
+        verify(hazelcastInstance, times(3)).getCluster();
         verify(hazelcastInstance, times(1)).getMap("tasks");
         verify(hazelcastInstance, times(1)).getMap("nodeTasks");
         verify(hazelcastInstance, times(1)).getPartitionService();
@@ -172,15 +172,15 @@ public class HazelcastClusterMigrationListernerTest {
 
         listener.migrationCompleted(event);
 
-        verify(event, times(3)).getNewOwner();
+        verify(event, times(4)).getNewOwner();
         verify(event, times(1)).getOldOwner();
         verify(event, times(2)).getPartitionId();
 
         verify(newOwner, times(1)).getUuid();
-        verify(newOwner, times(2)).getAddress();
-        verify(cluster, times(2)).getLocalMember();
+        verify(newOwner, times(3)).getAddress();
+        verify(cluster, times(3)).getLocalMember();
 
-        verify(hazelcastInstance, times(2)).getCluster();
+        verify(hazelcastInstance, times(3)).getCluster();
         verify(hazelcastInstance, times(1)).getMap("tasks");
         verify(hazelcastInstance, times(1)).getMap("nodeTasks");
         verify(hazelcastInstance, times(1)).getPartitionService();
@@ -194,11 +194,52 @@ public class HazelcastClusterMigrationListernerTest {
     }
 
     @Test
-    public void testMigrationStarted() {
+    public void testMigrationStarted() throws MangleException, UnknownHostException {
+        Member newOwner = mock(Member.class);
+        Cluster cluster = mock(Cluster.class);
+        Partition partition = mock(Partition.class);
+        IMap<Object, Object> taskMap = mock(IMap.class);
+        IMap<Object, Object> nodeTask = mock(IMap.class);
         MigrationEvent event = mock(MigrationEvent.class);
-        when(event.getPartitionId()).thenReturn(1);
+
+        String memberId = UUID.randomUUID().toString();
+        String key = UUID.randomUUID().toString();
+        String value = TaskStatus.COMPLETED.name();
+
+        Set<Object> currentNodeTasks = new HashSet<Object>(Arrays.asList(key));
+
+        Address address = new Address("127.0.0.1", 90000);
+
+        when(event.getNewOwner()).thenReturn(newOwner);
+        when(event.getOldOwner()).thenReturn(null);
+        when(event.getPartitionId()).thenReturn(100);
+
+        when(newOwner.getUuid()).thenReturn(memberId);
+        when(newOwner.getAddress()).thenReturn(address);
+        when(cluster.getLocalMember()).thenReturn(newOwner);
+        when(hazelcastInstance.getCluster()).thenReturn(cluster);
+        when(hazelcastInstance.getMap("tasks")).thenReturn(taskMap);
+        when(hazelcastInstance.getMap("nodeTasks")).thenReturn(nodeTask);
+        when(hazelcastInstance.getPartitionService()).thenReturn(partitionService);
+
+        when(nodeTask.get(memberId)).thenReturn(currentNodeTasks);
+
+        when(partitionService.getPartition(anyString())).thenReturn(partition);
+        when(partition.getPartitionId()).thenReturn(100);
+        when(taskMap.localKeySet()).thenReturn(currentNodeTasks);
+
+        doNothing().when(taskService).cleanUpTaskForMigration(anyString());
+
+
         listener.migrationStarted(event);
-        verify(event, times(1)).getPartitionId();
+
+        verify(event, times(1)).getOldOwner();
+
+        verify(cluster, times(1)).getLocalMember();
+
+        verify(hazelcastInstance, times(1)).getCluster();
+
+        verify(taskService, times(0)).triggerTask(anyString());
 
     }
 

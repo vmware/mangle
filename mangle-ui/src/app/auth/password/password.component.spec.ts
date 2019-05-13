@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { PasswordComponent } from './password.component';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -9,59 +9,58 @@ import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { SettingService } from 'src/app/setting/setting.service';
 import { AuthService } from '../auth.service';
 import { of } from 'rxjs';
-import { LoginComponent } from '../login/login.component';
+import { Router } from '@angular/router';
 
 describe('PasswordComponent', () => {
   let component: PasswordComponent;
   let coreService: CoreService;
   let settingService: SettingService;
   let authService: AuthService;
-  let fixture: ComponentFixture<PasswordComponent>; 
+  let router: Router;
+  let fixture: ComponentFixture<PasswordComponent>;
 
-  beforeEach(async(() => {
+  beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [
         FormsModule,
         HttpClientModule,
-        RouterTestingModule.withRoutes([{ path: 'password', component: PasswordComponent }, { path: 'login', component: LoginComponent }])
+        RouterTestingModule.withRoutes([{ path: 'password', component: PasswordComponent }])
       ],
-      declarations: [ PasswordComponent, LoginComponent ],
+      declarations: [PasswordComponent],
       providers: [
         CoreService,
         SettingService,
         AuthService
       ],
-      schemas: [ NO_ERRORS_SCHEMA ]
+      schemas: [NO_ERRORS_SCHEMA]
     })
-    .compileComponents();
-  }));
-
-  beforeEach(() => {
+      .compileComponents();
     fixture = TestBed.createComponent(PasswordComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
     coreService = TestBed.get(CoreService);
     settingService = TestBed.get(SettingService);
     authService = TestBed.get(AuthService);
-    spyOn(coreService, 'getMyDetails').and.returnValue(of({"name":"user@mangle.local"}));
-    spyOn(settingService, 'updateLocalUser').and.returnValue(of({}));
+    router = TestBed.get(Router);
+    spyOn(coreService, 'getMyDetails').and.returnValue(of({ "name": "user@mangle.local" }));
+    spyOn(settingService, 'updatePassword').and.returnValue(of(component.passwordFormData));
     spyOn(authService, 'logout').and.returnValue(of({}));
+    spyOn(router, 'navigateByUrl');
   });
 
   it('should create', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should get user details', () => {
-    component.getMyDetails();
-    expect(component.passwordFormData.username).toBe("user@mangle.local");
-    expect(coreService.getMyDetails).toHaveBeenCalled();
+  it('should update password', () => {
+    component.updatePassword(component.passwordFormData);
+    expect(component.successFlag).toBe(true);
+    expect(settingService.updatePassword).toHaveBeenCalled();
   });
 
-  it('should update password', () => {
-    component.updatePassword({});
-    expect(component.successFlag).toBe(true);
-    expect(settingService.updateLocalUser).toHaveBeenCalled();
+  it('should login again', () => {
+    component.loginAgain();
+    expect(router.navigateByUrl).toHaveBeenCalled();
   });
 
 });

@@ -12,9 +12,8 @@
 package com.vmware.mangle.services;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
+
 import javax.annotation.PostConstruct;
 
 import io.micrometer.core.instrument.util.NamedThreadFactory;
@@ -26,12 +25,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.vmware.mangle.cassandra.model.MangleAdminConfigurationSpec;
-import com.vmware.mangle.cassandra.model.metricprovider.DatadogConnectionProperties;
 import com.vmware.mangle.cassandra.model.metricprovider.MetricProviderSpec;
-import com.vmware.mangle.cassandra.model.metricprovider.WaveFrontConnectionProperties;
 import com.vmware.mangle.model.enums.MetricProviderType;
-import com.vmware.mangle.services.config.MangleDatadogConfig;
-import com.vmware.mangle.services.config.MangleWavefrontConfig;
 import com.vmware.mangle.services.repository.AdminConfigurationRepository;
 import com.vmware.mangle.services.repository.MetricProviderRepository;
 import com.vmware.mangle.task.framework.metric.providers.MetricProviderClientFactory;
@@ -60,12 +55,6 @@ public class MetricProviderService {
     private DatadogMeterRegistry datadogMeterRegistry;
 
     @Autowired
-    private MangleWavefrontConfig mangleWavefrontConfig;
-
-    @Autowired
-    private MangleDatadogConfig mangleDatadogConfig;
-
-    @Autowired
     private MetricProviderClientFactory mangleMetricProviderClientFactory;
 
     @Autowired
@@ -87,10 +76,8 @@ public class MetricProviderService {
                     this.sendMetrics();
                 }
             }
-            // Catching generic exception because here apart from MangleException we can encounter various type of exception from WavefrontMeterRegistry and DatadogMeterRegistry
-        } catch (Exception exception) {
-            log.error("Can't configure metric provider client while initializating the application"
-                    + exception.getMessage());
+        } catch (MangleException mangleException) {
+            log.debug(mangleException.getMessage());
         }
     }
 
@@ -104,8 +91,9 @@ public class MetricProviderService {
 
     /**
      * @return boolean if all metric providers deleted or not
+     * @throws MangleException
      */
-    public boolean deleteAllMetricProviders() {
+    public boolean deleteAllMetricProviders() throws MangleException {
         log.info("Deleting all Metric Providers...");
         this.metricProviderRepository.deleteAll();
         resetAdminConfigDetails();
@@ -118,8 +106,8 @@ public class MetricProviderService {
      * @return MetricProviderSpec
      * @throws MangleException
      */
-    public MetricProviderSpec getActiveMetricProvider() throws MangleException {
-        log.info("Getting the enabled metric provider.");
+    public MetricProviderSpec getActiveMetricProvider() {
+        log.debug("Finding active metric provider.");
         Optional<MangleAdminConfigurationSpec> optional =
                 this.adminConfigurationRepository.findByPropertyName(MetricProviderConstants.ACTIVE_METRIC_PROVIDER);
         MangleAdminConfigurationSpec adminConfiguration;
@@ -130,11 +118,12 @@ public class MetricProviderService {
                 Optional<MetricProviderSpec> optionalMetricProvider =
                         this.metricProviderRepository.findByName(activeMetricProvider);
                 return optionalMetricProvider.isPresent() ? optionalMetricProvider.get() : null;
+            } else {
+                log.warn(ErrorConstants.NO_ACTIVE_METRIC_PROVIDER);
+                return null;
             }
-            return null;
         } else {
-            log.error(ErrorConstants.METRICPROVIDER_ACTIVE + ErrorConstants.NO_RECORD_FOUND);
-            throw new MangleException(ErrorCode.NO_RECORD_FOUND, ErrorConstants.METRICPROVIDER_ACTIVE);
+            return null;
         }
     }
 
@@ -145,8 +134,6 @@ public class MetricProviderService {
         changeMetricSendingStatus(false);
         this.wavefrontMeterRegistry.stop();
         this.datadogMeterRegistry.stop();
-        this.wavefrontMeterRegistry.close();
-        this.datadogMeterRegistry.close();
         return true;
     }
 
@@ -218,7 +205,7 @@ public class MetricProviderService {
             Optional<MetricProviderSpec> optional = this.metricProviderRepository.findByName(metricProviderName);
             if (optional.isPresent()) {
                 MetricProviderSpec activeMetricProviderSpec = this.getActiveMetricProvider();
-                if (activeMetricProviderSpec.getName().equals(metricProviderName)) {
+                if (null != activeMetricProviderSpec && activeMetricProviderSpec.getName().equals(metricProviderName)) {
                     resetAdminConfigDetails();
                 }
                 this.metricProviderRepository.deleteByName(metricProviderName);
@@ -238,7 +225,7 @@ public class MetricProviderService {
         return false;
     }
 
-    private void resetAdminConfigDetails() {
+    private void resetAdminConfigDetails() throws MangleException {
         changeActiveMetricProvider("");
         changeMetricSendingStatus(false);
     }
@@ -296,29 +283,6 @@ public class MetricProviderService {
     }
 
     /**
-     * @param metricProviderName
-     * @return Is test connection to metric provider is success or not
-     * @throws MangleException
-     */
-    public boolean testConnectionMetricProvider(String metricProviderName) throws MangleException {
-        log.info("Checking Connection with  Metric Provider: " + metricProviderName);
-        if (!StringUtils.isEmpty(metricProviderName)) {
-            Optional<MetricProviderSpec> metricProvider = this.metricProviderRepository.findByName(metricProviderName);
-            MetricProviderSpec metricProviderSpec;
-            if (metricProvider.isPresent()) {
-                metricProviderSpec = metricProvider.get();
-            } else {
-                throw new MangleRuntimeException(ErrorCode.NO_RECORD_FOUND, ErrorConstants.METRICPROVIDER_NAME,
-                        metricProviderName);
-            }
-            return this.testConnectionMetricProvider(metricProviderSpec);
-        } else {
-            log.error(ErrorConstants.METRICPROVIDER_NAME + ErrorConstants.FIELD_VALUE_EMPTY);
-            throw new MangleException(ErrorCode.FIELD_VALUE_EMPTY, ErrorConstants.METRICPROVIDER_NAME);
-        }
-    }
-
-    /**
      * @param metricProviderSpec
      * @return Is test connection to metric provider is success or not
      * @throws MangleException
@@ -326,7 +290,15 @@ public class MetricProviderService {
     public boolean testConnectionMetricProvider(MetricProviderSpec metricProviderSpec) throws MangleException {
         log.info("Checking Connection with  Metric Provider: " + metricProviderSpec.getName());
         if (!StringUtils.isEmpty(metricProviderSpec.getName())) {
-            return this.mangleMetricProviderClientFactory.getMetricProviderClient(metricProviderSpec).testConnection();
+            boolean status =
+                    this.mangleMetricProviderClientFactory.getMetricProviderClient(metricProviderSpec).testConnection();
+            if (status) {
+                return true;
+            } else {
+                log.error(ErrorConstants.METRICPROVIDER_NAME + ErrorConstants.TEST_CONNECTION_FAILED_METRICPROVIDER);
+                throw new MangleException(ErrorConstants.TEST_CONNECTION_FAILED_METRICPROVIDER,
+                        ErrorCode.TEST_CONNECTION_FAILED, metricProviderSpec.getName());
+            }
         } else {
             log.error(ErrorConstants.METRICPROVIDER_NAME + ErrorConstants.FIELD_VALUE_EMPTY);
             throw new MangleException(ErrorCode.FIELD_VALUE_EMPTY, ErrorConstants.METRICPROVIDER_NAME);
@@ -345,8 +317,13 @@ public class MetricProviderService {
                     this.metricProviderRepository.findByName(metricProviderName);
             MangleAdminConfigurationSpec adminConfigSpec = null;
             if (metricProviderOptional.isPresent()) {
+                MetricProviderSpec activeMetricProvider = this.getActiveMetricProvider();
+                if (null != activeMetricProvider && activeMetricProvider.getName().equals(metricProviderName)) {
+                    throw new MangleRuntimeException(ErrorCode.ALREADY_ACTIVE_METRIC_PROVIDER,
+                            ErrorConstants.ALREADY_ACTIVE_METRIC_PROVIDER, metricProviderName);
+                }
                 adminConfigSpec = changeActiveMetricProvider(metricProviderName);
-                changeMetricMeterRegistry();
+                changeMetricMeterRegistry(metricProviderOptional.get());
                 return adminConfigSpec;
             } else {
                 throw new MangleRuntimeException(ErrorCode.NO_RECORD_FOUND, ErrorConstants.METRICPROVIDER_NAME,
@@ -358,11 +335,33 @@ public class MetricProviderService {
         }
     }
 
-    private MangleAdminConfigurationSpec changeActiveMetricProvider(String name) {
+    private void changeMetricMeterRegistry(MetricProviderSpec metricProviderSpec) throws MangleException {
+        Optional<MangleAdminConfigurationSpec> optional =
+                this.adminConfigurationRepository.findByPropertyName(MetricProviderConstants.SENDING_MANGLE_METRICS);
+        if (optional.isPresent() && optional.get().getPropertyValue().equals("true")) {
+            log.info("Changing Metric Meter Registry...");
+            if (!enableMetricsBasedOnType(metricProviderSpec)) {
+                throw new MangleRuntimeException(ErrorCode.METER_REGISTERY_FAILED);
+            }
+        }
+    }
+
+    private MangleAdminConfigurationSpec changeActiveMetricProvider(String name) throws MangleException {
         Optional<MangleAdminConfigurationSpec> adminConfigOptional =
                 this.adminConfigurationRepository.findByPropertyName(MetricProviderConstants.ACTIVE_METRIC_PROVIDER);
         MangleAdminConfigurationSpec adminConfigSpec = null;
-        if (adminConfigOptional.isPresent()) {
+        if (adminConfigOptional.isPresent() && !adminConfigOptional.get().getPropertyValue().isEmpty()) {
+            MetricProviderSpec metricProviderSpec = this.getActiveMetricProvider();
+            if (metricProviderSpec.getMetricProviderType().equals(MetricProviderType.DATADOG)) {
+                this.datadogMeterRegistry.stop();
+            } else if (metricProviderSpec.getMetricProviderType().equals(MetricProviderType.WAVEFRONT)) {
+                this.wavefrontMeterRegistry.stop();
+            }
+            adminConfigSpec = adminConfigOptional.get();
+            adminConfigSpec.setPropertyValue(name);
+            adminConfigSpec = this.adminConfigurationRepository.save(adminConfigSpec);
+
+        } else if (adminConfigOptional.isPresent() && adminConfigOptional.get().getPropertyValue().isEmpty()) {
             adminConfigSpec = adminConfigOptional.get();
             adminConfigSpec.setPropertyValue(name);
             adminConfigSpec = this.adminConfigurationRepository.save(adminConfigSpec);
@@ -373,20 +372,6 @@ public class MetricProviderService {
             adminConfigSpec = this.adminConfigurationRepository.save(adminConfigSpec);
         }
         return adminConfigSpec;
-    }
-
-    private void changeMetricMeterRegistry() throws MangleException {
-        Optional<MangleAdminConfigurationSpec> optional =
-                this.adminConfigurationRepository.findByPropertyName(MetricProviderConstants.SENDING_MANGLE_METRICS);
-        if (optional.isPresent() && optional.get().getPropertyValue().equals("true")) {
-            MetricProviderSpec metricProviderSpec = this.getActiveMetricProvider();
-            if (metricProviderSpec.getMetricProviderType().equals(MetricProviderType.WAVEFRONT)) {
-                this.wavefrontMeterRegistry.stop();
-            } else if (metricProviderSpec.getMetricProviderType().equals(MetricProviderType.DATADOG)) {
-                this.datadogMeterRegistry.stop();
-            }
-            enableMetricsBasedOnType(metricProviderSpec);
-        }
     }
 
     private MetricProviderSpec getUpdatedSpec(MetricProviderSpec metricProviderSpecToUpdate,
@@ -407,50 +392,52 @@ public class MetricProviderService {
     public boolean sendMetrics() throws MangleException {
         log.info("Enabling Mangle Metrics...");
         MetricProviderSpec metricProviderSpec = this.getActiveMetricProvider();
-        changeMetricSendingStatus(true);
-        return enableMetricsBasedOnType(metricProviderSpec);
+        if (null != metricProviderSpec) {
+            changeMetricSendingStatus(true);
+            return enableMetricsBasedOnType(metricProviderSpec);
+        } else {
+            throw new MangleException(ErrorCode.NO_ACTIVE_METRIC_PROVIDER, ErrorConstants.NO_ACTIVE_METRIC_PROVIDER);
+        }
+    }
+
+    /**
+     * @return Giving status if Mangle is sending Metrics or not
+     */
+    public boolean isMangleMetricsEnabled() {
+        Optional<MangleAdminConfigurationSpec> optional =
+                this.adminConfigurationRepository.findByPropertyName(MetricProviderConstants.SENDING_MANGLE_METRICS);
+        if (optional.isPresent()) {
+            String status = optional.get().getPropertyValue();
+            if (null == status) {
+                return false;
+            } else if (status.equals("false")) {
+                return false;
+            } else if (status.equals("true")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean enableMetricsBasedOnType(MetricProviderSpec metricProviderSpec) {
         switch (metricProviderSpec.getMetricProviderType()) {
         case DATADOG:
-            return enableDatadogMetrics(metricProviderSpec.getDatadogConnectionProperties());
+            return enableDatadogMetrics();
         case WAVEFRONT:
-            return enableWavefrontMetrics(metricProviderSpec.getWaveFrontConnectionProperties());
+            return enableWavefrontMetrics();
         default:
             return false;
         }
     }
 
-    private boolean enableWavefrontMetrics(WaveFrontConnectionProperties waveFrontConnectionProperties) {
-        this.mangleWavefrontConfig.setApiToken(waveFrontConnectionProperties.getWavefrontAPIToken());
-        this.mangleWavefrontConfig.setPrefix(waveFrontConnectionProperties.getPrefix());
-        this.mangleWavefrontConfig.setSource(waveFrontConnectionProperties.getSource());
-        this.mangleWavefrontConfig.setUri(waveFrontConnectionProperties.getWavefrontInstance());
+    private boolean enableWavefrontMetrics() {
         this.wavefrontMeterRegistry.start(new NamedThreadFactory("wavefront-metrics-publisher"));
         return true;
     }
 
-    private boolean enableDatadogMetrics(DatadogConnectionProperties datadogConnectionProperties) {
-        this.mangleDatadogConfig.setApiKey(datadogConnectionProperties.getApiKey());
-        this.mangleDatadogConfig.setApplicationKey(datadogConnectionProperties.getApplicationKey());
-        this.mangleDatadogConfig.setUri(datadogConnectionProperties.getUri());
-        this.datadogMeterRegistry.config().commonTags(getArrayOfTags(datadogConnectionProperties));
+    private boolean enableDatadogMetrics() {
         this.datadogMeterRegistry.start(new NamedThreadFactory("datadog-metrics-publisher"));
         return true;
-    }
-
-    private String[] getArrayOfTags(DatadogConnectionProperties datadogConnectionProperties) {
-        Map<String, String> tags = datadogConnectionProperties.getStaticTags();
-        String[] tagsArray = new String[tags.size() * 2];
-        int count = 0;
-        for (Entry<String, String> each : tags.entrySet()) {
-            tagsArray[count] = each.getKey();
-            count++;
-            tagsArray[count] = each.getValue();
-            count++;
-        }
-        return tagsArray;
     }
 
     private void changeMetricSendingStatus(boolean status) {

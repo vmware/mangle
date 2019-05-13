@@ -30,6 +30,7 @@ import com.vmware.mangle.cassandra.model.tasks.FaultTriggeringTask;
 import com.vmware.mangle.cassandra.model.tasks.K8SSpecificArguments;
 import com.vmware.mangle.cassandra.model.tasks.Task;
 import com.vmware.mangle.cassandra.model.tasks.TaskType;
+import com.vmware.mangle.faults.plugin.utils.TaskDescriptionUtils;
 import com.vmware.mangle.task.framework.endpoint.EndpointClientFactory;
 import com.vmware.mangle.task.framework.events.TaskSubstageEvent;
 import com.vmware.mangle.task.framework.helpers.AbstractTaskHelper;
@@ -48,16 +49,29 @@ import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 @SuppressWarnings("squid:CommentedOutCodeLine")
 public class K8SFaultTriggerTaskHelper<T extends K8SFaultTriggerSpec, S extends CommandExecutionFaultSpec>
         extends AbstractTaskHelper<T> implements IMultiTaskHelper<T, S> {
-    @Autowired
+
     private EndpointClientFactory endpointClientFactory;
 
-    @Autowired
     private BytemanFaultTaskHelper<S> bytemanFaultTask;
 
-    @Autowired
-    SystemResourceFaultTaskHelper<S> systemResourceFaultTask;
+    private SystemResourceFaultTaskHelper<S> systemResourceFaultTask;
 
     public K8SFaultTriggerTaskHelper() {
+    }
+
+    @Autowired
+    public void setEndpointClientFactory(EndpointClientFactory endpointClientFactory) {
+        this.endpointClientFactory = endpointClientFactory;
+    }
+
+    @Autowired
+    public void setBytemanFaultTasky(BytemanFaultTaskHelper<S> bytemanFaultTask) {
+        this.bytemanFaultTask = bytemanFaultTask;
+    }
+
+    @Autowired
+    public void setSystemResourceFaultTaskHelper(SystemResourceFaultTaskHelper<S> systemResourceFaultTask) {
+        this.systemResourceFaultTask = systemResourceFaultTask;
     }
 
     @Override
@@ -100,14 +114,16 @@ public class K8SFaultTriggerTaskHelper<T extends K8SFaultTriggerSpec, S extends 
             List<String> listOfPods = getK8SPods(task);
             Map<String, String> childTaskMap = new HashMap<>();
             ((FaultTriggeringTask<T, S>) task).setTaskObjmap(new HashMap<>());
+            int childCounter = 1;
             for (String podName : listOfPods) {
                 Task<S> childTask = null;
                 S childFaultSpec = createK8SFaultSpec(task, podName);
                 if (childFaultSpec instanceof JVMAgentFaultSpec) {
-                    childTask = bytemanFaultTask.init(createK8SFaultSpec(task, podName));
+                    childTask = bytemanFaultTask.init(childFaultSpec);
                 } else {
-                    childTask = systemResourceFaultTask.init(createK8SFaultSpec(task, podName));
+                    childTask = systemResourceFaultTask.init(childFaultSpec);
                 }
+                childTask.setTaskName(childTask.getTaskName() + "-" + childCounter++);
                 ((FaultTriggeringTask<T, S>) task).getTaskObjmap().put(podName, childTask);
                 childTaskMap.put(podName, childTask.getId());
             }
@@ -116,13 +132,6 @@ public class K8SFaultTriggerTaskHelper<T extends K8SFaultTriggerSpec, S extends 
         }
         if (task.getTaskType() == TaskType.REMEDIATION) {
             Map<String, String> childTaskMap = new HashMap<>();
-            /*Map<String, String> parentChildTaskMap = task.getTaskData().getChildTaskMap();
-            for (String podName : parentChildTaskMap.keySet()) {
-                Task<TaskSpec> remediatedTask =
-                        (Task<TaskSpec>) FaultTaskFactory.getRemediationTask(parentChildTaskMap.get(podName)).task;
-               taskObjmap.put(podName, remediatedTask);
-                childTaskMap.put(podName, remediatedTask.getId());
-            }*/
             task.getTaskData().setChildTaskMap(childTaskMap);
         }
         task.getTaskData().setReadyForChildExecution(true);
@@ -133,9 +142,16 @@ public class K8SFaultTriggerTaskHelper<T extends K8SFaultTriggerSpec, S extends 
 
     @Override
     public String getDescription(Task<T> task) {
-        return "Executing Fault: " + task.getTaskData().getFaultSpec().getFaultName() + " on K8Sendpoint: "
-                + task.getTaskData().getFaultSpec().getEndpointName() + "["
-                + task.getTaskData().getFaultSpec().getK8sArguments() + "]";
+        String description = new StringBuffer().append(task.getTaskData().getFaultSpec().getFaultName())
+                .append(" on K8Sendpoint: ").append(task.getTaskData().getFaultSpec().getEndpointName())
+                .append(". More Details: [ ").append(task.getTaskData().getFaultSpec()).append(" ], [ ")
+                .append(task.getTaskData().getFaultSpec().getK8sArguments()).append(" ]").toString();
+        description = TaskDescriptionUtils.removeNullMembersFromString(description);
+        if (task.getTaskType() == TaskType.INJECTION) {
+            return "Executing Fault: " + description;
+        } else {
+            return "Remediating Fault: " + description;
+        }
     }
 
     protected List<String> getK8SPods(Task<T> task) throws MangleException {
@@ -175,7 +191,9 @@ public class K8SFaultTriggerTaskHelper<T extends K8SFaultTriggerSpec, S extends 
             jvmCodefault.setClassName(parentFaultSpec.getClassName());
             jvmCodefault.setMethodName(parentFaultSpec.getMethodName());
             jvmCodefault.setRuleEvent(parentFaultSpec.getRuleEvent());
+            jvmCodefault.setJvmProperties(((JVMAgentFaultSpec) parentFaultSpec).getJvmProperties());
             k8sFaultspec = jvmCodefault;
+
         } else if (isJVMAgentFaultSpec(task.getTaskData().getFaultSpec())) {
             k8sFaultspec = new JVMAgentFaultSpec();
             ((JVMAgentFaultSpec) k8sFaultspec)
@@ -190,6 +208,7 @@ public class K8SFaultTriggerTaskHelper<T extends K8SFaultTriggerSpec, S extends 
         k8sFaultspec.setEndpoint(parentFaultSpec.getEndpoint());
         k8sFaultspec.setFaultName(parentFaultSpec.getFaultName());
         k8sFaultspec.setFaultType(parentFaultSpec.getFaultType());
+        k8sFaultspec.setInjectionHomeDir(parentFaultSpec.getInjectionHomeDir());
         k8sFaultspec.setK8sArguments(getK8SArguments(task, podName));
         k8sFaultspec.setSchedule(null);
         k8sFaultspec.setTimeoutInMilliseconds(parentFaultSpec.getTimeoutInMilliseconds());

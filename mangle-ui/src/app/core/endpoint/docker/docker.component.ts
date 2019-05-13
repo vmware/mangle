@@ -8,13 +8,13 @@ import { CommonEndpoint } from '../common.endpoint';
   styleUrls: ['./docker.component.css']
 })
 export class DockerComponent extends CommonEndpoint implements OnInit {
-
   constructor(endpointService: EndpointService) {
     super(endpointService, 'DOCKER');
   }
 
   ngOnInit() {
     this.getEndpoints();
+    this.getCertificates();
   }
 
 }

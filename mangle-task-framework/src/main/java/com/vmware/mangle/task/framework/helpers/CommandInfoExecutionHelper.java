@@ -30,6 +30,7 @@ import com.vmware.mangle.cassandra.model.tasks.commands.CommandOutputProcessingI
 import com.vmware.mangle.utils.CommonUtils;
 import com.vmware.mangle.utils.ICommandExecutor;
 import com.vmware.mangle.utils.constants.Constants;
+import com.vmware.mangle.utils.constants.ErrorConstants;
 import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
@@ -69,18 +70,22 @@ public class CommandInfoExecutionHelper {
             throws MangleException {
         CommandExecutionResult commandExecutionResult = null;
         if (commandInfo.getNoOfRetries() > 0) {
-            for (int i = 0; i <= commandInfo.getNoOfRetries(); i++) {
+            int retryDelayInSeconds = Constants.COMMAND_EXECUTION_RETRY_INTERVAL;
+            if (commandInfo.getRetryInterval() > 0) {
+                retryDelayInSeconds = commandInfo.getRetryInterval();
+            }
+            for (int i = 1; i <= commandInfo.getNoOfRetries(); i++) {
                 try {
                     commandExecutionResult =
                             executeCommand(executor, commandInfo, taskTroubleShootingInfo, args, latestCommandOutput);
                     return commandExecutionResult;
                 } catch (MangleException e) {
-                    log.error("Command Execution Attempt: " + i + " Failed. Reason:", e.getMessage());
-                    CommonUtils.delayInSeconds(Constants.COMMAND_EXECUTION_RETRY_INTERVAL);
+                    log.error("Command Execution Attempt: " + i + " Failed. Reason:" + e.getMessage());
+                    CommonUtils.delayInSeconds(retryDelayInSeconds);
                 }
             }
-            throw new MangleException(ErrorCode.COMMAND_EXEC_ERROR, commandInfo.getCommand());
-
+            commandExecutionResult =
+                    executeCommand(executor, commandInfo, taskTroubleShootingInfo, args, latestCommandOutput);
         } else {
             commandExecutionResult =
                     executeCommand(executor, commandInfo, taskTroubleShootingInfo, args, latestCommandOutput);
@@ -98,9 +103,6 @@ public class CommandInfoExecutionHelper {
         // valid exit code
         if (!commandInfo.isIgnoreExitValueCheck() && commandExecutionResult.getExitCode() != 0) {
             verifyExpectedFailures(commandInfo, commandExecutionResult);
-            throw new MangleException(commandExecutionResult.getCommandOutput(), ErrorCode.COMMAND_EXEC_EXIT_CODE_ERROR,
-                    commandInfo.getCommand(), commandExecutionResult.getExitCode(),
-                    commandExecutionResult.getCommandOutput());
         }
         // Condition to validate the command execution by verification
         // of command execution result
@@ -113,8 +115,12 @@ public class CommandInfoExecutionHelper {
                 }
             }
             if (!isOutputMatched) {
-                throw new MangleException(ErrorCode.COMMAND_EXEC_OUTPUT_ERROR,
-                        commandInfo.getExpectedCommandOutputList(), commandExecutionResult.getCommandOutput());
+                verifyExpectedFailures(commandInfo, commandExecutionResult);
+                log.error(String.format(ErrorConstants.COMMAND_EXECUTION_FAILURE_FOR_EXPECTED_OUTPUT,
+                        commandInfo.getExpectedCommandOutputList(), commandExecutionResult.getCommandOutput()));
+                throw new MangleException(commandExecutionResult.getCommandOutput(),
+                        ErrorCode.COMMAND_EXEC_EXIT_CODE_ERROR, commandInfo.getCommand(),
+                        commandExecutionResult.getExitCode(), commandExecutionResult.getCommandOutput());
             }
         }
         return commandExecutionResult;
@@ -124,15 +130,24 @@ public class CommandInfoExecutionHelper {
             throws MangleException {
         if (!CollectionUtils.isEmpty(commandInfo.getKnownFailureMap())) {
             for (Map.Entry<String, String> entry : commandInfo.getKnownFailureMap().entrySet()) {
-                if (!StringUtils.isEmpty(entry.getValue())
-                        && commandExecutionResult.getCommandOutput().contains(entry.getKey())) {
-                    throw new MangleException(commandExecutionResult.getCommandOutput(),
-                            ErrorCode.COMMAND_EXEC_EXIT_CODE_ERROR, commandInfo.getCommand(),
-                            commandExecutionResult.getExitCode(), entry.getValue());
+                if (StringUtils.isNotEmpty(entry.getKey()) && commandExecutionResult.getCommandOutput().toLowerCase()
+                        .contains(entry.getKey().toLowerCase())) {
+                    log.error(String.format(ErrorConstants.COMMAND_EXEC_EXIT_CODE_ERROR, commandInfo.getCommand(),
+                            commandExecutionResult.getExitCode(), commandExecutionResult.getCommandOutput()));
+                    if (entry.getValue() != null) {
+                        throw new MangleException(commandExecutionResult.getCommandOutput(),
+                                ErrorCode.COMMAND_EXEC_ERROR_WITH_KNOWN_FAILURE, entry.getValue());
+                    } else {
+                        throw new MangleException(commandExecutionResult.getCommandOutput(),
+                                ErrorCode.COMMAND_EXEC_ERROR_WITH_KNOWN_FAILURE,
+                                commandExecutionResult.getCommandOutput());
+                    }
                 }
             }
-
         }
+        throw new MangleException(commandExecutionResult.getCommandOutput(), ErrorCode.COMMAND_EXEC_EXIT_CODE_ERROR,
+                commandInfo.getCommand(), commandExecutionResult.getExitCode(),
+                commandExecutionResult.getCommandOutput());
     }
 
 
@@ -177,7 +192,7 @@ public class CommandInfoExecutionHelper {
             commandInfo.setCommand(commandInfo.getCommand().replaceAll("\\" + Constants.FIAACO_CMD_STACK_EXPRESSION,
                     latestCommandOutput.trim()));
         }
-        log.info(commandInfo.getCommand());
+        log.debug("Absolute Command is " + commandInfo.getCommand());
         return commandInfo.getCommand();
     }
 

@@ -31,5 +31,5 @@ public class VCenterOperationTaskQueryResponse {
     private String taskID;
     private String taskStatus;
     private String responseMessage;
-    private Object ifiaascoVCenterVMObject;
+    private Object vCenterVMObject;
 }

@@ -11,10 +11,8 @@
 
 package com.vmware.mangle.task.framework.helpers;
 
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Stack;
-import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEventPublisher;
@@ -56,13 +54,11 @@ public abstract class AbstractTaskHelper<T extends TaskSpec> implements ITaskHel
             return task;
         }
         task.setTaskClass(task.getClass().getName());
-        task.setId(UUID.randomUUID().toString());
         String className = this.getClass().getName();
         initTroubleshootingInfo(task, injectedTaskId);
         task.setExtensionName(this.getClass().getName());
         task.setTaskData(taskData);
-        task.setTaskName(
-                className.substring(className.lastIndexOf('.') + 1) + "-" + Calendar.getInstance().getTimeInMillis());
+        task.setTaskName(className.substring(className.lastIndexOf('.') + 1) + "-" + System.currentTimeMillis());
         if (task.getTriggers() == null) {
             task.setTriggers(new Stack<>());
         }
@@ -82,7 +78,6 @@ public abstract class AbstractTaskHelper<T extends TaskSpec> implements ITaskHel
             TaskTroubleShootingInfo taskTroubleShootingInfo = new TaskTroubleShootingInfo();
             taskTroubleShootingInfo.setAdditionalInfo(new HashMap<>());
             taskTroubleShootingInfo.setSupportFiles(new HashMap<>());
-
             task.setTaskTroubleShootingInfo(taskTroubleShootingInfo);
         }
     }

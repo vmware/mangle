@@ -20,7 +20,6 @@ import java.util.Map.Entry;
 import java.util.logging.Logger;
 
 import com.vmware.mangle.java.agent.faults.AgentFault;
-import com.vmware.mangle.java.agent.faults.helpers.BytemanRuleHelper;
 import com.vmware.mangle.java.agent.faults.helpers.FaultsHelper;
 import com.vmware.mangle.java.agent.faults.helpers.HeapDumpUtils;
 import com.vmware.mangle.java.agent.faults.helpers.ThreadDumpUtils;
@@ -31,7 +30,11 @@ import com.vmware.mangle.java.agent.faults.helpers.ThreadDumpUtils;
  */
 public class DumpUtils {
 
-    private static final Logger LOG = Logger.getLogger(BytemanRuleHelper.class.getName());
+    private static final Logger LOG = Logger.getLogger(DumpUtils.class.getName());
+
+    private DumpUtils() {
+        throw new java.lang.UnsupportedOperationException("This is a utility class and cannot be instantiated");
+    }
 
     public static String captureThreadDump(String filePath) {
         String threadfilePath = filePath + "-ThreadDump-" + Calendar.getInstance().getTimeInMillis() + ".txt";

@@ -15,16 +15,19 @@
 	<artifactId>mangle-java-agent</artifactId>
 	<packaging>pom</packaging>
 	<parent>
-		<groupId>org.jboss.byteman</groupId>
+		<groupId>com.vmware.mangle</groupId>
 		<artifactId>mangle-byteman-root</artifactId>
-		<version>3.0.10</version>
+		<version>1.0.0</version>
 	</parent>
+	<properties>
+		<mangle.plugin.dir>${user.dir}${file.separator}mangle-default-plugin${file.separator}src${file.separator}main${file.separator}resources${file.separator}</mangle.plugin.dir>
+	</properties>
 	<description>
         The Byteman download includes the byteman agent, submit and install jars. the contributed
         tool jars, the binary scripts used to drive byteman, the Byteman user guide plus the
         sample jar and scripts which provide some simple examples of how to use Byteman.
     </description>
-	<name>byteman-download</name>
+	<name>mangle-java-agent</name>
 	<url>http://www.jboss.org/byteman</url>
 	<build>
 		<plugins>
@@ -47,23 +50,44 @@
 					</execution>
 				</executions>
 			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-resources-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>copy-resources</id>
+						<phase>install</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${mangle.plugin.dir}</outputDirectory>
+							<resources>
+								<resource>
+									<directory>target/</directory>
+									<includes>
+										<include>mangle-java-agent-*-full.tar.gz</include>
+									</includes>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
 	<dependencies>
 		<dependency>
-			<groupId>org.jboss.byteman</groupId>
-			<artifactId>mangle-byteman-agent</artifactId>
-			<version>${project.version}</version>
+			<groupId>com.vmware.mangle</groupId>
+			<artifactId>mangle-byteman</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.jboss.byteman</groupId>
-			<artifactId>byteman-submit</artifactId>
-			<version>${project.version}</version>
+			<groupId>com.vmware.mangle</groupId>
+			<artifactId>mangle-byteman-submit</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.jboss.byteman</groupId>
-			<artifactId>byteman-install</artifactId>
-			<version>${project.version}</version>
+			<groupId>com.vmware.mangle</groupId>
+			<artifactId>mangle-byteman-install</artifactId>
 		</dependency>
 	</dependencies>
 </project>

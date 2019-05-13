@@ -20,6 +20,10 @@ import java.lang.management.ManagementFactory;
 public class RuntimeUtils {
     private static final Runtime runtime = Runtime.getRuntime();
 
+    private RuntimeUtils() {
+        throw new java.lang.UnsupportedOperationException("This is a utility class and cannot be instantiated");
+    }
+
     public static int getNoOfProcessors() {
         return runtime.availableProcessors();
     }
@@ -37,8 +41,9 @@ public class RuntimeUtils {
     }
 
     public static double round(double value, int places) {
-        if (places < 0)
+        if (places < 0) {
             throw new IllegalArgumentException();
+        }
 
         long factor = (long) Math.pow(10, places);
         value = value * factor;

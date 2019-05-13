@@ -29,12 +29,12 @@ import com.vmware.mangle.java.agent.utils.ReflectionUtils;
 
 /**
  * Helper class to support Lifecycle Operations on Byteman Agent Fault
- * 
+ *
  * @author hkilari
  *
  */
 public class FaultsHelper {
-    private static final Logger LOG = Logger.getLogger(AgentFaultFactory.class.getName());
+    private static final Logger LOG = Logger.getLogger(FaultsHelper.class.getName());
 
     private Map<String, AgentFault> faultsMap;
 

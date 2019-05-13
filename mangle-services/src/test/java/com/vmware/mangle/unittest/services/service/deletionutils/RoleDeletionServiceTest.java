@@ -11,12 +11,14 @@
 
 package com.vmware.mangle.unittest.services.service.deletionutils;
 
+import static org.mockito.Matchers.anyList;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import lombok.extern.log4j.Log4j2;
@@ -37,10 +39,10 @@ import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
 /**
-*
-*
-* @author chetanc
-*/
+ *
+ *
+ * @author chetanc
+ */
 @Log4j2
 public class RoleDeletionServiceTest {
     private RoleDeletionService roleDeletionService;
@@ -59,8 +61,7 @@ public class RoleDeletionServiceTest {
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.service.deletionutils.RoleDeletionService#deleteRolesByNames(List)}.
+     * Test method for {@link RoleDeletionService#deleteRolesByNames(List)}.
      *
      */
     @Test
@@ -70,13 +71,13 @@ public class RoleDeletionServiceTest {
         List<String> roles = new ArrayList<>();
         roles.add(role.getName());
 
-        when(roleRepository.findByName(anyString())).thenReturn(role);
+        when(roleRepository.findByNameIn(anyList())).thenReturn(Collections.singletonList(role));
         Mockito.doNothing().when(roleRepository).delete(Mockito.any());
         when(userService.getUsersForRole(role.getName())).thenReturn(new ArrayList<>());
 
         roleDeletionService.deleteRolesByNames(roles);
 
-        Mockito.verify(roleRepository, Mockito.atLeastOnce()).findByName(anyString());
+        Mockito.verify(roleRepository, Mockito.atLeastOnce()).findByNameIn(roles);
         verify(userService, times(1)).getUsersForRole(role.getName());
     }
 
@@ -98,8 +99,8 @@ public class RoleDeletionServiceTest {
         try {
             roleDeletionService.deleteRolesByNames(roles);
         } catch (MangleException e) {
-            Assert.assertEquals(e.getErrorCode(), ErrorCode.DEFAULT_ROLE_DELETE);
-            Mockito.verify(roleRepository, Mockito.atLeastOnce()).findByName(anyString());
+            Assert.assertEquals(e.getErrorCode(), ErrorCode.NO_RECORD_FOUND);
+            Mockito.verify(roleRepository, Mockito.atLeastOnce()).findByNameIn(roles);
             throw e;
         }
     }
@@ -122,55 +123,9 @@ public class RoleDeletionServiceTest {
         try {
             roleDeletionService.deleteRolesByNames(roles);
         } catch (MangleException e) {
-            Assert.assertEquals(e.getErrorCode(), ErrorCode.ROLE_NOT_FOUND);
-            Mockito.verify(roleRepository, Mockito.atLeastOnce()).findByName(anyString());
+            Assert.assertEquals(e.getErrorCode(), ErrorCode.NO_RECORD_FOUND);
+            Mockito.verify(roleRepository, Mockito.atLeastOnce()).findByNameIn(roles);
             throw e;
         }
-    }
-
-    /**
-     * Test method for {@link RoleDeletionService#deleteRolesByNames(List)}.
-     *
-     */
-    @Test(expectedExceptions = MangleException.class)
-    public void deleteRoleByNameTestFailure() throws MangleException {
-        log.info("Executing test: deleteRoleByNameTestFailure on RoleService#deleteRolesByNames");
-        Role role = rolesMockData.getDummyRole();
-        role.setType(MangleScopeEnum.MANGLE_DEFAULT);
-        List<String> roles = new ArrayList<>();
-        roles.add(role.getName());
-
-
-        when(roleRepository.findByName(anyString())).thenReturn(role);
-        Mockito.doNothing().when(roleRepository).delete(Mockito.any());
-
-        try {
-            roleDeletionService.deleteRoleByName(role.getName());
-        } catch (MangleException e) {
-            Assert.assertEquals(e.getErrorCode(), ErrorCode.DEFAULT_ROLE_DELETE);
-            Mockito.verify(roleRepository, Mockito.atLeastOnce()).findByName(anyString());
-            throw e;
-        }
-    }
-
-    /**
-     * Test method for {@link RoleDeletionService#deleteRolesByNames(List)}.
-     *
-     */
-    @Test
-    public void deleteRoleByNameTestSuccess() throws MangleException {
-        log.info("Executing test: deleteRoleByNameTestSuccess on RoleService#deleteRolesByNames");
-        Role role = rolesMockData.getDummyRole();
-        List<String> roles = new ArrayList<>();
-        roles.add(role.getName());
-
-        when(roleRepository.findByName(anyString())).thenReturn(role);
-        Mockito.doNothing().when(roleRepository).delete(Mockito.any());
-        when(userService.getUsersForRole(role.getName())).thenReturn(new ArrayList<>());
-
-        roleDeletionService.deleteRoleByName(role.getName());
-        Mockito.verify(roleRepository, Mockito.atLeastOnce()).findByName(anyString());
-        Mockito.verify(roleRepository, Mockito.times(1)).delete(Mockito.any());
-        verify(userService, times(1)).getUsersForRole(role.getName());
     }
 }

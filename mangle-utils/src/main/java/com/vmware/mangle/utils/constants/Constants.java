@@ -158,7 +158,6 @@ public class Constants {
     public static final String KEY_FAULTTYPE = "faultType";
     public static final String KEY_SERVICE = "service";
     public static final String RESILIENCY_SCORE_METRIC_NAME = "mangle.metrics.resiliencyscore";
-    public static final String JVM_AGENT_JAR = "byteman-download-3.0.10";
     public static final String SUCESSFUL_FAULT_CREATION_MESSAGE = "Created Fault Successfully";
     public static final String LOCAL_DOMAIN_NAME = "mangle.local";
     public static final String FIAACO_CMD_ARG_EXPRESSION = "$FI_ARG_";
@@ -167,11 +166,19 @@ public class Constants {
     public static final int COMMAND_EXECUTION_RETRY_INTERVAL = 1;
 
     public static final String DEFAULT_DATE_FORMAT = "dd MMM yyyy HH:mm:ss ZZZ";
+    public static final String GMT_DATE_FORMAT = "dd MMM yyyy HH:mm:ss z";
+    public static final String DATE_FORMAT_HIPHEN_SEPERATED = "yyyy-MM-dd-HH-mm-ss-SSS";
+    public static final String GMT = "GMT";
     public static final String HTTPS = "https://";
 
     public static final String DATADOG_API_KEY = "api_key=";
     public static final String DATADOG_APPLICATION_KEY = "application_key=";
-    public static final String DATADOG_VALIDATE_CONNECTION_API = "/api/v1/validate";
     public static final String AND_OPERATOR = "&";
     public static final String SH_COMMAND_PREFIX = "/bin/sh ";
+    public static final String CONTAINER_PAUSE_SUCCESS_MESSAGE = "The container is paused successfully";
+    public static final String CONTAINER_UNPAUSE_SUCCESS_MESSAGE = "The container is unpaused successfully";
+    public static final String CONTAINER_STOP_SUCCESS_MESSAGE = "The container is stopped successfully";
+    public static final String CONTAINER_START_SUCCESS_MESSAGE = "The container is started successfully";
+    public static final String MANGLE_DEFAULT_USER = "admin@mangle.local";
+    public static final String NODESTATUS_TASK_NAME = "NodeStatusTask";
 }

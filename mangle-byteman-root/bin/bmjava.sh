@@ -101,22 +101,26 @@ exit
 }
 
 # use BYTEMAN_HOME to locate installed byteman release
-if [ -z "$BYTEMAN_HOME" ]; then
+if [ -z "$BYTEMAN_HOME" ]
+then
 # use the root of the path to this file to locate the byteman jar
     BYTEMAN_HOME=${0%*/bin/bmjava.sh}
 # allow for rename to plain bmjava
-    if [ "$BYTEMAN_HOME" == "$0" ]; then
+    if [ "$BYTEMAN_HOME" = "$0" ]
+    then
 	BYTEMAN_HOME=${0%*/bin/bmjava}
     fi
-    if [ "$BYTEMAN_HOME" == "$0" ]; then
+    if [ "$BYTEMAN_HOME" = "$0" ]
+    then
 	echo "Unable to find byteman home"
 	exit
     fi
 fi
 
 # the byteman jar shouldbe in the lib directory
-if [ -r ${BYTEMAN_HOME}/lib/fiaasco-byteman.jar ]; then
-    BYTEMAN_JAR=${BYTEMAN_HOME}/lib/fiaasco-byteman.jar
+if [ -r ${BYTEMAN_HOME}/lib/mangle-byteman.jar ]
+then
+    BYTEMAN_JAR=${BYTEMAN_HOME}/lib/mangle-byteman.jar
 else
     echo "Cannot locate byteman jar"
     exit
@@ -136,8 +140,10 @@ HOST=
 
 while [ $# -ge 1 -a "${1#-*}" != "$1" ]
 do
-    if [ "$1" == "-l" -a $# -ge 2 ]; then
-	if [ -r "$2" ]; then
+    if [ "$1" = "-l" -a $# -ge 2 ]
+    then
+	if [ -r "$2" ]
+	then
 	    AGENT_OPTS="${AGENT_OPTS},script:$2"
 	    shift;
 	    shift;
@@ -145,8 +151,10 @@ do
 	    echo "Cannot read script $2"
 	    exit
 	fi
-    elif [ "$1" == "-b" -a $# -ge 2 ]; then
-	if [ -r "$2" ]; then
+    elif [ "$1" = "-b" -a $# -ge 2 ]
+    then
+	if [ -r "$2" ]
+	then
 	    AGENT_OPTS="${AGENT_OPTS},boot:$2"
 	    shift;
 	    shift;
@@ -154,8 +162,10 @@ do
 	    echo "Cannot read boot jar $2"
 	    exit
 	fi
-    elif [ "$1" == "-s" -a $# -ge 2 ]; then
-	if [ -r "$2" ]; then
+    elif [ "$1" = "-s" -a $# -ge 2 ]
+    then
+	if [ -r "$2" ]
+	then
 	    AGENT_OPTS="${AGENT_OPTS},sys:$2"
 	    shift;
 	    shift;
@@ -163,24 +173,30 @@ do
 	    echo "Cannot read system jar $2"
 	    exit
 	fi
-    elif [ "$1" == "-p" -a $# -ge 2 ]; then
+    elif [ "$1" = "-p" -a $# -ge 2 ]
+    then
 	    PORT=$2
 	    shift;
 	    shift;
-    elif [ "$1" == "-h" -a $# -ge 2 ]; then
+    elif [ "$1" = "-h" -a $# -ge 2 ]
+    then
 	    HOST=$2
 	    shift;
 	    shift;
-    elif [ "$1" == "-nl" ]; then
+    elif [ "$1" = "-nl" ]
+    then
 	    LISTENER=0
 	    shift;
-    elif [ "$1" == "-nb" ]; then
+    elif [ "$1" = "-nb" ]
+    then
 	    BYTEMAN_BOOT_JAR=0
 	    shift;
-    elif [ "$1" == "-nj" ]; then
+    elif [ "$1" = "-nj" ]
+    then
 	    INJECT_JAVA_LANG=0
 	    shift;
-    elif [ "$1" == "--" ]; then
+    elif [ "$1" = "--" ]
+    then
 	    shift;
 	    break;
     else
@@ -189,24 +205,30 @@ do
     fi
 done
 
-if [ $BYTEMAN_BOOT_JAR -eq 1 ]; then
+if [ $BYTEMAN_BOOT_JAR -eq 1 ]
+then
     AGENT_OPTS="${AGENT_OPTS},boot:${BYTEMAN_JAR}"
 fi
 
-if [ $LISTENER -eq 1 ]; then
-    if [ "$PORT" != "" ]; then
+if [ $LISTENER -eq 1 ]
+then
+    if [ "$PORT" != "" ]
+    then
 	AGENT_OPTS=${AGENT_OPTS},port:${PORT}
     fi
-    if [ "$HOST" != "" ]; then
+    if [ "$HOST" != "" ]
+    then
 	AGENT_OPTS=${AGENT_OPTS},address:${HOST}
     fi
     AGENT_OPTS="listener:true$AGENT_OPTS"
 else
-    if [ "$PORT" != "" ]; then
+    if [ "$PORT" != "" ]
+    then
 	echo "incompatible opions -p and -nl"
 	exit 1
     fi
-    if [ "$HOST" != "" ]; then
+    if [ "$HOST" != "" ]
+    then
 	AGENT_OPTS=${AGENT_OPTS},host:${HOST}
   	echo "incompatible opions -h and -nl"
 	exit 1
@@ -214,7 +236,8 @@ else
     AGENT_OPTS="listener:false$AGENT_OPTS"
 fi
 
-if [ $INJECT_JAVA_LANG -eq 1 ]; then
+if [ $INJECT_JAVA_LANG -eq 1 ]
+then
     INJECT_JAVA_LANG_OPTS="-Dorg.jboss.byteman.transform.all"
 else
     INJECT_JAVA_LANG_OPTS=""

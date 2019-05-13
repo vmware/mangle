@@ -14,6 +14,7 @@ package com.vmware.mangle.cassandra.model.faults.specs;
 import com.datastax.driver.core.DataType.Name;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.springframework.data.cassandra.core.mapping.CassandraType;
 
 import com.vmware.mangle.services.enums.VCenterDiskFaults;
@@ -26,6 +27,7 @@ import com.vmware.mangle.services.enums.VCenterDiskFaults;
  */
 
 @Data
+@ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 @SuppressWarnings("squid:MaximumInheritanceDepth")
 public class VMDiskFaultSpec extends VMFaultSpec {

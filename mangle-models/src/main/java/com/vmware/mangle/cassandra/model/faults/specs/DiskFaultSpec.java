@@ -13,6 +13,7 @@ package com.vmware.mangle.cassandra.model.faults.specs;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 /**
  * @author bkaranam
@@ -20,6 +21,7 @@ import lombok.EqualsAndHashCode;
  *
  */
 @Data
+@ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 public class DiskFaultSpec extends FaultSpec {
     private static final long serialVersionUID = 1L;

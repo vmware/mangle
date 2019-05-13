@@ -23,10 +23,9 @@ RUN mkdir -p $TOMCAT_DIR/logs/
 COPY docker/start.sh $TOMCAT_DIR
 COPY docker/generateCert.sh $OPT_DIR/vmware/mangle/cert/
 COPY mangle-services/target/mangle-services.jar $TOMCAT_DIR/mangle-services.jar
-COPY mangle-default-plugin/target/mangle-default-plugin-0.0.1.zip $TOMCAT_DIR/plugins/mangle-default-plugin-0.0.1.zip
+COPY mangle-default-plugin/target/mangle-default-plugin-1.0.0.zip $TOMCAT_DIR/plugins/mangle-default-plugin-1.0.0.zip
 
 # Setting working directory for web service
 WORKDIR $TOMCAT_DIR
 
-EXPOSE 8080 8443
 ENTRYPOINT sh $TOMCAT_DIR/start.sh

@@ -12,10 +12,11 @@
 package com.vmware.mangle.services.controller;
 
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -27,10 +28,9 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.vmware.mangle.cassandra.model.scheduler.ScheduledTaskStatus;
+import com.vmware.mangle.cassandra.model.scheduler.SchedulerRequestStatus;
 import com.vmware.mangle.cassandra.model.scheduler.SchedulerSpec;
 import com.vmware.mangle.model.enums.SchedulerStatus;
-import com.vmware.mangle.model.response.DeleteSchedulerResponse;
 import com.vmware.mangle.services.constants.CommonConstants;
 import com.vmware.mangle.services.scheduler.Scheduler;
 import com.vmware.mangle.utils.exceptions.MangleException;
@@ -41,6 +41,7 @@ import com.vmware.mangle.utils.exceptions.MangleException;
  * @author bkaranam
  * @author ashrimali
  */
+@Log4j2
 @RestController
 @RequestMapping("/rest/api/v1/scheduler")
 @Api("/rest/api/v1/scheduler")
@@ -53,110 +54,77 @@ public class SchedulerController {
         this.scheduler = scheduler;
     }
 
-
     @ApiOperation(value = "API to  cancel scheduled task/job(s) ", nickname = "cancelScheduledJobs")
     @RequestMapping(value = "/cancel/{jobIds}", method = RequestMethod.POST, produces = "application/json")
-    public ResponseEntity<Map<String, ScheduledTaskStatus>> cancelScheduledJobs(
-            @PathVariable("jobIds") List<String> jobIds) {
-        Map<String, ScheduledTaskStatus> statusMap = scheduler.cancelScheduledJobs(jobIds);
-        if (null != statusMap && !(statusMap.isEmpty())) {
-            return verifyJobsStatus(statusMap, SchedulerStatus.CANCELLED);
-        } else {
-            HttpHeaders headers = new HttpHeaders();
-            headers.add(CommonConstants.MESSAGE_HEADER, SchedulerStatus.CANCELLATION_FAILED.name());
-            return new ResponseEntity<>(statusMap, headers, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<SchedulerRequestStatus> cancelScheduledJobs(@PathVariable("jobIds") List<String> jobIds)
+            throws MangleException {
+        log.info("Received request to cancel schedules with the schedule id: {}", jobIds.toString());
+        Set<String> processedJobs = scheduler.cancelScheduledJobs(jobIds);
+        return new ResponseEntity<>(
+                new SchedulerRequestStatus(
+                        String.format("Received request to cancel the schedules %s", processedJobs.toString())),
+                HttpStatus.OK);
     }
 
     @ApiOperation(value = "API to  pause scheduled task/job(s) ", nickname = "pauseScheduledJobs")
     @RequestMapping(value = "/pause/{jobIds}", method = RequestMethod.POST, produces = "application/json")
-    public ResponseEntity<Map<String, ScheduledTaskStatus>> pauseScheduledJobs(
-            @PathVariable("jobIds") List<String> jobIds) {
-        Map<String, ScheduledTaskStatus> statusMap = scheduler.pauseScheduledJobs(jobIds);
-        if (null != statusMap && !(statusMap.isEmpty())) {
-            return verifyJobsStatus(statusMap, SchedulerStatus.PAUSED);
-        } else {
-            HttpHeaders headers = new HttpHeaders();
-            headers.add(CommonConstants.MESSAGE_HEADER, SchedulerStatus.PAUSE_FAILED.name());
-            return new ResponseEntity<>(statusMap, headers, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<SchedulerRequestStatus> pauseScheduledJobs(@PathVariable("jobIds") List<String> jobIds)
+            throws MangleException {
+        log.info("Received request to pause schedules with the schedule id: {}", jobIds.toString());
+        Set<String> processedJobs = scheduler.pauseScheduledJobs(jobIds);
+        return new ResponseEntity<>(
+                new SchedulerRequestStatus(
+                        String.format("Received request to pause the schedules %s", processedJobs.toString())),
+                HttpStatus.OK);
     }
 
     @ApiOperation(value = "API to  resume scheduled task/job(s) ", nickname = "resumeScheduledJobs")
     @RequestMapping(value = "/resume/{jobIds}", method = RequestMethod.POST, produces = "application/json")
-    public ResponseEntity<Map<String, ScheduledTaskStatus>> resumeScheduledJobs(
-            @PathVariable("jobIds") List<String> jobIds) {
-        Map<String, ScheduledTaskStatus> statusMap = scheduler.resumeJobs(jobIds);
-        if (null != statusMap && !(statusMap.isEmpty())) {
-            return verifyJobsStatus(statusMap, SchedulerStatus.SCHEDULED);
-        } else {
-            HttpHeaders headers = new HttpHeaders();
-            headers.add(CommonConstants.MESSAGE_HEADER, SchedulerStatus.RESUME_FAILED.name());
-            return new ResponseEntity<>(statusMap, headers, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<SchedulerRequestStatus> resumeScheduledJobs(@PathVariable("jobIds") List<String> jobIds)
+            throws MangleException {
+        log.info("Received request to resume schedules with the schedule id: {}", jobIds.toString());
+        Set<String> processedJobs = scheduler.resumeJobs(jobIds);
+        return new ResponseEntity<>(
+                new SchedulerRequestStatus(
+                        String.format("Received request to resume the schedules %s", processedJobs.toString())),
+                HttpStatus.OK);
     }
 
     @ApiOperation(value = "API to  cancel all the scheduled jobs ", nickname = "cancelAllScheduledJobs")
     @RequestMapping(value = "/cancel/all-jobs", method = RequestMethod.POST, produces = "application/json")
-    public ResponseEntity<Map<String, ScheduledTaskStatus>> cancelAllScheduledJobs() {
-        Map<String, ScheduledTaskStatus> statusMap;
-        try {
-            statusMap = scheduler.cancelAllScheduledJobs();
-        } catch (MangleException e) {
-            HttpHeaders headers = new HttpHeaders();
-            headers.add(CommonConstants.MESSAGE_HEADER, e.getMessage());
-            return new ResponseEntity<>(headers, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-
-        if (null != statusMap && !(statusMap.isEmpty())) {
-            return verifyJobsStatus(statusMap, SchedulerStatus.CANCELLED);
-        } else {
-            HttpHeaders headers = new HttpHeaders();
-            headers.add(CommonConstants.MESSAGE_HEADER, SchedulerStatus.CANCELLATION_FAILED.name());
-            return new ResponseEntity<>(statusMap, headers, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<SchedulerRequestStatus> cancelAllScheduledJobs() throws MangleException {
+        log.info("Received request to cancel all the schedules");
+        scheduler.cancelAllScheduledJobs();
+        return new ResponseEntity<>(new SchedulerRequestStatus("Received request to cancel all the schedules"),
+                HttpStatus.OK);
     }
 
     @ApiOperation(value = "API to delete scheduled jobs from Mangle", nickname = "deleteTasks")
     @RequestMapping(value = "", method = RequestMethod.DELETE, produces = "application/json")
-    public ResponseEntity<Map<String, DeleteSchedulerResponse>> deleteScheduledJob(
-            @RequestParam("taskIds") List<String> taskIds,
-            @RequestParam(name = "delete-associated-tasks", required = false) boolean isDeleteTasks)
+    public ResponseEntity<SchedulerRequestStatus> deleteScheduledJob(@RequestParam("jobIds") List<String> jobIds)
             throws MangleException {
-        Map<String, DeleteSchedulerResponse> resultMap = scheduler.deleteScheduledJobs(taskIds, isDeleteTasks);
-        return new ResponseEntity<>(resultMap, HttpStatus.OK);
+        log.info("Received request to delete schedules: {}", jobIds.toString());
+        Set<String> processedJobs = scheduler.deleteScheduledJobs(jobIds);
+        return new ResponseEntity<>(
+                new SchedulerRequestStatus(
+                        String.format("Received request to delete the schedules %s", processedJobs.toString())),
+                HttpStatus.OK);
     }
 
     @ApiOperation(value = "API to get all Scheduled jobs in Mangle with a Filter on Scheduler Status", nickname = "getAllScheduledJobs")
     @GetMapping(value = "", produces = "application/json")
     public ResponseEntity<List<SchedulerSpec>> getAllScheduledJobs(
             @RequestParam(name = "status", required = false) SchedulerStatus status) {
+        log.info("Received request to retrieve all the schedules");
         List<SchedulerSpec> listOfDAOs;
         HttpHeaders headers = new HttpHeaders();
         if (status != null) {
             listOfDAOs = scheduler.getAllScheduledJobs(status);
-            headers.add(CommonConstants.MESSAGE_HEADER,
-                    "Successfully got all the jobs with status " + status.name());
+            headers.add(CommonConstants.MESSAGE_HEADER, "Successfully got all the jobs with status " + status.name());
         } else {
             listOfDAOs = scheduler.getAllScheduledJobs();
         }
 
         return new ResponseEntity<>(listOfDAOs, headers, HttpStatus.OK);
-    }
-
-    private ResponseEntity<Map<String, ScheduledTaskStatus>> verifyJobsStatus(
-            Map<String, ScheduledTaskStatus> statusMap, SchedulerStatus status) {
-        for (ScheduledTaskStatus statusMessages : statusMap.values()) {
-            if (!(statusMessages.getStatus().equals(status))) {
-
-                HttpHeaders headers = new HttpHeaders();
-                headers.add(CommonConstants.MESSAGE_HEADER,
-                        "One or More jobIds not " + status.name() + " .. Please verify status map in the response ");
-                return new ResponseEntity<>(statusMap, headers, HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-        }
-        HttpHeaders headers = new HttpHeaders();
-        headers.add(CommonConstants.MESSAGE_HEADER, "Jobs " + status.name() + " successfully");
-        return new ResponseEntity<>(statusMap, headers, HttpStatus.OK);
     }
 }

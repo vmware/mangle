@@ -44,6 +44,7 @@ public class URLConstants {
 
     public static final String INJECTION_URL = API_V1 + "faults";
     public static final String ENDPOINT_URL = API_V1 + "endpoints";
+
     public static final String VCENTER_STATE_FAULT_API = INJECTION_URL + "/vcenter/state";
     public static final String VCENTER_NIC_FAULT_API = INJECTION_URL + "/vcenter/nic";
     public static final String VCENTER_DISK_FAULT_API = INJECTION_URL + "/vcenter/disk";

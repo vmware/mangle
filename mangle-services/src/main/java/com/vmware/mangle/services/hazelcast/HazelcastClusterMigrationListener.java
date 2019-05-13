@@ -65,7 +65,24 @@ public class HazelcastClusterMigrationListener implements MigrationListener, Haz
 
     @Override
     public void migrationStarted(MigrationEvent migrationEvent) {
-        log.debug("Migration has started for the partition {}", migrationEvent.getPartitionId());
+        if (isMigratedOutOfTheCurrentNode(migrationEvent)) {
+            log.trace("Migration has started for the partition {} from old node {} to new node {}",
+                    migrationEvent.getPartitionId(), migrationEvent.getOldOwner().getAddress(),
+                    migrationEvent.getNewOwner().getAddress());
+            IMap<Object, Object> map = hz.getMap(URLConstants.HAZELCAST_TASKS_MAP);
+            Set<Object> keys = map.localKeySet();
+            for (Object key : keys) {
+                String taskId = String.valueOf(key);
+                if (isTaskInCurrentMigratedPartition(migrationEvent, taskId)) {
+                    try {
+                        hazelcastTaskService.cleanUpTaskForMigration(taskId);
+                    } catch (MangleException e) {
+                        log.error("Schedule cancellation for the task {} on the node {} failed", taskId,
+                                migrationEvent.getOldOwner().getAddress());
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -79,44 +96,51 @@ public class HazelcastClusterMigrationListener implements MigrationListener, Haz
      */
     @Override
     public void migrationCompleted(MigrationEvent migrationEvent) {
-        if (!isNodeRemovedMigration(migrationEvent)) {
-            return;
-        } else {
+        if (isMigratedToTheCurrentNode(migrationEvent)) {
             IMap<Object, Object> map = hz.getMap(URLConstants.HAZELCAST_TASKS_MAP);
-            IMap<String, Set<String>> nodeToTaskMapping = hz.getMap(URLConstants.HAZELCAST_NODE_TASKS_MAP);
-            Set<String> currentNodeTasks = nodeToTaskMapping.get(hz.getCluster().getLocalMember().getUuid());
 
             Set<Object> keys = map.localKeySet();
             synchronized (hazelcastTaskService) {
                 for (Object key : keys) {
                     String taskId = String.valueOf(key);
-                    if (isTaskInCurrentMigratedPartition(migrationEvent, taskId)) {
-                        if (!isTaskAlreadyTriggered(currentNodeTasks, taskId)) {
-                            log.info("Task with the id {} is migrated to new owner {}", taskId,
+                    if (isTaskValidForTriggeringOnCurrentNode(migrationEvent, taskId)) {
+                        try {
+                            log.info("Triggering task {} execution on the node {}", taskId,
                                     migrationEvent.getNewOwner().getAddress());
-                            try {
-                                log.debug("Triggering execution of the task {} on the new node {}", taskId,
-                                        migrationEvent.getNewOwner().getAddress().getHost());
-                                log.info("Triggering the task {}", taskId);
-                                hazelcastTaskService.triggerTask(taskId);
-                            } catch (MangleException e) {
-                                log.error("Triggering of the task {} failed with the exception: {}", taskId,
-                                        e.getStackTrace());
-                            }
-                        } else {
-                            log.debug("Task {} to be migrated is already re-triggered on the node {}", taskId,
-                                    migrationEvent.getNewOwner());
+                            hazelcastTaskService.triggerTask(taskId);
+                        } catch (MangleException e) {
+                            log.error("Triggering of the task {} failed with the exception: {}", taskId,
+                                    e.getStackTrace());
                         }
+                    } else {
+                        log.debug("Task {} to be migrated is already re-triggered on the node {}", taskId,
+                                migrationEvent.getNewOwner());
                     }
                 }
             }
         }
-        log.debug("Migration event is completed on the instance {} for the partition with the id {}",
-                migrationEvent.getNewOwner(), migrationEvent.getPartitionId());
+        log.trace("Migration of the partition {} to {} is completed", migrationEvent.getPartitionId(),
+                migrationEvent.getNewOwner().getAddress());
     }
 
     private boolean isTaskInCurrentMigratedPartition(MigrationEvent migrationEvent, String taskId) {
         return partitionService.getPartition(taskId).getPartitionId() == migrationEvent.getPartitionId();
+    }
+
+    private boolean isMigratedToTheCurrentNode(MigrationEvent event) {
+        return hz.getCluster().getLocalMember().equals(event.getNewOwner());
+    }
+
+    private boolean isMigratedOutOfTheCurrentNode(MigrationEvent event) {
+        return hz.getCluster().getLocalMember().equals(event.getOldOwner());
+    }
+
+    private boolean isTaskValidForTriggeringOnCurrentNode(MigrationEvent event, String taskId) {
+        IMap<String, Set<String>> nodeToTaskMapping = hz.getMap(URLConstants.HAZELCAST_NODE_TASKS_MAP);
+        Set<String> currentNodeTasks = nodeToTaskMapping.get(hz.getCluster().getLocalMember().getUuid());
+        return isTaskInCurrentMigratedPartition(event, taskId)
+                && (isNodeRemovedMigration(event) || hazelcastTaskService.isScheduledTask(taskId))
+                && !isTaskAlreadyTriggered(currentNodeTasks, taskId);
     }
 
     /**

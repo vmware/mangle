@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { RequestsService } from '../requests.service';
 import { ClrDatagridSortOrder } from '@clr/angular';
+import { MessageConstants } from 'src/app/common/message.constants';
 
 @Component({
   selector: 'app-processed',
@@ -36,8 +37,18 @@ export class ProcessedComponent implements OnInit {
           this.isLoading = false;
         } else {
           for (var i = 0; i < res.length; i++) {
-            res[i].triggerui = res[i].triggers[0];
-            if (res[i].taskData.endpointName === undefined) {
+            if (res[i].triggers != null) {
+              res[i].triggerui = res[i].triggers[res[i].triggers.length - 1];
+              res[i].triggerui.startTime = new Date(res[i].triggerui.startTime);
+              if (res[i].triggerui.endTime != null) {
+                res[i].triggerui.endTime = new Date(res[i].triggerui.endTime);
+              }
+            } else {
+              res[i].triggerui = {
+                "taskStatus": "NOT STARTED"
+              };
+            }
+            if (res[i].taskData.endpointName === undefined && res[i].taskData.faultSpec !== undefined) {
               res[i].taskData.endpointName = res[i].taskData.faultSpec.endpointName;
             }
           }
@@ -56,12 +67,12 @@ export class ProcessedComponent implements OnInit {
   public deleteTask(processedRequest) {
     this.errorFlag = false;
     this.successFlag = false;
-    if (confirm('Do you want to delete: ' + processedRequest.taskName + ' task?')) {
+    if (confirm(MessageConstants.DELETE_CONFIRM + processedRequest.taskName + MessageConstants.QUESTION_MARK)) {
       this.isLoading = true;
       this.requestsService.deleteTask(processedRequest.id).subscribe(
         res => {
           this.getAllProcessedTasks();
-          this.alertMessage = processedRequest.taskName + ' task deleted successfully!';
+          this.alertMessage = processedRequest.taskName + MessageConstants.TASK_DELETE;
           this.successFlag = true;
           this.isLoading = false;
         }, err => {
@@ -69,6 +80,9 @@ export class ProcessedComponent implements OnInit {
           this.alertMessage = err.error.description;
           this.errorFlag = true;
           this.isLoading = false;
+          if (this.alertMessage === undefined) {
+            this.alertMessage = err.error.error;
+          }
         });
     } else {
       // Do nothing!
@@ -78,12 +92,12 @@ export class ProcessedComponent implements OnInit {
   public remediateFault(processedRequest) {
     this.errorFlag = false;
     this.successFlag = false;
-    if (confirm('Do you want to remediate: ' + processedRequest.taskName + ' task?')) {
+    if (confirm(MessageConstants.REMEDIATE_CONFIRM + processedRequest.taskName + MessageConstants.QUESTION_MARK)) {
       this.isLoading = true;
       this.requestsService.remediateFault(processedRequest.id).subscribe(
         res => {
           this.getAllProcessedTasks();
-          this.alertMessage = processedRequest.taskName + ' remediation task triggered!';
+          this.alertMessage = processedRequest.taskName + MessageConstants.REMEDIATION_TASK_TRIGGERED;
           this.successFlag = true;
           this.isLoading = false;
         }, err => {
@@ -91,6 +105,9 @@ export class ProcessedComponent implements OnInit {
           this.alertMessage = err.error.description;
           this.errorFlag = true;
           this.isLoading = false;
+          if (this.alertMessage === undefined) {
+            this.alertMessage = err.error.error;
+          }
         });
     } else {
       // Do nothing!
@@ -98,7 +115,8 @@ export class ProcessedComponent implements OnInit {
   }
 
   public viewReport(processedRequest) {
-    this.processedRequestView = processedRequest;
+    this.processedRequestView = JSON.parse(JSON.stringify(processedRequest));
+    delete this.processedRequestView["triggerui"];
   }
 
 }

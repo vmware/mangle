@@ -30,9 +30,12 @@ public class MetricProviderConstants {
     public static final String COLON = ":";
     public static final String HYPHEN = "-";
     public static final String NEW_LINE = "\n";
+    public static final String METRIC_PROVIDER_PROXY_TEST_CONNECTION_METRIC = "mangle.wavefront.test.connection";
 
     public static final String DATADOG_API_SEND_EVENT = "/api/v1/events";
+    public static final String DATADOG_API_VALIDATE_API_APP_KEYS = "/api/v1/api_key";
     public static final String WAVEFRONT_API_SEND_EVENT = "/api/v2/event";
+    public static final String WAVEFRONT_API_TEST_CONNECTION = "/api/v2/source?limit=1";
 
     public static final String METRIC_PROVIDERS_FOUND = "Successfully got all available Metric Providers";
     public static final String METRIC_PROVIDERS_EMPTY = "Metric provider list is empty";
@@ -45,4 +48,18 @@ public class MetricProviderConstants {
     public static final String ACTIVE_METRIC_PROVIDER_ALREADY_EXISTS = "One Metric Provider is already in Active state";
     public static final String ACTIVE_METRIC_PROVIDER = "activeMetricProvider";
     public static final String SENDING_MANGLE_METRICS = "sendingMangleMetrics";
+
+    public static final short ONE_SECOND_IN_MILLIS = 1000;
+    public static final String SENDING_MANGLE_METRICS_STATUS = "Retrieved sendingMangleMetrics status";
+    public static final String NODE_ADDRESS = "publicAddress";
+    public static final String LOAD_INJECTED = " load injected ";
+    public static final String TARGET_DIRECTORY = "Target Directory: ";
+
+    public static final String END_TIME_TEXT = "End Time: ";
+    public static final String START_TIME_TEXT = "Start Time: ";
+    public static final String STATUS_TEXT = "Status: ";
+    public static final String TARGET_VM_TEXT = "Target VM: ";
+    public static final String VM_NIC_ID_TEXT = "Nic ID: ";
+    public static final String VM_DISK_ID_TEXT = "Disk ID: ";
+    public static final String TARGET_CONTAINER_TEXT = "Target Container: ";
 }

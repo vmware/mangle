@@ -11,13 +11,10 @@
 
 package com.vmware.mangle.unittest.services.controller;
 
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -32,11 +29,9 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.ObjectFactory;
 import org.testng.annotations.Test;
 
-import com.vmware.mangle.cassandra.model.scheduler.ScheduledTaskStatus;
+import com.vmware.mangle.cassandra.model.scheduler.SchedulerRequestStatus;
 import com.vmware.mangle.cassandra.model.scheduler.SchedulerSpec;
-import com.vmware.mangle.model.enums.OperationStatus;
 import com.vmware.mangle.model.enums.SchedulerStatus;
-import com.vmware.mangle.model.response.DeleteSchedulerResponse;
 import com.vmware.mangle.services.controller.SchedulerController;
 import com.vmware.mangle.services.mockdata.SchedulerControllerMockData;
 import com.vmware.mangle.services.scheduler.Scheduler;
@@ -62,8 +57,7 @@ public class SchedulerControllerTest {
     @InjectMocks
     private SchedulerController schedulerController;
 
-    private SchedulerControllerMockData schedulerControllerMockData =
-            new SchedulerControllerMockData();
+    private SchedulerControllerMockData schedulerControllerMockData = new SchedulerControllerMockData();
 
 
     /**
@@ -76,31 +70,43 @@ public class SchedulerControllerTest {
 
     /**
      * Test method for {@link SchedulerController#cancelScheduledJobs(List)}
+     *
+     * @throws MangleException
      */
     @Test
-    public void cancelScheduledJobs() {
+    public void cancelScheduledJobs() throws MangleException {
         List<String> jobIds = schedulerControllerMockData.getJobIds();
-        Map<String, ScheduledTaskStatus> scheduledStatusMap =
-                schedulerControllerMockData.getCancelledScheduledStatusMap();
-        when(scheduler.cancelScheduledJobs(jobIds)).thenReturn(scheduledStatusMap);
-        ResponseEntity<Map<String, ScheduledTaskStatus>> response =
-                schedulerController.cancelScheduledJobs(jobIds);
+        when(scheduler.cancelScheduledJobs(jobIds)).thenReturn(new HashSet<>(jobIds));
+        ResponseEntity<SchedulerRequestStatus> response = schedulerController.cancelScheduledJobs(jobIds);
         Mockito.verify(scheduler, Mockito.atLeastOnce()).cancelScheduledJobs(Mockito.any());
         Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
     }
 
     /**
      * Test method for {@link SchedulerController#pauseScheduledJobs(List)}
+     *
+     * @throws MangleException
      */
     @Test
-    public void pauseScheduledJobs() {
+    public void pauseScheduledJobs() throws MangleException {
         List<String> jobIds = schedulerControllerMockData.getJobIds();
-        Map<String, ScheduledTaskStatus> scheduledStatusMap =
-                schedulerControllerMockData.getPausedScheduledStatusMap();
-        when(scheduler.pauseScheduledJobs(jobIds)).thenReturn(scheduledStatusMap);
-        ResponseEntity<Map<String, ScheduledTaskStatus>> response =
-                schedulerController.pauseScheduledJobs(jobIds);
+        when(scheduler.pauseScheduledJobs(jobIds)).thenReturn(new HashSet<>(jobIds));
+        ResponseEntity<SchedulerRequestStatus> response = schedulerController.pauseScheduledJobs(jobIds);
         Mockito.verify(scheduler, Mockito.atLeastOnce()).pauseScheduledJobs(Mockito.any());
+        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
+    }
+
+    /**
+     * Test method for {@link SchedulerController#resumeScheduledJobs(List)}
+     *
+     * @throws MangleException
+     */
+    @Test
+    public void resumeScheduledJobs() throws MangleException {
+        List<String> jobIds = schedulerControllerMockData.getJobIds();
+        when(scheduler.resumeJobs(jobIds)).thenReturn(new HashSet<>(jobIds));
+        ResponseEntity<SchedulerRequestStatus> response = schedulerController.resumeScheduledJobs(jobIds);
+        Mockito.verify(scheduler, Mockito.atLeastOnce()).resumeJobs(Mockito.any());
         Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
     }
 
@@ -108,13 +114,10 @@ public class SchedulerControllerTest {
      * Test method for {@link SchedulerController#resumeScheduledJobs(List)}
      */
     @Test
-    public void resumeScheduledJobs() {
+    public void resumeScheduledJobsFailureEmptyStatusMap() throws MangleException {
         List<String> jobIds = schedulerControllerMockData.getJobIds();
-        Map<String, ScheduledTaskStatus> scheduledStatusMap =
-                schedulerControllerMockData.getResumedScheduledStatusMap();
-        when(scheduler.resumeJobs(jobIds)).thenReturn(scheduledStatusMap);
-        ResponseEntity<Map<String, ScheduledTaskStatus>> response =
-                schedulerController.resumeScheduledJobs(jobIds);
+        when(scheduler.resumeJobs(jobIds)).thenReturn(new HashSet<>(jobIds));
+        ResponseEntity<SchedulerRequestStatus> response = schedulerController.resumeScheduledJobs(jobIds);
         Mockito.verify(scheduler, Mockito.atLeastOnce()).resumeJobs(Mockito.any());
         Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
     }
@@ -126,48 +129,10 @@ public class SchedulerControllerTest {
      */
     @Test
     public void cancelAllScheduledJobs() throws MangleException {
-        Map<String, ScheduledTaskStatus> scheduledStatusMap =
-                schedulerControllerMockData.getCancelledScheduledStatusMap();
-        when(scheduler.cancelAllScheduledJobs()).thenReturn(scheduledStatusMap);
-        ResponseEntity<Map<String, ScheduledTaskStatus>> response = schedulerController.cancelAllScheduledJobs();
+        List<String> jobIds = schedulerControllerMockData.getJobIds();
+        when(scheduler.cancelAllScheduledJobs()).thenReturn(new HashSet<>(jobIds));
+        ResponseEntity<SchedulerRequestStatus> response = schedulerController.cancelAllScheduledJobs();
         Mockito.verify(scheduler, Mockito.times(1)).cancelAllScheduledJobs();
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-    }
-
-    /**
-     * Test method for {@link SchedulerController#deleteScheduledJob(List, boolean)}
-     */
-    @Test
-    public void deleteScheduledJob() throws MangleException {
-        List<String> jobIds = schedulerControllerMockData.getJobIds();
-        when(scheduler.deletScheduledJob(jobIds)).thenReturn(OperationStatus.SUCCESS);
-        ResponseEntity<Map<String, DeleteSchedulerResponse>> response =
-                schedulerController.deleteScheduledJob(jobIds, false);
-        Mockito.verify(scheduler, Mockito.atLeastOnce()).deleteScheduledJobs(Mockito.any(), anyBoolean());
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-    }
-
-    @Test
-    public void testDeleteSchedulerJobDeleteTasks() throws MangleException {
-        List<String> jobIds = schedulerControllerMockData.getJobIds();
-        when(scheduler.deletScheduledJob(jobIds)).thenReturn(OperationStatus.SUCCESS);
-
-        ResponseEntity<Map<String, DeleteSchedulerResponse>> response =
-                schedulerController.deleteScheduledJob(jobIds, true);
-
-        Mockito.verify(scheduler, Mockito.atLeastOnce()).deleteScheduledJobs(Mockito.any(), anyBoolean());
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-    }
-
-    @Test
-    public void testDeleteSchedulerJobWrongTask() throws MangleException {
-        List<String> jobIds = new ArrayList<>();
-
-        ResponseEntity<Map<String, DeleteSchedulerResponse>> response =
-                schedulerController.deleteScheduledJob(jobIds, true);
-
-        Mockito.verify(scheduler, times(0)).getScheduledJob(Mockito.any());
-        Mockito.verify(scheduler, times(0)).deletScheduledJob(Mockito.any());
         Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
     }
 
@@ -175,7 +140,7 @@ public class SchedulerControllerTest {
      * Test method for {@link SchedulerController#getAllScheduledJobs(SchedulerStatus)}
      */
     @Test
-    public void getAllScheduledJobs() {
+    public void getAllScheduledJobsWithFilter() {
         Mockito.when(scheduler.getAllScheduledJobs(SchedulerStatus.CANCELLED))
                 .thenReturn(schedulerControllerMockData.getListOfSchedulerSpec());
         ResponseEntity<List<SchedulerSpec>> response =
@@ -183,4 +148,16 @@ public class SchedulerControllerTest {
         Mockito.verify(scheduler, Mockito.atLeastOnce()).getAllScheduledJobs(Mockito.any());
         Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
     }
+
+    /**
+     * Test method for {@link SchedulerController#getAllScheduledJobs(SchedulerStatus)}
+     */
+    @Test
+    public void getAllScheduledJobsWithNoFilter() {
+        Mockito.when(scheduler.getAllScheduledJobs()).thenReturn(schedulerControllerMockData.getListOfSchedulerSpec());
+        ResponseEntity<List<SchedulerSpec>> response = schedulerController.getAllScheduledJobs(null);
+        Mockito.verify(scheduler, Mockito.atLeastOnce()).getAllScheduledJobs();
+        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
+    }
+
 }

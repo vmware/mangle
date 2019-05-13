@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { SettingService } from '../setting.service';
+import { ClrLoadingState } from '@clr/angular';
+import { MessageConstants } from 'src/app/common/message.constants';
 
 @Component({
     selector: 'app-roles',
@@ -14,11 +16,20 @@ export class RolesComponent implements OnInit {
     public successFlag = false;
     public alertMessage: string;
 
+    public roleModal: boolean = false;
+
+    public privilegeErrorFlag = false;
+    public privilegeAlertMessage: string;
+
+    public submitBtnState: ClrLoadingState = ClrLoadingState.DEFAULT;
+
     public addEdit: string;
 
     public roleFormData;
     public roleList: any;
     public privilegeList: any;
+
+    public currentSelectedPrivileges: any = [];
 
     public isLoading: boolean = true;
 
@@ -28,17 +39,20 @@ export class RolesComponent implements OnInit {
     }
 
     public populateRoleForm(roleData: any) {
-        roleData.privilegeNames = [];
         this.roleFormData = roleData;
+        this.currentSelectedPrivileges = [];
+        for (var i = 0; i < roleData.privilegeNames.length; i++) {
+            this.currentSelectedPrivileges.push(roleData.privilegeNames[i]);
+        }
     }
 
     public updateRoleFormData(privilegeEvent, privilege) {
         if (privilegeEvent.target.checked) {
-            this.roleFormData.privilegeNames.push(privilege.name);
+            this.currentSelectedPrivileges.push(privilege.name);
         } else {
-            for (var i = 0; i < this.roleFormData.privilegeNames.length; i++) {
-                if (this.roleFormData.privilegeNames[i] == privilege.name) {
-                    this.roleFormData.privilegeNames.splice(i, 1);
+            for (var i = 0; i < this.currentSelectedPrivileges.length; i++) {
+                if (this.currentSelectedPrivileges[i] == privilege.name) {
+                    this.currentSelectedPrivileges.splice(i, 1);
                 }
             }
         }
@@ -50,6 +64,11 @@ export class RolesComponent implements OnInit {
             res => {
                 this.roleList = res._embedded.roleList;
                 this.isLoading = false;
+            }, err => {
+                this.roleList = [];
+                this.isLoading = false;
+                this.alertMessage = err.error.description;
+                this.errorFlag = true;
             });
     }
 
@@ -61,13 +80,20 @@ export class RolesComponent implements OnInit {
     }
 
     public addOrUpdateRole(roleFormValue) {
-        roleFormValue.privilegeNames = this.roleFormData.privilegeNames;
-        if (roleFormValue.id == null) {
-            this.addRole(roleFormValue);
+        this.submitBtnState = ClrLoadingState.LOADING;
+        if (this.currentSelectedPrivileges.length != 0) {
+            roleFormValue.privilegeNames = this.currentSelectedPrivileges;
+            if (roleFormValue.id == null) {
+                this.addRole(roleFormValue);
+            } else {
+                this.updateRole(roleFormValue);
+            }
+            this.getPrivilegeList();
         } else {
-            this.updateRole(roleFormValue);
+            this.privilegeAlertMessage = MessageConstants.MIN_PRIVILEGE_REQUIRED;
+            this.privilegeErrorFlag = true;
+            this.submitBtnState = ClrLoadingState.DEFAULT;
         }
-        this.getPrivilegeList();
     }
 
     public addRole(roleFormValue) {
@@ -78,14 +104,18 @@ export class RolesComponent implements OnInit {
         this.settingService.addRole(roleFormValue).subscribe(
             res => {
                 this.getRoleList();
-                this.alertMessage = 'Role added successfully!';
+                this.alertMessage = roleFormValue.name + MessageConstants.ROLE_ADD;
                 this.successFlag = true;
                 this.isLoading = false;
+                this.submitBtnState = ClrLoadingState.DEFAULT;
+                this.roleModal = false;
             }, err => {
                 this.getRoleList();
                 this.alertMessage = err.error.description;
                 this.errorFlag = true;
                 this.isLoading = false;
+                this.submitBtnState = ClrLoadingState.DEFAULT;
+                this.roleModal = false;
             });
     }
 
@@ -96,26 +126,29 @@ export class RolesComponent implements OnInit {
         this.settingService.updateRole(roleFormValue).subscribe(
             res => {
                 this.getRoleList();
-                this.alertMessage = 'Role updated successfully!';
+                this.alertMessage = roleFormValue.name + MessageConstants.ROLE_UPDATE;
                 this.successFlag = true;
                 this.isLoading = false;
+                this.submitBtnState = ClrLoadingState.DEFAULT;
+                this.roleModal = false;
             }, err => {
                 this.getRoleList();
                 this.alertMessage = err.error.description;
                 this.errorFlag = true;
                 this.isLoading = false;
+                this.submitBtnState = ClrLoadingState.DEFAULT;
+                this.roleModal = false;
             });
     }
 
     public deleteRole(role) {
         this.errorFlag = false;
         this.successFlag = false;
-        this.isLoading = true;
-        if (confirm('Do you want to delete: ' + role.name + ' role ?')) {
+        if (confirm(MessageConstants.DELETE_CONFIRM + role.name + MessageConstants.QUESTION_MARK)) {
             this.settingService.deleteRole(role.name).subscribe(
                 res => {
                     this.getRoleList();
-                    this.alertMessage = role.name + ' role deleted successfully!';
+                    this.alertMessage = role.name + MessageConstants.ROLE_DELETE;
                     this.successFlag = true;
                     this.isLoading = false;
                 }, err => {

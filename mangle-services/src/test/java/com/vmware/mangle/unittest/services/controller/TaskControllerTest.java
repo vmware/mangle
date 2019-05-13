@@ -13,12 +13,14 @@ package com.vmware.mangle.unittest.services.controller;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -39,9 +41,10 @@ import org.testng.annotations.Test;
 import com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.TaskSpec;
 import com.vmware.mangle.cassandra.model.tasks.Task;
-import com.vmware.mangle.model.enums.OperationStatus;
 import com.vmware.mangle.model.response.DeleteOperationResponse;
+import com.vmware.mangle.model.response.ErrorDetails;
 import com.vmware.mangle.services.TaskService;
+import com.vmware.mangle.services.constants.CommonConstants;
 import com.vmware.mangle.services.controller.TaskController;
 import com.vmware.mangle.services.deletionutils.TaskDeletionService;
 import com.vmware.mangle.services.mockdata.TasksMockData;
@@ -156,10 +159,10 @@ public class TaskControllerTest {
 
         when(taskDeletionService.deleteTasksByIds(tasks)).thenReturn(operationResponse);
 
-        ResponseEntity<DeleteOperationResponse> response = taskController.deleteTasks(tasks);
-        Assert.assertEquals(HttpStatus.PRECONDITION_FAILED, response.getStatusCode());
-        Assert.assertEquals(response.getBody().getAssociations().size(), 1);
-        Assert.assertEquals(response.getBody().getResult(), OperationStatus.FAILED);
+        ResponseEntity<ErrorDetails> response = taskController.deleteTasks(tasks);
+        Assert.assertEquals(response.getStatusCode(), HttpStatus.PRECONDITION_FAILED);
+        Assert.assertEquals(((HashMap<String, List<String>>) response.getBody().getDetails()).size(), 1);
+        Assert.assertEquals(response.getBody().getCode(), ErrorCode.DELETE_OPERATION_FAILED.getCode());
         verify(taskDeletionService, times(1)).deleteTasksByIds(any());
     }
 
@@ -171,10 +174,24 @@ public class TaskControllerTest {
 
         when(taskDeletionService.deleteTasksByIds(tasks)).thenReturn(operationResponse);
 
-        ResponseEntity<DeleteOperationResponse> response = taskController.deleteTasks(tasks);
-        Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
-        Assert.assertEquals(response.getBody().getAssociations().size(), 0);
-        Assert.assertEquals(response.getBody().getResult(), OperationStatus.SUCCESS);
+        ResponseEntity<ErrorDetails> response = taskController.deleteTasks(tasks);
+        Assert.assertEquals(response.getStatusCode(), HttpStatus.NO_CONTENT);
         verify(taskDeletionService, times(1)).deleteTasksByIds(any());
+    }
+
+    /**
+     * Test method for
+     * {@link com.vmware.mangle.services.controller.TaskController#cleanupInprogressTasks(String)}.
+     *
+     * @throws MangleException
+     * @throws ParseException
+     */
+    @Test
+    public void testCleanupInprogressTasks() throws MangleException, ParseException {
+        when(taskService.cleanupInprogressTasks(anyLong())).thenReturn(CommonConstants.NO_INPROGRESS_TASK_FOR_CLEANUP);
+        ResponseEntity<String> response = taskController.cleanupInprogressTasks("60");
+        verify(taskService, times(1)).cleanupInprogressTasks(anyLong());
+        assertEquals(response.getStatusCode(), HttpStatus.OK);
+        assertEquals(response.getBody(), CommonConstants.NO_INPROGRESS_TASK_FOR_CLEANUP);
     }
 }

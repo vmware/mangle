@@ -48,12 +48,12 @@ public class PropertiesTest {
     @Test
     public void verifyHazelcastDefaultProperties() {
         String configProperty = propertyMap.get("hazelcast.config.public");
-        String hazelcastValidationToken = propertyMap.get("hazelcast.config.validationToken");
+        String validationToken = propertyMap.get("hazelcast.config.validationToken");
 
         Assert.assertNotNull(configProperty, "hazelcast config property cannot be null");
-        Assert.assertEquals(configProperty, "${hazelcastPublicAddress:}",
+        Assert.assertEquals(configProperty, "${publicAddress:}",
                 "hazelcast.config.public property has to be localhost for the check-in to proceed");
-        Assert.assertEquals(hazelcastValidationToken, "${hazelcastValidationToken:}",
+        Assert.assertEquals(validationToken, "${clusterValidationToken:}",
                 "hazelcast.config.public property has to be left blank for the check-in to proceed");
     }
 }

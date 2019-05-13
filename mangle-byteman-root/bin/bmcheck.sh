@@ -20,30 +20,35 @@
 # 02110-1301 USA, or see the FSF site: http://www.fsf.org.
 #
 # @authors Andrew Dinn
+# @authors hkilari
 #
 # shell script which type checks a byteman rule set
 #
 # usage: bmcheck [-cp classpath]* [-p package]* [-v] script1 . . . scriptN
 #
 # use BYTEMAN_HOME to locate installed byteman release
-if [ -z "$BYTEMAN_HOME" ]; then
+if [ -z "$BYTEMAN_HOME" ]
+then
 # use the root of the path to this file to locate the byteman jar
     BYTEMAN_HOME=${0%*/bin/bmcheck.sh}
 # allow for rename to plain bmcheck
-    if [ "$BYTEMAN_HOME" == "$0" ]; then
+    if [ "$BYTEMAN_HOME" = "$0" ]
+    then
 	BYTEMAN_HOME=${0%*/bin/bmcheck}
     fi
-    if [ "$BYTEMAN_HOME" == "$0" ]; then
+    if [ "$BYTEMAN_HOME" = "$0" ]
+    then
 	echo "Unable to find byteman home"
 	exit
     fi
 fi
 
 # check that we can find  the byteman jar via BYTEMAN_HOME
-if [ -r ${BYTEMAN_HOME}/lib/fiaasco-byteman.jar ]; then
-    BYTEMAN_JAR=${BYTEMAN_HOME}/lib/fiaasco-byteman.jar
+if [ -r ${BYTEMAN_HOME}/lib/mangle-byteman.jar ]
+then
+    BYTEMAN_JAR=${BYTEMAN_HOME}/lib/mangle-byteman.jar
 else
-    echo "Cannot locate fiaasco-byteman jar"
+    echo "Cannot locate mangle-byteman jar"
     exit
 fi
 CP=${BYTEMAN_JAR}
@@ -52,24 +57,29 @@ VERBOSE=""
 # for debugging purposes we will also pass through sys prop defines
 DEFINES=""
 # include application classes upplied via -cp flag and check for -v flag
-while [ $# -ne 0 -a ${1#-*} != ${1} ]; 
+while [ $# -ne 0 -a ${1#-*} != ${1} ];
 do
-  if [ "$1" == "-cp" ] ; then
+  if [ "$1" = "-cp" ]
+  then
     CP=${CP}:$2
     shift
     shift
-  elif [ "$1" == "-p" ] ; then
+  elif [ "$1" = "-p" ]
+  then
       shift
-      if [ $# -ne 0 ] ; then
+      if [ $# -ne 0 ]
+      then
 	  PACKAGES="$PACKAGES -p $1"
 	  shift;
       else
 	  echo "usage: bmcheck [-cp classpath]* [-p package]* [-v] script1 . . . scriptN"
       fi
-  elif [ "$1" == "-v" ] ; then
+  elif [ "$1" = "-v" ]
+  then
     VERBOSE="-v"
     shift
-  elif [ "${1#-D*}" != "$1" ] ; then
+  elif [ "${1#-D*}" != "$1" ]
+  then
     DEFINES="$DEFINES $1"
     shift
   else
@@ -81,7 +91,8 @@ done
 
 SCRIPT_OPTS=""
 
-if [ $# -eq 0 ] ; then
+if [ $# -eq 0 ]
+then
    echo "usage: bmcheck [-cp classpath]* [-p package]* [-v] script1 . . . scriptN"
    exit
 fi
@@ -89,7 +100,8 @@ fi
 error=0
 while [ $# -ne 0 ]
 do
-  if [ ! -f $1 -o ! -r $1 ] ; then
+  if [ ! -f $1 -o ! -r $1 ]
+  then
     echo "$1 is not a readable file";
     error=1
   fi
@@ -97,7 +109,8 @@ do
   shift
 done
 
-if [ $error -ne 0 ] ; then
+if [ $error -ne 0 ]
+then
   exit
 fi
 

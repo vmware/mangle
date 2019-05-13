@@ -1,5 +1,7 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { ServiceConstants } from '../common/service.constants';
+import { Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -8,8 +10,8 @@ export class ConfigService {
 
   constructor(private http: HttpClient) { }
 
-  public setConfigStatus() {
-    return this.http.post('/mangle-services/rest/api/v1/authentication-management/users/admin', null);
+  public updateLocalUserConfig(user, oldPassword): Observable<any> {
+    return this.http.put(ServiceConstants.USER_MANAGEMENT_USERS_ADMIN, user, { observe: 'response', headers: new HttpHeaders().set('Content-Type', 'application/json').set('Authorization', 'Basic ' + btoa(user.name + ':' + oldPassword)) });
   }
 
 }

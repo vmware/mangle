@@ -36,7 +36,7 @@ public class MemoryFault extends AbstractFault {
     protected Map<String, String> getFaultSpecificArgs() {
         MemoryFaultSpec localFaultSpec = (MemoryFaultSpec) faultSpec;
         Map<String, String> specificArgs = new HashMap<>();
-        specificArgs.put(LOAD_ARG, localFaultSpec.getMemoryLoad());
+        specificArgs.put(LOAD_ARG, String.valueOf(localFaultSpec.getMemoryLoad()));
         return specificArgs;
 
     }

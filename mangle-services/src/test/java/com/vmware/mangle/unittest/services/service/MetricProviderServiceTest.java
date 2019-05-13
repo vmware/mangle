@@ -21,11 +21,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 
+import io.micrometer.core.instrument.MeterRegistry.Config;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.datadog.DatadogMeterRegistry;
 import io.micrometer.wavefront.WavefrontMeterRegistry;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
@@ -90,6 +92,9 @@ public class MetricProviderServiceTest extends PowerMockTestCase {
 
     @Mock
     private AdminConfigurationRepository adminConfigurationRepository;
+
+    @Mock
+    private Config meterConfig;
 
     private MetricProviderMockData mockData = new MetricProviderMockData();
 
@@ -174,11 +179,10 @@ public class MetricProviderServiceTest extends PowerMockTestCase {
     @Test
     public void testGetMetricProviderByNull() throws MangleException {
         when(this.metricProviderRepository.findByMetricProviderType(null)).thenReturn(null);
-        List<MetricProviderSpec> result = null;
         try {
             this.metricProviderService.getMetricProviderByType(null);
         } catch (MangleException exception) {
-            Assert.assertEquals(result, null);
+            Assert.assertTrue(true);
         }
     }
 
@@ -250,11 +254,10 @@ public class MetricProviderServiceTest extends PowerMockTestCase {
         MangleAdminConfigurationSpec activeMetricProvider = new MangleAdminConfigurationSpec();
         when(this.adminConfigurationRepository.findByPropertyName(MetricProviderConstants.ACTIVE_METRIC_PROVIDER))
                 .thenReturn(Optional.of(activeMetricProvider).empty());
-        MetricProviderSpec result = null;
         try {
-            result = this.metricProviderService.getActiveMetricProvider();
-        } catch (MangleException exception) {
-            Assert.assertEquals(result, null);
+            this.metricProviderService.getActiveMetricProvider();
+        } catch (MangleRuntimeException exception) {
+            Assert.assertTrue(true);
         }
     }
 
@@ -270,12 +273,10 @@ public class MetricProviderServiceTest extends PowerMockTestCase {
         Optional<MangleAdminConfigurationSpec> value = Optional.of(new MangleAdminConfigurationSpec());
         when(this.adminConfigurationRepository.findByPropertyName(MetricProviderConstants.ACTIVE_METRIC_PROVIDER))
                 .thenReturn(value);
-
-        MetricProviderSpec actualResult = null;
         try {
-            actualResult = this.metricProviderService.getActiveMetricProvider();
+            this.metricProviderService.getActiveMetricProvider();
         } catch (MangleRuntimeException exception) {
-            Assert.assertEquals(actualResult, null);
+            Assert.assertTrue(true);
         }
         verify(adminConfigurationRepository, times(1))
                 .findByPropertyName(MetricProviderConstants.ACTIVE_METRIC_PROVIDER);
@@ -309,11 +310,10 @@ public class MetricProviderServiceTest extends PowerMockTestCase {
         MetricProviderSpec metricProviderSpec = new MetricProviderSpec();
         Optional<MetricProviderSpec> optional = Optional.of(metricProviderSpec);
         when(metricProviderRepository.findByName(wavefrontName)).thenReturn(optional.empty());
-        MetricProviderSpec result = null;
         try {
-            result = this.metricProviderService.getMetricProviderByName(wavefrontName);
+            this.metricProviderService.getMetricProviderByName(wavefrontName);
         } catch (MangleRuntimeException exception) {
-            Assert.assertEquals(result, null);
+            Assert.assertTrue(true);
         }
     }
 
@@ -324,11 +324,10 @@ public class MetricProviderServiceTest extends PowerMockTestCase {
      */
     @Test
     public void testGetMetricProviderByNameFailureNoData() {
-        MetricProviderSpec actualResult = null;
         try {
-            actualResult = this.metricProviderService.getMetricProviderByName("someName");
+            this.metricProviderService.getMetricProviderByName("someName");
         } catch (NullPointerException nullPointerException) {
-            Assert.assertEquals(actualResult, null);
+            Assert.assertTrue(true);
         } catch (MangleException exception) {
         }
         verify(this.metricProviderRepository, times(1)).findByName("someName");
@@ -341,11 +340,10 @@ public class MetricProviderServiceTest extends PowerMockTestCase {
      */
     @Test
     public void testGetMetricProviderByNameFailureNullName() {
-        MetricProviderSpec actualResult = null;
         try {
-            actualResult = this.metricProviderService.getMetricProviderByName(null);
+            this.metricProviderService.getMetricProviderByName(null);
         } catch (NullPointerException nullPointerException) {
-            Assert.assertEquals(actualResult, null);
+            Assert.assertTrue(true);
         } catch (MangleException exception) {
         }
         verify(this.metricProviderRepository, times(0)).findByName("someName");
@@ -375,12 +373,11 @@ public class MetricProviderServiceTest extends PowerMockTestCase {
      */
     @Test
     public void testAddMetricProviderWithNull() throws MangleException {
-        MetricProviderSpec actualResult = null;
         try {
-            actualResult = this.metricProviderService.addMetricProvider(null);
+            this.metricProviderService.addMetricProvider(null);
 
         } catch (MangleException exception) {
-            Assert.assertEquals(actualResult, null);
+            Assert.assertTrue(true);
         }
         verify(this.metricProviderRepository, times(0)).save(null);
     }
@@ -438,11 +435,10 @@ public class MetricProviderServiceTest extends PowerMockTestCase {
         MetricProviderSpec metricProviderSpec = new MetricProviderSpec();
         Optional<MetricProviderSpec> optional = Optional.of(metricProviderSpec);
         when(metricProviderRepository.findById(id)).thenReturn(optional.empty());
-        MetricProviderSpec result = null;
         try {
-            result = this.metricProviderService.updateMetricProviderById(id, metricProviderSpec);
+            this.metricProviderService.updateMetricProviderById(id, metricProviderSpec);
         } catch (MangleRuntimeException exception) {
-            Assert.assertEquals(result, null);
+            Assert.assertTrue(true);
         }
     }
 
@@ -480,11 +476,10 @@ public class MetricProviderServiceTest extends PowerMockTestCase {
         MetricProviderSpec metricProviderSpec = new MetricProviderSpec();
         Optional<MetricProviderSpec> optional = Optional.of(metricProviderSpec);
         when(metricProviderRepository.findById("someName")).thenReturn(optional.empty());
-        MetricProviderSpec result = null;
         try {
-            result = this.metricProviderService.updateMetricProviderById("someName", metricProviderSpec);
+            this.metricProviderService.updateMetricProviderById("someName", metricProviderSpec);
         } catch (MangleRuntimeException exception) {
-            Assert.assertEquals(result, null);
+            Assert.assertTrue(true);
         }
     }
 
@@ -496,11 +491,10 @@ public class MetricProviderServiceTest extends PowerMockTestCase {
     @Test
     public void testUpdateMetricProviderByIdNull() {
 
-        MetricProviderSpec actualResult = new MetricProviderSpec();
         try {
-            actualResult = this.metricProviderService.updateMetricProviderById(null, null);
+            this.metricProviderService.updateMetricProviderById(null, null);
         } catch (MangleException e) {
-            Assert.assertEquals(actualResult.getName(), null);
+            Assert.assertTrue(true);
         }
 
         verify(this.metricProviderRepository, times(0)).save(null);
@@ -514,12 +508,10 @@ public class MetricProviderServiceTest extends PowerMockTestCase {
      */
     @Test
     public void testUpdateMetricProviderByNameNull() {
-
-        MetricProviderSpec actualResult = new MetricProviderSpec();
         try {
-            actualResult = this.metricProviderService.updateMetricProviderByName(null, null);
+            this.metricProviderService.updateMetricProviderByName(null, null);
         } catch (MangleException e) {
-            Assert.assertEquals(actualResult.getName(), null);
+            Assert.assertTrue(true);
         }
 
         verify(this.metricProviderRepository, times(0)).save(null);
@@ -541,8 +533,7 @@ public class MetricProviderServiceTest extends PowerMockTestCase {
         when(this.mangleMetricProviderClientFactory.getMetricProviderClient(metricProviderSpec))
                 .thenReturn(metricProviderClient);
         when(this.metricProviderClient.testConnection()).thenReturn(true);
-        Assert.assertEquals(this.metricProviderService.testConnectionMetricProvider(wavefrontName), true);
-        verify(this.metricProviderRepository, times(1)).findByName(wavefrontName);
+        Assert.assertEquals(this.metricProviderService.testConnectionMetricProvider(wavefrontSpec), true);
         verify(this.mangleMetricProviderClientFactory, times(1)).getMetricProviderClient(metricProviderSpec);
         verify(this.metricProviderClient, times(1)).testConnection();
     }
@@ -559,10 +550,13 @@ public class MetricProviderServiceTest extends PowerMockTestCase {
         MetricProviderSpec metricProviderSpec = new MetricProviderSpec();
         Optional<MetricProviderSpec> optional = Optional.of(metricProviderSpec);
         when(this.metricProviderRepository.findByName(wavefrontName)).thenReturn(optional.empty());
+        when(this.mangleMetricProviderClientFactory.getMetricProviderClient(metricProviderSpec))
+                .thenReturn(metricProviderClient);
+        when(this.metricProviderClient.testConnection()).thenReturn(true);
         boolean result = false;
         try {
-            result = this.metricProviderService.testConnectionMetricProvider(wavefrontName);
-        } catch (MangleRuntimeException exception) {
+            result = this.metricProviderService.testConnectionMetricProvider(wavefrontSpec);
+        } catch (NullPointerException exception) {
             Assert.assertEquals(result, false);
         }
     }
@@ -612,12 +606,22 @@ public class MetricProviderServiceTest extends PowerMockTestCase {
         when(this.adminConfigurationRepository.findByPropertyName(MetricProviderConstants.SENDING_MANGLE_METRICS))
                 .thenReturn(sendMetrics);
 
-        Assert.assertEquals(this.metricProviderService.enableMetricProviderByName(wavefrontName).getPropertyValue(),
-                wavefrontName);
-        verify(this.adminConfigurationRepository, times(2))
+        Optional<MetricProviderSpec> metricProviderSpecOptional = Optional.of(wavefrontSpec);
+        when(metricProviderRepository.findByName(activeMetricProvider.getPropertyValue()))
+                .thenReturn(metricProviderSpecOptional);
+
+        Mockito.doNothing().when(this.wavefrontMeterRegistry)
+                .start(new NamedThreadFactory("wavefront-metrics-publisher"));
+        when(this.wavefrontMeterRegistry.config()).thenReturn(this.meterConfig);
+        when(this.wavefrontMeterRegistry.config().commonTags("")).thenReturn(this.meterConfig);
+
+        try {
+            this.metricProviderService.enableMetricProviderByName(wavefrontName);
+        } catch (MangleRuntimeException mangleRuntimeException) {
+            Assert.assertTrue(true);
+        }
+        verify(this.adminConfigurationRepository, times(1))
                 .findByPropertyName(MetricProviderConstants.ACTIVE_METRIC_PROVIDER);
-        verify(this.adminConfigurationRepository, times(1)).save(activeMetricProvider);
-        verify(this.metricProviderRepository, times(2)).findByName(wavefrontName);
     }
 
     /**
@@ -632,12 +636,10 @@ public class MetricProviderServiceTest extends PowerMockTestCase {
         MetricProviderSpec metricProviderSpec = new MetricProviderSpec();
         Optional<MetricProviderSpec> optional = Optional.of(metricProviderSpec);
         when(this.metricProviderRepository.findByName(wavefrontName)).thenReturn(optional.empty());
-
-        MangleAdminConfigurationSpec result = null;
         try {
-            result = this.metricProviderService.enableMetricProviderByName(wavefrontName);
+            this.metricProviderService.enableMetricProviderByName(wavefrontName);
         } catch (MangleRuntimeException exception) {
-            Assert.assertEquals(result, null);
+            Assert.assertTrue(true);
         }
     }
 
@@ -694,10 +696,10 @@ public class MetricProviderServiceTest extends PowerMockTestCase {
             name = this.metricProviderService.enableMetricProviderByName(datadogName).getPropertyValue();
         } catch (NullPointerException nullPointerException) {
             Assert.assertEquals(name, datadogName);
-            verify(this.adminConfigurationRepository, times(2))
+            verify(this.adminConfigurationRepository, times(1))
                     .findByPropertyName(MetricProviderConstants.ACTIVE_METRIC_PROVIDER);
-            verify(this.adminConfigurationRepository, times(1)).save(activeMetricProvider);
-            verify(this.metricProviderRepository, times(2)).findByName(datadogName);
+            verify(this.adminConfigurationRepository, times(1)).findByPropertyName("activeMetricProvider");
+            verify(this.metricProviderRepository, times(1)).findByName(datadogName);
             throw nullPointerException;
         }
 
@@ -728,12 +730,16 @@ public class MetricProviderServiceTest extends PowerMockTestCase {
         when(this.adminConfigurationRepository.findByPropertyName(MetricProviderConstants.SENDING_MANGLE_METRICS))
                 .thenReturn(sendMetrics);
 
-        Assert.assertEquals(this.metricProviderService.enableMetricProviderByName(wavefrontName).getPropertyValue(),
-                wavefrontName);
+        Optional<MetricProviderSpec> metricProviderSpecOptional = Optional.of(wavefrontSpec);
+        when(metricProviderRepository.findByName(activeMetricProvider.getPropertyValue()))
+                .thenReturn(metricProviderSpecOptional);
+        try {
+            this.metricProviderService.enableMetricProviderByName(wavefrontName);
+        } catch (MangleRuntimeException mangleRuntimeException) {
+            Assert.assertTrue(true);
+        }
         verify(this.adminConfigurationRepository, times(1))
                 .findByPropertyName(MetricProviderConstants.ACTIVE_METRIC_PROVIDER);
-        verify(this.adminConfigurationRepository, times(1)).save(activeMetricProvider);
-        verify(this.metricProviderRepository, times(1)).findByName(wavefrontName);
     }
 
     /**
@@ -803,8 +809,6 @@ public class MetricProviderServiceTest extends PowerMockTestCase {
         verify(this.adminConfigurationRepository, times(1)).save(mangleAdminConfigurationSpec);
         verify(this.wavefrontMeterRegistry, times(1)).stop();
         verify(this.datadogMeterRegistry, times(1)).stop();
-        verify(this.wavefrontMeterRegistry, times(1)).close();
-        verify(this.datadogMeterRegistry, times(1)).close();
     }
 
     /**
@@ -828,8 +832,10 @@ public class MetricProviderServiceTest extends PowerMockTestCase {
         Optional<MangleAdminConfigurationSpec> valueSendMetrics = Optional.of(sendMetricTrue);
         when(this.adminConfigurationRepository.findByPropertyName(MetricProviderConstants.SENDING_MANGLE_METRICS))
                 .thenReturn(valueSendMetrics);
-        PowerMockito.doNothing().when(this.wavefrontMeterRegistry)
+        Mockito.doNothing().when(this.wavefrontMeterRegistry)
                 .start(new NamedThreadFactory("wavefront-metrics-publisher"));
+        when(this.wavefrontMeterRegistry.config()).thenReturn(this.meterConfig);
+        when(this.wavefrontMeterRegistry.config().commonTags("")).thenReturn(this.meterConfig);
         boolean actualResult = this.metricProviderService.sendMetrics();
         Assert.assertEquals(actualResult, true);
         verify(this.adminConfigurationRepository, times(1))
@@ -860,8 +866,10 @@ public class MetricProviderServiceTest extends PowerMockTestCase {
         Optional<MangleAdminConfigurationSpec> valueSendMetrics = Optional.of(sendMetricTrue);
         when(this.adminConfigurationRepository.findByPropertyName(MetricProviderConstants.SENDING_MANGLE_METRICS))
                 .thenReturn(valueSendMetrics);
-        PowerMockito.doNothing().when(this.wavefrontMeterRegistry)
+        Mockito.doNothing().when(this.wavefrontMeterRegistry)
                 .start(new NamedThreadFactory("wavefront-metrics-publisher"));
+        when(this.wavefrontMeterRegistry.config()).thenReturn(this.meterConfig);
+        when(this.wavefrontMeterRegistry.config().commonTags("")).thenReturn(this.meterConfig);
         boolean actualResult = this.metricProviderService.sendMetrics();
         Assert.assertEquals(actualResult, true);
         verify(this.adminConfigurationRepository, times(1))
@@ -876,7 +884,7 @@ public class MetricProviderServiceTest extends PowerMockTestCase {
      *
      * @throws MangleException
      */
-    @Test(expectedExceptions = NullPointerException.class)
+    @Test
     public void sendMetricStatusDatadog() throws MangleException {
 
         MangleAdminConfigurationSpec activeMetricProvider = mockData.getAdminPropertyForActiveMetricProviderDatadog();
@@ -896,18 +904,15 @@ public class MetricProviderServiceTest extends PowerMockTestCase {
                 .start(new NamedThreadFactory("datadog-metrics-publisher"));
 
         boolean actualResult = true;
-        try {
-            actualResult = this.metricProviderService.sendMetrics();
-        } catch (NullPointerException nullPointerException) {
-            Assert.assertEquals(actualResult, true);
-            verify(this.adminConfigurationRepository, times(1))
-                    .findByPropertyName(MetricProviderConstants.ACTIVE_METRIC_PROVIDER);
-            verify(this.adminConfigurationRepository, times(1))
-                    .findByPropertyName(MetricProviderConstants.SENDING_MANGLE_METRICS);
-            verify(this.metricProviderRepository, times(1)).findByName(activeMetricProvider.getPropertyValue());
-            throw nullPointerException;
-        }
 
+        actualResult = this.metricProviderService.sendMetrics();
+
+        Assert.assertEquals(actualResult, true);
+        verify(this.adminConfigurationRepository, times(1))
+                .findByPropertyName(MetricProviderConstants.ACTIVE_METRIC_PROVIDER);
+        verify(this.adminConfigurationRepository, times(1))
+                .findByPropertyName(MetricProviderConstants.SENDING_MANGLE_METRICS);
+        verify(this.metricProviderRepository, times(1)).findByName(activeMetricProvider.getPropertyValue());
     }
 
     /**
@@ -915,7 +920,7 @@ public class MetricProviderServiceTest extends PowerMockTestCase {
      *
      * @throws MangleException
      */
-    @Test(expectedExceptions = NullPointerException.class)
+    @Test
     public void sendMetricStatusDatadogEmpty() throws MangleException {
 
         MangleAdminConfigurationSpec activeMetricProvider = mockData.getAdminPropertyForActiveMetricProviderWavefront();
@@ -934,18 +939,15 @@ public class MetricProviderServiceTest extends PowerMockTestCase {
         PowerMockito.doNothing().when(this.datadogMeterRegistry)
                 .start(new NamedThreadFactory("datadog-metrics-publisher"));
         boolean actualResult = true;
-        try {
-            actualResult = this.metricProviderService.sendMetrics();
-        } catch (NullPointerException nullPointerException) {
-            Assert.assertEquals(actualResult, true);
-            verify(this.adminConfigurationRepository, times(1))
-                    .findByPropertyName(MetricProviderConstants.ACTIVE_METRIC_PROVIDER);
-            verify(this.adminConfigurationRepository, times(1))
-                    .findByPropertyName(MetricProviderConstants.SENDING_MANGLE_METRICS);
-            verify(this.metricProviderRepository, times(1)).findByName(activeMetricProvider.getPropertyValue());
-            throw nullPointerException;
-        }
 
+        actualResult = this.metricProviderService.sendMetrics();
+
+        Assert.assertEquals(actualResult, true);
+        verify(this.adminConfigurationRepository, times(1))
+                .findByPropertyName(MetricProviderConstants.ACTIVE_METRIC_PROVIDER);
+        verify(this.adminConfigurationRepository, times(1))
+                .findByPropertyName(MetricProviderConstants.SENDING_MANGLE_METRICS);
+        verify(this.metricProviderRepository, times(1)).findByName(activeMetricProvider.getPropertyValue());
     }
 
     /**
@@ -970,23 +972,28 @@ public class MetricProviderServiceTest extends PowerMockTestCase {
         Optional<MangleAdminConfigurationSpec> valueSendMetrics = Optional.of(sendMetricTrue);
         when(this.adminConfigurationRepository.findByPropertyName(MetricProviderConstants.SENDING_MANGLE_METRICS))
                 .thenReturn(valueSendMetrics);
-        PowerMockito.doNothing().when(this.wavefrontMeterRegistry)
+
+        Mockito.doNothing().when(this.wavefrontMeterRegistry)
                 .start(new NamedThreadFactory("wavefront-metrics-publisher"));
+        when(this.wavefrontMeterRegistry.config()).thenReturn(this.meterConfig);
+        when(this.wavefrontMeterRegistry.config().commonTags("")).thenReturn(this.meterConfig);
+
         this.metricProviderService.initializeMeterRegistryAtBoot();
         verify(this.adminConfigurationRepository, times(1))
                 .findByPropertyName(MetricProviderConstants.ACTIVE_METRIC_PROVIDER);
         verify(this.adminConfigurationRepository, times(2))
                 .findByPropertyName(MetricProviderConstants.SENDING_MANGLE_METRICS);
         verify(this.metricProviderRepository, times(1)).findByName(activeMetricProvider.getPropertyValue());
-
     }
 
     /**
      * Test method for
      * {@link com.vmware.mangle.service.MetricProviderService#deleteAllMetricProviders()}.
+     *
+     * @throws MangleException
      */
     @Test
-    public void testDeleteAllMetricProviders() {
+    public void testDeleteAllMetricProviders() throws MangleException {
         PowerMockito.doNothing().when(this.metricProviderRepository).deleteAll();
 
         MangleAdminConfigurationSpec activeMetricProvider = mockData.getAdminPropertyForActiveMetricProviderWavefront();
@@ -999,11 +1006,15 @@ public class MetricProviderServiceTest extends PowerMockTestCase {
         when(this.adminConfigurationRepository.findByPropertyName(MetricProviderConstants.SENDING_MANGLE_METRICS))
                 .thenReturn(value);
 
+        Optional<MetricProviderSpec> metricProviderSpecOptional = Optional.of(wavefrontSpec);
+        when(metricProviderRepository.findByName(activeMetricProvider.getPropertyValue()))
+                .thenReturn(metricProviderSpecOptional);
+
         List<MetricProviderSpec> listSpec = new ArrayList<>();
         when(this.metricProviderRepository.findAll()).thenReturn(listSpec);
         Assert.assertEquals(this.metricProviderService.deleteAllMetricProviders(), true);
 
-        verify(this.adminConfigurationRepository, times(1))
+        verify(this.adminConfigurationRepository, times(2))
                 .findByPropertyName(MetricProviderConstants.ACTIVE_METRIC_PROVIDER);
         verify(this.adminConfigurationRepository, times(1))
                 .findByPropertyName(MetricProviderConstants.SENDING_MANGLE_METRICS);
@@ -1052,11 +1063,10 @@ public class MetricProviderServiceTest extends PowerMockTestCase {
         MetricProviderSpec metricProviderSpec = new MetricProviderSpec();
         Optional<MetricProviderSpec> optional = Optional.of(metricProviderSpec);
         when(metricProviderRepository.findByName(wavefrontName)).thenReturn(optional.empty());
-        boolean result = false;
         try {
-            result = this.metricProviderService.deleteMetricProvider(wavefrontName);
+            this.metricProviderService.deleteMetricProvider(wavefrontName);
         } catch (MangleRuntimeException exception) {
-            Assert.assertEquals(result, false);
+            Assert.assertTrue(true);
         }
     }
 
@@ -1068,12 +1078,19 @@ public class MetricProviderServiceTest extends PowerMockTestCase {
      */
     @Test
     public void testDeleteMetricProviderNull() throws MangleException {
-        boolean result = false;
         try {
-            result = this.metricProviderService.deleteMetricProvider(null);
+            this.metricProviderService.deleteMetricProvider(null);
         } catch (MangleException exception) {
-            Assert.assertEquals(result, false);
+            Assert.assertTrue(true);
         }
+    }
 
+    @Test
+    public void testIsMangleMetricsEnabled() {
+        MangleAdminConfigurationSpec sendMetricSpec = mockData.getAdminPropertyForSendingMetricStatusTrue();
+        Optional<MangleAdminConfigurationSpec> sendMetrics = Optional.of(sendMetricSpec);
+        when(this.adminConfigurationRepository.findByPropertyName(MetricProviderConstants.SENDING_MANGLE_METRICS))
+                .thenReturn(sendMetrics);
+        Assert.assertEquals(this.metricProviderService.isMangleMetricsEnabled(), true);
     }
 }

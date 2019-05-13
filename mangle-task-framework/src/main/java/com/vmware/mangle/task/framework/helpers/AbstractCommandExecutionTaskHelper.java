@@ -19,6 +19,7 @@ import java.util.Stack;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.CollectionUtils;
 
 import com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec;
 import com.vmware.mangle.cassandra.model.tasks.SupportScriptInfo;
@@ -36,7 +37,8 @@ import com.vmware.mangle.utils.exceptions.MangleException;
  * @author bkaranam
  */
 @Log4j2
-public abstract class AbstractCommandExecutionTaskHelper<T extends CommandExecutionFaultSpec> extends AbstractTaskHelper<T> {
+public abstract class AbstractCommandExecutionTaskHelper<T extends CommandExecutionFaultSpec>
+        extends AbstractTaskHelper<T> {
     protected CommandInfoExecutionHelper commandInfoExecutionHelper;
 
     public AbstractCommandExecutionTaskHelper() {
@@ -201,7 +203,7 @@ public abstract class AbstractCommandExecutionTaskHelper<T extends CommandExecut
     }
 
     protected void setMandatoryCommandArgs(Task<T> task) {
-        if (((CommandExecutionFaultSpec) task.getTaskData()).getArgs().isEmpty()) {
+        if (CollectionUtils.isEmpty(((CommandExecutionFaultSpec) task.getTaskData()).getArgs())) {
             ((CommandExecutionFaultSpec) task.getTaskData()).setArgs(new HashMap<>());
         }
         if (task.getTaskType().equals(TaskType.INJECTION)) {

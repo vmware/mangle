@@ -52,8 +52,8 @@ public class DefaultPluginSpringConfig {
     }
 
     @Bean
-    public LinuxBytemanFaultHelper linuxBytemanFaultHelper(EndpointClientFactory endpointClientFactory) {
-        return new LinuxBytemanFaultHelper(endpointClientFactory);
+    public LinuxBytemanFaultHelper linuxBytemanFaultHelper() {
+        return new LinuxBytemanFaultHelper();
     }
 
     @Bean
@@ -100,9 +100,8 @@ public class DefaultPluginSpringConfig {
 
 
     @Bean
-    public DockerBytemanFaultHelper dockerBytemanFaultHelper(EndpointClientFactory endpointClientFactory,
-            JavaAgentFaultUtils javaAgentFaultUtils) {
-        return new DockerBytemanFaultHelper(endpointClientFactory, javaAgentFaultUtils);
+    public DockerBytemanFaultHelper dockerBytemanFaultHelper() {
+        return new DockerBytemanFaultHelper();
     }
 
     @Bean
@@ -111,15 +110,13 @@ public class DefaultPluginSpringConfig {
     }
 
     @Bean
-    public LinuxSystemResourceFaultHelper linuxSystemResourceFaultHelper(
-            EndpointClientFactory endpointClientFactory,
+    public LinuxSystemResourceFaultHelper linuxSystemResourceFaultHelper(EndpointClientFactory endpointClientFactory,
             SystemResourceFaultUtils systemResourceFaultUtils) {
         return new LinuxSystemResourceFaultHelper(endpointClientFactory, systemResourceFaultUtils);
     }
 
     @Bean
-    public DockerSystemResourceFaultHelper dockerSystemResourceFaultHelper(
-            EndpointClientFactory endpointClientFactory,
+    public DockerSystemResourceFaultHelper dockerSystemResourceFaultHelper(EndpointClientFactory endpointClientFactory,
             SystemResourceFaultUtils systemResourceFaultUtils) {
         return new DockerSystemResourceFaultHelper(endpointClientFactory, systemResourceFaultUtils);
     }
@@ -136,8 +133,7 @@ public class DefaultPluginSpringConfig {
     }
 
     @Bean
-    public K8sSystemResourceFaultHelper k8sSystemResourceFaultHelper(
-            EndpointClientFactory endpointClientFactory,
+    public K8sSystemResourceFaultHelper k8sSystemResourceFaultHelper(EndpointClientFactory endpointClientFactory,
             SystemResourceFaultUtils systemResourceFaultUtils) {
         return new K8sSystemResourceFaultHelper(endpointClientFactory, systemResourceFaultUtils);
     }

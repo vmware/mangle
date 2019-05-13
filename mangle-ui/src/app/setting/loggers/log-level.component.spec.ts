@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { LogLevelComponent } from './log-level.component';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
@@ -20,7 +20,7 @@ describe('LogLevelComponent', () => {
   let coreService: CoreService;
   let fixture: ComponentFixture<LogLevelComponent>;
 
-  beforeEach(async(() => {
+  beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [
         BrowserAnimationsModule,
@@ -39,9 +39,6 @@ describe('LogLevelComponent', () => {
       schemas: [NO_ERRORS_SCHEMA]
     })
       .compileComponents();
-  }));
-
-  beforeEach(() => {
     settingService = TestBed.get(SettingService);
     spyOn(settingService, 'getLoggers').and.returnValue(of({}));
     coreService = TestBed.get(CoreService);

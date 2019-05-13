@@ -11,12 +11,12 @@
 
 package com.vmware.mangle.faults.plugin.helpers;
 
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.FI_ADD_INFO_FAULTID;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.GET_FAULT_COMMAND;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.GET_FAULT_COMMAND_WITH_PORT;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.PID_AGENT_COMMAND_WITH_PORT;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.REMEDIATION_COMMAND;
-import static com.vmware.mangle.faults.plugin.helpers.FaultConstants.REMEDIATION_COMMAND_WITH_PORT;
+import static com.vmware.mangle.utils.constants.FaultConstants.FI_ADD_INFO_FAULTID;
+import static com.vmware.mangle.utils.constants.FaultConstants.GET_FAULT_COMMAND;
+import static com.vmware.mangle.utils.constants.FaultConstants.GET_FAULT_COMMAND_WITH_PORT;
+import static com.vmware.mangle.utils.constants.FaultConstants.PID_AGENT_COMMAND_WITH_PORT;
+import static com.vmware.mangle.utils.constants.FaultConstants.REMEDIATION_COMMAND;
+import static com.vmware.mangle.utils.constants.FaultConstants.REMEDIATION_COMMAND_WITH_PORT;
 
 import java.util.Map;
 

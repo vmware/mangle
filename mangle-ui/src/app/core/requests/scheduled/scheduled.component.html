@@ -6,11 +6,11 @@
 </clr-alert>
 <h2>Scheduled Jobs</h2><clr-icon shape="refresh" (click)="getAllScheduleJobs();"></clr-icon><br />
 <clr-datagrid [clrDgLoading]="isLoadingScheduledJobs" id="scheduledg" name="scheduledg">
-    <clr-dg-column>ID</clr-dg-column>
-    <clr-dg-column>Job Type</clr-dg-column>
+    <clr-dg-column [clrDgField]="'id'">ID</clr-dg-column>
+    <clr-dg-column [clrDgField]="'jobType'">Job Type</clr-dg-column>
     <clr-dg-column>Scheduled At</clr-dg-column>
-    <clr-dg-column>Status</clr-dg-column>
-    <clr-dg-column>Description</clr-dg-column>
+    <clr-dg-column [clrDgField]="'status'">Status</clr-dg-column>
+    <clr-dg-column [clrDgField]="'description'">Description</clr-dg-column>
     <clr-dg-row *clrDgItems="let scheduledJob of scheduledJobs" [clrDgItem]="scheduledJob">
         <clr-dg-action-overflow>
             <button class="action-item" [disabled]="!(scheduledJob.status == 'INITIALIZING' || scheduledJob.status == 'SCHEDULED')" (click)="cancelSchedule(scheduledJob);">Cancel</button>
@@ -18,12 +18,13 @@
             <button class="action-item" [disabled]="!(scheduledJob.status == 'PAUSED')" (click)="resumeSchedule(scheduledJob);">Resume</button>
             <button class="action-item" (click)="getScheduledTaskDetails(scheduledJob);viewReportFlage=true;">Reports</button>
             <button class="action-item" (click)="deleteSchedule(scheduledJob);">Delete</button>
+            <button class="action-item" (click)="deleteScheduleOnly(scheduledJob);">Delete Schedule Only</button>
         </clr-dg-action-overflow>
         <clr-dg-cell><a href="javascript://" (click)="getScheduledTaskDetails(scheduledJob);viewDetailedStatus=true;">{{scheduledJob.id}}</a></clr-dg-cell>
         <clr-dg-cell>{{scheduledJob.jobType}}</clr-dg-cell>
         <clr-dg-cell>
             <span *ngIf="scheduledJob.cronExpression != null">{{scheduledJob.cronExpression}}</span>
-            <span *ngIf="scheduledJob.cronExpression == null">{{scheduledJob.scheduledTime}}</span></clr-dg-cell>
+            <span *ngIf="scheduledJob.cronExpression == null">{{scheduledJob.scheduledTime}} ms</span></clr-dg-cell>
         <clr-dg-cell>{{scheduledJob.status}}</clr-dg-cell>
         <clr-dg-cell>{{scheduledJob.description}}</clr-dg-cell>
     </clr-dg-row>
@@ -46,8 +47,8 @@
             <clr-dg-column style="min-width:372px;" [clrDgField]="'taskFailureReason'">Failure Reason</clr-dg-column>
             <clr-dg-row *clrDgItems="let trigger of scheduledTaskDetails.triggers" [clrDgItem]="trigger">
                 <clr-dg-cell style="min-width:132px;">{{trigger.taskStatus}}</clr-dg-cell>
-                <clr-dg-cell style="min-width:150px;">{{trigger.startTime | date:'EEE MMM dd HH:mm:ss z yyyy'}}</clr-dg-cell>
-                <clr-dg-cell style="min-width:150px;">{{trigger.endTime | date:'EEE MMM dd HH:mm:ss z yyyy'}}</clr-dg-cell>
+                <clr-dg-cell style="min-width:150px;">{{trigger.startTime | date:'medium'}}</clr-dg-cell>
+                <clr-dg-cell style="min-width:150px;">{{trigger.endTime | date:'medium'}}</clr-dg-cell>
                 <clr-dg-cell style="min-width:372px;">{{trigger.taskFailureReason}}</clr-dg-cell>
             </clr-dg-row>
             <clr-dg-footer>

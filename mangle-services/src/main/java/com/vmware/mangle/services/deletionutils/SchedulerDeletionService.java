@@ -12,13 +12,19 @@
 package com.vmware.mangle.services.deletionutils;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.vmware.mangle.cassandra.model.scheduler.SchedulerSpec;
 import com.vmware.mangle.model.enums.OperationStatus;
 import com.vmware.mangle.services.repository.SchedulerRepository;
+import com.vmware.mangle.utils.constants.ErrorConstants;
+import com.vmware.mangle.utils.exceptions.MangleException;
+import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
 /**
  * Service class for supporting deletion operations for scheduled objects
@@ -35,21 +41,31 @@ public class SchedulerDeletionService {
         this.schedulerRepository = schedulerRepository;
     }
 
-    public OperationStatus deleteSchedulerDetailsByJobIds(List<String> listOfIds) {
-        if (!CollectionUtils.isEmpty(listOfIds)) {
-            schedulerRepository.deleteByIdIn(listOfIds);
-            return OperationStatus.SUCCESS;
-        } else {
-            return OperationStatus.FAILED;
+    public List<String> verifyDeletionPrecheck(List<String> jobIds) throws MangleException {
+        Set<SchedulerSpec> persistedSpecs = schedulerRepository.findByIds(jobIds);
+        List<String> persistedSpecIds = persistedSpecs.stream().map(SchedulerSpec::getId).collect(Collectors.toList());
+        jobIds.removeAll(persistedSpecIds);
+
+        if (!jobIds.isEmpty()) {
+            throw new MangleException(ErrorCode.NO_RECORD_FOUND, ErrorConstants.SCHEDULE, jobIds.toString());
+        }
+        return persistedSpecIds;
+    }
+
+    public void deleteSchedulerDetailsByJobIds(List<String> jobIds) throws MangleException {
+        if (!CollectionUtils.isEmpty(jobIds)) {
+            List<String> persistedSpecIds = verifyDeletionPrecheck(jobIds);
+            schedulerRepository.deleteByIdIn(persistedSpecIds);
         }
     }
 
-    public OperationStatus deleteSchedulerDetailsByJobId(String jobId) {
+    public OperationStatus deleteSchedulerDetailsByJobId(String jobId) throws MangleException {
         if (schedulerRepository.findById(jobId).isPresent()) {
             schedulerRepository.deleteById(jobId);
             return OperationStatus.SUCCESS;
+        } else {
+            throw new MangleException(ErrorCode.NO_RECORD_FOUND, ErrorConstants.SCHEDULE, jobId);
         }
-        return OperationStatus.FAILED;
     }
 
 }

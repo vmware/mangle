@@ -44,6 +44,7 @@ import com.vmware.mangle.cassandra.model.hazelcast.HazelcastClusterConfig;
 import com.vmware.mangle.services.ClusterConfigService;
 import com.vmware.mangle.services.hazelcast.HazelcastClusterMembershipListener;
 import com.vmware.mangle.services.hazelcast.HazelcastTaskService;
+import com.vmware.mangle.services.tasks.executor.TaskExecutor;
 import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
@@ -64,17 +65,28 @@ public class HazelcastClusterMembershipListenerTest {
     @Mock
     private ClusterConfigService configService;
 
+    @Mock
+    private TaskExecutor taskExecutor;
+
     @InjectMocks
     private HazelcastClusterMembershipListener listener;
 
     private HazelcastClusterConfig clusterConfig = new HazelcastClusterConfig();
 
     @BeforeMethod
-    public void initMocks() {
+    public void initMocks() throws UnknownHostException {
         MockitoAnnotations.initMocks(this);
         hazelcastInstance = mock(HazelcastInstance.class);
+        Cluster cluster = mock(Cluster.class);
+        Member newOwner = mock(Member.class);
+        Address address = new Address("127.0.0.1", 90000);
 
         when(hazelcastInstance.getPartitionService()).thenReturn(partitionService);
+        when(hazelcastInstance.getCluster()).thenReturn(cluster);
+        when(cluster.getLocalMember()).thenReturn(newOwner);
+        when(newOwner.getAddress()).thenReturn(address);
+
+
         doNothing().when(taskService).setHazelcastInstance(any());
         listener.setHazelcastInstance(hazelcastInstance);
         clusterConfig.setMembers(new HashSet<>());
@@ -120,7 +132,7 @@ public class HazelcastClusterMembershipListenerTest {
         verify(event, times(4)).getMember();
         verify(newOwner, times(2)).getUuid();
         verify(cluster, times(1)).getLocalMember();
-        verify(hazelcastInstance, times(2)).getCluster();
+        verify(hazelcastInstance, times(3)).getCluster();
         verify(hazelcastInstance, times(1)).getMap("nodeTasks");
         verify(hazelcastInstance, times(1)).getPartitionService();
         verify(partitionService, times(2)).getPartition(anyString());
@@ -168,7 +180,7 @@ public class HazelcastClusterMembershipListenerTest {
         verify(event, times(4)).getMember();
         verify(newOwner, times(2)).getUuid();
         verify(cluster, times(1)).getLocalMember();
-        verify(hazelcastInstance, times(2)).getCluster();
+        verify(hazelcastInstance, times(3)).getCluster();
         verify(hazelcastInstance, times(1)).getMap("nodeTasks");
         verify(hazelcastInstance, times(1)).getPartitionService();
         verify(partitionService, times(2)).getPartition(anyString());
@@ -211,7 +223,7 @@ public class HazelcastClusterMembershipListenerTest {
         verify(event, times(3)).getMember();
         verify(newOwner, times(1)).getUuid();
         verify(cluster, times(1)).getLocalMember();
-        verify(hazelcastInstance, times(2)).getCluster();
+        verify(hazelcastInstance, times(3)).getCluster();
         verify(hazelcastInstance, times(1)).getMap("nodeTasks");
         verify(hazelcastInstance, times(1)).getPartitionService();
         verify(partitionService, times(0)).getPartition(anyString());
@@ -254,7 +266,7 @@ public class HazelcastClusterMembershipListenerTest {
         verify(event, times(3)).getMember();
         verify(newOwner, times(1)).getUuid();
         verify(cluster, times(1)).getLocalMember();
-        verify(hazelcastInstance, times(2)).getCluster();
+        verify(hazelcastInstance, times(3)).getCluster();
         verify(hazelcastInstance, times(1)).getMap("nodeTasks");
         verify(hazelcastInstance, times(1)).getPartitionService();
         verify(partitionService, times(0)).getPartition(anyString());

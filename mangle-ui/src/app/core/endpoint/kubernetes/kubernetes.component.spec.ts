@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { KubernetesComponent } from './kubernetes.component';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
@@ -11,21 +11,17 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { BrowserModule } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
 import { of } from 'rxjs';
-import { CoreService } from '../../core.service';
-import { CoreComponent } from '../../core.component';
-import { LoginComponent } from 'src/app/auth/login/login.component';
 
 describe('KubernetesComponent', () => {
   let component: KubernetesComponent;
   let endpointService: EndpointService;
-  let coreService: CoreService;
   let fixture: ComponentFixture<KubernetesComponent>;
 
   let ep_data: any = { "id": null, "name": "k8s_ep", "endPointType": "K8S_CLUSTER", "credentialsName": "k8s_cred", "k8sConnectionProperties": { "namespace": "default" } };
   let ep_data_id: any = { "id": "with_id", "name": "k8s_ep", "endPointType": "K8S_CLUSTER", "credentialsName": "k8s_cred", "k8sConnectionProperties": { "namespace": "default" } };
   let cred_data: any = { "name": "k8s_cred", "kubeConfig": null };
 
-  beforeEach(async(() => {
+  beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [
         BrowserAnimationsModule,
@@ -34,24 +30,18 @@ describe('KubernetesComponent', () => {
         HttpClientModule,
         CommonModule,
         ClarityModule,
-        RouterTestingModule.withRoutes([{ path: 'kubernetes', component: KubernetesComponent }, { path: 'login', component: LoginComponent }])
+        RouterTestingModule.withRoutes([{ path: 'kubernetes', component: KubernetesComponent }])
       ],
-      declarations: [KubernetesComponent, CoreComponent, LoginComponent],
+      declarations: [KubernetesComponent],
       providers: [
-        EndpointService,
-        CoreService
+        EndpointService
       ],
       schemas: [NO_ERRORS_SCHEMA]
     })
       .compileComponents();
-  }));
-
-  beforeEach(() => {
     endpointService = TestBed.get(EndpointService);
     spyOn(endpointService, 'getEndpoints').and.returnValue(of([ep_data]));
     spyOn(endpointService, 'getCredentials').and.returnValue(of([cred_data]));
-    coreService = TestBed.get(CoreService);
-    spyOn(coreService, 'getMyDetails').and.returnValue(of({ "name": "user@mangle.local" }));
     fixture = TestBed.createComponent(KubernetesComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
@@ -114,7 +104,7 @@ describe('KubernetesComponent', () => {
 
   it('should test endpoint connection', () => {
     spyOn(endpointService, 'testEndpointConnection').and.returnValue(of(ep_data));
-    component.testEndpointConnection(ep_data);
+    component.testEndpointConnection(true, ep_data);
     expect(component.successFlag).toBe(true);
     expect(component.disableSubmit).toBe(false);
     expect(endpointService.testEndpointConnection).toHaveBeenCalled();

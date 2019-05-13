@@ -26,6 +26,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import com.vmware.mangle.cassandra.model.faults.specs.CpuFaultSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.DockerFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.K8SFaultTriggerSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.TaskSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.VMStateFaultSpec;
@@ -240,6 +241,30 @@ public class FaultInjectionHelperTest {
         } catch (MangleException ex) {
             Assert.assertEquals(ex.getErrorCode(), ErrorCode.INVALID_SCHEDULE_INPUTS);
             Assert.assertTrue(true);
+        }
+    }
+
+    @Test
+    public void testValidateDockerSpecificArguments() {
+        DockerFaultSpec faultSpec = faultsMockData.getDockerPauseFaultSpec();
+        faultSpec.setDockerArguments(null);
+        faultSpec.setEndpoint(endpointMockData.getDockerEndpointSpecMock());
+        try {
+            faultInjectionHelper.validateEndpointTypeSpecificArguments(faultSpec);
+        } catch (MangleException e) {
+            Assert.assertEquals(e.getErrorCode(), ErrorCode.DOCKER_SPECIFIC_ARGUMENTS_REQUIRED);
+        }
+    }
+
+    @Test
+    public void testValidateK8SSpecificArguments() {
+        CpuFaultSpec faultSpec = faultsMockData.getK8SCPUFaultSpec();
+        faultSpec.setK8sArguments(null);
+        faultSpec.setEndpoint(endpointMockData.k8sEndpointMockData());
+        try {
+            faultInjectionHelper.validateEndpointTypeSpecificArguments(faultSpec);
+        } catch (MangleException e) {
+            Assert.assertEquals(e.getErrorCode(), ErrorCode.K8S_SPECIFIC_ARGUMENTS_REQUIRED);
         }
     }
 }

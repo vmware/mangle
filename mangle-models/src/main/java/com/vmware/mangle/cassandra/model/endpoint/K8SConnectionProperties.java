@@ -13,6 +13,8 @@ package com.vmware.mangle.cassandra.model.endpoint;
 
 import java.io.Serializable;
 
+import javax.validation.constraints.Pattern;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -30,6 +32,7 @@ import org.springframework.data.cassandra.core.mapping.UserDefinedType;
 public class K8SConnectionProperties implements Serializable {
     private static final long serialVersionUID = 1L;
     @ApiModelProperty(value = "Namespace of the cluster, if not specified default to 'default' namespace", example = "default")
+    @Pattern(regexp = "[a-z0-9]([-a-z0-9]*[a-z0-9])?", message = "must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character (e.g. 'my-name',  or '123-abc')")
     @JsonProperty(defaultValue = "default")
     private String namespace;
 }

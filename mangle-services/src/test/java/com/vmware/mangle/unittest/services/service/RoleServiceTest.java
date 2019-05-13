@@ -17,6 +17,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 
 import lombok.extern.log4j.Log4j2;
@@ -145,7 +146,24 @@ public class RoleServiceTest extends PowerMockTestCase {
             Mockito.verify(privilegeService, Mockito.times(1)).getPrivilege(Mockito.anyString());
             throw e;
         }
+    }
 
+    /**
+     * Test method for {@link RoleService#createRole(Role)}
+     *
+     */
+    @Test(expectedExceptions = MangleException.class)
+    public void createRoleTestFailureEmptyPrivileges() throws MangleException {
+        log.info("Executing test: createRoleTest on method RoleService#createRole(Role)");
+        Role role = rolesMockData.getDummyRole();
+        role.setPrivilegeNames(new HashSet<>());
+        try {
+            roleService.createRole(role);
+        } catch (MangleException e) {
+            Assert.assertEquals(e.getErrorCode(), ErrorCode.CUSTOM_ROLE_CREATION_FAILED_NO_PRVILEGES);
+            Mockito.verify(privilegeService, Mockito.times(0)).getPrivilege(Mockito.anyString());
+            throw e;
+        }
     }
 
     /**

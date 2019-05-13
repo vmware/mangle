@@ -15,10 +15,13 @@ import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;
+import lombok.AccessLevel;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import org.springframework.data.annotation.Transient;
 
 import com.vmware.mangle.cassandra.model.endpoint.CredentialsSpec;
@@ -32,8 +35,9 @@ import com.vmware.mangle.cassandra.model.tasks.commands.CommandInfo;
  *
  */
 @Data
+@ToString(exclude = { "injectionCommandInfoList", "remediationCommandInfoList", "testMachinePreperationCommandInfoList",
+        "cleanUpCommandInfoList", "supportScriptInfo", "endpoint", "credentials" }, callSuper = true)
 @EqualsAndHashCode(callSuper = true)
-@SuppressWarnings("squid:S1948")
 public class CommandExecutionFaultSpec extends AutoRemediatedFaultSpec {
     private static final long serialVersionUID = 1L;
     @JsonIgnore
@@ -48,13 +52,26 @@ public class CommandExecutionFaultSpec extends AutoRemediatedFaultSpec {
     protected List<SupportScriptInfo> supportScriptInfo;
     @JsonIgnore
     protected Map<String, String> args;
-    @ApiModelProperty(value = "This Directory is Used by Mangle to copy fault invocation scripts", example = "/tmp")
-    @JsonProperty(required = false, defaultValue = "/tmp")
-    protected String injectionHomeDir = "/tmp";
+    @ApiModelProperty(value = "This Directory is Used by Mangle to copy fault invocation scripts", example = "/tmp/")
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
+    protected String injectionHomeDir = "/tmp/";
     @JsonIgnore
     @Transient
     protected transient EndpointSpec endpoint;
     @JsonIgnore
     @Transient
     protected transient CredentialsSpec credentials;
+
+    public String getInjectionHomeDir() {
+        return injectionHomeDir;
+    }
+
+    public void setInjectionHomeDir(String injectionHomeDir) {
+        if (!injectionHomeDir.endsWith("/")) {
+            this.injectionHomeDir = injectionHomeDir + "/";
+        } else {
+            this.injectionHomeDir = injectionHomeDir;
+        }
+    }
 }

@@ -12,9 +12,10 @@ import { KubernetesComponent } from './kubernetes/kubernetes.component';
 import { DockerComponent } from './docker/docker.component';
 import { VcenterComponent } from './vcenter/vcenter.component';
 import { EndpointCredentialsComponent } from './credentials/endpoint-credentials.component';
+import { EndpointCertificatesComponent } from './certificates/endpoint-certificates.component';
 
 @NgModule({
-  declarations: [EndpointComponent, MachineComponent, KubernetesComponent, DockerComponent, VcenterComponent, EndpointCredentialsComponent],
+  declarations: [EndpointComponent, MachineComponent, KubernetesComponent, DockerComponent, VcenterComponent, EndpointCredentialsComponent, EndpointCertificatesComponent],
   imports: [
 	  BrowserAnimationsModule,
     BrowserModule,

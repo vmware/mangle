@@ -72,10 +72,12 @@ public class DatadogEventNotifier implements Notifier {
 
     private String getEventDetails(FaultEventSpec faultEventInfo) {
         StringBuilder details = new StringBuilder();
-        details.append("Fault Start Time: " + faultEventInfo.getFaultStartTime());
-        details.append(MetricProviderConstants.SEPERATOR + "Fault End Time: " + faultEventInfo.getFaultEndTime());
+        details.append(MetricProviderConstants.START_TIME_TEXT + faultEventInfo.getFaultStartTime());
+        details.append(MetricProviderConstants.SEPERATOR + MetricProviderConstants.END_TIME_TEXT
+                + faultEventInfo.getFaultEndTime());
         details.append(MetricProviderConstants.SEPERATOR + faultEventInfo.getFaultDescription());
-        details.append(MetricProviderConstants.NEW_LINE + "Fault Status: " + faultEventInfo.getFaultStatus());
+        details.append(MetricProviderConstants.NEW_LINE + MetricProviderConstants.STATUS_TEXT
+                + faultEventInfo.getFaultStatus());
         return details.toString();
     }
 
