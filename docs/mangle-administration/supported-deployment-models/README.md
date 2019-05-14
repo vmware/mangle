@@ -108,6 +108,12 @@ To deploy the Mangle container run the docker command below on the docker host.
 docker run --name mangle -d -e DB_OPTIONS="-DcassandraContactPoints=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' mangle-cassandradb) -DcassandraUsername= -DcassandraSslEnabled=false" -e CLUSTER_OPTIONS="-DhazelcastValidationToken=mangle" -p 8080:8080 -p 8443:8443 mangle-docker-containers.bintray.io/mangle:$MANGLE_VERSION
 ```
 
+To deploy the vCenter adapter container run the docker command below on the docker host.
+
+```text
+docker run -dt --name mangle-vc-adapter -p 9000:8085 mangle-docker-containers.bintray.io/mangle-vcenter-adapter:$MANGLE_VERSION
+```
+
 ## Multi Node Deployment
 
 A multi-node setup for Mangle ensures availability in case of unexpected failures. We recommend that you use a 3 node Mangle setup. 

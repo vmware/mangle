@@ -40,7 +40,7 @@ Mangle supports docker hosts as endpoints or targets for injection. It needs the
 1. Login as an user with read and write privileges to Mangle.
 2. Navigate to Endpoint tab.
 3. Click on ![](../.gitbook/assets/dockerbutton.png).
-4. Enter a name, IP/Hostname, port details and certificate details \(if TLS is enabled for the docker host\)and click on **Test Connection**.
+4. Enter a name, IP/Hostname, port details, tags \(refers to additional tags that should be send to the enabled metric provider to uniquely identify faults against that endpoint\), certificate details \(if TLS is enabled for the docker host\)and click on **Test Connection**.
 5. If **Test Connection** succeeds click on **Submit**.
 6. A success message is displayed and the table for Endpoints will be updated with the new entry.
 7. Click on ![](../.gitbook/assets/supportedactionsbutton.png) against a table entry to see the supported operations.
@@ -58,7 +58,7 @@ Mangle supports VMware vCenter as endpoints or targets for injection. It needs t
 1. Login as an user with read and write privileges to Mangle.
 2. Navigate to Endpoint tab.
 3. Click on ![](../.gitbook/assets/vcenterbutton.png).
-4. Enter a name, IP/Hostname, credentials, vCenter Adapter URL, username, password, tags and click on **Test Connection**.
+4. Enter a name, IP/Hostname, credentials, vCenter Adapter URL \(where the IP/hostname is the docker host where the adapter container runs appended with the port used\), username, password, tags \(refers to additional tags that should be send to the enabled metric provider to uniquely identify faults against that endpoint\) and click on **Test Connection**.
 5. If **Test Connection** succeeds click on **Submit**.
 6. A success message is displayed and the table for Endpoints will be updated with the new entry.
 7. Click on ![](../.gitbook/assets/supportedactionsbutton.png) against a table entry to see the supported operations.
@@ -75,8 +75,8 @@ Mangle supports any remote machine with ssh enabled as endpoints or targets for 
 
 1. Login as an user with read and write privileges to Mangle.
 2. Navigate to Endpoint tab.
-3. Click on ![](../.gitbook/assets/vcenterbutton.png).
-4. Enter a name, IP/Hostname, credentials \(either password or private key\), ssh details, OS type, tags and click on **Test Connection**.
+3. Click on ![](../.gitbook/assets/remotemachinebutton.png).
+4. Enter a name, IP/Hostname, credentials \(either password or private key\), ssh details, OS type, tags \(refers to additional tags that should be send to the enabled metric provider to uniquely identify faults against that endpoint\) and click on **Test Connection**.
 5. If **Test Connection** succeeds click on **Submit**.
 6. A success message is displayed and the table for Endpoints will be updated with the new entry.
 7. Click on ![](../.gitbook/assets/supportedactionsbutton.png) against a table entry to see the supported operations.
