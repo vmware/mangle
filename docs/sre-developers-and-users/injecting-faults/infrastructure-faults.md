@@ -100,3 +100,27 @@ Kill Process fault enables abrupt termination of any process that is running on 
 
       ![](../../.gitbook/assets/wavefrontevents.png) 
 
+## Docker State Change Faults
+
+Docker State Change faults enable you to abruptly stop or pause containers running on a Docker host. Unlike other infrastructure faults like CPU, Memory and Disk IO this fault is specific to the Docker endpoint and does not have a timeout field because the fault completes very quickly. Some containers may be configured for auto-start and some might require a manual start command to be executed. For the first case, auto-remediation through Mangle is not needed. For the second case, a manual remediation can be triggered from the Requests and Reports tab after the fault completes.
+
+**Steps to follow:** 
+
+1. Login as an user with read and write privileges to Mangle.
+2. Navigate to Fault Execution tab ---&gt; Infrastructure Faults ---&gt; Docker ---&gt; State Change.
+3. Select an Endpoint \(Only Docker Endpoints are listed\).
+4. Select the fault.
+5. Provide a "Container Name".
+6. Schedule options are not available for this fault.
+7. Tags are key value pairs that will be send to the active monitoring tool under Mangle Admin settings ---&gt; Metric Providers at the time of publishing events for fault injection and remediation. They are not mandatory.
+8. Click on Run Fault.
+9. The user will be re-directed to the Processed Requests section under Requests & Reports tab.
+10. If Mangle was able to successfully trigger the fault, the status of the task will change to "COMPLETED". The fault will continue to run at the endpoint until the timeout expires or a remediation request is triggered. The option to trigger a remediation request at anytime can be found on clicking the ![](../../.gitbook/assets/supportedactionsbutton.png) button against the task in the Processed Requests table.
+11. For monitoring purposes, log into either Wavefront or Datadog once it is configured as an active Metric provider in Mangle and refer to the Events section. Events similar to the screenshots provided below will be available on the monitoring tool for tracking purposes.
+
+     ![](../../.gitbook/assets/datadogevents.png) 
+
+
+
+      ![](../../.gitbook/assets/wavefrontevents.png) 
+
