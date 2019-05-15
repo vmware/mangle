@@ -1,14 +1,12 @@
 
 
-# Contributing to mangle
+# Contributing to Mangle
 
-The mangle project team welcomes contributions from the community. If you wish to contribute code and you have not
-signed our contributor license agreement (CLA), our bot will update the issue when you open a Pull Request. For any
-questions about the CLA process, please refer to our [FAQ](https://cla.vmware.com/faq).
+## We are glad that you are interested in contributing...
 
-## Community
+The Mangle project team welcomes contributions from the community. We are always thrilled to receive [pull requests](https://help.github.com/articles/creating-a-pull-request), and do our best to process them as fast as we can.If you wish to contribute code, you should sign our [Contributor License Agreement](https://github.com/vmware/mangle/blob/master/assets/files/vmware_cla.pdf) and return a copy to [OSS Contributions](mailto:osscontributions@vmware.com) before we can merge your contribution.For any questions about the CLA process, please refer to our [FAQ](https://cla.vmware.com/faq).
 
-## Getting Started
+Before you start to code, we recommend discussing your plans through a [Github issue](https://github.com/vmware/mangle/issues) or discuss it first with the official project maintainers via [team chat](https://teams.microsoft.com/l/team/19%3aa0fe7cfcd9bc451b8a5b1fc60302cc8e%40thread.skype/conversations?groupId=34804802-7ffb-4f9a-8e7a-95b9c7ce305a&tenantId=b39138ca-3cee-4b4a-a4d6-cd83d9dd62f0), especially for more ambitious contributions. This gives other contributors a chance to point you in the right direction, give you feedback on your design, and help you find out if someone else is working on the same thing.
 
 ## Contribution Flow
 
@@ -42,7 +40,7 @@ git push --force-with-lease origin my-new-feature
 
 ### Updating pull requests
 
-If your PR fails to pass CI or needs changes based on code review, you'll most likely want to squash these changes into
+If your PR needs changes based on code review, you'll most likely want to squash these changes into
 existing commits.
 
 If your pull request contains a single commit or your changes are related to the most recent commit, you can simply
@@ -78,6 +76,6 @@ and commits.
 
 ## Reporting Bugs and Creating Issues
 
-When opening a new issue, try to roughly follow the commit message format conventions above.
+When opening a new issue through [Github](https://github.com/vmware/mangle/issues), try to roughly follow the commit message format conventions above.
 
 ## Repository Structure
