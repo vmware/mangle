@@ -66,53 +66,125 @@ After you have downloaded the OVA, log in to your vSphere environment and perfor
 
 8. Verify Deployment Settings and click **Finish** to start creating the virtual machine. Depending on bandwidth, this operation might take a while. When finished, vSphere powers up the Mangle VM based on your selections.
 
-After the VM is booted, open the command window. vSphere prompts you to log in.
+After the VM is boots up successfully, open the command window. Press Alt+F2 to log into the VM.
 
-**Note**: Because of limitations within OVA support on vSphere, it was necessary to specify a default password for the OVA option. However, all Mangle instances that are created by importing the OVA require an immediate password change upon login. The default account credentials are:
+The default account credentials are:
 
 * Username: `root`
-* Password: `changeme`
+* Password: `vmware`
 
-  After you provide these credentials, vSphere prompts you to create a new password and type it a second time to verify it.
+{% hint style="info" %}
+Because of limitations within OVA support on vSphere, it was necessary to specify a default password for the OVA option. However, for security reasons, we would recommend that you modify the password after importing the appliance.
+{% endhint %}
 
-  **Note:** For security, Mangle forbids common dictionary words for the root password.
+It takes a couple of minutes for the containers to run. Once the Mangle application and DB containers are running, the Mangle application should be available at the following URL: 
 
-  Once logged in, you will see the shell prompt.
+```text
+https://<IP or Hostname provided>/mangle-services
+```
 
-* The Mangle application should be available at the following URL: _https://&lt;IP or Hostname provided&gt;/mangle-services_
-* You will be prompted to change the admin password to continue.
-  * Default Mangle Username: `admin@mangle.local`
-  * Password: `admin`
+You will be prompted to change the admin password to continue.
+
+* Default Mangle Username: `admin@mangle.local`
+* Password: `admin`
 
 Export the VM as a Template \(Optional\)
 
 Consider converting this imported VM into a template \(from the Actions menu, choose **Export** \) so that you have a master Mangle instance that can be combined with vSphere Guest Customization to enable rapid provisioning of Mangle instances.
 
+Now you can move on to the [Mangle Users Guide](../../sre-developers-and-users/).
+
 ### Deploying the Mangle Containers
 
 #### Prerequisites
 
-Before creating the Mangle container a Cassandra DB container should be made available on a Docker host. You can setup a docker host by following the instructions [here](https://docs.docker.com/install/).
+Before creating the Mangle container a Cassandra DB container should be made available on a Docker host. You can choose to deploy the DB and the Application container on the same Docker host or on different Docker hosts. However, we recommend that you use a separate Docker host for each of these. You can setup a Docker host by following the instructions [here](https://docs.docker.com/install/).
 
-To deploy a Cassandra DB container without enabling authentication or ssl run the docker command below on the docker host.
+To deploy Cassandra, you can either use the authentication enabled image tested and verified with Mangle available on the Mangle Bintray repo or use the default public Cassandra image hosted on Dockerhub.
+
+**If you chose to use the Cassandra image from Mangle Bintray Repo:**
 
 ```text
-docker run --name mangle-cassandradb -v /cassandra/storage/:/var/lib/cassandra -p 9042:9042 -d -e CASSANDRA_CLUSTER_NAME=<Cluster Name> -e CASSANDRA_DC="DC1" -e CASSANDRA_RACK="rack1" -e CASSANDRA_ENDPOINT_SNITCH="GossipingPropertyFileSnitch"  mangle-docker-containers.bintray.io/mangle-cassandradb:$MANGLE_CASSANDRA_VERSION
+docker run --name mangle-cassandradb -v /cassandra/storage/:/var/lib/cassandra -p 9042:9042 -d -e CASSANDRA_CLUSTER_NAME="manglecassandracluster" -e CASSANDRA_DC="DC1" -e CASSANDRA_RACK="rack1" -e CASSANDRA_ENDPOINT_SNITCH="GossipingPropertyFileSnitch"  mangle-docker-containers.bintray.io/mangle-cassandradb:$MANGLE_CASSANDRA_VERSION
 ```
 
+**If you chose to use the Cassandra image from** [**Dockerhub**](https://hub.docker.com/_/cassandra/)**:**
+
+```text
+docker run --name mangle-cassandradb -v /cassandra/storage/:/var/lib/cassandra -p 9042:9042 -d -e CASSANDRA_CLUSTER_NAME="manglecassandracluster" -e CASSANDRA_DC="DC1" -e CASSANDRA_RACK="rack1" -e CASSANDRA_ENDPOINT_SNITCH="GossipingPropertyFileSnitch" cassandra:3.11
+```
+
+{% hint style="info" %}
 To enable authentication or clustering on Cassandra refer to the [Cassandra Advanced Configuration](advanced-cassandra-configuration.md).
+{% endhint %}
 
-To deploy the Mangle container run the docker command below on the docker host.
+#### **Deploying the Mangle application container**
+
+To deploy the Mangle container using a Cassandra DB deployed using the image from Mangle Bintray repo or with DB authentication and ssl enabled, run the docker command below on the docker host after substituting the values in angle braces &lt;&gt; with actual values.
 
 ```text
-docker run --name mangle -d -e DB_OPTIONS="-DcassandraContactPoints=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' mangle-cassandradb) -DcassandraUsername= -DcassandraSslEnabled=false" -e CLUSTER_OPTIONS="-DhazelcastValidationToken=mangle" -p 8080:8080 -p 8443:8443 mangle-docker-containers.bintray.io/mangle:$MANGLE_VERSION
+docker run --name mangle -d -e DB_OPTIONS="-DcassandraContactPoints=<IP of the docker host where Cassandra is deployed> -DcassandraSslEnabled=true -DcassandraUsername=cassandra -DcassandraPassword=cassandra" -e CLUSTER_OPTIONS="-DclusterValidationToken=mangle -DpublicAddress=<IP or Hostname>" -p 8080:8080 -p 8443:8443 mangle-docker-containers.bintray.io/mangle:$MANGLE_VERSION
 ```
+
+To deploy the Mangle container using a Cassandra DB deployed using the image from Dockerhub or with DB authentication and ssl disabled, run the docker command below on the docker host after substituting the values in angle braces &lt;&gt; with actual values.
+
+```text
+docker run --name mangle -d -e DB_OPTIONS="-DcassandraContactPoints=<IP of the docker host where Cassandra is deployed> -DcassandraSslEnabled=false" -e CLUSTER_OPTIONS="-DclusterValidationToken=mangle -DpublicAddress=<IP or Hostname>" -p 8080:8080 -p 8443:8443 mangle-docker-containers.bintray.io/mangle:$MANGLE_VERSION
+```
+
+{% hint style="info" %}
+The Mangle docker container takes two environmental variables 
+
+"**DB\_OPTIONS**", which can take a list of java arguments identifying the properties of the database cluster
+
+"**CLUSTER\_OPTIONS**", which can take a list of java arguments identifying the properties of the Mangle application cluster
+
+Although the docker run commands above lists only a few DB\_OPTIONS and CLUSTER\_OPTIONS parameters, Mangle supports a lot more for further customization.
+{% endhint %}
+
+**Supported DB\_OPTIONS**
+
+```text
+-DcassandraContactPoints : IP Address of Cassandra DB (mandatory, default value is "localhost" and works only if the Mangle application and DB are on the same Docker host)
+-DcassandraClusterName : Cassandra cluster name (mandatory, value should be the one passed during cassandra db creation as an environmental variable CASSANDRA_CLUSTER_NAME)
+-DcassandraKeyspaceName : Cassandra keyspace name (optional, default value is "mangledb" if you are using the Cassandra image file from Mangle Bintray repo)
+-DcassandraPorts : Cassandra DB port used (optional, default value is "9042")
+-DcassandraSslEnabled : Cassandra DB ssl configuration (optional, default value is "false")
+-DcassandraUsername : Cassandra DB username (mandatory only if the Cassandra DB is created with ssl enabled)
+-DcassandraPassword : Cassandra DB password (mandatory only if the Cassandra DB is created with ssl enabled)
+-DcassandraSchemaAction : Cassandra DB schema action (optional, default value is "create_if_not_exists")
+-DcassandraConsistencyLevel : Cassandra DB Consistency level (optional, default value is "local-quorum")
+-DcassandraSerialConsistencyLevel : Cassandra DB serial consistency level (optional, default value is "local-serial")
+-DcassandraDCName : Cassandra DB DC name (optional, value should be the one passed during cassandra db creation as an environmental variable CASSANDRA_DC or if it is set a value other than "DC1")
+-DcassandraNoOfReplicas : Cassandra DB replicas numbers (optional, default value is "1"...mandatory only if multiple nodes are available in the DB cluster)
+```
+
+**Supported CLUSTER\_OPTIONS**
+
+```text
+-DpublicAddress : IP address of the mangle node (mandatory)
+-DclusterValidationToken : Any string token name for mangle cluster (mandatory and should be kept in mind if more nodes need to be added to the cluster.)
+-DclusterName : Any string cluster name for mangle (optional, default value is "mangle")
+-DclusterMembers : Members in the mangle cluster (optional)
+```
+
+#### **Deploying the Mangle vCenter adapter container**
+
+Mangle vCenter Adapter is a fault injection adapter for injecting vCenter specific faults. All the vCenter operations from the Mangle application will be carried out through this adapter.
 
 To deploy the vCenter adapter container run the docker command below on the docker host.
 
 ```text
-docker run -dt --name mangle-vc-adapter -p 9000:8085 mangle-docker-containers.bintray.io/mangle-vcenter-adapter:$MANGLE_VERSION
+docker run --name mangle-vc-adapter -v /var/opt/mangle-vc-adapter-tomcat/logs:/var/opt/mangle-vc-adapter-tomcat/logs -d -p 8080:8080 -p 8443:8443 mangle-docker-containers.bintray.io/mangle-vcenter-adapter:$MANGLE_VERSION
 ```
+
+{% hint style="info" %}
+The API documentation for the vCenter Adapter can be found at: 
+
+_https://&lt;NODE-IP&gt;:&lt;PORT&gt;:/mangle-vc-adapter/swagger-ui.html_
+
+The vCenter adapter requires authentication against any API calls. It supports only one user, _admin_ with password _admin_. All the post APIs that are supported by the adapter will take the vCenter information as a request body.
+{% endhint %}
 
 ## Multi Node Deployment
 
@@ -120,19 +192,9 @@ A multi-node setup for Mangle ensures availability in case of unexpected failure
 
 #### Prerequisites
 
-You need at least 3 docker hosts for setting up a multi node Mangle instance. You can setup a docker host by following the instructions [here](https://docs.docker.com/install/).
+You need at least 4 docker hosts for setting up a multi node Mangle instance; 1 for the Cassandra DB and 3 for Mangle application containers . You can setup a docker host by following the instructions [here](https://docs.docker.com/install/).
 
 A multi node setup of Mangle is implemented using Hazelcast. Mangle multi node setup uses TCP connection to communicate with each other. The configuration of the setup is handled by providing the right arguments to the docker container run command, which identifies the cluster.
-
-The Mangle docker container takes an environmental variable "**CLUSTER\_OPTIONS**", which can take a list of java arguments identifying the properties of the cluster. Following are the different arguments that should be part of "CLUSTER\_OPTIONS":  
-  
-**clusterName** - A unique string that identifies the cluster to which the current mangle app will be joining. If not provided, the Mangle app will by default use string "mangle" as the clusterName, and if this doesn't match the one already configured with the cluster, the node is trying to join to, container start fails.  
-  
-**clusterValidationToken** - A unique string which will act similar to a password for a member to get validated against the existing cluster. If the validation token doesn't match with the one that is being used by the cluster, the container will fail to start.
-
-**publicAddress** - IP of the docker host on which the mangle application will be deployed. This is the IP that mangle will use to establish a connection with the other members that are already part of the cluster, and hence it is necessary to provide the host IP and make sure the docker host is discoverable from other nodes  
-  
-**clusterMembers** - This is an optional property that takes a comma-separated list of IP addresses that are part of the cluster. If not provided, Mangle will query DB and find the members of the cluster that is using the DB and will try connecting to that automatically. It is enough for mangle to connect to at least one member to become part of the cluster. 
 
 {% hint style="info" %}
 **NOTE:** 
@@ -146,11 +208,7 @@ All the mangle app participating in the cluster should use the same cassandra DB
 The properties clusterValidationToken and publicAddress are mandatory for any mangle container spin up, if not provided container will fail to start. 
 {% endhint %}
 
-Deploy a Cassandra DB container on one of the three docker hosts or on a separate host.
-
-```text
-docker run --name mangle-cassandradb -v /cassandra/storage/:/var/lib/cassandra -p 9042:9042 -d -e CASSANDRA_CLUSTER_NAME=<Cluster Name> -e CASSANDRA_DC="DC1" -e CAS
-```
+Deploy a Cassandra DB container by referring to the section [here](./#prerequisites). 
 
 Deploy the Mangle cluster by bringing up the mangle container in each docker host.
 
