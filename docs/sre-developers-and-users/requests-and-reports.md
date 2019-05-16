@@ -25,13 +25,14 @@ Click on ![](../.gitbook/assets/supportedactionsbutton.png) to list all the supp
 Click on refresh icon to sync mangle task datagrid with current status.
 
 ## Scheduled Jobs
+
 Scheduled Jobs datagrid list down all the schedules available on mangle.
 
 #### Important fields of schedules:
-ID: Contains id of the schedule.
-Job Type: Type of the schedule , eg: CRON, SIMPLE
-Scheduled At: Timing of the schedule, It shows the epoch time in millisecond if job type is SIMPLE and cron if job type is CRON.
-Status: Status of the schedule . It may have values like: INITIALIZING, CANCELLED, SCHEDULED, FINISHED, PAUSED, SCHEDULE_FAILED
+1. ID: Contains id of the schedule.
+2. Job Type: Type of the schedule , eg: CRON, SIMPLE
+3. Scheduled At: Timing of the schedule, It shows the epoch time in millisecond if job type is SIMPLE and cron if job type is CRON.
+4. Status: Status of the schedule . It may have values like: INITIALIZING, CANCELLED, SCHEDULED, FINISHED, PAUSED, SCHEDULE_FAILED
 
 #### Triggers of each schedule:
 Click on the ID link of each schedule to view all the triggers of that schedule.
