@@ -18,7 +18,7 @@ Mangle supports using Active Directory as an additional authentication source.
 {% hint style="info" %}
 **Relevant API List**
 
-**For access to Swagger documentation, please traverse to link** ![](../.gitbook/assets/help.png) -----&gt; API Documentation from the Mangle UI or access _https://&lt;Mangle IP or Hostname&gt;/mangle-services/swagger-ui.html_
+**For access to Swagger documentation, please traverse to link** ![](../.gitbook/assets/help.png) -----&gt; API Documentation from the Mangle UI or access _https://&lt;Mangle IP or Hostname&gt;/mangle-services/swagger-ui.html\#_/auth-provider-controller
 
   ![](../.gitbook/assets/auth-provider-controller.png) 
 {% endhint %}
@@ -39,7 +39,7 @@ Mangle supports adding new local user or importing users from Active Directory s
 {% hint style="info" %}
 **Relevant API List**
 
-**For access to Swagger documentation, please traverse to link** ![](../.gitbook/assets/help.png) -----&gt; API Documentation from the Mangle UI or access _https://&lt;Mangle IP or Hostname&gt;/mangle-services/swagger-ui.html_
+**For access to Swagger documentation, please traverse to link** ![](../.gitbook/assets/help.png) -----&gt; API Documentation from the Mangle UI or access _https://&lt;Mangle IP or Hostname&gt;/mangle-services/swagger-ui.html\#_/user-management-controller
 
  ![](../.gitbook/assets/usermanagementcontroller.png) 
 {% endhint %}
@@ -72,7 +72,7 @@ Mangle supports creation of custom roles from the default privileges that are av
 {% hint style="info" %}
 **Relevant API List**
 
-**For access to Swagger documentation, please traverse to link** ![](../.gitbook/assets/help.png) -----&gt; API Documentation from the Mangle UI or access _https://&lt;Mangle IP or Hostname&gt;/mangle-services/swagger-ui.html_
+**For access to Swagger documentation, please traverse to link** ![](../.gitbook/assets/help.png) -----&gt; API Documentation from the Mangle UI or access _https://&lt;Mangle IP or Hostname&gt;/mangle-services/swagger-ui.html\#_/role-controller
 
  ![](../.gitbook/assets/rolecontroller.png) 
 {% endhint %}
@@ -95,7 +95,7 @@ Mangle supports modifying log levels for the application.
 {% hint style="info" %}
 **Relevant API List**
 
-**For access to Swagger documentation, please traverse to link** ![](../.gitbook/assets/help.png) -----&gt; API Documentation from the Mangle UI or access _https://&lt;Mangle IP or Hostname&gt;/mangle-services/swagger-ui.html_
+**For access to Swagger documentation, please traverse to link** ![](../.gitbook/assets/help.png) -----&gt; API Documentation from the Mangle UI or access _https://&lt;Mangle IP or Hostname&gt;/mangle-services/swagger-ui.html\#_/operation-handler
 
   ![](../.gitbook/assets/operationhandlercontroller.png)
 {% endhint %}
@@ -115,10 +115,12 @@ Mangle supports addition of either Wavefront or Datadog as metric providers. Thi
 5. A success message is displayed and the table for Monitoring tools will be updated with the new entry.
 6. Click on ![](../.gitbook/assets/supportedactionsbutton.png) against a table entry to see the supported operations.
 
+On adding a metric provider, Mangle will send events automatically to the enabled provider for every fault injected and remediated. If the requirement is to monitor Mangle as an application by looking at its metrics, then click on the ![](../.gitbook/assets/sendmetricsbutton.png) button to enable sending of Mangle application metrics to the corresponding metric provider.
+
 {% hint style="info" %}
 **Relevant API List**
 
-**For access to Swagger documentation, please traverse to link** ![](../.gitbook/assets/help.png) -----&gt; API Documentation from the Mangle UI or access _https://&lt;Mangle IP or Hostname&gt;/mangle-services/swagger-ui.html_
+**For access to Swagger documentation, please traverse to link** ![](../.gitbook/assets/help.png) -----&gt; API Documentation from the Mangle UI or access _https://&lt;Mangle IP or Hostname&gt;/mangle-services/swagger-ui.html\#_/operation-handler
 
   ![](../.gitbook/assets/operationhandlercontroller.png)
 {% endhint %}
