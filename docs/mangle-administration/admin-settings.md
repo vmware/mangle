@@ -18,7 +18,7 @@ Mangle supports using Active Directory as an additional authentication source.
 {% hint style="info" %}
 **Relevant API List**
 
-**For access to Swagger documentation, please traverse to link** ![](../.gitbook/assets/help.png) -----&gt; API Documentation from the Mangle UI or access _https://&lt;Mangle IP or Hostname&gt;/mangle-services/swagger-ui.html\#_/auth-provider-controller
+**For access to Swagger documentation, please traverse to link** ![](../.gitbook/assets/help.png) -----&gt; API Documentation from the Mangle UI or access _https://&lt;Mangle IP or Hostname&gt;/mangle-services/swagger-ui.html\#/auth-provider-controller_
 
   ![](../.gitbook/assets/auth-provider-controller.png) 
 {% endhint %}
@@ -39,7 +39,7 @@ Mangle supports adding new local user or importing users from Active Directory s
 {% hint style="info" %}
 **Relevant API List**
 
-**For access to Swagger documentation, please traverse to link** ![](../.gitbook/assets/help.png) -----&gt; API Documentation from the Mangle UI or access _https://&lt;Mangle IP or Hostname&gt;/mangle-services/swagger-ui.html\#_/user-management-controller
+**For access to Swagger documentation, please traverse to link** ![](../.gitbook/assets/help.png) -----&gt; API Documentation from the Mangle UI or access _https://&lt;Mangle IP or Hostname&gt;/mangle-services/swagger-ui.html\#/user-management-controller_
 
  ![](../.gitbook/assets/usermanagementcontroller.png) 
 {% endhint %}
@@ -72,7 +72,7 @@ Mangle supports creation of custom roles from the default privileges that are av
 {% hint style="info" %}
 **Relevant API List**
 
-**For access to Swagger documentation, please traverse to link** ![](../.gitbook/assets/help.png) -----&gt; API Documentation from the Mangle UI or access _https://&lt;Mangle IP or Hostname&gt;/mangle-services/swagger-ui.html\#_/role-controller
+**For access to Swagger documentation, please traverse to link** ![](../.gitbook/assets/help.png) -----&gt; API Documentation from the Mangle UI or access _https://&lt;Mangle IP or Hostname&gt;/mangle-services/swagger-ui.html\#/role-controller_
 
  ![](../.gitbook/assets/rolecontroller.png) 
 {% endhint %}
@@ -95,7 +95,7 @@ Mangle supports modifying log levels for the application.
 {% hint style="info" %}
 **Relevant API List**
 
-**For access to Swagger documentation, please traverse to link** ![](../.gitbook/assets/help.png) -----&gt; API Documentation from the Mangle UI or access _https://&lt;Mangle IP or Hostname&gt;/mangle-services/swagger-ui.html\#_/operation-handler
+**For access to Swagger documentation, please traverse to link** ![](../.gitbook/assets/help.png) -----&gt; API Documentation from the Mangle UI or access _https://&lt;Mangle IP or Hostname&gt;/mangle-services/swagger-ui.html\#/operation-handler_
 
   ![](../.gitbook/assets/operationhandlercontroller.png)
 {% endhint %}
