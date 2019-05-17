@@ -22,7 +22,7 @@ Mangle supports K8s clusters as endpoints or targets for injection. It needs a k
 1. Login as an user with read and write privileges to Mangle.
 2. Navigate to Endpoint tab ---&gt; Kubernetes Cluster.
 3. Click on ![](../.gitbook/assets/k8sclusterbutton.png).
-4. Enter a name, credential \(kubeconfig file\), namespace \(if not specified the default namespace in k8s will be taken\), tags \(refers to additional tags that should be send to the enabled metric provider to uniquely identify faults against that endpoint\) and click on **Test Connection**.
+4. Enter a name, credential \(kubeconfig file\), namespace \(mandatory...Please specify "default" if you are unsure of the namespace else provide the actual name\), tags \(refers to additional tags that should be send to the enabled metric provider to uniquely identify faults against that endpoint\) and click on **Test Connection**.
 5. If **Test Connection** succeeds click on **Submit**.
 6. A success message is displayed and the table for Endpoints will be updated with the new entry.
 7. Click on ![](../.gitbook/assets/supportedactionsbutton.png) against a table entry to see the supported operations.
