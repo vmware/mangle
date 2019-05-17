@@ -255,3 +255,13 @@ vCenter VM State Change faults enable you to abruptly power-off, reset or suspen
 
       ![](../../.gitbook/assets/wavefrontevents.png)
 
+## Relevant API Reference
+
+{% hint style="info" %}
+**For access to relevant API Swagger documentation:**
+
+Please traverse to link ****![](../../.gitbook/assets/help.png) -----&gt; API Documentation from the Mangle UI or access _https://&lt;Mangle IP or Hostname&gt;/mangle-services/swagger-ui.html\#_/_fault-injection-controller_
+
+  ![](../../.gitbook/assets/faultinjectioncontroller.png) 
+{% endhint %}
+

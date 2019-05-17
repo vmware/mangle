@@ -88,3 +88,13 @@ Mangle supports any remote machine with ssh enabled as endpoints or targets for 
 6. A success message is displayed and the table for Endpoints will be updated with the new entry.
 7. Click on ![](../.gitbook/assets/supportedactionsbutton.png) against a table entry to see the supported operations.
 
+## Relevant API Reference
+
+{% hint style="info" %}
+**For access to Swagger documentation:**
+
+Please traverse to link ****![](../.gitbook/assets/help.png) -----&gt; API Documentation from the Mangle UI or access _https://&lt;Mangle IP or Hostname&gt;/mangle-services/swagger-ui.html\#_/_endpoint-controller_
+
+  ![](../.gitbook/assets/endpointcontroller.png) 
+{% endhint %}
+
