@@ -77,5 +77,3 @@ and commits.
 ## Reporting Bugs and Creating Issues
 
 When opening a new issue through [Github](https://github.com/vmware/mangle/issues), try to roughly follow the commit message format conventions above.
-
-## Repository Structure
