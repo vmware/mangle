@@ -11,7 +11,7 @@ This information is intended for SRE, Developers and Chaos engineers who would l
 | Sub Content | Description |
 | :--- | :--- |
 | [Adding Endpoints](adding-endpoints.md) | Provides information about adding the targets for fault injection |
-| [Injecting Faults](injecting-faults.md) | Provides information about the types of faults that can be injected to a specific endpoint |
+| [Injecting Faults](injecting-faults/) | Provides information about the types of faults that can be injected to a specific endpoint |
 | [Requests and Reports](requests-and-reports.md) | Provides information about the progress and status of the injections |
 
 Copyright \(c\) 2019 VMware, Inc. All rights reserved. [Copyright and trademark information](http://pubs.vmware.com/copyright-trademark.html). Any feedback you provide to VMware is subject to the terms at [www.vmware.com/community\_terms.html](http://www.vmware.com/community_terms.html).

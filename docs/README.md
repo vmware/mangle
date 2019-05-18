@@ -17,6 +17,8 @@ This information is intended for the following audiences:
 | All Users | Understand Mangle | [Overview](overview.md) |
 | Mangle administrators | Deploy and configure Mangle | [Mangle Deployment and Administration Guide](mangle-administration/) |
 | SRE, developers, viewers | Use Mangle to run chaos experiments and monitor progress | [Mangle Users Guide](sre-developers-and-users/) |
+| All community | Building the Mangle Codebase and creating local images of Mangle | [Building the Mangle Codebase](building-the-mangle-codebase.md) |
+| Contributors of Mangle | Guidelines for Contributing | [Contributing to Mangle](contributing-to-mangle.md) |
 
 Copyright \(c\) 2019 VMware, Inc. All rights reserved. [Copyright and trademark information](http://pubs.vmware.com/copyright-trademark.html). Any feedback you provide to VMware is subject to the terms at [www.vmware.com/community\_terms.html](http://www.vmware.com/community_terms.html).
 

@@ -99,5 +99,17 @@ Attaching the required files which help to enable the authentication and ssl in 
 
 To download the Cassandra client as DevCenter form [DevCenter](https://academy.datastax.com/downloads).
 
-**To Create Multi-Node Cassandra cluster :**Create seed Node : `docker run --name mangle-cassandra -v /cassandra/storage/:/var/lib/cassandra -p 9042:9042 -d -e CASSANDRA_DC="DC1" -e CASSANDRA_RACK="rack1" -e CASSANDRA_ENDPOINT_SNITCH="GossipingPropertyFileSnitch"`  [`<`_`location of image`_`>/cassandradb:1.0`](http://es-fault-injection-docker-local.artifactory.eng.vmware.com/fiaasco/cassandradb:1.0)`" .Join the Other Node in Seed Node : "docker run --name mangle-cassandra-n1 -v /cassandra/n1storage/:/var/lib/cassandra -p 9043:9042 -d -e CASSANDRA_SEEDS="$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' mangle-cassandra)" -e CASSANDRA_DC="DC1" -e CASSANDRA_RACK="rack1" -e CASSANDRA_ENDPOINT_SNITCH="GossipingPropertyFileSnitch"`  [`<`_`location of image`_`>/cassandradb:1.0`](http://es-fault-injection-docker-local.artifactory.eng.vmware.com/fiaasco/cassandradb:1.0)\`\`
+**To Create Multi-Node Cassandra cluster**
+
+Create seed Node : 
+
+```text
+docker run --name mangle-cassandra -v /cassandra/storage/:/var/lib/cassandra -p 9042:9042 -d -e CASSANDRA_DC="DC1" -e CASSANDRA_RACK="rack1" -e CASSANDRA_ENDPOINT_SNITCH="GossipingPropertyFileSnitch" mangle-docker-containers.bintray.io/mangle:$MANGLE_VERSION
+```
+
+Join the Other Node to Seed Node : 
+
+```text
+docker run --name mangle-cassandra-n1 -v /cassandra/n1storage/:/var/lib/cassandra -p 9043:9042 -d -e CASSANDRA_SEEDS="$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' mangle-cassandra)" -e CASSANDRA_DC="DC1" -e CASSANDRA_RACK="rack1" -e CASSANDRA_ENDPOINT_SNITCH="GossipingPropertyFileSnitch" mangle-docker-containers.bintray.io/mangle:$MANGLE_VERSION 
+```
 
