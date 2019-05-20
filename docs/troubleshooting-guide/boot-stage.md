@@ -45,22 +45,22 @@ Provide the following information to support if encountering Boot Stage failures
 
 The goal of this step is to be able to SSH to the Mangle appliance to allow for better debugging information to be obtained from the appliance.
 
-* Access the vSphere console for the Mangle appliance. Press `ALT` + `->` to access the login prompt.
+* Access the vSphere console for the Mangle appliance. Press `ALT` + `F2` to access the login prompt.
   * Login with username `root` and the credentials you provided in the OVA deployment
 
-    customizations. If the deployment has failed to set your credentials, the default password is
+    customization. If the deployment has failed to set your credentials, the default password is
 
-    `VMw@re!23`.
+    `vmware`.
 
-  * Are there any startup components that failed to start? Run `systemctl list-units --state=failed`
-    * If no, continue with the next steps. If there are any failed units, provide the output of the
+  * Are there any startup components that failed to start? 
+    * Run `docker ps`. It should list two or three containers in running state; mangle or mangleWEB, mangleDB and the mangle-vsphere-adapter.
+      * If no, continue with the next steps. If DB container is not running execute:
 
-      following commands to support:
+        `docker start mangleDB`. Wait for 10-20 seconds and run `docker start mangleWEB`. Wait for a couple of seconds and see if the portal below can be reached.
 
-      * `systemctl list-units --state=failed`
-        * For each failed unit: `journalctl -u <unit name>`
-      * `ip addr show`
-      * `ip route show`
+        ```text
+        https://<IP or Hostname provided>/mangle-services
+        ```
   * Run `ip addr show`
     * Is the IP address the expected value based on DHCP or provided static IP settings?
   * Run `ip route show`
@@ -71,12 +71,12 @@ The goal of this step is to be able to SSH to the Mangle appliance to allow for 
       route between your client and the appliance.
 
     * If yes, verify the routing configuration between the client that is unable to SSH to the mangle appliance.
-  * If still unable to SSH to the VIC appliance, provide the output of the following commands to
+  * If still unable to SSH to the Mangle appliance, provide the output of the following commands to
 
     support:
 
-    * `systemctl list-units --state=failed`
-      * For each failed unit: `journalctl -u <unit name>`
+    * `docker start mangleDB`
+    * `docker start mangleWEB`
     * `ip addr show`
     * `ip route show`
 
