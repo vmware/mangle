@@ -79,4 +79,5 @@ The goal of this step is to be able to SSH to the Mangle appliance to allow for 
     * `docker start mangleWEB`
     * `ip addr show`
     * `ip route show`
+    * `ping <default gateway IP>`
 
