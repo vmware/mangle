@@ -1,8 +1,8 @@
-# Boot Stage
+# Boot/Initialization Stage
 
 Boot involves the Mangle appliance powering on and the containers being setup.
 
-During Boot stage, the user provides _&lt;to fill in&gt;_.
+At the end of boot or initialization phase, the Mangle application should be available at URL: https://_&lt;IP or Hostname provided&gt;_/mangle-services and the default admin user should be prompted to change password on login.
 
 ## **Boot Failures**
 

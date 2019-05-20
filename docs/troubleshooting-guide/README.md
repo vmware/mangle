@@ -49,8 +49,6 @@ It is important to determine what stage in the appliance lifecycle you are at wh
 
 {% page-ref page="boot-stage.md" %}
 
-{% page-ref page="initialization-stage.md" %}
-
 {% page-ref page="endpoint-addition-stage.md" %}
 
 {% page-ref page="fault-injection-stage.md" %}
