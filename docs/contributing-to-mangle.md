@@ -73,3 +73,36 @@ When opening a new issue through [Github](https://github.com/vmware/mangle/issue
 
 ### Repository Structure
 
+```text
+├──  assets/files
+├──  checkstyle
+├──  docker
+├──  docs
+├──  formatter
+├──  mangle-byteman-root
+│    ├──  agent
+│    ├──  bin
+│    ├──  download
+│    ├──  install
+│    ├──  licenses
+│    │    submit
+│    │    README
+│    │    pom.xml 
+├──  mangle-default-plugin
+├──  mangle-metric-reporter
+├──  mangle-models
+├──  mangle-services
+├──  mangle-support
+├──  mangle-task-framework
+├──  mangle-test-plugin
+├──  mangle-ui
+├──  mangle-utils
+├──  mangle-vcenter-adapter
+│    .gitbook.yaml
+│    .gitignore
+│    CONTRIBUTING.md
+│    LICENSE
+│    NOTICE
+│    pom.xml
+```
+
