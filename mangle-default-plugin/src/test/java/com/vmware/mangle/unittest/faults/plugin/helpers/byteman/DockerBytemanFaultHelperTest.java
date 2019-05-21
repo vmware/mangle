@@ -17,15 +17,14 @@ import static org.testng.Assert.assertEquals;
 
 import static com.vmware.mangle.utils.constants.FaultConstants.AGENT_NAME;
 import static com.vmware.mangle.utils.constants.FaultConstants.DEFAULT_TEMP_DIR;
-import static com.vmware.mangle.utils.constants.FaultConstants.FI_ADD_INFO_FAULTID;
 import static com.vmware.mangle.utils.constants.FaultConstants.FORWARD_SLASH;
-import static com.vmware.mangle.utils.constants.FaultConstants.GET_FAULT_COMMAND_WITH_PORT;
 import static com.vmware.mangle.utils.constants.FaultConstants.PID_ATTACH_MXBEANS_COMMAND_WITH_PORT;
 import static com.vmware.mangle.utils.constants.FaultConstants.PORT_9091;
-import static com.vmware.mangle.utils.constants.FaultConstants.REMEDIATION_COMMAND_WITH_PORT;
 import static com.vmware.mangle.utils.constants.FaultConstants.SUBMIT_COMMAND_WITH_PORT;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import lombok.extern.log4j.Log4j2;
@@ -44,7 +43,9 @@ import com.vmware.mangle.cassandra.model.faults.specs.JVMCodeLevelFaultSpec;
 import com.vmware.mangle.cassandra.model.tasks.SupportScriptInfo;
 import com.vmware.mangle.cassandra.model.tasks.commands.CommandExecutionResult;
 import com.vmware.mangle.cassandra.model.tasks.commands.CommandInfo;
+import com.vmware.mangle.cassandra.model.tasks.commands.CommandOutputProcessingInfo;
 import com.vmware.mangle.faults.plugin.helpers.JavaAgentFaultUtils;
+import com.vmware.mangle.faults.plugin.helpers.KnownFailuresHelper;
 import com.vmware.mangle.faults.plugin.helpers.byteman.DockerBytemanFaultHelper;
 import com.vmware.mangle.faults.plugin.helpers.docker.DockerCommandUtils;
 import com.vmware.mangle.faults.plugin.mockdata.FaultsMockData;
@@ -73,22 +74,16 @@ public class DockerBytemanFaultHelperTest extends PowerMockTestCase {
     EndpointClientFactory endpointClientFactory;
     @Mock
     CustomDockerClient customDockerClient;
-
     @Mock
     JavaAgentFaultUtils javaAgentFaultUtils;
-
     @Mock
     PluginUtils pluginUtils;
-
     @Mock
     DockerCommandUtils dockerCommandUtils;
-
     @Mock
     ICommandExecutor commandExecutor;
-
     @Mock
     File file;
-
     @Mock
     CommandExecutionResult result;
 
@@ -127,12 +122,38 @@ public class DockerBytemanFaultHelperTest extends PowerMockTestCase {
                     .thenReturn(customDockerClient);
             List<CommandInfo> injectionCommands = dockerBytemanFaultHelper.getInjectionCommandInfoList(cpuFaultSpec);
             log.info(RestTemplateWrapper.objectToJson(injectionCommands));
-            Assert.assertTrue(injectionCommands.size() > 0);
+            List<CommandInfo> expectedCommands = getJVMAgentInjectionCommandInfo();
+            Assert.assertEquals(injectionCommands, expectedCommands);
         } catch (MangleException e) {
             log.error("testGetInjectionCommandInfoListForCPUJVMAgentFault failed with Exception: ", e);
             Assert.assertTrue(false);
 
         }
+    }
+
+    private List<CommandInfo> getJVMAgentInjectionCommandInfo() {
+        CommandInfo agentInstallation = new CommandInfo();
+        agentInstallation.setCommand("/bin/sh /tmp/mangle-java-agent-1.0.0/bin/bminstall.sh -p 9091 -s -b null");
+        agentInstallation.setIgnoreExitValueCheck(true);
+        agentInstallation.setExpectedCommandOutputList(Arrays.asList(new String[] {
+                "Started Byteman Listener Successfully", "Agent is already running on requested process" }));
+        agentInstallation.setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentInstallationRequest());
+        CommandInfo faultInjection = new CommandInfo();
+        faultInjection.setCommand(null);
+        faultInjection.setIgnoreExitValueCheck(false);
+        faultInjection.setExpectedCommandOutputList(Arrays.asList(new String[] { "Created Fault Successfully" }));
+        faultInjection.setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentFaultInjectionRequest());
+        List<CommandOutputProcessingInfo> commandOutputProcessingInfoList = new ArrayList<>();
+        CommandOutputProcessingInfo commandOutputProcessingInfo = new CommandOutputProcessingInfo();
+        commandOutputProcessingInfo.setExtractedPropertyName("faultId");
+        commandOutputProcessingInfo.setRegExpression("[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}");
+        commandOutputProcessingInfoList.add(commandOutputProcessingInfo);
+        faultInjection.setCommandOutputProcessingInfoList(commandOutputProcessingInfoList);
+
+        List<CommandInfo> commandInfoList = new ArrayList<>();
+        commandInfoList.add(agentInstallation);
+        commandInfoList.add(faultInjection);
+        return commandInfoList;
     }
 
     @Test
@@ -143,14 +164,39 @@ public class DockerBytemanFaultHelperTest extends PowerMockTestCase {
                     .thenReturn(customDockerClient);
             List<CommandInfo> injectionCommands = dockerBytemanFaultHelper.getInjectionCommandInfoList(cpuFaultSpec);
             log.info(RestTemplateWrapper.objectToJson(injectionCommands));
-            Assert.assertTrue(injectionCommands.size() > 0);
+            List<CommandInfo> expectedCommands = getJVMAgentInjectionCommandInfoListWithJavaHomeSet();
+            Assert.assertEquals(injectionCommands, expectedCommands);
         } catch (MangleException e) {
             log.error("testGetInjectionCommandInfoListForCPUJVMAgentFault failed with Exception: ", e);
             Assert.assertTrue(false);
-
         }
     }
 
+    private List<CommandInfo> getJVMAgentInjectionCommandInfoListWithJavaHomeSet() {
+        CommandInfo agentInstallation = new CommandInfo();
+        agentInstallation.setCommand(
+                "export JAVA_HOME=/usr/java/latest&&/bin/sh /tmp/mangle-java-agent-1.0.0/bin/bminstall.sh -p 9091 -s -b null");
+        agentInstallation.setIgnoreExitValueCheck(true);
+        agentInstallation.setExpectedCommandOutputList(Arrays.asList(new String[] {
+                "Started Byteman Listener Successfully", "Agent is already running on requested process" }));
+        agentInstallation.setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentInstallationRequest());
+        CommandInfo faultInjection = new CommandInfo();
+        faultInjection.setCommand("export JAVA_HOME=/usr/java/latest&&null");
+        faultInjection.setIgnoreExitValueCheck(false);
+        faultInjection.setExpectedCommandOutputList(Arrays.asList(new String[] { "Created Fault Successfully" }));
+        faultInjection.setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentFaultInjectionRequest());
+        List<CommandOutputProcessingInfo> commandOutputProcessingInfoList = new ArrayList<>();
+        CommandOutputProcessingInfo commandOutputProcessingInfo = new CommandOutputProcessingInfo();
+        commandOutputProcessingInfo.setExtractedPropertyName("faultId");
+        commandOutputProcessingInfo.setRegExpression("[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}");
+        commandOutputProcessingInfoList.add(commandOutputProcessingInfo);
+        faultInjection.setCommandOutputProcessingInfoList(commandOutputProcessingInfoList);
+
+        List<CommandInfo> commandInfoList = new ArrayList<>();
+        commandInfoList.add(agentInstallation);
+        commandInfoList.add(faultInjection);
+        return commandInfoList;
+    }
 
     @Test
     public void testGetJVMCodeLevelInjectionCommandInfoList() {
@@ -185,15 +231,35 @@ public class DockerBytemanFaultHelperTest extends PowerMockTestCase {
             List<CommandInfo> remediationCommands =
                     dockerBytemanFaultHelper.getRemediationCommandInfoList(cpuFaultSpec);
             log.info(RestTemplateWrapper.objectToJson(remediationCommands));
-            Assert.assertEquals(remediationCommands.get(0).getCommand().toString(), String.format(
-                    REMEDIATION_COMMAND_WITH_PORT, DEFAULT_TEMP_DIR + FORWARD_SLASH, PORT_9091, FI_ADD_INFO_FAULTID));
-            Assert.assertEquals(remediationCommands.get(1).getCommand().toString(), String.format(
-                    GET_FAULT_COMMAND_WITH_PORT, DEFAULT_TEMP_DIR + FORWARD_SLASH, PORT_9091, FI_ADD_INFO_FAULTID));
+            List<CommandInfo> expectedCommands = getJVMAgentRemediationCommandInfoList();
+            Assert.assertEquals(remediationCommands, expectedCommands);
         } catch (MangleException e) {
             log.error("testGetJVMCodeLevelInjectionCommandInfoListForSpringServiceFault failed with Exception: ", e);
             Assert.assertTrue(false);
         }
+    }
 
+    private List<CommandInfo> getJVMAgentRemediationCommandInfoList() {
+        CommandInfo faultRemediationRequest = new CommandInfo();
+        faultRemediationRequest
+                .setCommand("/bin/sh /tmp/mangle-java-agent-1.0.0/bin/bmsubmit.sh -p 9091 -rf $FI_ADD_INFO_faultId");
+        faultRemediationRequest.setIgnoreExitValueCheck(false);
+        faultRemediationRequest.setExpectedCommandOutputList(
+                Arrays.asList(new String[] { "Received Remediation Request Successfully" }));
+        faultRemediationRequest
+                .setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentFaultRemediationRequest());
+        CommandInfo faultInjection = new CommandInfo();
+        faultInjection
+                .setCommand("/bin/sh /tmp/mangle-java-agent-1.0.0/bin/bmsubmit.sh -p 9091 -gf $FI_ADD_INFO_faultId");
+        faultInjection.setIgnoreExitValueCheck(true);
+        faultInjection.setExpectedCommandOutputList(Arrays.asList(new String[] { "\"faultStatus\":\"COMPLETED\"",
+                "Failed to process request: java.net.ConnectException: Connection refused" }));
+        faultInjection.setNoOfRetries(6);
+        faultInjection.setRetryInterval(10);
+        List<CommandInfo> commandInfoList = new ArrayList<>();
+        commandInfoList.add(faultRemediationRequest);
+        commandInfoList.add(faultInjection);
+        return commandInfoList;
     }
 
     @Test
@@ -205,12 +271,24 @@ public class DockerBytemanFaultHelperTest extends PowerMockTestCase {
             List<CommandInfo> remediationCommands =
                     dockerBytemanFaultHelper.getRemediationCommandInfoList(springServiceExceptionFaultSpec);
             log.info(RestTemplateWrapper.objectToJson(remediationCommands));
-            Assert.assertTrue(remediationCommands.get(0).getCommand().contains(String.format(SUBMIT_COMMAND_WITH_PORT,
-                    DEFAULT_TEMP_DIR + FORWARD_SLASH, PORT_9091, "-u " + DEFAULT_TEMP_DIR + "/123456;.btm")));
+            List<CommandInfo> expectedCommands = getJVMCodeLevelRemediationCommandInfoList();
+            Assert.assertEquals(remediationCommands, expectedCommands);
         } catch (MangleException e) {
             log.error("testGetJVMCodeLevelRemediationCommandInfoListForSpringServiceFault failed with Exception: ", e);
             Assert.assertTrue(false);
         }
+    }
+
+    private List<CommandInfo> getJVMCodeLevelRemediationCommandInfoList() {
+        CommandInfo faultRemediationRequest = new CommandInfo();
+        faultRemediationRequest
+                .setCommand("/bin/sh /tmp/mangle-java-agent-1.0.0/bin/bmsubmit.sh -p 9091 -u /tmp/123456.btm");
+        faultRemediationRequest.setIgnoreExitValueCheck(true);
+        faultRemediationRequest.setExpectedCommandOutputList(Arrays.asList(new String[] { "uninstall RULE 123456" }));
+        faultRemediationRequest.setKnownFailureMap(null);
+        List<CommandInfo> commandInfoList = new ArrayList<>();
+        commandInfoList.add(faultRemediationRequest);
+        return commandInfoList;
     }
 
     @Test

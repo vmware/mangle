@@ -20,15 +20,6 @@
         <version>1.0.0</version>
         <relativePath>../pom.xml</relativePath>
 	</parent>
-
-	<properties>
-		<!--sonarqube properties -->
-		<sonar.host.url>https://fiaasco-quality.svc.eng.vmware.com</sonar.host.url>
-		<sonar.branch>master</sonar.branch>
-		<sonar.login>52ad1326343fe1bbc681f1b7187034a0adf498c2</sonar.login>
-		<sonar.jacoco.reportPath>target/jacoco-final.exec</sonar.jacoco.reportPath>
-		<sonar.coverage.exclusions>**/com/vmware/mangle/model/**/*</sonar.coverage.exclusions>
-	</properties>
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
