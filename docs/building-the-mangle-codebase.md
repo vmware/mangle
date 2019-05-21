@@ -35,18 +35,6 @@ The mangle Code is organised is as below sub modules using Maven build tool.
 
 Module for the Mangle java Agent, which is used to support application level fault injection against apps running on JVM. 
 
-To build as a sub module in the build-all profile of Mangle code
-
-```text
-mvn clean install –P build-all
-```
-
-To build as an independent module using profile byteman
-
-```text
-mvn clean install –P byteman
-```
-
 ### mangle-models:
 
  Module for the complete data model of Mangle Web Application. 
@@ -97,21 +85,49 @@ mangle-vcenter-adapter
 
 Different build profiles available in Mangle pom are: 
 
-### Default
+### default
 
-This profile builds mangle with last known good configuration of mangle-java-agent and does not take latest changes to mangle-byteman-root module into consideration. 
+This profile builds mangle with last known good configuration of mangle-byteman-agent and does not take latest changes to mangle-byteman-root module into consideration. 
+
+To build:
+
+```text
+mvn clean install
+```
 
 ### build-all
 
-This profile builds mangle with latest changes of mangle-java-agent and is recommended for use if the Mangle java agent jar has to be updated.
+This profile builds mangle with latest changes of mangle-byteman-agent and is recommended for use if the Mangle java agent jar has to be updated.
 
-### mangle-byteman-root
+To build using this profile:
 
-This profile builds only mangle-java-agent with the latest changes. 
+```text
+mvn clean install –P build-all
+OR
+mvn clean install --activate-profiles build-all
+```
 
-### mangle-vcenter-adapter
+### byteman
+
+This profile builds only the mangle-byteman-root module with the latest changes. 
+
+To build using profile byteman
+
+```text
+mvn clean install –P byteman
+OR
+mvn clean install --activate-profiles byteman
+```
+
+### vcenter-adapter
 
 This profile builds only mangle-vcenter-adapter with the latest changes.
+
+```text
+mvn clean install –P vcenter-adapter
+OR
+mvn clean install --activate-profiles vcenter-adapter
+```
 
 ## Building the code
 
