@@ -17,6 +17,6 @@
   * [Boot/Initialization Stage](troubleshooting-guide/boot-stage.md)
   * [Endpoint Addition Stage](troubleshooting-guide/endpoint-addition-stage.md)
   * [Fault Injection Stage](troubleshooting-guide/fault-injection-stage.md)
-* [Building the Mangle Codebase](building-the-mangle-codebase.md)
+* [Mangle Developers' Guide](building-the-mangle-codebase.md)
 * [Contributing to Mangle](contributing-to-mangle.md)
 
