@@ -240,13 +240,13 @@ Checkstyle runs as part of maven `validate` lifecycle.
 
 You can call it manually like `./mvnw validate` or `./mvnw checkstyle:checkstyle`.
 
-checkstyle file: [checkstyle.xml](https://github.com/vmware/xenon/blob/master/checkstyle.xml)
+checkstyle file: [checkstyle.xml](https://github.com/vmware/mangle/blob/master/checkstyle/checkstyle.xml)
 
 ## IDE Settings
 
 ### Formatter
 
-For both Eclipse and IntellJ, import [contrib/eclipse-java-style.xml](https://github.com/vmware/xenon/blob/master/contrib/eclipse-java-style.xml)
+For both Eclipse and IntellJ, import contrib/eclipse-java-style.xml
 
 #### IntelliJ
 
@@ -256,12 +256,54 @@ IntelliJ can import eclipse formatter file.
 
 Import `contrib/eclipse-java-style.xml`.
 
-Once "VMware DCP" is imported, select it and click "Copy to Project"
-
 ### IntelliJ Specific
 
 #### Setting java package import order
 
-1. Update `.idea/codeStyleSettings.xml` with [contrib/idea-java-style.xml](https://github.com/vmware/xenon/blob/master/contrib/idea-java-style.xml)
+1. Update `.idea/codeStyleSettings.xml` with contrib/idea-java-style.xml
 2. Restart IntelliJ
+
+## Building Mangle Docker Images
+
+### **Prerequisites**
+
+Install docker on the developer machine following [docker installation manual](https://docs.docker.com/v17.12/manuals/). Change the working directory to the root of mangle code repository.
+
+### **To build a docker image for Mangle**
+
+```text
+#!/bin/bash
+#stop the existing container if it is already running
+docker rm -f $(docker ps -a | grep mangle-app | awk '{print$1}')
+IMAGE=`docker images | grep "^mangle-app"| awk '{print $1}'`
+$CONTAINER_NAME= mangle-app
+if [ $IMAGE = $CONTAINER_NAME ]
+then
+               echo 'removing '$CONTAINER_NAME' image ...'
+               docker rmi -f $CONTAINER_NAME
+fi
+ 
+#Build Image
+docker build –f docker/Dockerfile -t $CONTAINER_NAME .
+IP=`ifconfig eth0 | grep "inet addr" | cut -d ':' -f 2 | cut -d ' ' -f 1`
+```
+
+### **To build a docker image for Mangle vCenter Adapter**
+
+```text
+#!/bin/bash
+#stop the existing container if it is already running
+docker rm -f $(docker ps -a | grep mangle-app | awk '{print$1}')
+IMAGE=`docker images | grep "^mangle-app"| awk '{print $1}'`
+$CONTAINER_NAME= mangle-app
+if [ $IMAGE = $CONTAINER_NAME ]
+then
+               echo 'removing '$CONTAINER_NAME' image ...'
+               docker rmi -f $CONTAINER_NAME
+fi
+ 
+#Build Image
+docker build –f docker/Dockerfile -t $CONTAINER_NAME .
+IP=`ifconfig eth0 | grep "inet addr" | cut -d ':' -f 2 | cut -d ' ' -f 1`
+```
 
