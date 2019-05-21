@@ -81,13 +81,7 @@ public class EndpointService {
     public List<EndpointSpec> getAllEndpointByType(EndpointType endPointType) throws MangleException {
         log.info("Geting endpoint by type : " + endPointType);
         if (endPointType != null && !endPointType.name().isEmpty()) {
-            List<EndpointSpec> results = endpointRepository.findByEndPointType(endPointType);
-            if (results != null && !results.isEmpty()) {
-                return results;
-            } else {
-                throw new MangleRuntimeException(ErrorCode.NO_RECORD_FOUND, ErrorConstants.ENDPOINT_TYPE, endPointType);
-            }
-
+            return endpointRepository.findByEndPointType(endPointType);
         } else {
             log.error(ErrorConstants.ENDPOINT_TYPE + ErrorConstants.FIELD_VALUE_EMPTY);
             throw new MangleException(ErrorCode.FIELD_VALUE_EMPTY, ErrorConstants.ENDPOINT_TYPE);

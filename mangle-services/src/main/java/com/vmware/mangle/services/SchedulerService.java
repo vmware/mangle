@@ -63,7 +63,7 @@ public class SchedulerService {
             return null;
         } else {
             Optional<SchedulerSpec> schedulerSpec = schedulerRepository.findById(jobId);
-            return schedulerSpec.isPresent() ? schedulerSpec.get() : null;
+            return schedulerSpec.orElse(null);
         }
     }
 
@@ -74,7 +74,7 @@ public class SchedulerService {
             return null;
         } else {
             Optional<SchedulerSpec> schedulerSpec = schedulerRepository.findByIdAndStatus(jobId, status);
-            return schedulerSpec.isPresent() ? schedulerSpec.get() : null;
+            return schedulerSpec.orElse(null);
         }
     }
 
@@ -85,7 +85,7 @@ public class SchedulerService {
             return new ArrayList<>();
         } else {
             Optional<List<SchedulerSpec>> schedulerSpec = schedulerRepository.findByStatus(status);
-            return schedulerSpec.isPresent() ? schedulerSpec.get() : null;
+            return schedulerSpec.orElse(null);
         }
     }
 
@@ -97,7 +97,7 @@ public class SchedulerService {
     public List<String> getActiveScheduleJobs() {
         List<SchedulerSpec> specs = schedulerRepository.findAll();
         return specs.stream().filter(schedulerSpec -> isActiveSchedule(schedulerSpec.getStatus()))
-                .map(schedulerSpec -> schedulerSpec.getId()).collect(Collectors.toList());
+                .map(SchedulerSpec::getId).collect(Collectors.toList());
     }
 
     /**

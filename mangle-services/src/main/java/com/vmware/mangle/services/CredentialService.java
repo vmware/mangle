@@ -31,7 +31,6 @@ import org.springframework.web.multipart.MultipartFile;
 import com.vmware.mangle.cassandra.model.endpoint.CredentialsSpec;
 import com.vmware.mangle.cassandra.model.endpoint.K8SCredentials;
 import com.vmware.mangle.cassandra.model.endpoint.RemoteMachineCredentials;
-import com.vmware.mangle.model.enums.EndpointType;
 import com.vmware.mangle.services.repository.CredentialRepository;
 import com.vmware.mangle.utils.CommonUtils;
 import com.vmware.mangle.utils.clients.kubernetes.KubernetesCommandLineClient;
@@ -75,22 +74,6 @@ public class CredentialService {
         } else {
             log.error(ErrorConstants.CREDENTIAL_NAME + ErrorConstants.FIELD_VALUE_EMPTY);
             throw new MangleException(ErrorCode.FIELD_VALUE_EMPTY, ErrorConstants.CREDENTIAL_NAME);
-        }
-    }
-
-    public List<CredentialsSpec> getAllCredentialByType(EndpointType endPointType) throws MangleException {
-        log.debug("Received request to get Credential by type : {}", endPointType);
-        if (endPointType != null) {
-            List<CredentialsSpec> results = credentialRepository.findByType(endPointType);
-            if (results != null && !results.isEmpty()) {
-                return results;
-            } else {
-                throw new MangleRuntimeException(ErrorCode.NO_RECORD_FOUND, ErrorConstants.ENDPOINT_TYPE, endPointType);
-            }
-
-        } else {
-            log.error(ErrorConstants.ENDPOINT_TYPE + ErrorConstants.FIELD_VALUE_EMPTY);
-            throw new MangleException(ErrorCode.FIELD_VALUE_EMPTY, ErrorConstants.ENDPOINT_TYPE);
         }
     }
 

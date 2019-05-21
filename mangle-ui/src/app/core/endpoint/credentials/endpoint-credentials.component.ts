@@ -129,7 +129,7 @@ export class EndpointCredentialsComponent implements OnInit {
         this.submitBtnState = ClrLoadingState.LOADING;
         this.errorFlag = false;
         this.successFlag = false;
-        if (this.keyFileToUpload != undefined || credential.password != "") {
+        if (typeof this.keyFileToUpload != undefined || (typeof credential.password != undefined && credential.password != "" && credential.password != null)) {
             this.endpointService.updateRemoteMachineCredential(credential, this.keyFileToUpload).subscribe(
                 res => {
                     this.getCredentials();

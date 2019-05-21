@@ -44,7 +44,6 @@ import org.testng.annotations.Test;
 import com.vmware.mangle.cassandra.model.endpoint.CredentialsSpec;
 import com.vmware.mangle.cassandra.model.endpoint.K8SCredentials;
 import com.vmware.mangle.cassandra.model.endpoint.RemoteMachineCredentials;
-import com.vmware.mangle.model.enums.EndpointType;
 import com.vmware.mangle.services.CredentialService;
 import com.vmware.mangle.services.mockdata.CredentialsSpecMockData;
 import com.vmware.mangle.services.repository.CredentialRepository;
@@ -150,68 +149,6 @@ public class CredentialServiceTest extends PowerMockTestCase {
             actualResult = true;
         }
         verify(credentialRepository, times(0)).findByName(anyString());
-        Assert.assertTrue(actualResult);
-    }
-
-    /**
-     * Test method for
-     * {@link CredentialService#getAllCredentialByType(com.vmware.mangle.model.enums.EndpointType)}.
-     *
-     * @throws MangleException
-     * @throws IllegalAccessException
-     * @throws InstantiationException
-     */
-    @Test(description = "Test to verify that service returns all the credentials in the db")
-    public void testGetAllCredentialByType() throws MangleException {
-        List<CredentialsSpec> credentialList = new ArrayList<>();
-        credentialList.add(credentialsSpec);
-        credentialList.add(credentialsSpec);
-        when(credentialRepository.findByType(any())).thenReturn(credentialList);
-        List<CredentialsSpec> actualResult = credentialService.getAllCredentialByType(credentialsSpec.getType());
-        verify(credentialRepository, times(1)).findByType(any());
-        Assert.assertEquals(actualResult.size(), 2);
-    }
-
-    /**
-     * Test method for
-     * {@link CredentialService#getAllCredentialByType(com.vmware.mangle.model.enums.EndpointType)}.
-     *
-     * @throws MangleException
-     * @throws IllegalAccessException
-     * @throws InstantiationException
-     */
-    @Test(description = "Test to verify that service returns all the credentials in the db", expectedExceptions = MangleRuntimeException.class)
-    public void testGetAllCredentialByTypeNullCredentials() throws MangleException {
-        when(credentialRepository.findByType(any())).thenReturn(null);
-        try {
-            credentialService.getAllCredentialByType(credentialsSpec.getType());
-        } catch (MangleRuntimeException e) {
-            verify(credentialRepository, times(1)).findByType(any());
-            Assert.assertEquals(e.getErrorCode(), ErrorCode.NO_RECORD_FOUND);
-            throw e;
-        }
-
-
-    }
-
-    /**
-     * Test method for {@link CredentialService#getAllCredentialByType(EndpointType)}
-     *
-     * @throws MangleException
-     * @throws IllegalAccessException
-     * @throws InstantiationException
-     */
-    @Test(description = "Test to verify that the exception is thrown when the credentials are not found in the db")
-    public void testGetAllCredentialByTypeWithNull() throws MangleException {
-        List<CredentialsSpec> credentialList = new ArrayList<>();
-        when(credentialRepository.findByType(any())).thenReturn(credentialList);
-        boolean actualResult = false;
-        try {
-            credentialService.getAllCredentialByType(null);
-        } catch (Exception e) {
-            actualResult = true;
-        }
-        verify(credentialRepository, times(0)).findByType(any());
         Assert.assertTrue(actualResult);
     }
 
