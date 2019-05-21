@@ -128,13 +128,7 @@ public class TaskService {
 
     public List<Task<TaskSpec>> getTaskByIsScheduledTask(boolean isScheduledTask) throws MangleException {
         log.info("Retrieving task by isScheduledTask : " + isScheduledTask);
-        List<Task<TaskSpec>> tasks = taskRepository.findByIsScheduledTask(isScheduledTask);
-        if (tasks != null && !tasks.isEmpty()) {
-            return tasks;
-        } else {
-            throw new MangleRuntimeException(ErrorCode.NO_RECORD_FOUND, ErrorConstants.IS_SCHEDULED_TASK,
-                    isScheduledTask);
-        }
+        return taskRepository.findByIsScheduledTask(isScheduledTask);
     }
 
     /**

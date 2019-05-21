@@ -1,0 +1,19 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: mangle-service
+  labels:
+    app: mangle
+    environment: test
+spec:
+  type: LoadBalancer
+  sessionAffinity: ClientIP
+  selector:
+    app: mangle
+    environment: test
+  ports:
+  - name: mangle-https
+    port: 443
+    protocol: TCP
+    targetPort: 8443
+

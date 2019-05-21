@@ -380,6 +380,9 @@ public class EndpointController {
         log.info("Start execution of addCredentials() method for RemoteMachine");
         credentialService.validatePasswordOrPrivateKeyNotNull(password, privateKey);
         credentialService.validateMultipartFileSize(privateKey, MAX_PRIVATEKEY_FILE_SIZE);
+        if (null != privateKey) {
+            certificatesService.validateRemoteMachinePrivateKey(privateKey);
+        }
         try {
             RemoteMachineCredentials remoteMachineCredentials =
                     credentialService.generateRemoteMachineCredentialsSpec(id, name, username, password, privateKey);

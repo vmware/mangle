@@ -1,0 +1,58 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: mangle
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: mangle
+        environment: test
+    spec:
+      volumes:
+      - name: procdir
+        hostPath:
+          path: /proc
+      - name: cgroups
+        hostPath:
+          path: /sys/fs/cgroup
+      - name: mangle-logs
+        emptyDir: {}
+      containers:
+      - name: mangle
+        image: mangle-vmware-docker-containers.bintray.io/mangle:1.0
+        livenessProbe:
+         httpGet:
+           path: "/mangle-services/application/health"
+           port: 8443
+           scheme: HTTPS
+         initialDelaySeconds: 60
+         periodSeconds: 60
+        readinessProbe:
+         httpGet:
+           path: "/mangle-services/application/health"
+           port: 8443
+           scheme: HTTPS
+         initialDelaySeconds: 60
+         periodSeconds: 60
+        ports:
+        - containerPort: 8443
+        env:
+        - name: POD_IP
+          valueFrom:
+           fieldRef:
+            fieldPath: status.podIP
+        - name: DB_OPTIONS
+          value: "-DcassandraContactPoints=cassandra.mangle.svc.cluster.local -DcassandraSslEnabled=true -DcassandraUsername=cassandra -DcassandraPassword=cassandra -DcassandraClusterName=manglecassandracluster"
+        - name: CLUSTER_OPTIONS
+          value: "-DclusterValidationToken=mangle -DpublicAddress=$(POD_IP) -DclusterMembers=mangle-service.mangle.svc.cluster.local"
+        volumeMounts:
+        - name: mangle-logs
+          mountPath: /var/opt/mangle-tomcat/logs
+        imagePullPolicy: Always
+        resources:
+          limits:
+            cpu: "1000m"
+            memory: "4000Mi"
+      restartPolicy: Always

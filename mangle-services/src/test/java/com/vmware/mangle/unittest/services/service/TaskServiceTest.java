@@ -17,7 +17,6 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
 
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -396,45 +395,6 @@ public class TaskServiceTest {
         }
         verify(taskRepository, Mockito.atLeastOnce()).findByIsScheduledTask(anyBoolean());
         Assert.assertEquals(persistedTask, tasks);
-    }
-
-    /**
-     * Test method for {@link TaskService#getTaskByIsScheduledTask(boolean)}.
-     *
-     * @throws MangleException
-     *
-     */
-    @Test(expectedExceptions = { MangleRuntimeException.class })
-    public void getTaskByIsScheduledTaskWithEmptyListTest() throws MangleException {
-        log.info("Executing test: getTaskByIdTest on TaskService#getTaskByIsScheduledTaskWithEmptyListTest");
-        List<Task<TaskSpec>> tasks = new ArrayList<>();
-        Mockito.when(taskRepository.findByIsScheduledTask(anyBoolean())).thenReturn(tasks);
-        try {
-            taskService.getTaskByIsScheduledTask(true);
-        } catch (MangleException e) {
-            assertEquals(e.getErrorCode(), ErrorCode.NO_RECORD_FOUND);
-            verify(taskRepository, Mockito.atLeastOnce()).findByIsScheduledTask(anyBoolean());
-            throw e;
-        }
-    }
-
-    /**
-     * Test method for {@link TaskService#getTaskByIsScheduledTask(boolean)}.
-     *
-     * @throws MangleException
-     *
-     */
-    @Test(expectedExceptions = { MangleRuntimeException.class })
-    public void getTaskByIsScheduledTaskWithNullListTest() throws MangleException {
-        log.info("Executing test: getTaskByIdTest on TaskService#getTaskByIsScheduledTaskWithNullListTest");
-        Mockito.when(taskRepository.findByIsScheduledTask(anyBoolean())).thenReturn(null);
-        try {
-            taskService.getTaskByIsScheduledTask(true);
-        } catch (MangleException e) {
-            assertEquals(e.getErrorCode(), ErrorCode.NO_RECORD_FOUND);
-            verify(taskRepository, Mockito.atLeastOnce()).findByIsScheduledTask(anyBoolean());
-            throw e;
-        }
     }
 
     /**
