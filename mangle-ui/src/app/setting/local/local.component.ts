@@ -87,7 +87,6 @@ export class LocalComponent implements OnInit {
     public deleteLocalUser(localUser) {
         this.errorFlag = false;
         this.successFlag = false;
-        this.isLoading = true;
         if (confirm('Do you want to delete: ' + localUser.username + ' user ?')) {
             this.settingService.deleteLocalUser(localUser.username).subscribe(
                 res => {

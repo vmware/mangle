@@ -16,6 +16,7 @@ mangle-models/mangle-models.iml
 mangle-services/mangle-services.iml
 mangle-utils/mangle-utils.iml
 mangle-services/.springBeans
+mangle-default-plugin/**/mangle-default-plugin-0.0.1.zip
 mangle-default-plugin/mangle-default-plugin.iml
 mangle-task-framework/mangle-task-framework.iml
 mangle-test-plugin/mangletest-plugin.iml
@@ -25,5 +26,4 @@ mangle-test-plugin/mangle-test-plugin.iml
 mangle-ui/mangle-ui.iml
 mangle-vcenter-adapter/mangle-vcenter-adapter.iml
 mangle-vcenter-adapter/bin/
-mangle-ui/package-lock.json
 mangle-ui/package-lock.json
