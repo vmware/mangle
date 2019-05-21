@@ -42,8 +42,8 @@ import com.vmware.mangle.services.UserService;
 
 /**
  *
- * Configures security for the current application, defines the authentication
- * and authorization rules for the app
+ * Configures security for the current application, defines the authentication and authorization
+ * rules for the app
  *
  * @author chetanc
  */
@@ -51,138 +51,141 @@ import com.vmware.mangle.services.UserService;
 @Configuration
 public class SecurityConfig implements WebMvcConfigurer {
 
-	UserService userService;
-	PrivilegeService privilegeService;
-	ADAuthProvider adAuthProvider;
-	CustomUserDetailsService customUserDetailsService;
-	PasswordEncoder passwordEncoder;
+    UserService userService;
+    PrivilegeService privilegeService;
+    ADAuthProvider adAuthProvider;
+    CustomUserDetailsService customUserDetailsService;
+    PasswordEncoder passwordEncoder;
 
-	@Autowired
-	public SecurityConfig(UserService userService, PrivilegeService privilegeService, ADAuthProvider adAuthProvider,
-			CustomUserDetailsService customUserDetailsService, PasswordEncoder passwordEncoder) {
-		this.userService = userService;
-		this.privilegeService = privilegeService;
-		this.adAuthProvider = adAuthProvider;
-		this.customUserDetailsService = customUserDetailsService;
-		this.passwordEncoder = passwordEncoder;
-	}
+    @Autowired
+    public SecurityConfig(UserService userService, PrivilegeService privilegeService, ADAuthProvider adAuthProvider,
+            CustomUserDetailsService customUserDetailsService, PasswordEncoder passwordEncoder) {
+        this.userService = userService;
+        this.privilegeService = privilegeService;
+        this.adAuthProvider = adAuthProvider;
+        this.customUserDetailsService = customUserDetailsService;
+        this.passwordEncoder = passwordEncoder;
+    }
 
-	/**
-	 * Configuring authentication providers to the application
-	 *
-	 * @param auth
-	 * @throws Exception
-	 */
-	@Autowired
-	public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
-		auth.authenticationProvider(adAuthProvider);
-		auth.userDetailsService(customUserDetailsService).passwordEncoder(passwordEncoder);
-	}
+    /**
+     * Configuring authentication providers to the application
+     *
+     * @param auth
+     * @throws Exception
+     */
+    @Autowired
+    public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
+        auth.authenticationProvider(adAuthProvider);
+        auth.userDetailsService(customUserDetailsService).passwordEncoder(passwordEncoder);
+    }
 
-	public List<GrantedAuthority> getAuthoritiesForUser(String username) {
-		List<GrantedAuthority> authorities = new ArrayList<>();
-		Set<Role> roles = userService.getRoleForUser(username);
-		if (roles != null) {
-			for (Role role : roles) {
-				role.setPrivileges(new HashSet<>(privilegeService.getPrivilegeByNames(role.getPrivilegeNames())));
-				for (Privilege privilege : role.getPrivileges()) {
-					authorities.add(new SimpleGrantedAuthority(privilege.getName()));
-				}
-			}
-		}
-		return authorities;
-	}
+    public List<GrantedAuthority> getAuthoritiesForUser(String username) {
+        List<GrantedAuthority> authorities = new ArrayList<>();
+        Set<Role> roles = userService.getRoleForUser(username);
+        if (roles != null) {
+            for (Role role : roles) {
+                role.setPrivileges(new HashSet<>(privilegeService.getPrivilegeByNames(role.getPrivilegeNames())));
+                for (Privilege privilege : role.getPrivileges()) {
+                    authorities.add(new SimpleGrantedAuthority(privilege.getName()));
+                }
+            }
+        }
+        return authorities;
+    }
 
-	@Configuration
-	@Order(1)
-	public static class ApiServiceWebSecurityConfigurationAdapter extends WebSecurityConfigurerAdapter {
+    @Configuration
+    @Order(1)
+    public static class ApiServiceWebSecurityConfigurationAdapter extends WebSecurityConfigurerAdapter {
 
-		private final String adminReadWrite = DefaultPrivileges.ADMIN_READ_WRITE.name();
-		private final String adminRead = DefaultPrivileges.ADMIN_READ.name();
-		private final String userReadWrite = DefaultPrivileges.USER_READ_WRITE.name();
-		private final String readOnly = DefaultPrivileges.READONLY.name();
-		private static final String REST = "/rest";
-		private static final String V1_API = "/api/v1/";
-		private static final String REST_V1_API = REST + V1_API;
+        private final String adminReadWrite = DefaultPrivileges.ADMIN_READ_WRITE.name();
+        private final String adminRead = DefaultPrivileges.ADMIN_READ.name();
+        private final String userReadWrite = DefaultPrivileges.USER_READ_WRITE.name();
+        private final String readOnly = DefaultPrivileges.READONLY.name();
+        private final String rest = "/rest";
+        private final String v1_api = "/api/v1/";
+        private final String rest_v1_api = rest + v1_api;
 
-		@Override
-		protected void configure(HttpSecurity http) throws Exception {
-			http.httpBasic().and().authorizeRequests()
-					.antMatchers("/", "/*.html", "/*.js", "/*.map", "/assets/**", "/*.ico").permitAll()
+        @Override
+        protected void configure(HttpSecurity http) throws Exception {
+            http.httpBasic().and().authorizeRequests()
+                    .antMatchers("/", "/*.html", "/*.js", "/*.map", "/assets/**", "/*.ico").permitAll()
 
-					.antMatchers(REST_V1_API + "auth-provider-management/domains").permitAll()
+                    .antMatchers("/application/health").permitAll()
 
-					.antMatchers(HttpMethod.GET, REST_V1_API + "user-management/users/admin").permitAll()
+                    .antMatchers(rest_v1_api + "auth-provider-management/domains").permitAll()
 
-					.antMatchers(HttpMethod.GET, REST_V1_API + "tasks")
-					.hasAnyAuthority(adminRead, adminReadWrite, readOnly, userReadWrite)
+                    .antMatchers(HttpMethod.GET, rest_v1_api + "user-management/users/admin").permitAll()
 
-					.antMatchers(HttpMethod.GET, REST_V1_API + "tasks/**")
-					.hasAnyAuthority(adminRead, adminReadWrite, readOnly, userReadWrite)
+                    .antMatchers(HttpMethod.GET, rest_v1_api + "tasks")
+                    .hasAnyAuthority(adminRead, adminReadWrite, readOnly, userReadWrite)
 
-					.antMatchers(HttpMethod.GET, REST_V1_API + "scheduler")
-					.hasAnyAuthority(adminRead, adminReadWrite, readOnly, userReadWrite)
+                    .antMatchers(HttpMethod.GET, rest_v1_api + "tasks/**")
+                    .hasAnyAuthority(adminRead, adminReadWrite, readOnly, userReadWrite)
 
-					.antMatchers(HttpMethod.GET, REST_V1_API + "endpoints")
-					.hasAnyAuthority(adminRead, adminReadWrite, readOnly, userReadWrite)
+                    .antMatchers(HttpMethod.GET, rest_v1_api + "scheduler")
+                    .hasAnyAuthority(adminRead, adminReadWrite, readOnly, userReadWrite)
 
-					.antMatchers(HttpMethod.GET, REST_V1_API + "endpoints/**")
-					.hasAnyAuthority(adminRead, adminReadWrite, readOnly, userReadWrite)
+                    .antMatchers(HttpMethod.GET, rest_v1_api + "endpoints")
+                    .hasAnyAuthority(adminRead, adminReadWrite, readOnly, userReadWrite)
 
-					.antMatchers(HttpMethod.GET, REST_V1_API + "role-management/roles")
-					.hasAnyAuthority(adminRead, adminReadWrite, readOnly, userReadWrite)
+                    .antMatchers(HttpMethod.GET, rest_v1_api + "endpoints/**")
+                    .hasAnyAuthority(adminRead, adminReadWrite, readOnly, userReadWrite)
 
-					.antMatchers(HttpMethod.GET, REST_V1_API + "role-management/privileges")
-					.hasAnyAuthority(adminRead, adminReadWrite)
+                    .antMatchers(HttpMethod.GET, rest_v1_api + "role-management/roles")
+                    .hasAnyAuthority(adminRead, adminReadWrite, readOnly, userReadWrite)
 
-					.antMatchers(REST_V1_API + "role-management/**").hasAuthority(adminReadWrite)
+                    .antMatchers(HttpMethod.GET, rest_v1_api + "role-management/privileges")
+                    .hasAnyAuthority(adminRead, adminReadWrite)
 
-					.antMatchers(REST_V1_API + "user-management/user")
-					.hasAnyAuthority(adminRead, adminReadWrite, readOnly)
+                    .antMatchers(rest_v1_api + "role-management/**").hasAuthority(adminReadWrite)
 
-					.antMatchers(REST_V1_API + "user-management/password")
-					.hasAnyAuthority(adminRead, adminReadWrite, userReadWrite, readOnly)
+                    .antMatchers(rest_v1_api + "user-management/user")
+                    .hasAnyAuthority(adminRead, adminReadWrite, readOnly)
 
-					.antMatchers(HttpMethod.GET, REST_V1_API + "user-management/**")
-					.hasAnyAuthority(adminRead, adminReadWrite)
+                    .antMatchers(rest_v1_api + "user-management/password")
+                    .hasAnyAuthority(adminRead, adminReadWrite, userReadWrite, readOnly)
 
-					.antMatchers(REST_V1_API + "user-management/**").hasAuthority(adminReadWrite)
+                    .antMatchers(HttpMethod.GET, rest_v1_api + "user-management/**")
+                    .hasAnyAuthority(adminRead, adminReadWrite)
 
-					.antMatchers(HttpMethod.GET, REST_V1_API + "auth-provider-management/**")
-					.hasAnyAuthority(adminRead, adminReadWrite)
+                    .antMatchers(rest_v1_api + "user-management/**").hasAuthority(adminReadWrite)
 
-					.antMatchers(REST_V1_API + "auth-provider-management/**").hasAuthority(adminReadWrite)
+                    .antMatchers(HttpMethod.GET, rest_v1_api + "auth-provider-management/**")
+                    .hasAnyAuthority(adminRead, adminReadWrite)
 
-					.antMatchers(HttpMethod.GET, REST_V1_API + "scheduler/**")
-					.hasAnyAuthority(adminRead, adminReadWrite)
+                    .antMatchers(rest_v1_api + "auth-provider-management/**").hasAuthority(adminReadWrite)
 
-					.antMatchers(REST_V1_API + "scheduler/**").hasAuthority(adminReadWrite)
+                    .antMatchers(HttpMethod.GET, rest_v1_api + "scheduler/**")
+                    .hasAnyAuthority(adminRead, adminReadWrite)
 
-					.antMatchers(REST_V1_API + "endpoints/**").hasAnyAuthority(adminRead, adminReadWrite, userReadWrite)
+                    .antMatchers(rest_v1_api + "scheduler/**").hasAuthority(adminReadWrite)
 
-					.antMatchers(REST_V1_API + "faults/**").hasAnyAuthority(adminRead, adminReadWrite, userReadWrite)
+                    .antMatchers(rest_v1_api + "endpoints/**").hasAnyAuthority(adminRead, adminReadWrite, userReadWrite)
 
-					.antMatchers(REST + "/api/**").hasAuthority(adminReadWrite)
+                    .antMatchers(rest_v1_api + "faults/**").hasAnyAuthority(adminRead, adminReadWrite, userReadWrite)
 
-					.antMatchers(REST_V1_API + "administration/**")
-					.hasAnyAuthority(adminRead, adminReadWrite, userReadWrite)
+                    .antMatchers(rest + "/api/**").hasAuthority(adminReadWrite)
 
-					.and().logout().deleteCookies("JSESSIONID");
-			http.sessionManagement().maximumSessions(5).sessionRegistry(sessionRegistry());
-			http.authorizeRequests().anyRequest().authenticated();
-			http.csrf().disable();
-		}
+                    .antMatchers(rest_v1_api + "administration/**")
+                    .hasAnyAuthority(adminRead, adminReadWrite, userReadWrite)
 
-		@Bean
-		public AuthenticationSuccessHandler myAuthenticationSuccessHandler() {
-			return new MyAuthenticationSuccessHandler();
-		}
+                    .and().logout().deleteCookies("JSESSIONID");
+            http.sessionManagement().maximumSessions(5).sessionRegistry(sessionRegistry());
+            http.authorizeRequests().anyRequest().authenticated();
+            http.csrf().disable();
+        }
 
-		@Bean
-		public SessionRegistry sessionRegistry() {
-			return new SessionRegistryImpl();
-		}
+        @Bean
+        public AuthenticationSuccessHandler myAuthenticationSuccessHandler() {
+            return new MyAuthenticationSuccessHandler();
+        }
 
-	}
+        @Bean
+        public SessionRegistry sessionRegistry() {
+            return new SessionRegistryImpl();
+        }
+
+    }
 
 }
+

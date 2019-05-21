@@ -55,12 +55,9 @@ init()
     fi
 
     if [ -z $MANGLE_DOCKER_ARTIFACTORY ]; then
-        echo "--MANGLE_DOCKER_ARTIFACTORY option not provided, so defaulting mangle to es-fault-injection-docker-local.artifactory.eng.vmware.com"
-        MANGLE_DOCKER_ARTIFACTORY="es-fault-injection-docker-local.artifactory.eng.vmware.com"
+        echo "--MANGLE_DOCKER_ARTIFACTORY option not provided, so defaulting mangle to mangle-vmware-docker-containers.bintray.io/mangle"
+        MANGLE_DOCKER_ARTIFACTORY="mangle-vmware-docker-containers.bintray.io/mangle"
     fi
-
-    #Mangle docker artifactory constants
-    MANGLE_IMAGE_BASE_URL="${MANGLE_DOCKER_ARTIFACTORY}/mangle-release/mangle:"
 
     # Initializing docker related variables
     initializeDockerConstants
@@ -68,7 +65,7 @@ init()
     # validating existing container
     validateExistingMangleContainer
 
-    MANGLE_BACKUP_IMAGE="${MANGLE_IMAGE_BASE_URL}${CURRENT_MANGLE_IMAGE_TAG}"
+    MANGLE_BACKUP_IMAGE="${MANGLE_DOCKER_ARTIFACTORY}:${CURRENT_MANGLE_IMAGE_TAG}"
 
     #Mangle constants including api uris
     MANGLE_BASE_CURL_CMD="curl -o - --max-time 10 --silent --insecure -u ${MANGLE_ADMIN_USERNAME}:${MANGLE_ADMIN_PASSWORD} -H Content-Type:application/json "
@@ -208,23 +205,6 @@ verify_if_container_is_running()
     else
         return 1
     fi
-}
-
-
-add_docker_artifactory()
-{
-    echo "Logging into docker artifactory"
-    ${LOGIN}
-    exit_if_command_failed  $?  "Successfully connected to mangle artificatory"  "connecting to mangle artifactory has failed. Please check the connectivity."
-}
-
-download_mangle_images()
-{
-    echo "Downloading the Mangle Images"
-    GET_MANGLE_WEB_IMAGE="${DOCKER_PULL_IMAGE}${MANGLE_WEB_IMAGE}${MANGLE_WEB_BUILD_NUMBER}"
-    ${GET_MANGLE_WEB_IMAGE}
-    exit_if_command_failed $? "Downloading mangle images is successfull" "Failed to get Mangle Web image. Specified build may not be valid. Please check."
-    echo "Completed downloading the images required"
 }
 
 verify_mangle_health()
@@ -414,7 +394,7 @@ upgrade_mangle_web_container()
     echo "Delete the Mangle container"
     delete_container ${MANGLE_CONTAINER_NAME}
     echo "Create new mangle container"
-    WEB_IMAGE="${MANGLE_IMAGE_BASE_URL}${MANGLE_BUILD_NUMBER}"
+    WEB_IMAGE="${MANGLE_DOCKER_ARTIFACTORY}:${MANGLE_BUILD_NUMBER}"
     create_mangle_web ${WEB_IMAGE}
     restore_if_failure $? "Creating of mangle container has failed hence, restoring to previous state"
     verify_mangle_health $NodeIP

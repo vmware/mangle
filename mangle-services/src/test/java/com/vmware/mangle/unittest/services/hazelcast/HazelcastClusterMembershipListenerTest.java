@@ -93,6 +93,30 @@ public class HazelcastClusterMembershipListenerTest {
     }
 
     @Test
+    public void testMemberAdded() throws UnknownHostException {
+        Member member = mock(Member.class);
+        Address address = new Address("127.0.0.1", 90000);
+        MembershipEvent event = mock(MembershipEvent.class);
+        Set<Member> memberSet = new HashSet<>();
+        memberSet.add(member);
+
+
+        when(member.getAddress()).thenReturn(address);
+        when(configService.getClusterConfiguration()).thenReturn(clusterConfig);
+        when(configService.updateClusterConfiguration(any())).thenReturn(clusterConfig);
+        when(event.getMembers()).thenReturn(memberSet);
+        when(event.getMember()).thenReturn(member);
+
+        listener.memberAdded(event);
+
+        verify(configService, times(1)).getClusterConfiguration();
+        verify(configService, times(1)).addClusterConfiguration(clusterConfig);
+        verify(event, times(1)).getMember();
+        verify(member, times(2)).getAddress();
+    }
+
+
+    @Test
     public void testMemberRemoved() throws UnknownHostException, MangleException {
         Member newOwner = mock(Member.class);
         Member oldOwner = mock(Member.class);

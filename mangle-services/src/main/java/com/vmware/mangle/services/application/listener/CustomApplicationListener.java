@@ -76,8 +76,8 @@ public class CustomApplicationListener implements ApplicationListener<ContextRef
         updateClusterConfigObject();
         if (null != hazelcastInstance && hazelcastInstance.getCluster().getMembers().size() == 1) {
             log.info("Mangle cluster has only one node, will be triggering scheduled tasks and in-progress tasks");
-            scheduleMisfiredJobs();
             retriggerInProgressTasks();
+            scheduleMisfiredJobs();
         }
         if (hazelcastInstance != null) {
             hazelcastInstance.getCluster().getLocalMember().setStringAttribute(
@@ -105,7 +105,7 @@ public class CustomApplicationListener implements ApplicationListener<ContextRef
                 if (CollectionUtils.isEmpty(task.getTriggers())) {
                     task.setTriggers(new Stack<>());
                     task.getTriggers().add(new TaskTrigger());
-                    updateTaskFailed(task);
+                    updateTaskFailed(task, TaskStatus.FAILED);
                 } else if (!task.isScheduledTask()) {
                     TaskTrigger trigger = task.getTriggers().peek();
                     SimpleDateFormat sdf = new SimpleDateFormat(Constants.DEFAULT_DATE_FORMAT);
@@ -114,8 +114,10 @@ public class CustomApplicationListener implements ApplicationListener<ContextRef
                             / ONE_MINUTE_IN_MILLIS < URLConstants.RETRIGGER_THRESHOLD_TIME_IN_MINS) {
                         mapService.addTaskToCache(task.getId(), task.getTaskStatus().name());
                     } else {
-                        updateTaskFailed(task);
+                        updateTaskFailed(task, TaskStatus.FAILED);
                     }
+                } else {
+                    updateTaskFailed(task, TaskStatus.TASK_SKIPPED);
                 }
             } catch (Exception e) {
                 log.error("Re-Triggering of the in-progress faults failed with an exception: " + e);
@@ -123,9 +125,12 @@ public class CustomApplicationListener implements ApplicationListener<ContextRef
         }
     }
 
-    private void updateTaskFailed(Task<TaskSpec> task) throws MangleException {
-        task.getTriggers().peek().setTaskStatus(TaskStatus.FAILED);
-        task.getTriggers().peek().setTaskFailureReason("Cluster failure");
+    private void updateTaskFailed(Task<TaskSpec> task, TaskStatus taskStatus) throws MangleException {
+        TaskTrigger taskTrigger = task.getTriggers().peek();
+        taskTrigger.setEndTime(new Date(System.currentTimeMillis()).toGMTString());
+        taskTrigger.setTaskStatus(taskStatus);
+        taskTrigger.setTaskFailureReason(
+                String.format("Node %s removed from cluster", task.getTriggers().peek().getNode()));
         taskService.addOrUpdateTask(task);
     }
 

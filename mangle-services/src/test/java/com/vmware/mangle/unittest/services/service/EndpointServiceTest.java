@@ -189,26 +189,6 @@ public class EndpointServiceTest {
      * @throws MangleException
      */
     @Test
-    public void testGetAllEndpointByTypeFailure() throws MangleException {
-        List<EndpointSpec> endpointSpecList = new ArrayList<>();
-        when(repository.findByEndPointType(any(EndpointType.class))).thenReturn(endpointSpecList);
-        boolean actualResult = false;
-        try {
-            endpointService.getAllEndpointByType(endpointSpec.getEndPointType());
-        } catch (Exception e) {
-            actualResult = true;
-        }
-        Assert.assertTrue(actualResult);
-        verify(repository, times(1)).findByEndPointType(any(EndpointType.class));
-    }
-
-    /**
-     * Test method for
-     * {@link EndpointService#getAllEndpointByType(com.vmware.mangle.model.enums.EndpointType)}.
-     *
-     * @throws MangleException
-     */
-    @Test
     public void testGetAllEndpointByTypeFailureWithNull() throws MangleException {
         List<EndpointSpec> endpointSpecList = new ArrayList<>();
         when(repository.findByEndPointType(any(EndpointType.class))).thenReturn(endpointSpecList);

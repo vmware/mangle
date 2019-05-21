@@ -84,7 +84,15 @@ public class HazelcastClusterMembershipListener implements MembershipListener, H
 
     @Override
     public void memberAdded(MembershipEvent membershipEvent) {
-        log.debug("Member {} joined the cluster", membershipEvent.getMember().getAddress());
+        Address addedMember = membershipEvent.getMember().getAddress();
+        log.debug("Member {} joined the cluster", addedMember);
+
+        Set<String> activeMembers = membershipEvent.getMembers().stream().map(member -> member.getAddress().getHost())
+                .collect(Collectors.toSet());
+
+        HazelcastClusterConfig config = clusterConfigService.getClusterConfiguration();
+        config.getMembers().addAll(activeMembers);
+        clusterConfigService.addClusterConfiguration(config);
     }
 
     /**
@@ -147,7 +155,8 @@ public class HazelcastClusterMembershipListener implements MembershipListener, H
         Set<Member> membersSet = hz.getCluster().getMembers();
 
         Set<Member> currentNodeSet = membersSet.stream()
-                .filter(member -> member.getAddress().getHost().equals(removedMemberAddress.getHost())).collect(Collectors.toSet());
+                .filter(member -> member.getAddress().getHost().equals(removedMemberAddress.getHost()))
+                .collect(Collectors.toSet());
 
         if (CollectionUtils.isEmpty(currentNodeSet) && config.getMembers().contains(removedMemberAddress.getHost())) {
             config.getMembers().remove(membershipEvent.getMember().getAddress().getHost());

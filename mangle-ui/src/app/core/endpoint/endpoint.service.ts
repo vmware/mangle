@@ -95,7 +95,7 @@ export class EndpointService {
         let body = new FormData();
         body.append(CommonConstants.name_var, credential.name);
         body.append(CommonConstants.username, credential.username);
-        if (credential.password != undefined) {
+        if (typeof credential.password != undefined && credential.password != "" && credential.password != null) {
             body.append(CommonConstants.password, credential.password);
         }
         else {
