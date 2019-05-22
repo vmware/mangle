@@ -12,7 +12,7 @@
     * [Infrastructure Faults](sre-developers-and-users/injecting-faults/infrastructure-faults.md)
     * [Application Faults](sre-developers-and-users/injecting-faults/application-faults.md)
   * [Requests and Reports](sre-developers-and-users/requests-and-reports.md)
-* [Troubleshooting Guide](troubleshooting-guide/README.md)
+* [Mangle Troubleshooting Guide](troubleshooting-guide/README.md)
   * [Deployment Stage](troubleshooting-guide/deployment-stage.md)
   * [Boot/Initialization Stage](troubleshooting-guide/boot-stage.md)
   * [Endpoint Addition Stage](troubleshooting-guide/endpoint-addition-stage.md)

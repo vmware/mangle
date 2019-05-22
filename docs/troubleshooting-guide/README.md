@@ -1,4 +1,4 @@
-# Troubleshooting Guide
+# Mangle Troubleshooting Guide
 
 This guide will help you to diagnose common issues with Mangle deployment and operation and determine what information to collect for further debugging.
 
