@@ -19,6 +19,12 @@ export class LoginComponent implements OnInit {
   public authSources: any;
   public submitBtnState: ClrLoadingState = ClrLoadingState.DEFAULT;
 
+  public authData = {
+    "authSource": null,
+    "username": null,
+    "password": null
+  };
+
   ngOnInit() {
     this.getAuthSources();
   }

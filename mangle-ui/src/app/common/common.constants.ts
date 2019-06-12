@@ -19,12 +19,12 @@ export class CommonConstants {
     public static readonly metricProviderByStatus = "metricProviderByStatus";
     public static readonly metricProviderName = "metricProviderName";
     public static readonly enableMangleMetrics = "enableMangleMetrics";
-    public static readonly domainNames = "jobIds";
+    public static readonly domainNames = "domainNames";
     public static readonly usernames = "usernames";
     public static readonly roles = "roles";
     public static readonly caCert = "caCert";
     public static readonly serverCert = "serverCert";
     public static readonly certificatesName = "certificatesName";
     public static readonly certificatesNames = CommonConstants.certificatesName + "s";
-    public static readonly active= "ACTIVE";
+    public static readonly active = "ACTIVE";
 }

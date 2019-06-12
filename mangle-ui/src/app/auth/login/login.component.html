@@ -1,5 +1,5 @@
 <div class="login-wrapper">
-    <form class="login" #loginForm="ngForm" (ngSubmit)="login(loginForm.value);" ngNativeValidate>
+    <form class="login" #loginForm="ngForm" (ngSubmit)="login(loginForm.value);" *ngIf="authData" ngNativeValidate>
         <label class="title">
             <h3 class="welcome">Welcome to Mangle</h3>
             <h5 class="hint">
@@ -8,14 +8,13 @@
         </label>
         <div class="login-group">
             <div class="auth-source select">
-                <select name="authSource" [(ngModel)]="authSource" required>
-                    <ng-container *ngFor="let sourceAuth of authSources">
-                        <option [value]="sourceAuth">{{sourceAuth}}</option>
-                    </ng-container>
+                <select name="authSource" [(ngModel)]="authData.authSource" required>
+                    <option *ngIf="!loginForm.value.authSource" [value]="null" selected disabled></option>
+                    <option [value]="sourceAuth" *ngFor="let sourceAuth of authSources">{{sourceAuth}}</option>
                 </select>
             </div>
-            <input class="username" type="text" id="username" name="username" [(ngModel)]="username" required>
-            <input class="password" type="password" id="password" name="password" [(ngModel)]="password" required>
+            <input class="username" type="text" id="username" name="username" [(ngModel)]="authData.username" required>
+            <input class="password" type="password" id="password" name="password" [(ngModel)]="authData.password" required>
             <div>
                 <clr-alert *ngIf="errorFlag" [clrAlertType]="'danger'">
                     <div class="alert-item">{{alertMessage}}</div>
