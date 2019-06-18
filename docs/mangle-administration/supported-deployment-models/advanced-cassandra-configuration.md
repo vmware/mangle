@@ -104,12 +104,12 @@ To download the Cassandra client as DevCenter form [DevCenter](https://academy.d
 Create seed Node : 
 
 ```text
-docker run --name mangle-cassandra -v /cassandra/storage/:/var/lib/cassandra -p 9042:9042 -d -e CASSANDRA_DC="DC1" -e CASSANDRA_RACK="rack1" -e CASSANDRA_ENDPOINT_SNITCH="GossipingPropertyFileSnitch" mangle-docker-containers.bintray.io/mangle:$MANGLE_VERSION
+docker run --name mangle-cassandra -v /cassandra/storage/:/var/lib/cassandra -p 9042:9042 -d -e CASSANDRA_DC="DC1" -e CASSANDRA_RACK="rack1" -e CASSANDRA_ENDPOINT_SNITCH="GossipingPropertyFileSnitch" mangleuser/mangle:$MANGLE_VERSION
 ```
 
 Join the Other Node to Seed Node : 
 
 ```text
-docker run --name mangle-cassandra-n1 -v /cassandra/n1storage/:/var/lib/cassandra -p 9043:9042 -d -e CASSANDRA_SEEDS="$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' mangle-cassandra)" -e CASSANDRA_DC="DC1" -e CASSANDRA_RACK="rack1" -e CASSANDRA_ENDPOINT_SNITCH="GossipingPropertyFileSnitch" mangle-docker-containers.bintray.io/mangle:$MANGLE_VERSION 
+docker run --name mangle-cassandra-n1 -v /cassandra/n1storage/:/var/lib/cassandra -p 9043:9042 -d -e CASSANDRA_SEEDS="$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' mangle-cassandra)" -e CASSANDRA_DC="DC1" -e CASSANDRA_RACK="rack1" -e CASSANDRA_ENDPOINT_SNITCH="GossipingPropertyFileSnitch" mangleuser/mangle:$MANGLE_VERSION 
 ```
 
