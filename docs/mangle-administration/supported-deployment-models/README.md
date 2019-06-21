@@ -175,7 +175,7 @@ Mangle vCenter Adapter is a fault injection adapter for injecting vCenter specif
 To deploy the vCenter adapter container run the docker command below on the docker host.
 
 ```text
-docker run --name mangle-vc-adapter -v /var/opt/mangle-vc-adapter-tomcat/logs:/var/opt/mangle-vc-adapter-tomcat/logs -d -p 8080:8080 -p 8443:8443 mangleuser/mangle-vcenter-adapter:<VERSION>
+docker run --name mangle-vc-adapter -v /var/opt/mangle-vc-adapter-tomcat/logs:/var/opt/mangle-vc-adapter-tomcat/logs -d -p 8080:8080 -p 8443:8443 mangleuser/mangle_vcenter_adapter:<VERSION>
 ```
 
 {% hint style="info" %}
@@ -215,7 +215,7 @@ Deploy the Mangle cluster by bringing up the mangle container in each docker hos
 **For the first node in the cluster:**
 
 ```text
-docker run --name mangle -d -v /var/opt/mangle-tomcat/logs:/var/opt/mangle-tomcat/logs -e DB_OPTIONS="-DcassandraContactPoints=<Cassandra-IP>" -e CLUSTER_OPTIONS="-DclusterName=<CLUSTER-NAME> -DclusterValidationToken=<CLUSTER-VALIDATION-TOKEN> -DpublicAddress=<DOCKER-HOST-IP-1>" -p 8080:8080 -p 443:8443 -p 5701:5701 mmangleuser/mangle:<VERSION>
+docker run --name mangle -d -v /var/opt/mangle-tomcat/logs:/var/opt/mangle-tomcat/logs -e DB_OPTIONS="-DcassandraContactPoints=<Cassandra-IP>" -e CLUSTER_OPTIONS="-DclusterName=<CLUSTER-NAME> -DclusterValidationToken=<CLUSTER-VALIDATION-TOKEN> -DpublicAddress=<DOCKER-HOST-IP-1>" -p 8080:8080 -p 443:8443 -p 5701:5701 mangleuser/mangle:<VERSION>
 ```
 
 **For the subsequent nodes in the cluster:**
