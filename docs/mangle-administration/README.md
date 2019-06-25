@@ -4,7 +4,7 @@ _Mangle Deployment and Administration Guide_ provides information about how to i
 
 **Product version: 1.0**
 
-#### Intended Audience
+## Intended Audience
 
 This information is intended for Mangle administrators who would be setting up Mangle, adding users, adding metric providers for monitoring faults, setting log levels and creating support bundles. Knowledge of [container technology](https://en.wikipedia.org/wiki/Operating-system-level_virtualization) and [Docker](https://docs.docker.com/) will be useful.
 

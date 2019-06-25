@@ -18,12 +18,12 @@ It provides details of the tasks executed by Mangle.
 
 ### Supported operations for Mangle tasks
 
-Click on ![](../.gitbook/assets/supportedactionsbutton%20%281%29.png) to understand what operations are supported for a specific task.
+Click on ![](../.gitbook/assets/supportedactionsbutton-1.png) to understand what operations are supported for a specific task.
 
-Primarily, the operations supported are Delete, Remediate Fault and Report. 
+Primarily, the operations supported are Delete, Remediate Fault and Report.
 
 {% hint style="info" %}
-Remediate Fault option will be enabled only if the the task type is INJECTION and status is set to COMPLETED. 
+Remediate Fault option will be enabled only if the the task type is INJECTION and status is set to COMPLETED.
 {% endhint %}
 
 {% hint style="info" %}
@@ -32,7 +32,7 @@ Delete is not supported for tasks created through scheduled jobs.
 
 ### Refreshing the Mangle task data grid
 
-Click on refresh icon  ![](../.gitbook/assets/refreshbutton.png) to sync Mangle task data grid with the current status.
+Click on refresh icon ![](../.gitbook/assets/refreshbutton%20%281%29.png) to sync Mangle task data grid with the current status.
 
 ## Scheduled Jobs
 
@@ -51,13 +51,13 @@ Click on the ID link of each schedule to view all the triggers of that schedule.
 
 ### Supported operations for Mangle schedules
 
-Click on ![](../.gitbook/assets/supportedactionsbutton%20%281%29.png) to understand what operations are supported for a Scheduled Job.
+Click on ![](../.gitbook/assets/supportedactionsbutton-1%20%281%29.png) to understand what operations are supported for a Scheduled Job.
 
-Primarily, the operations supported are Cancel, Pause, Resume, Reports, Delete, and Delete Schedule Only. 
+Primarily, the operations supported are Cancel, Pause, Resume, Reports, Delete, and Delete Schedule Only.
 
 ### Refreshing the schedule data grid
 
-Click on refresh icon  ![](../.gitbook/assets/refreshbutton.png) to sync Mangle schedule data grid with the current status.
+Click on refresh icon ![](../.gitbook/assets/refreshbutton.png) to sync Mangle schedule data grid with the current status.
 
 ## Logs
 
@@ -68,8 +68,8 @@ Click on the Logs link to open up a browser window displaying the current Mangle
 {% hint style="info" %}
 **For access to relevant API Swagger documentation:**
 
-Please traverse to link ****![](../.gitbook/assets/help.png) -----&gt; API Documentation from the Mangle UI or access _https://&lt;Mangle IP or Hostname&gt;/mangle-services/swagger-ui.html\#_/_scheduler-controller_
+Please traverse to link _\*\*_![](../.gitbook/assets/help.png) -----&gt; API Documentation from the Mangle UI or access [https://&lt;Mangle](https://<Mangle) _IP or Hostname&gt;/mangle-services/swagger-ui.html\#_/_scheduler-controller_
 
-  ![](../.gitbook/assets/schedulercontroller.png) 
+![](../.gitbook/assets/schedulercontroller.png)
 {% endhint %}
 

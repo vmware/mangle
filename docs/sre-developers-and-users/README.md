@@ -4,7 +4,7 @@ _Mangle Users Guide_ provides information about how to add endpoints, run faults
 
 **Product version: 1.0**
 
-#### Intended Audience
+## Intended Audience
 
 This information is intended for SRE, Developers and Chaos engineers who would like to run chaos experiments against infrastructure or applications to assess the resilience of their applications when subjected to unexpected failures.
 

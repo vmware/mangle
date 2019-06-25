@@ -2,7 +2,7 @@
 
 Boot involves the Mangle appliance powering on and the containers being setup.
 
-At the end of boot or initialization phase, the Mangle application should be available at URL: https://_&lt;IP or Hostname provided&gt;_/mangle-services and the default admin user should be prompted to change password on login.
+At the end of boot or initialization phase, the Mangle application should be available at URL: [https://\_&lt;IP](https://_<IP) or Hostname provided&gt;\_/mangle-services and the default admin user should be prompted to change password on login.
 
 ## **Boot Failures**
 
@@ -52,7 +52,7 @@ The goal of this step is to be able to SSH to the Mangle appliance to allow for 
 
     `vmware`.
 
-  * Are there any startup components that failed to start? 
+  * Are there any startup components that failed to start?
     * Run `docker ps`. It should list two or three containers in running state; mangle or mangleWEB, mangleDB and the mangle-vsphere-adapter.
       * If no, continue with the next steps. If DB container is not running execute:
 

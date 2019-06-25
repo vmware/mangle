@@ -6,7 +6,7 @@ CPU fault enables spiking cpu usage values for a selected application within a s
 
 This fault therefore takes additional arguments to identify the application under test.
 
-**Steps to follow:** 
+**Steps to follow:**
 
 1. Login as a user with read and write privileges to Mangle.
 2. Navigate to Fault Execution tab ---&gt; Application Faults ---&gt; CPU.
@@ -31,17 +31,17 @@ This fault therefore takes additional arguments to identify the application unde
 12. If Mangle was able to successfully trigger the fault, the status of the task will change to "COMPLETED". The fault will continue to run at the endpoint until the timeout expires or a remediation request is triggered. The option to trigger a remediation request at anytime can be found on clicking the ![](../../.gitbook/assets/supportedactionsbutton.png) button against the task in the Processed Requests table.
 13. For monitoring purposes, log into either Wavefront or Datadog once it is configured as an active Metric provider in Mangle and refer to the Events section. Events similar to the screenshots provided below will be available on the monitoring tool for tracking purposes.
 
-     ![](../../.gitbook/assets/datadogevents.png) 
+    ![](../../.gitbook/assets/datadogevents.png)
 
-
-
-      ![](../../.gitbook/assets/wavefrontevents.png) 
+```text
+  ![](../../.gitbook/assets/wavefrontevents.png) 
+```
 
 ## Memory Fault
 
 Memory fault enables spiking memory usage values for a selected endpoint by a percentage specified by the user. With the help of a timeout field the duration for the fault run can be specified after which Mangle triggers the automatic remediation procedure.
 
-**Steps to follow:** 
+**Steps to follow:**
 
 1. Login as a user with read and write privileges to Mangle.
 2. Navigate to Fault Execution tab ---&gt; Infrastructure Faults ---&gt; Memory.
@@ -66,19 +66,19 @@ Memory fault enables spiking memory usage values for a selected endpoint by a pe
 12. If Mangle was able to successfully trigger the fault, the status of the task will change to "COMPLETED". The fault will continue to run at the endpoint until the timeout expires or a remediation request is triggered. The option to trigger a remediation request at anytime can be found on clicking the ![](../../.gitbook/assets/supportedactionsbutton.png) button against the task in the Processed Requests table.
 13. For monitoring purposes, log into either Wavefront or Datadog once it is configured as an active Metric provider in Mangle and refer to the Events section. Events similar to the screenshots provided below will be available on the monitoring tool for tracking purposes.
 
-     ![](../../.gitbook/assets/datadogevents.png) 
+    ![](../../.gitbook/assets/datadogevents.png)
 
-
-
-      ![](../../.gitbook/assets/wavefrontevents.png) 
+```text
+  ![](../../.gitbook/assets/wavefrontevents.png) 
+```
 
 ## Relevant API Reference
 
 {% hint style="info" %}
 **For access to relevant API Swagger documentation:**
 
-Please traverse to link ****![](../../.gitbook/assets/help.png) -----&gt; API Documentation from the Mangle UI or access _https://&lt;Mangle IP or Hostname&gt;/mangle-services/swagger-ui.html\#_/_fault-injection-controller_
+Please traverse to link _\*\*_![](../../.gitbook/assets/help.png) -----&gt; API Documentation from the Mangle UI or access [https://&lt;Mangle](https://<Mangle) _IP or Hostname&gt;/mangle-services/swagger-ui.html\#_/_fault-injection-controller_
 
-  ![](../../.gitbook/assets/faultinjectioncontroller.png) 
+![](../../.gitbook/assets/faultinjectioncontroller.png)
 {% endhint %}
 
