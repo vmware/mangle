@@ -65,6 +65,17 @@ Mangle supports VMware vCenter as endpoints or targets for injection. It needs t
 6. A success message is displayed and the table for Endpoints will be updated with the new entry.
 7. Click on ![](../.gitbook/assets/supportedactionsbutton.png) against a table entry to see the supported operations.
 
+{% hint style="info" %}
+When the vCenter adapter is deployed on the same machine on which Mangle is running, vCenter adapter IP used for adding vCenter endpoint can be either
+
+* A internal docker container IP OR
+* A docker host IP 
+
+**To find out the internal docker container IP for mangle-vc-adapter run**
+
+`docker inspect --format '{{.NetworkSettings.IPAddress}}' *mangle-vc-adapter`
+{% endhint %}
+
 #### Remote Machine Endpoint
 
 Mangle supports any remote machine with ssh enabled as endpoints or targets for injection. It needs the IP/Hostname, credentials \(either password or private key\), ssh details, OS type and tags to connect to the remote machine and run the supported faults.
