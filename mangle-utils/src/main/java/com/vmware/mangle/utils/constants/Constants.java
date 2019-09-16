@@ -20,12 +20,19 @@ public class Constants {
     private Constants() {
     }
 
+    public static boolean SCHEMA_MIGRATED = false;
     // TIMEOUT_CONSTANTS
     public static final int TIMEOUT_SEC_VERY_LONG = 10800;
     public static final int TIMEOUT_SEC_LONG = 3600;
     public static final int TIMEOUT_SEC_SHORT = 300;
     public static final int NO_OF_RETRIES = 6;
-    public static final int RETRY_COUNT = 10;
+    public static final int RETRY_WAIT_INTERVAL = 10;
+    public static int ONE_MINUTE_IN_MILLIS = 60000;
+    public static final int RETRIGGER_THRESHOLD_TIME_IN_MINS = 30;
+    public static final int DEFAULT_THREAD_POOL_SIZE = 5;
+    public static final String DEFAULT_TASK_SCHEDULER_THREAD_POOL_NAME = "MangleThreadPoolTaskScheduler";
+    public static final int USER_ACCOUNT_LOGOUT_THRESHOLD = 5;
+    public static final int USER_ACCOUNT_LOCK_RELEASE_TIME_IN_MINS = 30;
 
     // Unit in Seconds
     public static final int SSH_CONNECT_TIMEOUT = 500;

@@ -12,17 +12,17 @@
 package com.vmware.mangle.services.cassandra.model.events.basic;
 
 import java.io.Serializable;
-import java.time.LocalDate;
+import java.util.Date;
 import java.util.UUID;
+
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.springframework.data.cassandra.core.mapping.Indexed;
 import org.springframework.data.cassandra.core.mapping.PrimaryKey;
-import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.format.annotation.DateTimeFormat.ISO;
 
 /**
  * Domain entity for Spring events.
@@ -40,9 +40,9 @@ public class Event implements Serializable {
     protected String id;
 
     @NotNull(message = "{errors.required}")
-    @DateTimeFormat(iso = ISO.DATE)
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss z")
     @Indexed
-    protected LocalDate eventDate;
+    protected Date eventDate;
 
     @NotNull(message = "{errors.required}")
     @Size(min = 5, max = 30, message = "{errors.range}")
@@ -56,7 +56,7 @@ public class Event implements Serializable {
         this.id = UUID.randomUUID().toString();
         this.name = "";
         this.message = "";
-        this.eventDate = LocalDate.now();
+        this.eventDate = new Date();
     }
 
     public Event(String name, String message) {

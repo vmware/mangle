@@ -24,6 +24,7 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,7 +43,10 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import com.vmware.mangle.cassandra.model.endpoint.AWSCredentials;
+import com.vmware.mangle.cassandra.model.endpoint.CertificatesSpec;
 import com.vmware.mangle.cassandra.model.endpoint.CredentialsSpec;
+import com.vmware.mangle.cassandra.model.endpoint.DockerCertificates;
 import com.vmware.mangle.cassandra.model.endpoint.EndpointSpec;
 import com.vmware.mangle.cassandra.model.endpoint.K8SCredentials;
 import com.vmware.mangle.cassandra.model.endpoint.RemoteMachineCredentials;
@@ -59,6 +63,7 @@ import com.vmware.mangle.services.deletionutils.CredentialDeletionService;
 import com.vmware.mangle.services.deletionutils.EndpointCertificatesDeletionService;
 import com.vmware.mangle.services.deletionutils.EndpointDeletionService;
 import com.vmware.mangle.services.events.web.CustomEventPublisher;
+import com.vmware.mangle.services.mockdata.CertificatesSpecMockData;
 import com.vmware.mangle.services.mockdata.CredentialsSpecMockData;
 import com.vmware.mangle.services.mockdata.EndpointMockData;
 import com.vmware.mangle.utils.exceptions.MangleException;
@@ -103,6 +108,7 @@ public class EndpointControllerTest {
 
     private EndpointMockData mockData = new EndpointMockData();
     private CredentialsSpecMockData credentialsSpecMockData = new CredentialsSpecMockData();
+    private CertificatesSpecMockData certificatesSpecMockData = new CertificatesSpecMockData();
 
 
     @BeforeMethod
@@ -163,6 +169,20 @@ public class EndpointControllerTest {
         Assert.assertEquals(responseList.size(), 1);
         Assert.assertEquals(responseList.get(0), spec);
         verify(endpointService, atLeast(1)).getAllEndpointByType(any());
+    }
+
+    @Test
+    public void getAllDockerContainersByEndpoint() throws MangleException {
+        EndpointSpec spec = mockData.getDockerEndpointSpecMock();
+        String containerName = "container1";
+        List<String> list = new ArrayList<>(Arrays.asList(containerName));
+        when(endpointService.getAllContainersByEndpointName(any())).thenReturn(list);
+        ResponseEntity<List<String>> response = controller.getAllDockerContainersByEndpoint(spec.getName());
+        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
+        List<String> responseList = response.getBody();
+        Assert.assertEquals(responseList.size(), 1);
+        Assert.assertEquals(responseList.get(0), containerName);
+        verify(endpointService, atLeast(1)).getAllContainersByEndpointName(any());
     }
 
     @Test
@@ -286,15 +306,14 @@ public class EndpointControllerTest {
     /**
      * Test method for {@link EndpointController#addCredentials(AWSCredentials)}
      */
-    //Will be uncommented when we started supporting AWS endpoint
-    /*@Test
+    @Test
     public void testAddCredentialsAWS() throws MangleException {
         CredentialsSpec credentialsSpec = credentialsSpecMockData.getAWSCredentialsData();
         when(credentialService.addOrUpdateCredentials(any())).thenReturn(credentialsSpec);
         ResponseEntity<CredentialsSpec> responseEntity = controller.addCredentials((AWSCredentials) credentialsSpec);
         Assert.assertEquals(responseEntity.getStatusCode(), HttpStatus.OK);
         Assert.assertEquals(responseEntity.getBody(), credentialsSpec);
-    }*/
+    }
 
     /**
      * Test method for {@link EndpointController#addCredentials(VCenterCredentials)}
@@ -596,5 +615,104 @@ public class EndpointControllerTest {
         Assert.assertEquals(responseEntity.getStatusCode(), HttpStatus.OK);
         Assert.assertEquals(responseEntity.getBody(), credentialsSpec);
         verify(credentialService, times(1)).updateCredential(any());
+    }
+
+    /**
+     * Test method for {@link EndpointController#getAllEndpointCertificates()}
+     *
+     * @throws MangleException
+     */
+    @Test
+    public void testGetAllEndpointCertificates() throws MangleException {
+        List<CertificatesSpec> certificateSpecs = new ArrayList<>();
+        when(certificatesService.getAllCertificates()).thenReturn(certificateSpecs);
+        ResponseEntity<List<CertificatesSpec>> responseEntity = controller.getAllEndpointCertificates();
+        Assert.assertEquals(responseEntity.getStatusCode(), HttpStatus.OK);
+        Assert.assertEquals(responseEntity.getBody(), certificateSpecs);
+    }
+
+    /**
+     * Test method for {@link EndpointController#deleteCertificates(List<String> certificatesNames)}
+     *
+     * @throws MangleException
+     */
+    @Test
+    public void testDeleteCertificates() throws MangleException {
+        DeleteOperationResponse response = new DeleteOperationResponse();
+        response.setAssociations(Collections.emptyMap());
+        when(certificatesDeletionService.deleteCertificatesByNames(any())).thenReturn(response);
+        ResponseEntity<ErrorDetails> responseEntity = controller.deleteCertificates(Collections.emptyList());
+        Assert.assertEquals(responseEntity.getStatusCode(), HttpStatus.NO_CONTENT);
+        Map<String, List<String>> associations = new HashMap<>();
+        associations.put("DummyAssocitation", new ArrayList<>());
+        response.setAssociations(associations);
+        responseEntity = controller.deleteCertificates(Collections.emptyList());
+        Assert.assertEquals(responseEntity.getStatusCode(), HttpStatus.PRECONDITION_FAILED);
+    }
+
+    /**
+     * Test method for {@link EndpointController#addDockerEndpointCertificates}
+     *
+     * @throws MangleException
+     * @throws IOException
+     */
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testAddDockerEndpointCertificates() throws IOException {
+        CertificatesSpec certificatesSpec = certificatesSpecMockData.getDockerCertificatesData();
+        DeleteOperationResponse response = new DeleteOperationResponse();
+        response.setAssociations(Collections.emptyMap());
+        try {
+            when(certificatesDeletionService.deleteCertificatesByNames(any())).thenReturn(response);
+            doNothing().when(certificatesService).validateDockerCertificates(any(), any(), any());
+            when(certificatesService.generateDockerCertificatesSpec(any(), any(), any(), any(), any()))
+                    .thenReturn(new DockerCertificates());
+            when(certificatesService.addOrUpdateCertificates(any())).thenReturn(certificatesSpec);
+            ResponseEntity<CertificatesSpec> responseEntity = controller.addDockerEndpointCertificates(
+                    "DummyCertificateID", "DummyCertificate", Mockito.mock(MultipartFile.class),
+                    Mockito.mock(MultipartFile.class), Mockito.mock(MultipartFile.class));
+            Assert.assertEquals(responseEntity.getBody(), certificatesSpec);
+            when(certificatesService.generateDockerCertificatesSpec(any(), any(), any(), any(), any()))
+                    .thenThrow(IOException.class);
+            responseEntity = controller.addDockerEndpointCertificates("DummyCertificateID", "DummyCertificate",
+                    Mockito.mock(MultipartFile.class), Mockito.mock(MultipartFile.class),
+                    Mockito.mock(MultipartFile.class));
+            Assert.assertEquals(responseEntity.getBody(), certificatesSpec);
+        } catch (MangleException e) {
+            Assert.assertEquals(e.getErrorCode(), ErrorCode.IO_EXCEPTION);
+        }
+    }
+
+    /**
+     * Test method for {@link EndpointController#updateDockerEndpointCertificates}
+     *
+     * @throws MangleException
+     * @throws IOException
+     */
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testUpdateDockerEndpointCertificates() throws IOException {
+        CertificatesSpec certificatesSpec = certificatesSpecMockData.getDockerCertificatesData();
+        DeleteOperationResponse response = new DeleteOperationResponse();
+        response.setAssociations(Collections.emptyMap());
+        try {
+            when(certificatesDeletionService.deleteCertificatesByNames(any())).thenReturn(response);
+            doNothing().when(certificatesService).validateDockerCertificates(any(), any(), any());
+            when(certificatesService.generateDockerCertificatesSpec(any(), any(), any(), any(), any()))
+                    .thenReturn(new DockerCertificates());
+            when(certificatesService.updateCertificates(any())).thenReturn(certificatesSpec);
+            ResponseEntity<CertificatesSpec> responseEntity = controller.updateDockerEndpointCertificates(
+                    "DummyCertificateID", "DummyCertificate", Mockito.mock(MultipartFile.class),
+                    Mockito.mock(MultipartFile.class), Mockito.mock(MultipartFile.class));
+            Assert.assertEquals(responseEntity.getBody(), certificatesSpec);
+            when(certificatesService.generateDockerCertificatesSpec(any(), any(), any(), any(), any()))
+                    .thenThrow(IOException.class);
+            responseEntity = controller.updateDockerEndpointCertificates("DummyCertificateID", "DummyCertificate",
+                    Mockito.mock(MultipartFile.class), Mockito.mock(MultipartFile.class),
+                    Mockito.mock(MultipartFile.class));
+            Assert.assertEquals(responseEntity.getBody(), certificatesSpec);
+        } catch (MangleException e) {
+            Assert.assertEquals(e.getErrorCode(), ErrorCode.IO_EXCEPTION);
+        }
     }
 }

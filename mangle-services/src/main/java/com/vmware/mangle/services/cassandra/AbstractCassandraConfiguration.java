@@ -19,6 +19,8 @@ import java.util.Set;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
 import org.springframework.beans.factory.BeanClassLoaderAware;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
@@ -40,8 +42,10 @@ import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
+import com.vmware.mangle.services.PluginService;
 import com.vmware.mangle.services.cassandra.converters.CertificatesSpecReadingConverter;
 import com.vmware.mangle.services.cassandra.converters.CredentialsSpecReadingConverter;
+import com.vmware.mangle.services.cassandra.converters.EventReadingConverter;
 import com.vmware.mangle.services.cassandra.converters.FaultSpecReadingConverter;
 import com.vmware.mangle.services.cassandra.converters.TaskReadingConverter;
 import com.vmware.mangle.services.cassandra.converters.TaskSpecReadingConverter;
@@ -53,9 +57,12 @@ import com.vmware.mangle.services.cassandra.converters.TaskSpecWritingConverter;
  * @author kumargautam
  */
 @Configuration
+@ConditionalOnBean(value = PluginService.class)
 public abstract class AbstractCassandraConfiguration extends AbstractClusterConfiguration
         implements BeanClassLoaderAware {
 
+    @Autowired
+    private PluginService pluginService;
     private @Nullable ClassLoader beanClassLoader;
 
     /**
@@ -176,6 +183,7 @@ public abstract class AbstractCassandraConfiguration extends AbstractClusterConf
         List<Converter<?, ?>> converters = new ArrayList<>();
         converters.add(new CredentialsSpecReadingConverter());
         converters.add(new CertificatesSpecReadingConverter());
+        converters.add(new EventReadingConverter());
         converters.add(new TaskSpecWritingConverter());
         converters.add(new TaskSpecReadingConverter());
         converters.add(getTaskReadingCoverter(converters));
@@ -187,7 +195,7 @@ public abstract class AbstractCassandraConfiguration extends AbstractClusterConf
         CassandraMappingContext mappingContext = new CassandraMappingContext(
                 new SimpleUserTypeResolver(cluster, this.getKeyspaceName()), new SimpleTupleTypeFactory(cluster));
         mappingContext.setUserTypeResolver(new SimpleUserTypeResolver(cluster, getKeyspaceName()));
-        converters.add(new FaultSpecReadingConverter());
+        converters.add(new FaultSpecReadingConverter(pluginService));
         mappingContext.setCustomConversions(new CassandraCustomConversions(converters));
 
         MappingCassandraConverter cassandraConverter = new MappingCassandraConverter(mappingContext);

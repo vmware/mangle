@@ -22,11 +22,11 @@ import java.util.stream.Collectors;
 
 import com.datastax.driver.core.PagingState;
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.cassandra.core.query.CassandraPageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import com.vmware.mangle.cassandra.model.faults.specs.TaskSpec;
 import com.vmware.mangle.cassandra.model.tasks.RemediableTask;
@@ -61,6 +61,18 @@ public class TaskService {
     public List<Task<TaskSpec>> getAllTasks() {
         log.info("Retrieving all Tasks...");
         return taskRepository.findAll();
+    }
+
+    public List<Task<TaskSpec>> getAllTasks(Boolean isScheduledTask, String taskName) {
+        if (null != isScheduledTask && StringUtils.hasText(taskName)) {
+            return getTaskByIsScheduledTaskAndTaskName(isScheduledTask, taskName);
+        } else if (null != isScheduledTask && !StringUtils.hasText(taskName)) {
+            return getTaskByIsScheduledTask(isScheduledTask);
+        } else if (null == isScheduledTask && StringUtils.hasText(taskName)) {
+            return getTaskByTaskName(taskName);
+        } else {
+            return getAllTasks();
+        }
     }
 
     public Task<TaskSpec> getTaskById(String taskId) throws MangleException {
@@ -121,14 +133,20 @@ public class TaskService {
         }
     }
 
+
     public int getTotalPages(Slice<Task<TaskSpec>> slice) {
         long totalCount = taskRepository.count();
         return slice.getSize() == 0 ? 1 : (int) Math.ceil((double) totalCount / (double) slice.getSize());
     }
 
-    public List<Task<TaskSpec>> getTaskByIsScheduledTask(boolean isScheduledTask) throws MangleException {
-        log.info("Retrieving task by isScheduledTask : " + isScheduledTask);
+    public List<Task<TaskSpec>> getTaskByIsScheduledTask(boolean isScheduledTask) {
+        log.info("Retrieving all tasks by isScheduledTask : " + isScheduledTask);
         return taskRepository.findByIsScheduledTask(isScheduledTask);
+    }
+
+    public List<Task<TaskSpec>> getTaskByIsScheduledTaskAndTaskName(boolean isScheduledTask, String taskName) {
+        log.info("Retrieving all tasks with scheduled {} and taskName {}", isScheduledTask, taskName);
+        return taskRepository.findByTaskNameAndIsScheduledTask(taskName, isScheduledTask);
     }
 
     /**
@@ -144,17 +162,17 @@ public class TaskService {
 
     public List<Task<TaskSpec>> getInProgressTasks() {
         List<Task<TaskSpec>> tasks = taskRepository.findAll();
-        return tasks.stream().filter(task -> (task.getTaskStatus() == TaskStatus.IN_PROGRESS || task.getTaskStatus() == TaskStatus.INITIALIZING))
-                .collect(Collectors.toList());
+        return tasks.stream().filter(task -> (task.getTaskStatus() == TaskStatus.IN_PROGRESS
+                || task.getTaskStatus() == TaskStatus.INITIALIZING)).collect(Collectors.toList());
     }
 
-    public Task<TaskSpec> getTaskByTaskName(String taskName) {
+    public List<Task<TaskSpec>> getTaskByTaskName(String taskName) {
         log.debug("Retrieving task by task name: {}", taskName);
-        Task<TaskSpec> task = taskRepository.findByTaskName(taskName);
-        if (task == null) {
+        List<Task<TaskSpec>> tasks = taskRepository.findByTaskName(taskName);
+        if (tasks == null) {
             throw new MangleRuntimeException(ErrorCode.NO_RECORD_FOUND, ErrorConstants.TASK_NAME, taskName);
         }
-        return taskRepository.findByTaskName(taskName);
+        return tasks;
     }
 
     /**

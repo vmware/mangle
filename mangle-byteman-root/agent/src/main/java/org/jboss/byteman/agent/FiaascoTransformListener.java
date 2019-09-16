@@ -68,7 +68,7 @@ public class FiaascoTransformListener extends Thread {
         this.retransformer = retransformer;
         faultsHelper = FaultsHelper.getInstance();
         setDaemon(true);
-        System.out.println("Started Listener");
+        System.out.println("Started Listener by Mangle for Injecting Java Application Faults");
     }
 
     public static synchronized boolean initialize(Retransformer retransformer) {

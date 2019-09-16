@@ -5,16 +5,14 @@ import { MessageConstants } from 'src/app/common/message.constants';
 
 @Component({
     selector: 'app-roles',
-    templateUrl: './roles.component.html',
-    styleUrls: ['./roles.component.css']
+    templateUrl: './roles.component.html'
 })
 export class RolesComponent implements OnInit {
 
     constructor(private settingService: SettingService) { }
 
-    public errorFlag = false;
-    public successFlag = false;
-    public alertMessage: string;
+    public errorAlertMessage: string;
+    public successAlertMessage: string;
 
     public roleModal: boolean = false;
 
@@ -67,8 +65,7 @@ export class RolesComponent implements OnInit {
             }, err => {
                 this.roleList = [];
                 this.isLoading = false;
-                this.alertMessage = err.error.description;
-                this.errorFlag = true;
+                this.errorAlertMessage = err.error.description;
             });
     }
 
@@ -98,21 +95,17 @@ export class RolesComponent implements OnInit {
 
     public addRole(roleFormValue) {
         delete roleFormValue["id"];
-        this.errorFlag = false;
-        this.successFlag = false;
         this.isLoading = true;
         this.settingService.addRole(roleFormValue).subscribe(
             res => {
                 this.getRoleList();
-                this.alertMessage = roleFormValue.name + MessageConstants.ROLE_ADD;
-                this.successFlag = true;
+                this.successAlertMessage = roleFormValue.name + MessageConstants.ROLE_ADD;
                 this.isLoading = false;
                 this.submitBtnState = ClrLoadingState.DEFAULT;
                 this.roleModal = false;
             }, err => {
                 this.getRoleList();
-                this.alertMessage = err.error.description;
-                this.errorFlag = true;
+                this.errorAlertMessage = err.error.description;
                 this.isLoading = false;
                 this.submitBtnState = ClrLoadingState.DEFAULT;
                 this.roleModal = false;
@@ -120,21 +113,17 @@ export class RolesComponent implements OnInit {
     }
 
     public updateRole(roleFormValue) {
-        this.errorFlag = false;
-        this.successFlag = false;
         this.isLoading = true;
         this.settingService.updateRole(roleFormValue).subscribe(
             res => {
                 this.getRoleList();
-                this.alertMessage = roleFormValue.name + MessageConstants.ROLE_UPDATE;
-                this.successFlag = true;
+                this.successAlertMessage = roleFormValue.name + MessageConstants.ROLE_UPDATE;
                 this.isLoading = false;
                 this.submitBtnState = ClrLoadingState.DEFAULT;
                 this.roleModal = false;
             }, err => {
                 this.getRoleList();
-                this.alertMessage = err.error.description;
-                this.errorFlag = true;
+                this.errorAlertMessage = err.error.description;
                 this.isLoading = false;
                 this.submitBtnState = ClrLoadingState.DEFAULT;
                 this.roleModal = false;
@@ -142,19 +131,15 @@ export class RolesComponent implements OnInit {
     }
 
     public deleteRole(role) {
-        this.errorFlag = false;
-        this.successFlag = false;
         if (confirm(MessageConstants.DELETE_CONFIRM + role.name + MessageConstants.QUESTION_MARK)) {
             this.settingService.deleteRole(role.name).subscribe(
                 res => {
                     this.getRoleList();
-                    this.alertMessage = role.name + MessageConstants.ROLE_DELETE;
-                    this.successFlag = true;
+                    this.successAlertMessage = role.name + MessageConstants.ROLE_DELETE;
                     this.isLoading = false;
                 }, err => {
                     this.getRoleList();
-                    this.alertMessage = err.error.description;
-                    this.errorFlag = true;
+                    this.errorAlertMessage = err.error.description;
                     this.isLoading = false;
                 });
         } else {

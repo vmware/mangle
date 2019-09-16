@@ -7,7 +7,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { ClarityModule } from '@clr/angular';
 import { AppRoutingModule } from '../app-routing.module';
-
+import { PasswordStrengthBarModule } from 'ng2-password-strength-bar';
 @NgModule({
   declarations: [ConfigComponent],
   imports: [
@@ -18,7 +18,8 @@ import { AppRoutingModule } from '../app-routing.module';
     HttpClientModule,
     ClarityModule,
 	  AppRoutingModule,
-    CommonModule
+    CommonModule,
+    PasswordStrengthBarModule
   ]
 })
 export class ConfigModule { }

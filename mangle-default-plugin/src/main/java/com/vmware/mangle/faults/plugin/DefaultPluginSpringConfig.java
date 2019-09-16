@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import com.vmware.mangle.faults.plugin.helpers.JavaAgentFaultUtils;
+import com.vmware.mangle.faults.plugin.helpers.aws.AwsEC2FaultHelper;
 import com.vmware.mangle.faults.plugin.helpers.byteman.BytemanFaultHelperFactory;
 import com.vmware.mangle.faults.plugin.helpers.byteman.DockerBytemanFaultHelper;
 import com.vmware.mangle.faults.plugin.helpers.byteman.K8sBytemanFaultHelper;
@@ -71,6 +72,11 @@ public class DefaultPluginSpringConfig {
     @Bean
     public VCenterFaultHelper vCenterFaultHelper(EndpointClientFactory endpointClientFactory) {
         return new VCenterFaultHelper(endpointClientFactory);
+    }
+
+    @Bean
+    public AwsEC2FaultHelper awsEC2FaultHelper(EndpointClientFactory endpointClientFactory) {
+        return new AwsEC2FaultHelper(endpointClientFactory);
     }
 
     @Bean

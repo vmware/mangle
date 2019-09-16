@@ -116,12 +116,23 @@ preRequisitescheck()
    isFreePresent
    isEvalPresent
    running_in_docker
+   checkWritePermissionOfInjectionDir
    if [ ! -z "$precheckmessage" ]
    then
-      echo "Precheck:Failed $precheckmessage required to proceed with injection"
+        precheckmessage="Precheck Failed with pre-requisites : $precheckmessage"
+        length=$(echo $precheckmessage |wc -c)
+        echo ${precheckmessage} | cut -c 1-$(($length - 2))
       cleanup
       exit $errorExitCode
    fi
+}
+
+checkWritePermissionOfInjectionDir()
+{
+    if [ ! -w "$basedir" ]
+    then
+        precheckmessage="$precheckmessage Write permission on ${basedir} is required,"
+    fi
 }
 
 running_in_docker() {
@@ -136,7 +147,7 @@ isPerlPresent(){
    perl -v > /dev/null 2>&1
    perlRetVal=$?
    if [ $perlRetVal -ne 0 -a $perlRetVal -ne 1 -a $perlRetVal -ne 2 ]; then
-      precheckmessage="perl"
+      precheckmessage="perl is required,"
    fi
 }
 
@@ -144,7 +155,7 @@ isAwkPresent(){
    awk > /dev/null 2>&1
    awkRetVal=$?
    if [ $awkRetVal -ne 0 -a $awkRetVal -ne 1 -a $awkRetVal -ne 2 ]; then
-      precheckmessage="$precheckmessage,awk"
+      precheckmessage="$precheckmessage awk is required,"
    fi
 }
 
@@ -152,7 +163,7 @@ isPgrepPresent(){
    pgrep  > /dev/null 2>&1
    pgrepRetVal=$?
    if [ $pgrepRetVal -ne 0 -a $pgrepRetVal -ne 1 -a $pgrepRetVal -ne 2 ]; then
-      precheckmessage="$precheckmessage,pgrep"
+      precheckmessage="$precheckmessage pgrep is required,"
    fi
 }
 
@@ -165,7 +176,7 @@ isFreePresent(){
               precheckmessage="${precheckmessage}, ${CONTAINER_MEM_LIMIT_FILE} or ${CONTAINER_MEM_USAGE_FILE} is not present"
            fi
         else
-           precheckmessage="$precheckmessage,free"
+           precheckmessage="$precheckmessage free is required,"
         fi
    fi
 }
@@ -174,7 +185,7 @@ isEvalPresent(){
    eval > /dev/null 2>&1
    evalRetVal=$?
    if [ $evalRetVal -ne 0 -a $evalRetVal -ne 1 -a $evalRetVal -ne 2 ]; then
-      precheckmessage="$precheckmessage,eval"
+      precheckmessage="$precheckmessage eval is required,"
    fi
 }
 

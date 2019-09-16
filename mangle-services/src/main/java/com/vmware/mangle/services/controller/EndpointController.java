@@ -40,6 +40,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.vmware.mangle.cassandra.model.endpoint.AWSCredentials;
 import com.vmware.mangle.cassandra.model.endpoint.CertificatesSpec;
 import com.vmware.mangle.cassandra.model.endpoint.CredentialsSpec;
 import com.vmware.mangle.cassandra.model.endpoint.DockerCertificates;
@@ -77,6 +78,7 @@ public class EndpointController {
 
     private static final int MAX_KUBECONFIG_FILE_SIZE = 20 * 1024;
     private static final int MAX_PRIVATEKEY_FILE_SIZE = 5 * 1024;
+    private static final String ASSCOCIATIONS = "associations";
     private EndpointService endpointService;
     private CredentialService credentialService;
     private CustomEventPublisher publisher;
@@ -118,7 +120,7 @@ public class EndpointController {
     }
 
     @ApiOperation(value = "API to get all the endpoints by endpointName", nickname = "getEndpointByName")
-    @GetMapping(value = "/{endpointName}", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @GetMapping(value = "/{endpointName:.+}", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public ResponseEntity<EndpointSpec> getEndpointByName(@PathVariable("endpointName") String endpointName)
             throws MangleException {
         log.info("Start execution of getEndpointByName() method");
@@ -138,6 +140,18 @@ public class EndpointController {
         HttpHeaders headers = new HttpHeaders();
         headers.add(CommonConstants.MESSAGE_HEADER, CommonConstants.ENDPOINTS_RESULT_FOUND);
         return new ResponseEntity<>(endPoint, headers, HttpStatus.OK);
+    }
+
+    @ApiOperation(value = "API to get all the containers of dockerHost based on DockerEndpointName", nickname = "getAllDockerContainersByEndpoint")
+    @GetMapping(value = "/docker/containers/{endPointName:.+}", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public ResponseEntity<List<String>> getAllDockerContainersByEndpoint(
+            @ApiParam(value = "Select endPointName") @PathVariable("endPointName") String endpointName)
+            throws MangleException {
+        log.info("Start execution of getAllDockerContainersByEndpoint() method");
+        List<String> containers = endpointService.getAllContainersByEndpointName(endpointName);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(CommonConstants.MESSAGE_HEADER, CommonConstants.CONTAINERS_RESULT_FOUND);
+        return new ResponseEntity<>(containers, headers, HttpStatus.OK);
     }
 
     @ApiOperation(value = "API to update a existing endpoint", nickname = "updateEndPoint")
@@ -193,8 +207,10 @@ public class EndpointController {
         log.info("Start execution of addCredentials(remoteMachineCredentials) method for RemoteMachine");
         credentialService.validatePasswordOrPrivateKeyNotNull(password, privateKey);
         credentialService.validateMultipartFileSize(privateKey, MAX_PRIVATEKEY_FILE_SIZE);
+        String privateKeyOriginalFileName = null;
         if (null != privateKey) {
             certificatesService.validateRemoteMachinePrivateKey(privateKey);
+            privateKeyOriginalFileName = privateKey.getOriginalFilename();
         }
         try {
             RemoteMachineCredentials remoteMachineCredentials =
@@ -206,7 +222,7 @@ public class EndpointController {
                     new EntityCreatedEvent(credentialsSpec.getPrimaryKey(), credentialsSpec.getClass().getName()));
             return new ResponseEntity<>(credentialsSpec, headers, HttpStatus.OK);
         } catch (IOException e) {
-            throw new MangleException(e, ErrorCode.FILE_SIZE_EXCEEDED, privateKey.getOriginalFilename());
+            throw new MangleException(e, ErrorCode.FILE_SIZE_EXCEEDED, privateKeyOriginalFileName);
 
         }
     }
@@ -233,9 +249,7 @@ public class EndpointController {
         }
     }
 
-    //Will be uncommented when we started supporting AWS endpoint
-
-    /* @ApiOperation(value = "API to add a AWS endpoint credentials", nickname = "addAWSCredentials")
+    @ApiOperation(value = "API to add a AWS endpoint credentials", nickname = "addAWSCredentials")
     @PostMapping(value = "/credentials/aws", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<CredentialsSpec> addCredentials(@RequestBody AWSCredentials awsCredentials)
             throws MangleException {
@@ -246,7 +260,7 @@ public class EndpointController {
         publisher.publishAnEvent(
                 new EntityCreatedEvent(credentialsSpec.getPrimaryKey(), credentialsSpec.getClass().getName()));
         return new ResponseEntity<>(credentialsSpec, headers, HttpStatus.OK);
-    }*/
+    }
 
     @ApiOperation(value = "API to add a Vcenter endpoint credentials", nickname = "addVCenterCredentials")
     @PostMapping(value = "/credentials/vcenter", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -272,7 +286,7 @@ public class EndpointController {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         } else {
             Map<String, Map<String, List<String>>> associations = new HashMap<>();
-            associations.put("associations", response.getAssociations());
+            associations.put(ASSCOCIATIONS, response.getAssociations());
             errorDetails.setTimestamp(new Date());
             errorDetails.setDescription(ErrorConstants.ENDPOINTS_DELETION_PRECHECK_FAIL);
             errorDetails.setCode(ErrorCode.DELETE_OPERATION_FAILED.getCode());
@@ -305,13 +319,11 @@ public class EndpointController {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         } else {
             Map<String, Map<String, List<String>>> associations = new HashMap<>();
-            associations.put("associations", response.getAssociations());
+            associations.put(ASSCOCIATIONS, response.getAssociations());
             errorDetails.setTimestamp(new Date());
             errorDetails.setDescription(ErrorConstants.CREDENTIALS_DELETION_PRECHECK_FAIL);
             errorDetails.setCode(ErrorCode.DELETE_OPERATION_FAILED.getCode());
             errorDetails.setDetails(associations);
-
-
         }
 
         return new ResponseEntity<>(errorDetails, HttpStatus.PRECONDITION_FAILED);
@@ -380,8 +392,10 @@ public class EndpointController {
         log.info("Start execution of addCredentials() method for RemoteMachine");
         credentialService.validatePasswordOrPrivateKeyNotNull(password, privateKey);
         credentialService.validateMultipartFileSize(privateKey, MAX_PRIVATEKEY_FILE_SIZE);
+        String privateKeyOriginalFileName = null;
         if (null != privateKey) {
             certificatesService.validateRemoteMachinePrivateKey(privateKey);
+            privateKeyOriginalFileName = privateKey.getOriginalFilename();
         }
         try {
             RemoteMachineCredentials remoteMachineCredentials =
@@ -391,7 +405,7 @@ public class EndpointController {
                     new EntityUpdatedEvent(credentialsSpec.getPrimaryKey(), credentialsSpec.getClass().getName()));
             return new ResponseEntity<>(credentialsSpec, HttpStatus.OK);
         } catch (IOException e) {
-            throw new MangleException(e, ErrorCode.FILE_SIZE_EXCEEDED, privateKey.getOriginalFilename());
+            throw new MangleException(e, ErrorCode.FILE_SIZE_EXCEEDED, privateKeyOriginalFileName);
 
         }
     }
@@ -431,7 +445,7 @@ public class EndpointController {
     @GetMapping(value = "/certificates", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<CertificatesSpec>> getAllEndpointCertificates() {
         log.info("Start execution of getAllEndpointCertificates() method");
-        List<CertificatesSpec> certificatesSpec = certificatesService.getAllCerficates();
+        List<CertificatesSpec> certificatesSpec = certificatesService.getAllCertificates();
         HttpHeaders headers = new HttpHeaders();
         headers.add(CommonConstants.MESSAGE_HEADER, CommonConstants.CERTIFICATES_RESULT_FOUND);
         return new ResponseEntity<>(certificatesSpec, headers, HttpStatus.OK);
@@ -461,7 +475,7 @@ public class EndpointController {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         } else {
             Map<String, Map<String, List<String>>> associations = new HashMap<>();
-            associations.put("associations", response.getAssociations());
+            associations.put(ASSCOCIATIONS, response.getAssociations());
             errorDetails.setTimestamp(new Date());
             errorDetails.setDescription(ErrorConstants.CREDENTIALS_DELETION_PRECHECK_FAIL);
             errorDetails.setCode(ErrorCode.DELETE_OPERATION_FAILED.getCode());
@@ -491,7 +505,6 @@ public class EndpointController {
             return new ResponseEntity<>(certificatesSpec, headers, HttpStatus.OK);
         } catch (IOException e) {
             throw new MangleException(e, ErrorCode.IO_EXCEPTION, e.getMessage());
-
         }
     }
 
@@ -516,7 +529,6 @@ public class EndpointController {
             return new ResponseEntity<>(certificatesSpec, headers, HttpStatus.OK);
         } catch (IOException e) {
             throw new MangleException(e, ErrorCode.IO_EXCEPTION, e.getMessage());
-
         }
     }
 }

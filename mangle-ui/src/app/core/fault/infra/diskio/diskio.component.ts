@@ -3,17 +3,17 @@ import { Router } from '@angular/router';
 import { FaultService } from '../../fault.service';
 import { EndpointService } from 'src/app/core/endpoint/endpoint.service';
 import { ClrLoadingState } from '@clr/angular';
+import { DataService } from 'src/app/shared/data.service';
+import { CommonUtils } from 'src/app/shared/commonUtils';
 
 @Component({
   selector: 'app-diskio-infra',
-  templateUrl: './diskio.component.html',
-  styleUrls: ['./diskio.component.css']
+  templateUrl: './diskio.component.html'
 })
 export class DiskioInfraComponent implements OnInit {
 
-  public errorFlag = false;
-  public successFlag = false;
-  public alertMessage: string;
+  public errorAlertMessage: string;
+  public successAlertMessage: string;
 
   public cronModal: boolean = false;
 
@@ -21,6 +21,7 @@ export class DiskioInfraComponent implements OnInit {
   public disableRun: boolean = false;
 
   public tagsData: any = {};
+  public originalTagsData: any = {};
 
   public timeInMillisecondsHidden: boolean = true;
   public cronExpressionHidden: boolean = true;
@@ -32,6 +33,7 @@ export class DiskioInfraComponent implements OnInit {
   public k8sHidden: boolean = true;
 
   public runBtnState: ClrLoadingState = ClrLoadingState.DEFAULT;
+  public dockerContainers: any = [];
 
   public faultFormData: any = {
     "endpointName": null,
@@ -51,17 +53,17 @@ export class DiskioInfraComponent implements OnInit {
       "timeInMilliseconds": null,
       "description": null
     },
-    "timeoutInMilliseconds": 0
+    "timeoutInMilliseconds": 1
   };
 
   public searchedEndpoints: any = [];
+  public searchedContainers: any = [];
 
-  constructor(private faultService: FaultService, private endpointService: EndpointService, private router: Router) {
+  constructor(private faultService: FaultService, private endpointService: EndpointService, private router: Router, private dataService: DataService, private commonUtils: CommonUtils) {
 
   }
 
   ngOnInit() {
-    this.errorFlag = false;
     this.endpointService.getAllEndpoints().subscribe(
       res => {
         if (res.code) {
@@ -71,9 +73,32 @@ export class DiskioInfraComponent implements OnInit {
         }
       }, err => {
         this.endpoints = [];
-        this.alertMessage = err.error.description;
-        this.errorFlag = true;
+        this.errorAlertMessage = err.error.description;
       });
+    if (this.dataService.sharedData != null) {
+      this.populateFaultData();
+    }
+  }
+
+  public populateFaultData() {
+    this.faultFormData.ioSize = this.dataService.sharedData.ioSize;
+    this.faultFormData.targetDir = this.dataService.sharedData.targetDir;
+    this.faultFormData.injectionHomeDir = this.dataService.sharedData.injectionHomeDir;
+    this.faultFormData.endpointName = this.dataService.sharedData.endpointName;
+    this.faultFormData.timeoutInMilliseconds = this.dataService.sharedData.timeoutInMilliseconds;
+    if (this.dataService.sharedData.dockerArguments != null) {
+      this.faultFormData.dockerArguments = this.dataService.sharedData.dockerArguments;
+      this.dockerHidden = false;
+    }
+    if (this.dataService.sharedData.k8sArguments != null) {
+      this.faultFormData.k8sArguments = this.dataService.sharedData.k8sArguments;
+      this.k8sHidden = false;
+    }
+    if (this.dataService.sharedData.tags != null) {
+      this.tagsData = this.dataService.sharedData.tags;
+      this.originalTagsData = JSON.parse(JSON.stringify(this.dataService.sharedData.tags));
+    }
+    this.dataService.sharedData = null;
   }
 
   public searchEndpoint(searchKeyWord) {
@@ -85,10 +110,39 @@ export class DiskioInfraComponent implements OnInit {
     }
   }
 
+  public searchContainer(searchKeyWord) {
+    this.searchedContainers = [];
+    for (var i = 0; i < this.dockerContainers.length; i++) {
+      if (this.dockerContainers[i].indexOf(searchKeyWord) > -1) {
+        this.searchedContainers.push(this.dockerContainers[i]);
+      }
+    }
+  }
+
   public setEndpointVal(endpointVal) {
     this.faultFormData.endpointName = endpointVal;
   }
 
+  public setContainerVal(containerVal) {
+    this.faultFormData.dockerArguments.containerName = containerVal;
+  }
+
+  public getDockerContainers(epType, epName) {
+    if (epType == "DOCKER") {
+      this.endpointService.getDockerContainers(epName).subscribe(
+        res => {
+          if (res.code) {
+            this.dockerContainers = [];
+          } else {
+            this.dockerContainers = res;
+          }
+        }, err => {
+          this.dockerContainers = [];
+          this.errorAlertMessage = err.error.description;
+        }
+      );
+    }
+  }
   public updateTags(tagsVal) {
     this.tagsData[tagsVal.tagKey] = tagsVal.tagValue;
   }
@@ -119,16 +173,14 @@ export class DiskioInfraComponent implements OnInit {
     }
   }
 
-  public displayEndpointFields(endpointNameVal) {
+  public displayEndpointFields(endpointNameVal){
     this.dockerHidden = true;
     this.k8sHidden = true;
+    this.tagsData = {};
     for (var i = 0; i < this.endpoints.length; i++) {
-      if (endpointNameVal == this.endpoints[i].name) {
-        if (this.endpoints[i].tags != null) {
-          this.tagsData = this.endpoints[i].tags;
-        } else {
-          this.tagsData = {};
-        }
+      if (endpointNameVal == this.endpoints[i].name) 
+      { 
+        this.tagsData = this.commonUtils.getTagsData(this.originalTagsData,this.endpoints[i].tags);
         if (this.endpoints[i].endPointType == 'DOCKER') {
           this.dockerHidden = false;
         }
@@ -157,8 +209,6 @@ export class DiskioInfraComponent implements OnInit {
 
   public executeDiskIOFault(faultData) {
     this.runBtnState = ClrLoadingState.LOADING;
-    this.errorFlag = false;
-    this.successFlag = false;
     if (this.tagsData != {}) {
       faultData.tags = this.tagsData;
     }
@@ -171,10 +221,9 @@ export class DiskioInfraComponent implements OnInit {
           this.router.navigateByUrl('core/requests/scheduled');
         }
       }, err => {
-        this.alertMessage = err.error.description;
-        this.errorFlag = true;
-        if (this.alertMessage === undefined) {
-          this.alertMessage = err.error.error;
+        this.errorAlertMessage = err.error.description;
+        if (this.errorAlertMessage === undefined) {
+          this.errorAlertMessage = err.error.error;
         }
         this.runBtnState = ClrLoadingState.DEFAULT;
       });

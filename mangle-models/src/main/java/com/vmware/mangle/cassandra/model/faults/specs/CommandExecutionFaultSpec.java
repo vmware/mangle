@@ -38,7 +38,7 @@ import com.vmware.mangle.cassandra.model.tasks.commands.CommandInfo;
 @ToString(exclude = { "injectionCommandInfoList", "remediationCommandInfoList", "testMachinePreperationCommandInfoList",
         "cleanUpCommandInfoList", "supportScriptInfo", "endpoint", "credentials" }, callSuper = true)
 @EqualsAndHashCode(callSuper = true)
-public class CommandExecutionFaultSpec extends AutoRemediatedFaultSpec {
+public class CommandExecutionFaultSpec extends AutoRemediatedFaultSpec  {
     private static final long serialVersionUID = 1L;
     @JsonIgnore
     protected List<CommandInfo> injectionCommandInfoList;

@@ -19,7 +19,27 @@ import { K8SResourceNotReadyComponent } from './infra/k8s/ready/k8s-resource-not
 import { VcenterDiskComponent } from './infra/vcenter/disk/vcenter-disk.component';
 import { VcenterNicComponent } from './infra/vcenter/nic/vcenter-nic.component';
 import { VcenterStateComponent } from './infra/vcenter/state/vcenter-state.component';
-import { CronComponent } from 'src/app/shared/cron/cron.component';
+import { AwsEC2StateComponent } from './infra/aws/ec2/state/aws-ec2-state.component';
+import { AwsEC2NetworkComponent } from './infra/aws/ec2/network/aws-ec2-network.component';
+import { FilehandlerComponent } from './application/filehandler/filehandler.component';
+import { ThreadLeakComponent } from './application/threadleak/threadleak.component';
+import { FilehandlerInfraComponent } from './infra/filehandler/filehandler.component';
+import { JavaMethodLatencyComponent } from './application/javamethodlatency/javamethodlatency.component';
+import { SpringServiceLatencyComponent } from './application/springservicelatency/springservicelatency.component';
+import { SpringServiceExceptionComponent } from './application/springserviceexception/springserviceexception.component';
+import { KillJVMComponent } from './application/killjvm/killjvm.component';
+import { SimulateJavaExceptionComponent } from './application/simulatejavaexception/simulatejavaexception.component';
+
+import { CustomFaultComponent } from './custom/custom-fault.component';
+
+import { PacketDelayComponent } from './infra/network/packet-delay/packet-delay.component';
+import { PacketDropComponent } from './infra/network/packet-drop/packet-drop.component';
+import { PacketDuplicateComponent } from './infra/network/packet-duplicate/packet-duplicate.component';
+import { PacketCorruptionComponent } from './infra/network/packet-corruption/packet-corruption.component';
+import { DiskSpaceComponent } from './infra/diskspace/diskspace.component';
+import { KernelPanicComponent } from './infra/kernelpanic/kernelpanic.component';
+import { SharedModule } from 'src/app/shared/shared.module';
+import { K8SServiceUnavailableComponent } from './infra/k8s/service-unavailable/k8s-service-unavailable.component';
 
 @NgModule({
   declarations: [
@@ -33,10 +53,27 @@ import { CronComponent } from 'src/app/shared/cron/cron.component';
     DockerStateChangeComponent,
     DeleteK8SResourceComponent,
     K8SResourceNotReadyComponent,
+    K8SServiceUnavailableComponent,
     VcenterDiskComponent,
     VcenterNicComponent,
     VcenterStateComponent,
-    CronComponent
+    AwsEC2StateComponent,
+    AwsEC2NetworkComponent,
+    FilehandlerComponent,
+    ThreadLeakComponent,
+    FilehandlerInfraComponent,
+    JavaMethodLatencyComponent,
+    SpringServiceLatencyComponent,
+    SpringServiceExceptionComponent,
+    KillJVMComponent,
+    SimulateJavaExceptionComponent,
+    CustomFaultComponent,
+    PacketDelayComponent,
+    PacketDropComponent,
+    PacketDuplicateComponent,
+    PacketCorruptionComponent,
+    DiskSpaceComponent,
+    KernelPanicComponent
   ],
   imports: [
     BrowserAnimationsModule,
@@ -46,7 +83,8 @@ import { CronComponent } from 'src/app/shared/cron/cron.component';
     HttpClientModule,
     ClarityModule,
     AppRoutingModule,
-    CommonModule
+    CommonModule,
+    SharedModule
   ]
 })
 export class FaultModule { }

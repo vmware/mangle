@@ -126,6 +126,14 @@ public class CredentialsSpecMockData {
         return vCenterCredentials;
     }
 
+    public AWSCredentials getAwsCredentialsData() {
+        AWSCredentials awsCredentials = new AWSCredentials();
+        awsCredentials.setName("awsCreds");
+        awsCredentials.setAccessKeyId("dummyAccessKeyId");
+        awsCredentials.setSecretKey("dummySecretAccessKey");
+        return awsCredentials;
+    }
+
     public void getK8SKubeConfig(LinkedMultiValueMap<String, Object> multiPartMap) {
         File file = new File(k8sConfigFile);
         if (file.exists()) {

@@ -29,13 +29,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.powermock.modules.testng.PowerMockTestCase;
 import org.springframework.core.MethodParameter;
-import org.springframework.data.cassandra.CassandraConnectionFailureException;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -118,7 +119,7 @@ public class CustomizedResponseEntityExceptionHandlerTest extends PowerMockTestC
 
     /**
      * Test method for
-     * {@link com.vmware.mangle.exceptions.handler.CustomizedResponseEntityExceptionHandler#handleAllExceptions(java.lang.Exception, org.springframework.web.context.request.WebRequest)}.
+     * {@link com.vmware.mangle.utils.exceptions.handler.CustomizedResponseEntityExceptionHandler#handleAllExceptions(java.lang.Exception, org.springframework.web.context.request.WebRequest)}.
      */
     @Test
     public void testHandleAllExceptions() {
@@ -132,7 +133,7 @@ public class CustomizedResponseEntityExceptionHandlerTest extends PowerMockTestC
 
     /**
      * Test method for
-     * {@link com.vmware.mangle.exceptions.handler.CustomizedResponseEntityExceptionHandler#handleHttpRequestMethodNotSupported(org.springframework.web.HttpRequestMethodNotSupportedException, org.springframework.http.HttpHeaders, org.springframework.http.HttpStatus, org.springframework.web.context.request.WebRequest)}.
+     * {@link com.vmware.mangle.utils.exceptions.handler.CustomizedResponseEntityExceptionHandler#handleHttpRequestMethodNotSupported(org.springframework.web.HttpRequestMethodNotSupportedException, org.springframework.http.HttpHeaders, org.springframework.http.HttpStatus, org.springframework.web.context.request.WebRequest)}.
      */
     @Test
     public void testHandleHttpRequestMethodNotSupported() {
@@ -152,7 +153,7 @@ public class CustomizedResponseEntityExceptionHandlerTest extends PowerMockTestC
 
     /**
      * Test method for
-     * {@link com.vmware.mangle.exceptions.handler.CustomizedResponseEntityExceptionHandler#handleHttpMediaTypeNotSupported(org.springframework.web.HttpMediaTypeNotSupportedException, org.springframework.http.HttpHeaders, org.springframework.http.HttpStatus, org.springframework.web.context.request.WebRequest)}.
+     * {@link com.vmware.mangle.utils.exceptions.handler.CustomizedResponseEntityExceptionHandler#handleHttpMediaTypeNotSupported(org.springframework.web.HttpMediaTypeNotSupportedException, org.springframework.http.HttpHeaders, org.springframework.http.HttpStatus, org.springframework.web.context.request.WebRequest)}.
      */
     @Test
     public void testHandleHttpMediaTypeNotSupported() {
@@ -173,7 +174,7 @@ public class CustomizedResponseEntityExceptionHandlerTest extends PowerMockTestC
 
     /**
      * Test method for
-     * {@link com.vmware.mangle.exceptions.handler.CustomizedResponseEntityExceptionHandler#handleMangleException(com.vmware.mangle.MangleException.MangleException, org.springframework.web.context.request.WebRequest)}.
+     * {@link com.vmware.mangle.utils.exceptions.handler.CustomizedResponseEntityExceptionHandler#handleMangleException(com.vmware.mangle.MangleException.MangleException, org.springframework.web.context.request.WebRequest)}.
      */
     @Test
     public void testHandleMangleException() {
@@ -190,7 +191,7 @@ public class CustomizedResponseEntityExceptionHandlerTest extends PowerMockTestC
 
     /**
      * Test method for
-     * {@link com.vmware.mangle.exceptions.handler.CustomizedResponseEntityExceptionHandler#handleMangleTaskException(com.vmware.mangle.MangleTaskException.MangleTaskException, org.springframework.web.context.request.WebRequest)}.
+     * {@link com.vmware.mangle.utils.exceptions.handler.CustomizedResponseEntityExceptionHandler#handleMangleTaskException(com.vmware.mangle.MangleTaskException.MangleTaskException, org.springframework.web.context.request.WebRequest)}.
      */
     @Test
     public void testHandleMangleTaskException() {
@@ -208,7 +209,7 @@ public class CustomizedResponseEntityExceptionHandlerTest extends PowerMockTestC
 
     /**
      * Test method for
-     * {@link com.vmware.mangle.exceptions.handler.CustomizedResponseEntityExceptionHandler#handleMangleRuntimeException(com.vmware.mangle.MangleRuntimeException.MangleRuntimeException, org.springframework.web.context.request.WebRequest)}.
+     * {@link com.vmware.mangle.utils.exceptions.handler.CustomizedResponseEntityExceptionHandler#handleMangleRuntimeException(com.vmware.mangle.MangleRuntimeException.MangleRuntimeException, org.springframework.web.context.request.WebRequest)}.
      */
     @Test
     public void testHandleMangleRuntimeException() {
@@ -220,13 +221,13 @@ public class CustomizedResponseEntityExceptionHandlerTest extends PowerMockTestC
         ResponseEntity<ErrorDetails> actualRsult =
                 customizedResponseEntityExceptionHandler.handleMangleRuntimeException(exception, request);
         Assert.assertEquals(actualRsult.getStatusCodeValue(), HttpStatus.INTERNAL_SERVER_ERROR.value());
-        verify(exception, times(3)).getMessage();
+        verify(exception, times(5)).getMessage();
         verify(exception, times(2)).getErrorCode();
     }
 
     /**
      * Test method for
-     * {@link com.vmware.mangle.exceptions.handler.CustomizedResponseEntityExceptionHandler#handleMethodArgumentTypeMismatch(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException, org.springframework.web.context.request.WebRequest)}.
+     * {@link com.vmware.mangle.utils.exceptions.handler.CustomizedResponseEntityExceptionHandler#handleMethodArgumentTypeMismatch(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException, org.springframework.web.context.request.WebRequest)}.
      *
      * @throws ClassNotFoundException
      */
@@ -253,7 +254,7 @@ public class CustomizedResponseEntityExceptionHandlerTest extends PowerMockTestC
 
     /**
      * Test method for
-     * {@link com.vmware.mangle.exceptions.handler.CustomizedResponseEntityExceptionHandler#handleHttpMessageNotReadable(org.springframework.http.converter.HttpMessageNotReadableException, org.springframework.http.HttpHeaders, org.springframework.http.HttpStatus, org.springframework.web.context.request.WebRequest)}.
+     * {@link com.vmware.mangle.utils.exceptions.handler.CustomizedResponseEntityExceptionHandler#handleHttpMessageNotReadable(org.springframework.http.converter.HttpMessageNotReadableException, org.springframework.http.HttpHeaders, org.springframework.http.HttpStatus, org.springframework.web.context.request.WebRequest)}.
      */
     @Test
     public void testHandleHttpMessageNotReadable() {
@@ -269,7 +270,7 @@ public class CustomizedResponseEntityExceptionHandlerTest extends PowerMockTestC
 
     /**
      * Test method for
-     * {@link com.vmware.mangle.exceptions.handler.CustomizedResponseEntityExceptionHandler#handleBindException(org.springframework.validation.BindException, org.springframework.http.HttpHeaders, org.springframework.http.HttpStatus, org.springframework.web.context.request.WebRequest)}.
+     * {@link com.vmware.mangle.utils.exceptions.handler.CustomizedResponseEntityExceptionHandler#handleBindException(org.springframework.validation.BindException, org.springframework.http.HttpHeaders, org.springframework.http.HttpStatus, org.springframework.web.context.request.WebRequest)}.
      */
     @Test
     public void testHandleBindException() {
@@ -291,7 +292,7 @@ public class CustomizedResponseEntityExceptionHandlerTest extends PowerMockTestC
 
     /**
      * Test method for
-     * {@link com.vmware.mangle.exceptions.handler.CustomizedResponseEntityExceptionHandler#handleMethodArgumentNotValid(org.springframework.web.bind.MethodArgumentNotValidException, org.springframework.http.HttpHeaders, org.springframework.http.HttpStatus, org.springframework.web.context.request.WebRequest)}.
+     * {@link com.vmware.mangle.utils.exceptions.handler.CustomizedResponseEntityExceptionHandler#handleMethodArgumentNotValid(org.springframework.web.bind.MethodArgumentNotValidException, org.springframework.http.HttpHeaders, org.springframework.http.HttpStatus, org.springframework.web.context.request.WebRequest)}.
      */
     @Test
     public void testHandleMethodArgumentNotValid() {
@@ -318,18 +319,35 @@ public class CustomizedResponseEntityExceptionHandlerTest extends PowerMockTestC
 
     /**
      * Test method for
-     * {@link com.vmware.mangle.exceptions.handler.CustomizedResponseEntityExceptionHandler#handleCassandraConnectionFailureException(java.lang.Exception, org.springframework.web.context.request.WebRequest)}.
+     * {@link com.vmware.mangle.utils.exceptions.handler.CustomizedResponseEntityExceptionHandler#handleCassandraException(DataAccessException, WebRequest)}.
      */
     @Test
-    public void testHandleCassandraConnectionFailureException() {
-        CassandraConnectionFailureException exception = mock(CassandraConnectionFailureException.class);
-        when(exception.getMessage()).thenReturn("testHandleCassandraConnectionFailureException");
+    public void testHandleCassandraExceptionForConnectionFailure() {
+        DataAccessException exception = mock(DataAccessException.class);
+        when(exception.getMessage()).thenReturn("testHandleCassandraExceptionForConnectionFailure");
         NoHostAvailableException noHostAvailableException = mock(NoHostAvailableException.class);
         when(exception.getCause()).thenReturn(noHostAvailableException);
         when(noHostAvailableException.getCustomMessage(anyInt(), anyBoolean(), anyBoolean()))
                 .thenReturn("All host(s) tried for query failed");
         ResponseEntity<ErrorDetails> actualRsult =
-                customizedResponseEntityExceptionHandler.handleCassandraConnectionFailureException(exception, request);
+                customizedResponseEntityExceptionHandler.handleCassandraException(exception, request);
+        Assert.assertEquals(actualRsult.getStatusCode(), HttpStatus.INTERNAL_SERVER_ERROR);
+        verify(exception, times(1)).getMessage();
+        verify(exception, times(2)).getCause();
+    }
+
+    /**
+     * Test method for
+     * {@link com.vmware.mangle.utils.exceptions.handler.CustomizedResponseEntityExceptionHandler#handleCassandraException(DataAccessException, WebRequest)}.
+     */
+    @Test
+    public void testHandleCassandraExceptionForInvalidQuery() {
+        DataAccessException exception = mock(DataAccessException.class);
+        when(exception.getMessage()).thenReturn("testHandleCassandraExceptionForInvalidQuery");
+        InvalidQueryException invalidQueryException = mock(InvalidQueryException.class);
+        when(exception.getCause()).thenReturn(invalidQueryException);
+        ResponseEntity<ErrorDetails> actualRsult =
+                customizedResponseEntityExceptionHandler.handleCassandraException(exception, request);
         Assert.assertEquals(actualRsult.getStatusCode(), HttpStatus.INTERNAL_SERVER_ERROR);
         verify(exception, times(1)).getMessage();
         verify(exception, times(2)).getCause();

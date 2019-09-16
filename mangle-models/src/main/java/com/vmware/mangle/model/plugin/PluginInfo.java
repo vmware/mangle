@@ -28,7 +28,7 @@ public class PluginInfo implements Serializable {
 
     private static final long serialVersionUID = 1L;
     @NotEmpty
-    @ApiModelProperty(value = "Pass plugin file name", example = "mangle-default-plugin-1.0.0")
+    @ApiModelProperty(value = "Pass plugin file name", example = "mangle-default-plugin-2.0.0")
     private String pluginName;
     private PluginAction pluginAction;
 }

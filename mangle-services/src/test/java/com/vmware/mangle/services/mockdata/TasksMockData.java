@@ -11,7 +11,9 @@
 
 package com.vmware.mangle.services.mockdata;
 
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 import java.util.Stack;
@@ -57,6 +59,8 @@ public class TasksMockData<T extends TaskSpec> {
         this.taskTriggers = new Stack<>();
         this.taskTriggers.add(new TaskTrigger());
         this.taskTriggers.peek().setMangleTaskInfo(taskInfo);
+        SimpleDateFormat sdf = new SimpleDateFormat(Constants.DEFAULT_DATE_FORMAT);
+        this.taskTriggers.peek().setStartTime(sdf.format(new Date()));
         this.taskData = taskData;
     }
 

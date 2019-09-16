@@ -19,7 +19,7 @@ import com.vmware.mangle.cassandra.model.faults.specs.VMStateFaultSpec;
 import com.vmware.mangle.cassandra.model.tasks.TaskType;
 import com.vmware.mangle.model.enums.EndpointType;
 import com.vmware.mangle.services.helpers.faults.AbstractFault;
-import com.vmware.mangle.services.helpers.faults.SupportedEndpoints;
+import com.vmware.mangle.task.framework.helpers.faults.SupportedEndpoints;
 import com.vmware.mangle.utils.exceptions.MangleException;
 
 /**

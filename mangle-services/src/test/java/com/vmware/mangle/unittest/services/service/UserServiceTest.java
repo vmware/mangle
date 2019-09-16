@@ -232,6 +232,7 @@ public class UserServiceTest extends PowerMockTestCase {
         when(userRepository.save(any())).thenReturn(user);
         when(roleService.getRoleByName(any())).thenReturn(dataProvider.getDummyRole());
         when(authProviderService.getAllDomains()).thenReturn(domains);
+        when(passwordEncoder.encode(anyString())).thenReturn(user.getPassword());
         doReturn(user).when(userService).getUserByName(any());
         User persisted = userService.updateUser(user);
 
@@ -471,6 +472,14 @@ public class UserServiceTest extends PowerMockTestCase {
 
         List<Privilege> privileges = userService.getPrivilegeForUser(username);
         Assert.assertEquals(privileges.size(), 2);
+    }
+
+    @Test
+    public void testResync() {
+        User user = dataProvider.getMockUser();
+        doNothing().when(userService).terminateUserSession(user.getName());
+        userService.resync(user.getName());
+        verify(userService, times(1)).terminateUserSession(user.getName());
     }
 
 

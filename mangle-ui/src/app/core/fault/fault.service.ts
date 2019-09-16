@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ServiceConstants } from 'src/app/common/service.constants';
 import { Observable } from 'rxjs';
+import { CommonConstants } from 'src/app/common/common.constants';
 
 @Injectable({
     providedIn: 'root'
@@ -45,6 +46,11 @@ export class FaultService {
         return this.http.post(ServiceConstants.FAULTS_K8S_RESOURCE_NOT_READY, faultData);
     }
 
+    public executeK8SServiceUnavailable(faultData) {
+        this.removeExtraArgs(faultData);
+        return this.http.post(ServiceConstants.FAULTS_K8S_SERVICE_UNAVAILABLE, faultData);
+    }
+
     public executeVcenterDiskFault(faultData) {
         this.removeExtraArgs(faultData);
         return this.http.post(ServiceConstants.FAULTS_VCENTER_DISK, faultData);
@@ -59,6 +65,50 @@ export class FaultService {
         this.removeExtraArgs(faultData);
         return this.http.post(ServiceConstants.FAULTS_VCENTER_STATE, faultData);
     }
+    public executeNetworkFault(faultData): Observable<any> {
+        this.removeExtraArgs(faultData);
+        return this.http.post(ServiceConstants.FAULTS_NETWORK, faultData);
+    }
+
+    public executeAwsEC2StateFault(faultData) {
+        this.removeExtraArgs(faultData);
+        return this.http.post(ServiceConstants.FAULTS_AWS_EC2_STATE, faultData);
+    }
+
+    public executeAwsEC2NetworkFault(faultData) {
+        this.removeExtraArgs(faultData);
+        return this.http.post(ServiceConstants.FAULTS_AWS_EC2_NETWORK, faultData);
+    }
+
+    public executeFilehandlerLeakFault(faultData): Observable<any> {
+        this.removeExtraArgs(faultData);
+        return this.http.post(ServiceConstants.FAULTS_FILE_HANDLER_LEAK, faultData);
+    }
+    public executeThreadLeakFault(faultData): Observable<any> {
+        this.removeExtraArgs(faultData);
+        return this.http.post(ServiceConstants.FAULTS_THREAD_LEAK, faultData);
+    }
+    public executeJavaMethodLatencyFault(faultData): Observable<any> {
+        this.removeExtraArgs(faultData);
+        return this.http.post(ServiceConstants.FAULTS_JAVA_METHOD_LATENCY, faultData);
+    }
+    public executeSpringServiceLatencyFault(faultData): Observable<any> {
+        this.removeExtraArgs(faultData);
+        return this.http.post(ServiceConstants.FAULTS_SPRING_SERVICE_LATENCY, faultData);
+    }
+    public executeSpringServiceExceptionFault(faultData): Observable<any> {
+        this.removeExtraArgs(faultData);
+        return this.http.post(ServiceConstants.FAULTS_SPRING_SERVICE_EXCEPTION, faultData);
+    }
+    public executeKillJVMFault(faultData): Observable<any> {
+        this.removeExtraArgs(faultData);
+        return this.http.post(ServiceConstants.FAULTS_KILL_JVM, faultData);
+    }
+    public executeSimulateJavaExceptionFault(faultData): Observable<any> {
+        this.removeExtraArgs(faultData);
+        return this.http.post(ServiceConstants.FAULTS_SIMULATE_JAVA_EXCEPTION, faultData);
+    }
+
 
     public removeExtraArgs(faultData) {
         if (typeof faultData.schedule !== "undefined") {
@@ -111,4 +161,26 @@ export class FaultService {
         }
     }
 
+    public getPluginDetails(): Observable<any> {
+        return this.http.get(ServiceConstants.PLUGIN_DETAILS);
+    }
+
+    public getCustomFaultJson(pluginId, faultName): Observable<any> {
+        return this.http.get(ServiceConstants.PLUGIN_REQ_JSON + CommonConstants.QUESTION_MARK + CommonConstants.pluginId + CommonConstants.EQUALS_TO + pluginId + CommonConstants.AND_OP + CommonConstants.faultName + CommonConstants.EQUALS_TO + faultName);
+    }
+
+    public executeCustomFault(faultData): Observable<any> {
+        this.removeExtraArgs(faultData);
+        return this.http.post(ServiceConstants.PLUGINS_CUSTOM_FAULT, faultData);
+    }
+
+    public executeDiskSpaceFault(faultData): Observable<any> {
+        this.removeExtraArgs(faultData);
+        return this.http.post(ServiceConstants.FAULTS_DISK_SPACE, faultData);
+    }
+
+    public executeKernelPanicFault(faultData): Observable<any> {
+        this.removeExtraArgs(faultData);
+        return this.http.post(ServiceConstants.KERNEL_PANIC_FAULT_URL, faultData);
+    }
 }

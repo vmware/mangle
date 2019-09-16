@@ -22,10 +22,11 @@ public class FaultConstants {
     private FaultConstants() {
     }
 
-    public static final String AGENT_NAME = "mangle-java-agent-1.0.0";
+    public static final String AGENT_NAME = "mangle-java-agent-2.0.0";
     public static final String AGENT_JAR_EXTENSION = "-full.tar.gz";
     public static final String INJECTION_SCRIPTS_FOLDER = "InjectionScripts/";
     public static final String BASH = "/bin/sh";
+    public static final String DELETE_COMMAND = "rm -rf ";
 
     public static final String KUBE_FAULT_EXEC_STRING = "exec -it %s -c %s -- %s";
     public static final String EXTRACT_AGENT_COMMAND = "cd %s;tar -zxvf %s";
@@ -42,6 +43,8 @@ public class FaultConstants {
             BASH + " %s" + AGENT_NAME + "/bin/bminstall.sh -p %s -s -b %s";
     public static final String PID_K8S_ATTACH_MXBEANS_COMMAND_WITH_PORT =
             "exec -it %s -c %s -- " + BASH + " %s" + AGENT_NAME + "/bin/bminstall.sh -p %s -s -b %s";
+    public static final String PID_K8S_ATTACH_MXBEANS_COMMAND_WITH_PORT_JAVA_HOME =
+            "exec -it %s -c %s -- " + BASH + " -c \"%s" + AGENT_NAME + "/bin/bminstall.sh -p %s -s -b %s\"";
     public static final String FAULT_NAME_MISSING = "Fault Name is Wrong.Please check your command";
     public static final String SUBMIT_COMMAND = BASH + " %s" + AGENT_NAME + "/bin/bmsubmit.sh";
     public static final String SUBMIT_COMMAND_WITH_PORT = SUBMIT_COMMAND + " -p %s ";
@@ -100,12 +103,23 @@ public class FaultConstants {
     public static final String KILL_PROCESS_REMEDIATION_COMMAND = "remediationCommand";
     public static final String KILL_PROCESS_REMEDIATION_COMMAND_ARG =
             ARGUEMENT_PREFIX + KILL_PROCESS_REMEDIATION_COMMAND;
+    public static final String FAULT_OPERATION = "faultOperation";
+    public static final String FAULT_OPERATION_SCRIPT_ARG = SCRIPT_ARGUEMENT_PREFIX + FAULT_OPERATION;
+    public static final String FAULT_OPERATION_ARG = ARGUEMENT_PREFIX + FAULT_OPERATION;
+    public static final String LATENCY = "latency";
+    public static final String LATENCY_SCRIPT_ARG = SCRIPT_ARGUEMENT_PREFIX + LATENCY;
+    public static final String LATENCY_ARG = ARGUEMENT_PREFIX + LATENCY;
+    public static final String PERCENTAGE = "percentage";
+    public static final String PERCENTAGE_SCRIPT_ARG = SCRIPT_ARGUEMENT_PREFIX + PERCENTAGE;
+    public static final String PERCENTAGE_ARG = ARGUEMENT_PREFIX + PERCENTAGE;
+    public static final String NIC_NAME = "nicName";
+    public static final String NIC_NAME_SCRIPT_ARG = SCRIPT_ARGUEMENT_PREFIX + NIC_NAME;
+    public static final String NIC_NAME_ARG = ARGUEMENT_PREFIX + NIC_NAME;
 
     public static final String SCRIPT_WITH_PARAMS = " %s %s > %s 2>&1";
     public static final String OPERATION_INJECT = " --operation=inject ";
     public static final String OPERATION_REMEDIATE = " --operation=remediate";
 
-    public static final String FILEHANDLER_SCRIPT_WITH_PARAMS = " %s > %s 2>&1";
     public static final String MEMORY_INJECTION_COMMAND_WITH_ARGS =
             new StringBuilder(FaultName.MEMORYFAULT.getScriptFileName()).append(OPERATION_INJECT).append("%s=%s %s=%s")
                     .toString();
@@ -113,13 +127,17 @@ public class FaultConstants {
             new StringBuilder(FaultName.DISKFAULT.getScriptFileName()).append(OPERATION_INJECT)
                     .append("%s=%s %s=%s %s=%s").toString();
     public static final String FILEHANDLER_INJECTION_COMMAND_WITH_ARGS =
-            FaultName.FILEHANDLERFAULT.getScriptFileName() + FILEHANDLER_SCRIPT_WITH_PARAMS;
+            new StringBuilder(FaultName.FILEHANDLERFAULT.getScriptFileName()).append(OPERATION_INJECT).append("%s=%s")
+                    .toString();
     public static final String CPU_INJECTION_COMMAND_WITH_ARGS =
             new StringBuilder(FaultName.CPUFAULT.getScriptFileName()).append(OPERATION_INJECT).append("%s=%s %s=%s")
                     .toString();
     public static final String KILL_SERVICE_INJECTION_COMMAND_WITH_ARGS =
             new StringBuilder(FaultName.KILLPROCESSFAULT.getScriptFileName()).append(OPERATION_INJECT)
                     .append("--processIdentifier=\"%s\"").toString();
+    public static final String NETWORK_FAULT_INJECTION_COMMAND_WITH_ARGS =
+            new StringBuilder(FaultName.NETWORKFAULT.getScriptFileName()).append(OPERATION_INJECT)
+                    .append("%s=%s %s=%s %s=%s %s=%s %s=%s").toString();
     public static final String KILL_SERVICE_INJECTION_COMMAND_WIN_WITH_ARGS =
             FaultName.KILLPROCESSFAULT_WINDOWS.getScriptFileName() + " \"" + "%s" + "\"" + "> %s 2>&1";
     public static final String DISK_LATENCY_INJECTION_COMMAND_WITH_ARGS =
@@ -133,4 +151,17 @@ public class FaultConstants {
             "%s %s %s %s %s %s %s %s %s > %s 2>&1";
     public static final String DB_TRANSACTION_ERROR_INJECTION_COMMAND_WITH_ARGS =
             "%s %s %s %s %s %s %s %s %s > %s 2>&1";
+    public static final String FAULT_PARAMETERS_KEY = "faultParameters";
+    public static final String DIRECTORY_PATH_ARG = ARGUEMENT_PREFIX + DIRECTORY_PATH;
+    public static final String DISK_FILL_SIZE = "diskFillSize";
+    public static final String DISK_FILL_SIZE_ARG = ARGUEMENT_PREFIX + DISK_FILL_SIZE;
+    public static final String DISK_FILL_SIZE_SCRIPT_ARG = SCRIPT_ARGUEMENT_PREFIX + DISK_FILL_SIZE;
+    public static final String DIRECTORY_PATH_SCRIPT_ARG = SCRIPT_ARGUEMENT_PREFIX + DIRECTORY_PATH;
+    public static final String DISK_SPACE_INJECTION_COMMAND_WITH_ARGS = FaultName.DISKSPACEFAULT.getScriptFileName()
+            + OPERATION_INJECT + DIRECTORY_PATH_SCRIPT_ARG + "=%s " + TIMEOUT_SCRIPT_ARG + "=%s";
+    public static final String DISK_SPACE_REMEDIATION_COMMAND_WITH_ARGS =
+            OPERATION_REMEDIATE + " " + DIRECTORY_PATH_SCRIPT_ARG + "=%s";
+    public static final String KERNELPANIC_INJECTION_COMMAND_WITH_ARGS =
+            new StringBuilder(FaultName.KERNELPANICFAULT.getScriptFileName()).append(OPERATION_INJECT).toString()
+                    .trim();
 }

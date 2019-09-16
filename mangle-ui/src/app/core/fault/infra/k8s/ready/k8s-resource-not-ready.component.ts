@@ -1,26 +1,28 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { EndpointService } from 'src/app/core/endpoint/endpoint.service';
 import { FaultService } from '../../../fault.service';
 import { MessageConstants } from 'src/app/common/message.constants';
 import { ClrLoadingState } from '@clr/angular';
+import { DataService } from 'src/app/shared/data.service';
+import { DOCUMENT } from '@angular/common';
+import { CommonUtils } from 'src/app/shared/commonUtils';
 
 @Component({
   selector: 'app-k8s-resource-not-ready',
-  templateUrl: './k8s-resource-not-ready.component.html',
-  styleUrls: ['./k8s-resource-not-ready.component.css']
+  templateUrl: './k8s-resource-not-ready.component.html'
 })
 export class K8SResourceNotReadyComponent implements OnInit {
 
-  public errorFlag = false;
-  public successFlag = false;
-  public alertMessage: string;
+  public errorAlertMessage: string;
+  public successAlertMessage: string;
 
   public resourceNameHidden: boolean = true;
   public resourceLabelsHidden: boolean = true;
   public resourceLabelsData: any = {};
 
   public tagsData: any = {};
+  public originalTagsData: any = {};
 
   public endpoints: any = [];
   public k8sResourceTypes: any = ["POD", "NODE"];
@@ -37,12 +39,11 @@ export class K8SResourceNotReadyComponent implements OnInit {
 
   public searchedEndpoints: any = [];
 
-  constructor(private faultService: FaultService, private endpointService: EndpointService, private router: Router) {
+  constructor(private faultService: FaultService, private endpointService: EndpointService, private router: Router, private dataService: DataService, @Inject(DOCUMENT) document, private commonUtils: CommonUtils) {
 
   }
 
   ngOnInit() {
-    this.errorFlag = false;
     this.endpointService.getAllEndpoints().subscribe(
       res => {
         if (res.code) {
@@ -52,9 +53,31 @@ export class K8SResourceNotReadyComponent implements OnInit {
         }
       }, err => {
         this.endpoints = [];
-        this.alertMessage = err.error.description;
-        this.errorFlag = true;
+        this.errorAlertMessage = err.error.description;
       });
+    if (this.dataService.sharedData != null) {
+      this.populateFaultData();
+    }
+  }
+
+  public populateFaultData() {
+    this.faultFormData.endpointName = this.dataService.sharedData.endpointName;
+    this.faultFormData.resourceName = this.dataService.sharedData.resourceName;
+    this.faultFormData.resourceLabels = this.dataService.sharedData.resourceLabels;
+    this.resourceLabelsData = this.dataService.sharedData.resourceLabels;
+    this.faultFormData.appContainerName = this.dataService.sharedData.appContainerName;
+    this.faultFormData.randomInjection = this.dataService.sharedData.randomInjection;
+    this.faultFormData.injectionHomeDir = this.dataService.sharedData.injectionHomeDir;
+    if (this.dataService.sharedData.resourceName != null) {
+      document.getElementById("resourceName").click();
+    } else {
+      document.getElementById("resourceLabels").click();
+    }
+    if (this.dataService.sharedData.tags != null) {
+      this.tagsData = this.dataService.sharedData.tags;
+      this.originalTagsData = JSON.parse(JSON.stringify(this.dataService.sharedData.tags));
+    }
+    this.dataService.sharedData = null;
   }
 
   public searchEndpoint(searchKeyWord) {
@@ -81,11 +104,7 @@ export class K8SResourceNotReadyComponent implements OnInit {
   public displayEndpointFields(endpointNameVal) {
     for (var i = 0; i < this.endpoints.length; i++) {
       if (endpointNameVal == this.endpoints[i].name) {
-        if (this.endpoints[i].tags != null) {
-          this.tagsData = this.endpoints[i].tags;
-        } else {
-          this.tagsData = {};
-        }
+        this.tagsData = this.commonUtils.getTagsData(this.originalTagsData,this.endpoints[i].tags);
       }
     }
   }
@@ -110,16 +129,13 @@ export class K8SResourceNotReadyComponent implements OnInit {
   }
 
   public executeK8SResourceNotReadyFault(faultData) {
-    this.errorFlag = false;
-    this.successFlag = false;
     if (!this.resourceNameHidden) {
       delete faultData["resourceLabels"];
       faultData.randomInjection = true;
     } else {
       faultData.resourceLabels = this.resourceLabelsData;
       if (JSON.stringify(faultData.resourceLabels) === JSON.stringify({})) {
-        this.alertMessage = MessageConstants.RESOURCE_LABEL_REQUIRED;
-        this.errorFlag = true;
+        this.errorAlertMessage = MessageConstants.RESOURCE_LABEL_REQUIRED;
         return false;
       }
       delete faultData["resourceName"];
@@ -133,10 +149,9 @@ export class K8SResourceNotReadyComponent implements OnInit {
         this.tagsData = {};
         this.router.navigateByUrl('core/requests');
       }, err => {
-        this.alertMessage = err.error.description;
-        this.errorFlag = true;
-        if (this.alertMessage === undefined) {
-          this.alertMessage = err.error.error;
+        this.errorAlertMessage = err.error.description;
+        if (this.errorAlertMessage === undefined) {
+          this.errorAlertMessage = err.error.error;
         }
         this.runBtnState = ClrLoadingState.DEFAULT;
       });

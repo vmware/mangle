@@ -40,7 +40,7 @@ public class MetricsHelper {
      *         is NOT empty and NOT null
      */
     public static Boolean isNull(String input) {
-        log.info("Checking if the input: " + input + " is non-empty and not null");
+        log.debug("Checking if the input: " + input + " is non-empty and not null");
         if (null != input && !input.isEmpty()) {
             return false;
         }
@@ -59,14 +59,14 @@ public class MetricsHelper {
      *         specified metric is not a valid metric name
      */
     public static Boolean isAValidMetricName(String metricName) {
-        log.info("Validating if the specified metric Name : " + metricName + " is a valid metric Name");
+        log.debug("Validating if the specified metric Name : " + metricName + " is a valid metric Name");
         if (isNull(metricName)) {
             log.error("NOT a valid metric Name. Metric Name should be in the format: metricPart.metricPart ");
             return false;
         }
         if (metricName.contains(".")) {
             if (Pattern.matches(".[a-zA-Z0-9-_.]+", metricName)) {
-                log.info("Specified metric name is a valid metric name ");
+                log.debug("Specified metric name is a valid metric name ");
                 return true;
             }
         }
@@ -87,7 +87,7 @@ public class MetricsHelper {
      *         can convert to double. false: if the specified value is NOT in valid format
      */
     public static Boolean isAValidMetricValue(Object metricValue) {
-        log.info("Validating if the specified metric Value is a valid metric Value");
+        log.debug("Validating if the specified metric Value is a valid metric Value");
         if (null == metricValue) {
             log.error(" NOT a valid metric value. Specified metric value is null");
             return false;
@@ -99,7 +99,7 @@ public class MetricsHelper {
             log.error("Metric value can be of type: Integer, Float, Double , String ");
             return false;
         }
-        log.info("Specified metric value is a VALID metric value");
+        log.debug("Specified metric value is a VALID metric value");
         return true;
     }
 
@@ -111,7 +111,7 @@ public class MetricsHelper {
      * @return: boolean, true: if the tags are empty false: if tags are not empty
      */
     public static Boolean isEmptyTag(Map<String, String> tags) {
-        log.info("Checking if the tags are empty");
+        log.debug("Checking if the tags are empty");
         if (null == tags || tags.isEmpty()) {
             log.error(" Empty tags OR null value for the tags. No tags specified ");
             return true;
@@ -130,7 +130,7 @@ public class MetricsHelper {
         Long timeStampInMillis;
         Instant instant = Instant.now();
         timeStampInMillis = instant.toEpochMilli();
-        log.info("Returning the current timestamp in Millis : " + timeStampInMillis);
+        log.debug("Returning the current timestamp in Millis : " + timeStampInMillis);
         return timeStampInMillis;
     }
 

@@ -36,6 +36,10 @@ public class MetricProviderConstants {
     public static final String DATADOG_API_VALIDATE_API_APP_KEYS = "/api/v1/api_key";
     public static final String WAVEFRONT_API_SEND_EVENT = "/api/v2/event";
     public static final String WAVEFRONT_API_TEST_CONNECTION = "/api/v2/source?limit=1";
+    public static final String WAVEFRONT_SEARCH_EVENT = "/api/v2/search/event";
+    public static final String WAVEFRONT_CLOSE_EVENT = "/api/v2/event/%s/close";
+    public static final String WAVEFRONT_DELETE_EVENT = "/api/v2/event//%s";
+    public static final String WAVEFRONT_ONGOING_STATE = "ONGOING";
 
     public static final String METRIC_PROVIDERS_FOUND = "Successfully got all available Metric Providers";
     public static final String METRIC_PROVIDERS_EMPTY = "Metric provider list is empty";

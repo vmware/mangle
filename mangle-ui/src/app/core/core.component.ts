@@ -5,8 +5,7 @@ import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-core',
-  templateUrl: './core.component.html',
-  styleUrls: ['./core.component.css']
+  templateUrl: './core.component.html'
 })
 export class CoreComponent implements OnInit {
 

@@ -65,15 +65,10 @@ public class TaskController {
     @ApiOperation(value = "API to get details of a Tasks Executed by Mangle", nickname = "getAllTasks")
     @GetMapping(value = "", produces = "application/json")
     public ResponseEntity<List<Task<TaskSpec>>> getAllTasks(
-            @RequestParam(name = "isScheduledTask", required = false) Boolean isScheduledTask) throws MangleException {
+            @RequestParam(name = "isScheduledTask", required = false) Boolean isScheduledTask,
+            @RequestParam(name = "taskName", required = false) String taskName) throws MangleException {
         log.info("Received request to retrieve details of all the tasks");
-        List<Task<TaskSpec>> tasks = null;
-        if (isScheduledTask != null) {
-            tasks = taskService.getTaskByIsScheduledTask(isScheduledTask);
-        } else {
-            tasks = taskService.getAllTasks();
-        }
-        return new ResponseEntity<>(tasks, HttpStatus.OK);
+        return new ResponseEntity<>(taskService.getAllTasks(isScheduledTask, taskName), HttpStatus.OK);
     }
 
     @ApiOperation(value = "API to get task details from Mangle using its id", nickname = "getTaskInfo")

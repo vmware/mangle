@@ -24,6 +24,7 @@ import ch.ethz.ssh2.SCPClient;
 import ch.ethz.ssh2.Session;
 import ch.ethz.ssh2.StreamGobbler;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.util.StringUtils;
 
 import com.vmware.mangle.utils.constants.Constants;
 import com.vmware.mangle.utils.constants.NumberConstants;
@@ -67,18 +68,18 @@ public class RemoteHost {
             while (true) {
                 String outStream = stdOutBufferedReader.readLine();
                 String errStream = stdErrorBufferedReader.readLine();
-                if (outStream == null && errStream == null) {
+                if (StringUtils.isEmpty(outStream) && StringUtils.isEmpty(errStream)) {
                     break;
                 }
-                if (outStream != null) {
+                if (!StringUtils.isEmpty(outStream)) {
                     output.append(outStream + "\n");
                 }
-                if (outStream == null && errStream != null) {
+                if (StringUtils.isEmpty(outStream) && !StringUtils.isEmpty(errStream)) {
                     output.append(errStream + "\n");
                 }
                 if (stdErrorBufferedReader.ready()) {
                     errStream = errStream + stdErrorBufferedReader.readLine();
-                    if (outStream == null && errStream != null) {
+                    if (StringUtils.isEmpty(outStream) && !StringUtils.isEmpty(errStream)) {
                         output.append(errStream);
                     }
                     log.error(errStream);

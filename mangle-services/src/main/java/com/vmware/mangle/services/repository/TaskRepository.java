@@ -40,8 +40,8 @@ public interface TaskRepository extends CassandraRepository<Task<TaskSpec>, Stri
     @Query("select * from task WHERE id IN ?0")
     List<Task<TaskSpec>> findByIds(Collection<String> taskIds);
 
-    @AllowFiltering
-    Task<TaskSpec> findByTaskName(String taskName);
+    @Query(value = "Select * from task where taskName = ?0", allowFiltering = true)
+    List<Task<TaskSpec>> findByTaskName(String taskName);
 
     @Override
     List<Task<TaskSpec>> findAll();
@@ -61,6 +61,9 @@ public interface TaskRepository extends CassandraRepository<Task<TaskSpec>, Stri
 
     @Query(value = "Select * from task where isScheduledTask = ?0", allowFiltering = true)
     List<Task<TaskSpec>> findByIsScheduledTask(boolean isScheduledTask);
+
+    @Query(value = "Select * from task where taskName = ?0 and isScheduledTask = ?1", allowFiltering = true)
+    List<Task<TaskSpec>> findByTaskNameAndIsScheduledTask(String taskName, boolean isScheduledTask);
 
     @Query(value = "select * from task where id in ?0", allowFiltering = true)
     List<Task<TaskSpec>> findByIds(List<String> ids);

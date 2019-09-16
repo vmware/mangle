@@ -628,7 +628,7 @@ public class CustomDockerClientTest extends PowerMockTestCase {
     public void testUnPauseAllContainersFailure() {
         ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
         when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
-        when(listContainersCmd.withStatusFilter(anyString())).thenReturn(listContainersCmd);
+        when(listContainersCmd.withStatusFilter(any())).thenReturn(listContainersCmd);
         Container container = mock(Container.class);
         List<Container> allContainers = new ArrayList<>();
         allContainers.add(container);
@@ -653,7 +653,7 @@ public class CustomDockerClientTest extends PowerMockTestCase {
     public void testUnPauseAllContainers() {
         ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
         when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
-        when(listContainersCmd.withStatusFilter(anyString())).thenReturn(listContainersCmd);
+        when(listContainersCmd.withStatusFilter(any())).thenReturn(listContainersCmd);
         Container container = mock(Container.class);
         List<Container> allContainers = new ArrayList<>();
         allContainers.add(container);
@@ -712,7 +712,7 @@ public class CustomDockerClientTest extends PowerMockTestCase {
     public void testDeleteAllMatchingContainerFailure() throws MangleException {
         ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
         when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
-        when(listContainersCmd.withStatusFilter(anyString())).thenReturn(listContainersCmd);
+        when(listContainersCmd.withStatusFilter(any())).thenReturn(listContainersCmd);
         Container container = mock(Container.class);
         List<Container> allContainers = new ArrayList<>();
         allContainers.add(container);
@@ -742,7 +742,7 @@ public class CustomDockerClientTest extends PowerMockTestCase {
     public void testDeleteAllMatchingContainer() throws MangleException {
         ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
         when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
-        when(listContainersCmd.withStatusFilter(anyString())).thenReturn(listContainersCmd);
+        when(listContainersCmd.withStatusFilter(any())).thenReturn(listContainersCmd);
         Container container = mock(Container.class);
         List<Container> allContainers = new ArrayList<>();
         allContainers.add(container);
@@ -847,7 +847,7 @@ public class CustomDockerClientTest extends PowerMockTestCase {
     public void testGetContainerByName() {
         ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
         when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
-        when(listContainersCmd.withStatusFilter(anyString())).thenReturn(listContainersCmd);
+        when(listContainersCmd.withStatusFilter(any())).thenReturn(listContainersCmd);
         Container container = mock(Container.class);
         List<Container> allContainers = new ArrayList<>();
         allContainers.add(container);
@@ -867,7 +867,7 @@ public class CustomDockerClientTest extends PowerMockTestCase {
     public void testGetContainerByName2() {
         ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
         when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
-        when(listContainersCmd.withStatusFilter(anyString())).thenReturn(listContainersCmd);
+        when(listContainersCmd.withStatusFilter(any())).thenReturn(listContainersCmd);
         Container container = mock(Container.class);
         List<Container> allContainers = new ArrayList<>();
         allContainers.add(container);
@@ -887,7 +887,7 @@ public class CustomDockerClientTest extends PowerMockTestCase {
     public void testIsContainerRunningByID() {
         ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
         when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
-        when(listContainersCmd.withStatusFilter(anyString())).thenReturn(listContainersCmd);
+        when(listContainersCmd.withStatusFilter(any())).thenReturn(listContainersCmd);
         Container container = mock(Container.class);
         List<Container> allContainers = new ArrayList<>();
         allContainers.add(container);
@@ -906,7 +906,7 @@ public class CustomDockerClientTest extends PowerMockTestCase {
     public void testIsContainerRunningByID2() {
         ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
         when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
-        when(listContainersCmd.withStatusFilter(anyString())).thenReturn(listContainersCmd);
+        when(listContainersCmd.withStatusFilter(any())).thenReturn(listContainersCmd);
         Container container = mock(Container.class);
         List<Container> allContainers = new ArrayList<>();
         allContainers.add(container);
@@ -925,7 +925,7 @@ public class CustomDockerClientTest extends PowerMockTestCase {
     public void testIsContainerPaused() {
         ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
         when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
-        when(listContainersCmd.withStatusFilter(anyString())).thenReturn(listContainersCmd);
+        when(listContainersCmd.withStatusFilter(any())).thenReturn(listContainersCmd);
         Container container = mock(Container.class);
         List<Container> allContainers = new ArrayList<>();
         allContainers.add(container);
@@ -944,7 +944,7 @@ public class CustomDockerClientTest extends PowerMockTestCase {
     public void testIsContainerPaused2() {
         ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
         when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
-        when(listContainersCmd.withStatusFilter(anyString())).thenReturn(listContainersCmd);
+        when(listContainersCmd.withStatusFilter(any())).thenReturn(listContainersCmd);
         Container container = mock(Container.class);
         List<Container> allContainers = new ArrayList<>();
         allContainers.add(container);
@@ -963,7 +963,7 @@ public class CustomDockerClientTest extends PowerMockTestCase {
     public void testIsPortAvailableToConsume() {
         ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
         when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
-        when(listContainersCmd.withStatusFilter(anyString())).thenReturn(listContainersCmd);
+        when(listContainersCmd.withStatusFilter(any())).thenReturn(listContainersCmd);
         Container container = mock(Container.class);
         List<Container> allContainers = new ArrayList<>();
         allContainers.add(container);
@@ -986,7 +986,7 @@ public class CustomDockerClientTest extends PowerMockTestCase {
     public void testIsPortAvailableToConsume2() {
         ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
         when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
-        when(listContainersCmd.withStatusFilter(anyString())).thenReturn(listContainersCmd);
+        when(listContainersCmd.withStatusFilter(any())).thenReturn(listContainersCmd);
         Container container = mock(Container.class);
         List<Container> allContainers = new ArrayList<>();
         allContainers.add(container);
@@ -1009,7 +1009,7 @@ public class CustomDockerClientTest extends PowerMockTestCase {
     public void testCopyFileToContainerByNameDockerClientFailure() throws Exception {
         ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
         when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
-        when(listContainersCmd.withStatusFilter(anyString())).thenReturn(listContainersCmd);
+        when(listContainersCmd.withStatusFilter(any())).thenReturn(listContainersCmd);
         Container container = mock(Container.class);
         List<Container> allContainers = new ArrayList<>();
         allContainers.add(container);
@@ -1041,7 +1041,7 @@ public class CustomDockerClientTest extends PowerMockTestCase {
     public void testCopyFileToContainerByNameNotFoundFailure() throws Exception {
         ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
         when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
-        when(listContainersCmd.withStatusFilter(anyString())).thenReturn(listContainersCmd);
+        when(listContainersCmd.withStatusFilter(any())).thenReturn(listContainersCmd);
         Container container = mock(Container.class);
         List<Container> allContainers = new ArrayList<>();
         allContainers.add(container);
@@ -1073,7 +1073,7 @@ public class CustomDockerClientTest extends PowerMockTestCase {
     public void testCopyFileToContainerByNameclientProtocolfailure() throws Exception {
         ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
         when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
-        when(listContainersCmd.withStatusFilter(anyString())).thenReturn(listContainersCmd);
+        when(listContainersCmd.withStatusFilter(any())).thenReturn(listContainersCmd);
         Container container = mock(Container.class);
         List<Container> allContainers = new ArrayList<>();
         allContainers.add(container);
@@ -1106,7 +1106,7 @@ public class CustomDockerClientTest extends PowerMockTestCase {
     public void testCopyFileToContainerByName() throws Exception {
         ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
         when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
-        when(listContainersCmd.withStatusFilter(anyString())).thenReturn(listContainersCmd);
+        when(listContainersCmd.withStatusFilter(any())).thenReturn(listContainersCmd);
         Container container = mock(Container.class);
         List<Container> allContainers = new ArrayList<>();
         allContainers.add(container);

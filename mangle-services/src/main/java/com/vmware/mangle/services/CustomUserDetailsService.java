@@ -24,6 +24,8 @@ import org.springframework.stereotype.Service;
 
 import com.vmware.mangle.cassandra.model.security.Privilege;
 import com.vmware.mangle.cassandra.model.security.User;
+import com.vmware.mangle.cassandra.model.security.UserLoginAttempts;
+import com.vmware.mangle.utils.constants.Constants;
 
 /**
  *
@@ -34,15 +36,17 @@ import com.vmware.mangle.cassandra.model.security.User;
 public class CustomUserDetailsService implements UserDetailsService {
 
     private UserService userService;
+    private UserLoginAttemptsService userLoginAttemptsService;
 
     @Autowired
-    public CustomUserDetailsService(UserService userService) {
+    public CustomUserDetailsService(UserService userService, UserLoginAttemptsService userLoginAttemptsService) {
         this.userService = userService;
+        this.userLoginAttemptsService = userLoginAttemptsService;
     }
 
     /**
-     * creates the userDetails object as required by the spring security This method queries the
-     * user in db for given username, and user authorities
+     * creates the userDetails object as required by the spring security This method queries the user in
+     * db for given username, and user authorities
      *
      * @param username
      *            for which user details need to be loaded
@@ -64,8 +68,8 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     /**
      * Get the list of spring security granted authorities for a given user, if the username is not
-     * already configured with a roles, he will be created with a default user entry with default
-     * role: ROLE_READONLY
+     * already configured with a roles, he will be created with a default user entry with default role:
+     * ROLE_READONLY
      *
      * @param username
      *            username for which the list of authorities need to be fetched
@@ -90,6 +94,27 @@ public class CustomUserDetailsService implements UserDetailsService {
      * @return UserDetails object as required by the spring security
      */
     private UserDetails buildUserForAuthentication(User user, List<GrantedAuthority> authorities) {
-        return new org.springframework.security.core.userdetails.User(user.getName(), user.getPassword(), authorities);
+        String password = user.getPassword() != null ? user.getPassword() : "";
+        return new org.springframework.security.core.userdetails.User(user.getName(), password, true, true,
+                true, !getAccountLockedStatus(user), authorities);
+    }
+
+    /**
+     * Account is locked if the user failed to authenticate for 5 times. He'll be allowed to try after
+     * 30minutes, but only once. Failing which the account will get locked for another 30 mins
+     *
+     * @param user
+     * @return
+     */
+    private boolean getAccountLockedStatus(User user) {
+        if (null != user && user.getAccountLocked() != null && user.getAccountLocked()) {
+            UserLoginAttempts loginAttempts = userLoginAttemptsService.getUserAttemptsForUser(user.getName());
+            if (null != loginAttempts) {
+                return System.currentTimeMillis() - loginAttempts.getLastAttempt()
+                        .getTime() <= Constants.USER_ACCOUNT_LOCK_RELEASE_TIME_IN_MINS * Constants.ONE_MINUTE_IN_MILLIS;
+            }
+            return true;
+        }
+        return false;
     }
 }

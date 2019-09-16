@@ -3,17 +3,17 @@ import { Router } from '@angular/router';
 import { FaultService } from '../../../fault.service';
 import { EndpointService } from 'src/app/core/endpoint/endpoint.service';
 import { ClrLoadingState } from '@clr/angular';
+import { DataService } from 'src/app/shared/data.service';
+import { CommonUtils } from 'src/app/shared/commonUtils';
 
 @Component({
   selector: 'app-vcenter-disk',
-  templateUrl: './vcenter-disk.component.html',
-  styleUrls: ['./vcenter-disk.component.css']
+  templateUrl: './vcenter-disk.component.html'
 })
 export class VcenterDiskComponent implements OnInit {
 
-  public errorFlag = false;
-  public successFlag = false;
-  public alertMessage: string;
+  public errorAlertMessage: string;
+  public successAlertMessage: string;
 
   public endpoints: any = [];
   public diskFaultTypes: any = ["DISCONNECT_DISK"];
@@ -21,6 +21,7 @@ export class VcenterDiskComponent implements OnInit {
   public runBtnState: ClrLoadingState = ClrLoadingState.DEFAULT;
 
   public tagsData: any = {};
+  public originalTagsData: any = {};
 
   public faultFormData: any = {
     "endpointName": null,
@@ -31,12 +32,11 @@ export class VcenterDiskComponent implements OnInit {
 
   public searchedEndpoints: any = [];
 
-  constructor(private faultService: FaultService, private endpointService: EndpointService, private router: Router) {
+  constructor(private faultService: FaultService, private endpointService: EndpointService, private router: Router, private dataService: DataService, private commonUtils: CommonUtils) {
 
   }
 
   ngOnInit() {
-    this.errorFlag = false;
     this.endpointService.getAllEndpoints().subscribe(
       res => {
         if (res.code) {
@@ -46,9 +46,23 @@ export class VcenterDiskComponent implements OnInit {
         }
       }, err => {
         this.endpoints = [];
-        this.alertMessage = err.error.description;
-        this.errorFlag = true;
+        this.errorAlertMessage = err.error.description;
       });
+    if (this.dataService.sharedData != null) {
+      this.populateFaultData();
+    }
+  }
+
+  public populateFaultData() {
+    this.faultFormData.endpointName = this.dataService.sharedData.endpointName;
+    this.faultFormData.fault = this.dataService.sharedData.fault;
+    this.faultFormData.vmDiskId = this.dataService.sharedData.vmDiskId;
+    this.faultFormData.vmName = this.dataService.sharedData.vmName;
+    if (this.dataService.sharedData.tags != null) {
+      this.tagsData = this.dataService.sharedData.tags;
+      this.originalTagsData = JSON.parse(JSON.stringify(this.dataService.sharedData.tags));
+    }
+    this.dataService.sharedData = null;
   }
 
   public searchEndpoint(searchKeyWord) {
@@ -75,19 +89,13 @@ export class VcenterDiskComponent implements OnInit {
   public displayEndpointFields(endpointNameVal) {
     for (var i = 0; i < this.endpoints.length; i++) {
       if (endpointNameVal == this.endpoints[i].name) {
-        if (this.endpoints[i].tags != null) {
-          this.tagsData = this.endpoints[i].tags;
-        } else {
-          this.tagsData = {};
-        }
+        this.tagsData = this.commonUtils.getTagsData(this.originalTagsData,this.endpoints[i].tags);
       }
     }
   }
 
   public executeVcenterDiskFault(faultData) {
     this.runBtnState = ClrLoadingState.LOADING;
-    this.errorFlag = false;
-    this.successFlag = false;
     if (this.tagsData != {}) {
       faultData.tags = this.tagsData;
     }
@@ -96,10 +104,9 @@ export class VcenterDiskComponent implements OnInit {
         this.tagsData = {};
         this.router.navigateByUrl('core/requests');
       }, err => {
-        this.alertMessage = err.error.description;
-        this.errorFlag = true;
-        if (this.alertMessage === undefined) {
-          this.alertMessage = err.error.error;
+        this.errorAlertMessage = err.error.description;
+        if (this.errorAlertMessage === undefined) {
+          this.errorAlertMessage = err.error.error;
         }
         this.runBtnState = ClrLoadingState.DEFAULT;
       });

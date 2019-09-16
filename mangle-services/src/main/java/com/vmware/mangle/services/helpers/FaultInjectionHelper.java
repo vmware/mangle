@@ -12,7 +12,6 @@
 package com.vmware.mangle.services.helpers;
 
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,16 +24,22 @@ import org.springframework.util.StringUtils;
 import com.vmware.mangle.cassandra.model.endpoint.CertificatesSpec;
 import com.vmware.mangle.cassandra.model.endpoint.DockerCertificates;
 import com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.FaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.K8SFaultTriggerSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.KillProcessFaultSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.NetworkFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.TaskSpec;
+import com.vmware.mangle.cassandra.model.plugin.PluginMetaInfo;
 import com.vmware.mangle.cassandra.model.tasks.FaultTriggeringTask;
 import com.vmware.mangle.cassandra.model.tasks.Task;
+import com.vmware.mangle.cassandra.model.tasks.TaskStatus;
 import com.vmware.mangle.model.enums.EndpointType;
 import com.vmware.mangle.services.CredentialService;
 import com.vmware.mangle.services.EndpointCertificatesService;
 import com.vmware.mangle.services.EndpointService;
+import com.vmware.mangle.services.PluginDetailsService;
 import com.vmware.mangle.services.TaskService;
+import com.vmware.mangle.services.enums.NetworkFaultType;
 import com.vmware.mangle.services.events.task.TaskCreatedEvent;
 import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
@@ -64,6 +69,9 @@ public class FaultInjectionHelper {
     @Autowired
     private EndpointCertificatesService certificatesService;
 
+    @Autowired
+    private PluginDetailsService pluginDetailsService;
+
     public void updateFaultSpec(TaskSpec spec) throws MangleException {
         CommandExecutionFaultSpec commandExecutionFaultSpec = getCommandExecutionFaultSpec(spec);
 
@@ -83,6 +91,15 @@ public class FaultInjectionHelper {
         }
     }
 
+    public Task<TaskSpec> getTaskByIdentifier(String taskIdentifier) throws MangleException {
+        Task<TaskSpec> task = null;
+        task = taskService.getTaskById(taskIdentifier);
+        if (null == task) {
+            throw new MangleException(ErrorCode.NO_TASK_FOUND, taskIdentifier);
+        }
+        return task;
+    }
+
     public Task<? extends TaskSpec> getTask(CommandExecutionFaultSpec faultSpec) throws MangleException {
         Task<? extends TaskSpec> task = faultTaskFactory.getTask(faultSpec);
         saveTask(task);
@@ -90,14 +107,7 @@ public class FaultInjectionHelper {
     }
 
     public Task<TaskSpec> triggerRemediation(String taskIdentifier) throws MangleException {
-        Task<TaskSpec> task = null;
-        try {
-            UUID.fromString(taskIdentifier);
-            task = taskService.getTaskById(taskIdentifier);
-        } catch (IllegalArgumentException e) {
-            task = taskService.getTaskByTaskName(taskIdentifier);
-        }
-
+        Task<TaskSpec> task = getTaskByIdentifier(taskIdentifier);
 
         if (task instanceof FaultTriggeringTask
                 && !CollectionUtils.isEmpty(task.getTriggers().peek().getChildTaskIDs())) {
@@ -111,6 +121,28 @@ public class FaultInjectionHelper {
         remediationTask.setTaskTroubleShootingInfo(task.getTaskTroubleShootingInfo());
         saveTask(remediationTask);
         return remediationTask;
+    }
+
+    public Task<TaskSpec> rerunFault(String taskIdentifier) throws MangleException {
+        Task<TaskSpec> task = getTaskByIdentifier(taskIdentifier);
+        checkIfPluginIsAvailable(task);
+        if (task.getTaskStatus().equals(TaskStatus.COMPLETED) || task.getTaskStatus().equals(TaskStatus.FAILED)) {
+            task.setTaskRetriggered(true);
+            saveTask(task);
+            return task;
+        } else {
+            throw new MangleException(ErrorCode.CANNOT_RERUN_FAULT, taskIdentifier, task.getTaskStatus());
+        }
+    }
+
+    private void checkIfPluginIsAvailable(Task<TaskSpec> task) throws MangleException {
+        if (task.getTaskData() instanceof FaultSpec) {
+            PluginMetaInfo pluginMetaInfo = ((FaultSpec) task.getTaskData()).getPluginMetaInfo();
+            if (null != pluginMetaInfo && !pluginDetailsService.isPluginAvailable(pluginMetaInfo)) {
+                throw new MangleException(ErrorCode.CUSTOM_FAULT_RE_RUN_FAILURE_DUE_TO_PLUGIN_STATE, task.getId(),
+                        pluginMetaInfo.getPluginId(), pluginMetaInfo.getPluginVersion());
+            }
+        }
     }
 
     public Task<TaskSpec> saveTask(Task<? extends TaskSpec> task) throws MangleException {
@@ -177,5 +209,18 @@ public class FaultInjectionHelper {
                 && faultSpec.getK8sArguments() == null) {
             throw new MangleException(ErrorCode.K8S_SPECIFIC_ARGUMENTS_REQUIRED);
         }
+    }
+
+    public void validateNertworkFaultSpec(NetworkFaultSpec faultSpec) throws MangleException {
+        if (faultSpec.getFaultOperation().equals(NetworkFaultType.NETWORK_DELAY_MILLISECONDS)
+                && faultSpec.getLatency() == 0) {
+            throw new MangleException(ErrorCode.LATENCY_REQUIRED_FOR_NETWORK_LATENCY_FAULT);
+        }
+        if (!faultSpec.getFaultOperation().equals(NetworkFaultType.NETWORK_DELAY_MILLISECONDS)
+                && faultSpec.getPercentage() == 0) {
+            throw new MangleException(ErrorCode.PERCENTAGE_REQUIRED_FOR_NETWORK_PACKET_RELATED_FAULT);
+        }
+
+
     }
 }

@@ -126,7 +126,7 @@ public class CustomActiveDirectoryLdapAuthenticationProvider extends AbstractLda
     // Only used to allow tests to substitute a mock LdapContext
     ContextFactory contextFactory = new ContextFactory();
 
-    private final String testUser = "test_user";
+    private static final String TEST_USER = "test_user";
 
     private UserService userService;
     private PrivilegeService privilegeService;
@@ -297,8 +297,7 @@ public class CustomActiveDirectoryLdapAuthenticationProvider extends AbstractLda
             throw new AccountExpiredException(
                     messages.getMessage("LdapAuthenticationProvider.expired", "User account has expired"), cause);
         case ACCOUNT_LOCKED:
-            throw new LockedException(
-                    messages.getMessage("LdapAuthenticationProvider.locked", "User account is locked"), cause);
+            throw new LockedException("User account is locked by authentication provider", cause);
         default:
             throw badCredentials(cause);
         }
@@ -447,7 +446,7 @@ public class CustomActiveDirectoryLdapAuthenticationProvider extends AbstractLda
 
     public boolean testConnection() {
         UsernamePasswordAuthenticationToken authToken =
-                new UsernamePasswordAuthenticationToken(testUser, UUID.randomUUID().toString());
+                new UsernamePasswordAuthenticationToken(TEST_USER, UUID.randomUUID().toString());
 
         try {
             authenticate(authToken);

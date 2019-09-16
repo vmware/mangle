@@ -31,9 +31,13 @@ public class KubernetesTemplates {
     public static final String PODS = "pods ";
     public static final String POD = "pod ";
     public static final String NODE = "node ";
+    public static final String SERVICE = "service ";
     public static final String NODES = "nodes ";
     public static final String NAMESPACE = "namespace ";
     public static final String SERVICES = "services ";
+    public static final String ENDPOINTS = "endpoints ";
+    public static final String SELECTORS_PREFIX = "selectors#";
+    public static final String SERVICE_KEY_PREFIX = "key#";
     public static final String OUTPUT_JSONPATH = "-o=jsonpath=";
     public static final String GET_NODES_JSONPATH = GET + NODES + OUTPUT_JSONPATH;
     public static final String GET_NODE_PODCIDR = GET + NODE + "%s " + OUTPUT_JSONPATH + "\"{.spec.podCIDR}\"";
@@ -71,17 +75,26 @@ public class KubernetesTemplates {
     public static final String VRBC_ONBOARDING_POD_LABELS = "app=vrbc-onboarding";
     public static final String VRBC_UI_POD_LABELS = "app=vrbc-ui";
     public static final String GET_SERVICE_LB_HOSTNAME =
-            GET + " service " + " %s " + OUTPUT_JSONPATH + "\"{.status.loadBalancer.ingress[0].hostname}\"";
+            GET + SERVICE + " %s " + OUTPUT_JSONPATH + "\"{.status.loadBalancer.ingress[0].hostname}\"";
     public static final String RESTART_PODS_WITH_LABELS = DELETE + PODS + " -l \"%s\" ";
     public static final String RESTART_POD_WITH_NAME = DELETE + POD + " \"%s\"";
     public static final String CSP_SERVICE_NAME = "csp-service";
     public static final String NGINX_CONTAINER_IMAGE = "nginx";
     public static final String PATCH_CONTAINER_IMAGE_OF_POD =
             PATCH + POD + " %s -p '{\"spec\":{\"containers\":[{\"name\":\"%s\",\"image\":\"%s\"}]}}' ";
+    public static final String PATCH_SERVICE_WITH_SELECTORS =
+            PATCH + SERVICE + " %s -p '{\"spec\":{\"selector\":%s}}' ";
     public static final String GET_CONTAINER_IMAGE = GET + POD + "%s " + TEMPLATE_OUTPUT
             + "\"{{range .spec.containers}}{{if eq .name \\\"%s\\\"}}{{.image}}{{end}}{{end}}\"";
     public static final String IS_CONTAINER_HAS_READINESS_PROBE = GET + POD + "%s " + TEMPLATE_OUTPUT
             + "\"{{range .spec.containers}}{{if eq .name \\\"%s\\\"}}{{if .readinessProbe}}ReadinessProbe Configured{{else}}ReadinessProbe not Configured for container %s {{end}}{{end}}{{end}}\"";
     public static final String IS_CONTAINER_READY = GET + POD + "%s " + TEMPLATE_OUTPUT
             + "\"{{range .status.containerStatuses}}{{if eq .name \\\"%s\\\"}}{{.ready}}{{end}}{{end}}\"";
+    public static final String GET_SERVICE_ENDPOINTS = GET + ENDPOINTS + "%s " + TEMPLATE_OUTPUT + "\"{{.subsets}}\"";
+    public static final String DEFAULT_MANGLE_SERVICE_SELECTORS = "{\"%s\":\"mangle\"}";
+    public static final String GET_SERVICE_SELECTORS = GET + SERVICE + "%s " + TEMPLATE_OUTPUT + "\"" + SELECTORS_PREFIX
+            + "{{\\\"{\\\"}}{{\\$i:=0}}{{range \\$k,\\$v := .spec.selector}}{{if eq \\$i 1}},{{end}}\\\"{{\\$k}}\\\":\\\"{{\\$v}}\\\"{{\\$i = 1}}{{end}}{{\\\"}\\\"}}\"";
+    public static final String GET_SERVICE_SELECTORS_KEY = GET + SERVICE + "%s " + TEMPLATE_OUTPUT
+            + "\"{{\\$key:=0}}{{range \\$k,\\$v := .spec.selector}}{{\\$key = \\$k}}{{end}}" + SERVICE_KEY_PREFIX
+            + "{{\\$key}}\"";
 }

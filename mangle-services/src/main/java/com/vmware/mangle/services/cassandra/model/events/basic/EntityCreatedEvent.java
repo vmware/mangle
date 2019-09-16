@@ -18,6 +18,8 @@ import org.springframework.core.ResolvableType;
 import org.springframework.core.ResolvableTypeProvider;
 import org.springframework.data.cassandra.core.mapping.Table;
 
+import com.vmware.mangle.model.enums.EventType;
+
 /**
  * @author hkilari
  *
@@ -33,9 +35,13 @@ public class EntityCreatedEvent extends Event implements ResolvableTypeProvider 
     private String entityClass;
 
     public EntityCreatedEvent(String entityId, String entityClass) {
-        super("EntityCreatedEvent", "Created entity: " + entityClass + " With Id: " + entityId);
+        super(EventType.ENTITY_CREATED_EVENT.getName(), "Created entity: " + entityClass + " With Id: " + entityId);
         this.entityId = entityId;
         this.entityClass = entityClass;
+    }
+
+    public EntityCreatedEvent() {
+        super();
     }
 
     @Override

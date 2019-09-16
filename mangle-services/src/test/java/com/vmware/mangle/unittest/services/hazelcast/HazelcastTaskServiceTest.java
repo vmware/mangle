@@ -105,7 +105,7 @@ public class HazelcastTaskServiceTest {
         String taskId = UUID.randomUUID().toString();
 
         Task task = mockData.getMockTask();
-        CommandExecutionFaultSpec commandExecutionFaultSpec = mockData.getMockFaultSpec();
+        CommandExecutionFaultSpec commandExecutionFaultSpec = (CommandExecutionFaultSpec) mockData.getMockFaultSpec();
         EndpointSpec endpointSpec = mockData.getMockEndpointSpec();
         String endpoinName = commandExecutionFaultSpec.getEndpointName();
 
@@ -145,7 +145,7 @@ public class HazelcastTaskServiceTest {
         String taskId = UUID.randomUUID().toString();
 
         Task task = mockData.getMockTask();
-        CommandExecutionFaultSpec commandExecutionFaultSpec = mockData.getMockFaultSpec();
+        CommandExecutionFaultSpec commandExecutionFaultSpec = (CommandExecutionFaultSpec) mockData.getMockFaultSpec();
         EndpointSpec endpointSpec = mockData.getMockEndpointSpec();
         String endpoinName = commandExecutionFaultSpec.getEndpointName();
 
@@ -192,7 +192,7 @@ public class HazelcastTaskServiceTest {
         String taskId = UUID.randomUUID().toString();
 
         Task task = mockData.getMockTask();
-        CommandExecutionFaultSpec commandExecutionFaultSpec = mockData.getMockFaultSpec();
+        CommandExecutionFaultSpec commandExecutionFaultSpec = (CommandExecutionFaultSpec) mockData.getMockFaultSpec();
 
         String key = UUID.randomUUID().toString();
         Set<Object> currentNodeTasks = new HashSet<Object>(Arrays.asList(key));

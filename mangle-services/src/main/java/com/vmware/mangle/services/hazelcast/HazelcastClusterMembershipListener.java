@@ -11,24 +11,28 @@
 
 package com.vmware.mangle.services.hazelcast;
 
-import static com.vmware.mangle.utils.constants.URLConstants.HAZELCAST_MANGLE_NODE_CURRENT_STATUS_ATTRIBUTE;
-import static com.vmware.mangle.utils.constants.URLConstants.HAZELCAST_NODE_TASKS_MAP;
+
+import static com.vmware.mangle.utils.constants.HazelcastConstants.HAZELCAST_MANGLE_NODE_CURRENT_STATUS_ATTRIBUTE;
+import static com.vmware.mangle.utils.constants.HazelcastConstants.HAZELCAST_NODE_TASKS_MAP;
 import static com.vmware.mangle.utils.constants.URLConstants.TASKS_WAIT_TIME_SECONDS;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceAware;
 import com.hazelcast.core.IMap;
-import com.hazelcast.core.Member;
 import com.hazelcast.core.MemberAttributeEvent;
 import com.hazelcast.core.MembershipEvent;
 import com.hazelcast.core.MembershipListener;
 import com.hazelcast.core.PartitionService;
+import com.hazelcast.core.ReplicatedMap;
 import com.hazelcast.nio.Address;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
@@ -37,8 +41,11 @@ import com.vmware.mangle.cassandra.model.hazelcast.HazelcastClusterConfig;
 import com.vmware.mangle.cassandra.model.tasks.Task;
 import com.vmware.mangle.services.ClusterConfigService;
 import com.vmware.mangle.services.enums.MangleNodeStatus;
+import com.vmware.mangle.services.enums.MangleQuorumStatus;
 import com.vmware.mangle.services.tasks.executor.TaskExecutor;
 import com.vmware.mangle.utils.CommonUtils;
+import com.vmware.mangle.utils.constants.Constants;
+import com.vmware.mangle.utils.constants.HazelcastConstants;
 import com.vmware.mangle.utils.constants.URLConstants;
 import com.vmware.mangle.utils.exceptions.MangleException;
 
@@ -70,43 +77,46 @@ import com.vmware.mangle.utils.exceptions.MangleException;
 @Component
 public class HazelcastClusterMembershipListener implements MembershipListener, HazelcastInstanceAware {
 
-    private HazelcastInstance hz;
-
-    @Autowired
-    private HazelcastTaskService hazelcastTaskService;
-
-    @Autowired
-    private ClusterConfigService clusterConfigService;
-
     @Autowired
     TaskExecutor<Task<? extends TaskSpec>> taskRunner;
+    private HazelcastInstance hz;
+    @Autowired
+    private HazelcastTaskService hazelcastTaskService;
+    @Autowired
+    private ClusterConfigService clusterConfigService;
+    private List<String> taskQueue = new ArrayList<>();
     private PartitionService partitionService;
+
+    private ThreadPoolTaskScheduler taskScheduler;
+
+    private static void updateMangleNodeCurrentStatus(MangleNodeStatus nodeStatus) {
+        URLConstants.setMangleNodeStatus(nodeStatus);
+    }
+
+    @Autowired
+    public void setTaskScheduler(ThreadPoolTaskScheduler threadPoolTaskScheduler) {
+        this.taskScheduler = threadPoolTaskScheduler;
+    }
 
     @Override
     public void memberAdded(MembershipEvent membershipEvent) {
         Address addedMember = membershipEvent.getMember().getAddress();
+        clusterConfigService.handleQuorumForNewNodeAddition();
+        hz.getConfig().getNetworkConfig().getJoin().getTcpIpConfig().addMember(addedMember.getHost());
         log.debug("Member {} joined the cluster", addedMember);
-
-        Set<String> activeMembers = membershipEvent.getMembers().stream().map(member -> member.getAddress().getHost())
-                .collect(Collectors.toSet());
-
-        HazelcastClusterConfig config = clusterConfigService.getClusterConfiguration();
-        config.getMembers().addAll(activeMembers);
-        clusterConfigService.addClusterConfiguration(config);
     }
 
     /**
      *
      * Method is triggered when member leaves the cluster
      *
-     * Upon the member leaving the cluster, the tasks that were being executed on the dead node are
-     * to be re-triggered on the each of the other node, depending on which node owns the partition,
-     * in which key(task id in our case) is stored
+     * Upon the member leaving the cluster, the tasks that were being executed on the dead node are to
+     * be re-triggered on the each of the other node, depending on which node owns the partition, in
+     * which key(task id in our case) is stored
      *
-     * The task that are triggered in this method are only those, which sits in the partition that
-     * are already migrated to another node(new owner) when it joined the cluster, but those tasks
-     * were continued to be executed on the same node(old owner), on which they had first started
-     * executing
+     * The task that are triggered in this method are only those, which sits in the partition that are
+     * already migrated to another node(new owner) when it joined the cluster, but those tasks were
+     * continued to be executed on the same node(old owner), on which they had first started executing
      *
      *
      *
@@ -118,6 +128,7 @@ public class HazelcastClusterMembershipListener implements MembershipListener, H
     public void memberRemoved(MembershipEvent membershipEvent) {
         log.debug("Member removed event triggered by hazelcast instance {} leaving the cluster",
                 membershipEvent.getMember().getAddress());
+        updateClusterConfiguration(membershipEvent);
 
         String removedNodeUUID = membershipEvent.getMember().getUuid();
         String currentNodeUUID = hz.getCluster().getLocalMember().getUuid();
@@ -127,8 +138,10 @@ public class HazelcastClusterMembershipListener implements MembershipListener, H
         Set<String> executingTasks = nodeToTaskMapping.get(removedNodeUUID);
         Set<String> currentNodeTasks = nodeToTaskMapping.get(currentNodeUUID);
 
-
-        if (executingTasks != null && !executingTasks.isEmpty()) {
+        // Tasks on the current node because of the member removed event
+        // will only be triggered if the current node and hence the cluster has a valid quorum
+        if (HazelcastConstants.mangleQourumStatus == MangleQuorumStatus.PRESENT && executingTasks != null
+                && !executingTasks.isEmpty()) {
             log.info("Tasks {} are to be re-triggered, as the node {} left the cluster", executingTasks.toString(),
                     membershipEvent.getMember().getAddress());
             synchronized (hazelcastTaskService) {
@@ -137,10 +150,7 @@ public class HazelcastClusterMembershipListener implements MembershipListener, H
                             && partitionService.getPartition(taskId).getOwner().getUuid().equals(currentNodeUUID)
                             && (CollectionUtils.isEmpty(currentNodeTasks) || !currentNodeTasks.contains(taskId))) {
                         try {
-                            log.debug("Task {} will be triggered as the node {} assigned the partition ownership",
-                                    taskId, currentNodeUUID);
-                            log.info("Triggering the task {}", taskId);
-                            hazelcastTaskService.triggerTask(taskId);
+                            triggerTask(taskId);
                         } catch (MangleException e) {
                             log.error("Failed to re-trigger the task {} because  of the exception {}", taskId,
                                     e.getMessage());
@@ -149,18 +159,17 @@ public class HazelcastClusterMembershipListener implements MembershipListener, H
                 }
             }
         }
+        this.taskScheduler.schedule(this::triggerTasks,
+                new Date(System.currentTimeMillis() + Constants.ONE_MINUTE_IN_MILLIS * 5));
+    }
 
-        HazelcastClusterConfig config = clusterConfigService.getClusterConfiguration();
-        Address removedMemberAddress = membershipEvent.getMember().getAddress();
-        Set<Member> membersSet = hz.getCluster().getMembers();
-
-        Set<Member> currentNodeSet = membersSet.stream()
-                .filter(member -> member.getAddress().getHost().equals(removedMemberAddress.getHost()))
-                .collect(Collectors.toSet());
-
-        if (CollectionUtils.isEmpty(currentNodeSet) && config.getMembers().contains(removedMemberAddress.getHost())) {
-            config.getMembers().remove(membershipEvent.getMember().getAddress().getHost());
-            clusterConfigService.updateClusterConfiguration(config);
+    private void triggerTask(String taskId) throws MangleException {
+        log.debug("Task {} will be triggered on the current node", taskId);
+        log.info("Triggering the task {}", taskId);
+        if (hazelcastTaskService.isScheduledTask(taskId)) {
+            hazelcastTaskService.triggerTask(taskId);
+        } else {
+            taskQueue.add(taskId);
         }
     }
 
@@ -168,31 +177,39 @@ public class HazelcastClusterMembershipListener implements MembershipListener, H
     public void memberAttributeChanged(MemberAttributeEvent memberAttributeEvent) {
         log.info("Member attribute {} has been modified to {} on the node {}", memberAttributeEvent.getKey(),
                 memberAttributeEvent.getValue(), memberAttributeEvent.getMember().getAddress());
-        if (memberAttributeEvent.getKey().equals(HAZELCAST_MANGLE_NODE_CURRENT_STATUS_ATTRIBUTE)) {
-            if (memberAttributeEvent.getValue().equals(MangleNodeStatus.MAINTENANCE_MODE.name())
-                    && !URLConstants.getMangleNodeCurrentStatus().equals(MangleNodeStatus.MAINTENANCE_MODE)) {
-                updateMangleNodeCurrentStatus(MangleNodeStatus.PAUSE);
-                //Wait for tasks to complete
-                int i = 0;
-                while (i++ < TASKS_WAIT_TIME_SECONDS / 10) {
-                    if (taskRunner.getRunningTasks().size() <= 1) {
-                        break;
-                    }
-                    CommonUtils.delayInSeconds(10);
-                }
-                hz.getCluster().getLocalMember().setStringAttribute(HAZELCAST_MANGLE_NODE_CURRENT_STATUS_ATTRIBUTE,
-                        MangleNodeStatus.MAINTENANCE_MODE.name());
-                updateMangleNodeCurrentStatus(MangleNodeStatus.MAINTENANCE_MODE);
-
-            } else {
-                String value = (String) memberAttributeEvent.getValue();
-                updateMangleNodeCurrentStatus(MangleNodeStatus.valueOf(value));
-                hz.getCluster().getLocalMember().setStringAttribute(HAZELCAST_MANGLE_NODE_CURRENT_STATUS_ATTRIBUTE,
-                        value);
-            }
+        if (memberAttributeEvent.getKey() == HAZELCAST_MANGLE_NODE_CURRENT_STATUS_ATTRIBUTE) {
+            handleMangleNodeCurrentStatusChange(memberAttributeEvent);
         }
     }
 
+    private void handleMangleNodeCurrentStatusChange(MemberAttributeEvent memberAttributeEvent) {
+        if (memberAttributeEvent.getValue().equals(MangleNodeStatus.MAINTENANCE_MODE.name())
+                && !URLConstants.getMangleNodeCurrentStatus().equals(MangleNodeStatus.MAINTENANCE_MODE)) {
+            updateMangleNodeCurrentStatus(MangleNodeStatus.PAUSE);
+            //Wait for tasks to complete
+            int i = 0;
+            while (i++ < TASKS_WAIT_TIME_SECONDS / 10) {
+                if (taskRunner.getRunningTasks().size() <= 1) {
+                    break;
+                }
+                CommonUtils.delayInSeconds(10);
+            }
+            hz.getCluster().getLocalMember().setStringAttribute(HAZELCAST_MANGLE_NODE_CURRENT_STATUS_ATTRIBUTE,
+                    MangleNodeStatus.MAINTENANCE_MODE.name());
+            updateMangleNodeCurrentStatus(MangleNodeStatus.MAINTENANCE_MODE);
+
+        } else {
+            String value = (String) memberAttributeEvent.getValue();
+            updateMangleNodeCurrentStatus(MangleNodeStatus.valueOf(value));
+            hz.getCluster().getLocalMember().setStringAttribute(HAZELCAST_MANGLE_NODE_CURRENT_STATUS_ATTRIBUTE, value);
+        }
+    }
+
+    /**
+     * Used for the lazy initialization of the cluster membership listener and its depended objects;
+     *
+     * @param hazelcastInstance
+     */
     @Override
     public void setHazelcastInstance(HazelcastInstance hazelcastInstance) {
         hz = hazelcastInstance;
@@ -201,7 +218,88 @@ public class HazelcastClusterMembershipListener implements MembershipListener, H
         taskRunner.setNode(hz.getCluster().getLocalMember().getAddress().getHost());
     }
 
-    private static void updateMangleNodeCurrentStatus(MangleNodeStatus nodeStatus) {
-        URLConstants.setMangleNodeStatus(nodeStatus);
+    /**
+     * Method will remove the member entry of the removed node present in the cluster config This will
+     * only take place on the nodes that have the quorum
+     *
+     * also removes the ip of the removed node from the node status replicated map
+     *
+     * @param membershipEvent
+     */
+    private void updateClusterConfiguration(MembershipEvent membershipEvent) {
+        log.debug("Received request to update cluster config as part of member removed event");
+        synchronized (clusterConfigService) {
+            HazelcastClusterConfig config = clusterConfigService.getClusterConfiguration();
+            Address removedMemberAddress = membershipEvent.getMember().getAddress();
+            if (isValidNodeToUpdateClusterConfig(config, membershipEvent)
+                    && !CollectionUtils.isEmpty(config.getMembers())) {
+                config.getMembers().remove(removedMemberAddress.getHost());
+                if (isPersistedMasterRemoved(config, membershipEvent) && isQuorumPresent(membershipEvent)) {
+                    log.info("Updating master reference as the node removed is the master node");
+                    config.setMaster(getOldestMemberIPInCluster(membershipEvent));
+                }
+                clusterConfigService.updateClusterConfiguration(config);
+            }
+            ReplicatedMap<String, Boolean> nodeStatus =
+                    hz.getReplicatedMap(HazelcastConstants.MANGLE_APPLICATION_STATUS_MAP);
+            nodeStatus.remove(removedMemberAddress.getHost());
+        }
     }
+
+    private void triggerTasks() {
+        for (String taskId : taskQueue) {
+            try {
+                hazelcastTaskService.triggerTask(taskId);
+            } catch (MangleException e) {
+                log.error("Failed to re-trigger the task {} because  of the exception {}", taskId, e.getMessage());
+            }
+        }
+    }
+
+    /**
+     * At any particular point in time, when a node leaves a cluster, then the entry of that node can be
+     * removed from the db by a node which meets the following terms,
+     *
+     * 1. If the node is the last identified master(as persisted in the DB)
+     *
+     * 2. If the removed node is the last persisted master, and if the current node is the oldest node
+     * in the cluster with the quorum
+     *
+     * @param config
+     * @param event
+     * @return
+     */
+    private boolean isValidNodeToUpdateClusterConfig(HazelcastClusterConfig config, MembershipEvent event) {
+        return (isPersistedMasterClusterOldestMember(config, event)
+                || (isQuorumPresent(event) && isPersistedMasterRemoved(config, event)) || null == config.getMaster())
+                && isCurrentNodeClusterOldestMember(event);
+    }
+
+    private boolean isCurrentNodeClusterOldestMember(MembershipEvent event) {
+        String clusterOldestNode = getOldestMemberIPInCluster(event);
+        String currentNode = hz.getCluster().getLocalMember().getAddress().getHost();
+        return null != currentNode && currentNode.equals(clusterOldestNode);
+    }
+
+    private boolean isPersistedMasterRemoved(HazelcastClusterConfig config, MembershipEvent event) {
+        String removedMemberAddress = event.getMember().getAddress().getHost();
+        return null != removedMemberAddress && null != config.getMaster()
+                && removedMemberAddress.equals(config.getMaster());
+    }
+
+    private boolean isPersistedMasterClusterOldestMember(HazelcastClusterConfig config, MembershipEvent event) {
+        String clusterOldestNode = getOldestMemberIPInCluster(event);
+        String persistedMaster = config.getMaster();
+        return null != persistedMaster && persistedMaster.equals(clusterOldestNode);
+    }
+
+    private boolean isQuorumPresent(MembershipEvent event) {
+        return HazelcastConstants.mangleQourum <= event.getMembers().size();
+    }
+
+    private String getOldestMemberIPInCluster(MembershipEvent event) {
+        return event.getMembers().iterator().next().getAddress().getHost();
+    }
+
+
 }

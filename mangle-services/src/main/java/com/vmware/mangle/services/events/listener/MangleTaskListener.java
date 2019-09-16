@@ -16,22 +16,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
-import com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec;
-import com.vmware.mangle.cassandra.model.faults.specs.K8SFaultTriggerSpec;
 import com.vmware.mangle.cassandra.model.tasks.Task;
 import com.vmware.mangle.cassandra.model.tasks.TaskStatus;
 import com.vmware.mangle.services.TaskService;
-import com.vmware.mangle.services.dto.FaultEventSpec;
+
 import com.vmware.mangle.services.events.task.TaskCompletedEvent;
 import com.vmware.mangle.services.events.task.TaskCreatedEvent;
 import com.vmware.mangle.services.events.task.TaskModifiedEvent;
 import com.vmware.mangle.services.hazelcast.HazelcastTaskCache;
 import com.vmware.mangle.services.helpers.MetricProviderHelper;
 import com.vmware.mangle.task.framework.events.TaskSubstageEvent;
-import com.vmware.mangle.utils.PopulateFaultEventData;
 import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.handler.CustomErrorMessage;
-import com.vmware.mangle.utils.helpers.notifiers.Notifier;
 
 /**
  *
@@ -94,24 +90,6 @@ public class MangleTaskListener {
     @EventListener
     public void handleTaskCompletedEvent(TaskCompletedEvent event) {
         Task task = event.getTask();
-        log.debug("TaskCreatedEvent", "Created Task: " + task.getClass().getName() + " With Id: " + task.getId());
-        if (task.getTaskData() instanceof CommandExecutionFaultSpec
-                || task.getTaskData() instanceof K8SFaultTriggerSpec) {
-            PopulateFaultEventData populateFaultEventData = new PopulateFaultEventData(task);
-            FaultEventSpec faultEventInfo = populateFaultEventData.getFaultEventSpec();
-            if (faultEventInfo == null) {
-                log.error("Can not find valid data to send the event.");
-                return;
-            }
-            log.debug("TaskCompleted Event is generated and here are the details: " + faultEventInfo.toString());
-            Notifier activeNotifier = metricProvider.getActiveNotificationProvider();
-            if (activeNotifier == null) {
-                log.warn(
-                        "Cannot find an active metric provider. Please check if the metric providers are created and marked as Active");
-                log.warn("Cannot send events to Metric Provider");
-                return;
-            }
-            activeNotifier.sendEvent(faultEventInfo);
-        }
+        metricProvider.sendFaultEvent(task);
     }
 }

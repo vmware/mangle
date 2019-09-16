@@ -3,25 +3,27 @@ import { Router } from '@angular/router';
 import { EndpointService } from 'src/app/core/endpoint/endpoint.service';
 import { FaultService } from '../../../fault.service';
 import { ClrLoadingState } from '@clr/angular';
+import { DataService } from 'src/app/shared/data.service';
+import { CommonUtils } from 'src/app/shared/commonUtils';
 
 @Component({
   selector: 'app-docker-state-change',
-  templateUrl: './docker-state-change.component.html',
-  styleUrls: ['./docker-state-change.component.css']
+  templateUrl: './docker-state-change.component.html'
 })
 export class DockerStateChangeComponent implements OnInit {
 
-  public errorFlag = false;
-  public successFlag = false;
-  public alertMessage: string;
+  public errorAlertMessage: string;
+  public successAlertMessage: string;
 
   public tagsData: any = {};
+  public originalTagsData: any = {};
 
   public endpoints: any = [];
   public dockerFaultNameList: any = ["DOCKER_STOP", "DOCKER_PAUSE"];
   public dockerHidden: boolean = true;
 
   public runBtnState: ClrLoadingState = ClrLoadingState.DEFAULT;
+  public dockerContainers: any = [];
 
   public faultFormData: any = {
     "endpointName": null,
@@ -32,13 +34,13 @@ export class DockerStateChangeComponent implements OnInit {
   };
 
   public searchedEndpoints: any = [];
+  public searchedContainers: any = [];
 
-  constructor(private faultService: FaultService, private endpointService: EndpointService, private router: Router) {
+  constructor(private faultService: FaultService, private endpointService: EndpointService, private router: Router, private dataService: DataService, private commonUtils: CommonUtils) {
 
   }
 
   ngOnInit() {
-    this.errorFlag = false;
     this.endpointService.getAllEndpoints().subscribe(
       res => {
         if (res.code) {
@@ -48,9 +50,22 @@ export class DockerStateChangeComponent implements OnInit {
         }
       }, err => {
         this.endpoints = [];
-        this.alertMessage = err.error.description;
-        this.errorFlag = true;
+        this.errorAlertMessage = err.error.description;
       });
+    if (this.dataService.sharedData != null) {
+      this.populateFaultData();
+    }
+  }
+
+  public populateFaultData() {
+    this.faultFormData.endpointName = this.dataService.sharedData.endpointName;
+    this.faultFormData.dockerFaultName = this.dataService.sharedData.dockerFaultName;
+    this.faultFormData.dockerArguments = this.dataService.sharedData.dockerArguments;
+    if (this.dataService.sharedData.tags != null) {
+      this.tagsData = this.dataService.sharedData.tags;
+      this.originalTagsData = JSON.parse(JSON.stringify(this.dataService.sharedData.tags));
+    }
+    this.dataService.sharedData = null;
   }
 
   public searchEndpoint(searchKeyWord) {
@@ -66,6 +81,36 @@ export class DockerStateChangeComponent implements OnInit {
     this.faultFormData.endpointName = endpointVal;
   }
 
+  public searchContainer(searchKeyWord) {
+    this.searchedContainers = [];
+    for (var i = 0; i < this.dockerContainers.length; i++) {
+      if (this.dockerContainers[i].indexOf(searchKeyWord) > -1) {
+        this.searchedContainers.push(this.dockerContainers[i]);
+      }
+    }
+  }
+
+  public setContainerVal(containerVal) {
+    this.faultFormData.dockerArguments.containerName = containerVal;
+  }
+
+  public getDockerContainers(epType, epName) {
+    if (epType == "DOCKER") {
+      this.endpointService.getDockerContainers(epName).subscribe(
+        res => {
+          if (res.code) {
+            this.dockerContainers = [];
+          } else {
+            this.dockerContainers = res;
+          }
+        }, err => {
+          this.dockerContainers = [];
+          this.errorAlertMessage = err.error.description;
+        }
+      );
+    }
+  }
+
   public updateTags(tagsVal) {
     this.tagsData[tagsVal.tagKey] = tagsVal.tagValue;
   }
@@ -77,19 +122,13 @@ export class DockerStateChangeComponent implements OnInit {
   public displayEndpointFields(endpointNameVal) {
     for (var i = 0; i < this.endpoints.length; i++) {
       if (endpointNameVal == this.endpoints[i].name) {
-        if (this.endpoints[i].tags != null) {
-          this.tagsData = this.endpoints[i].tags;
-        } else {
-          this.tagsData = {};
-        }
+        this.tagsData = this.commonUtils.getTagsData(this.originalTagsData,this.endpoints[i].tags);
       }
     }
   }
 
   public executeDockerStateChangeFault(faultData) {
     this.runBtnState = ClrLoadingState.LOADING;
-    this.errorFlag = false;
-    this.successFlag = false;
     if (this.tagsData != {}) {
       faultData.tags = this.tagsData;
     }
@@ -98,10 +137,9 @@ export class DockerStateChangeComponent implements OnInit {
         this.tagsData = {};
         this.router.navigateByUrl('core/requests');
       }, err => {
-        this.alertMessage = err.error.description;
-        this.errorFlag = true;
-        if (this.alertMessage === undefined) {
-          this.alertMessage = err.error.error;
+        this.errorAlertMessage = err.error.description;
+        if (this.errorAlertMessage === undefined) {
+          this.errorAlertMessage = err.error.error;
         }
         this.runBtnState = ClrLoadingState.DEFAULT;
       });

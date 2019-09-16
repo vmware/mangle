@@ -20,7 +20,6 @@ import com.vmware.mangle.services.enums.AgentFaultName;
 /**
  * @author bkaranam
  *
- *
  */
 @Data
 @ToString(callSuper = true)

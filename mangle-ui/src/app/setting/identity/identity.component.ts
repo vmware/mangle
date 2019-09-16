@@ -4,8 +4,7 @@ import { MessageConstants } from 'src/app/common/message.constants';
 
 @Component({
     selector: 'app-identity',
-    templateUrl: './identity.component.html',
-    styleUrls: ['./identity.component.css']
+    templateUrl: './identity.component.html'
 })
 export class IdentityComponent implements OnInit {
 
@@ -14,9 +13,8 @@ export class IdentityComponent implements OnInit {
     public identities: any;
     public identityFormData: any;
 
-    public errorFlag = false;
-    public successFlag = false;
-    public alertMessage: string;
+    public errorAlertMessage: string;
+    public successAlertMessage: string;
 
     public isLoading: boolean = true;
 
@@ -29,7 +27,6 @@ export class IdentityComponent implements OnInit {
     }
 
     public getIdentities() {
-        this.errorFlag = false;
         this.isLoading = true;
         this.settingService.getIdentities().subscribe(
             res => {
@@ -43,8 +40,7 @@ export class IdentityComponent implements OnInit {
             }, err => {
                 this.identities = [];
                 this.isLoading = false;
-                this.alertMessage = err.error.description;
-                this.errorFlag = true;
+                this.errorAlertMessage = err.error.description;
             });
     }
 
@@ -58,55 +54,43 @@ export class IdentityComponent implements OnInit {
 
     public addIdentitySource(identitySourceFormData) {
         delete identitySourceFormData["id"];
-        this.errorFlag = false;
-        this.successFlag = false;
         this.isLoading = true;
         this.settingService.addIdentitySource(identitySourceFormData).subscribe(
             res => {
                 this.getIdentities();
-                this.alertMessage = identitySourceFormData.adDomain + MessageConstants.IDENTITY_ADD;
-                this.successFlag = true;
+                this.successAlertMessage = identitySourceFormData.adDomain + MessageConstants.IDENTITY_ADD;
                 this.isLoading = false;
             }, err => {
-                this.alertMessage = err.error.description;
+                this.errorAlertMessage = err.error.description;
                 this.getIdentities();
-                this.errorFlag = true;
                 this.isLoading = false;
             });
     }
 
     public updateIdentitySource(identitySourceFormData) {
-        this.errorFlag = false;
-        this.successFlag = false;
         this.isLoading = true;
         this.settingService.updateIdentitySource(identitySourceFormData).subscribe(
             res => {
                 this.getIdentities();
-                this.alertMessage = identitySourceFormData.adDomain + MessageConstants.IDENTITY_UPDATE;
-                this.successFlag = true;
+                this.successAlertMessage = identitySourceFormData.adDomain + MessageConstants.IDENTITY_UPDATE;
                 this.isLoading = false;
             }, err => {
                 this.getIdentities();
-                this.alertMessage = err.error.description;
-                this.errorFlag = true;
+                this.errorAlertMessage = err.error.description;
                 this.isLoading = false;
             });
     }
 
     public deleteIdentity(identity) {
-        this.errorFlag = false;
-        this.successFlag = false;
         if (confirm(MessageConstants.DELETE_CONFIRM + identity.adDomain + MessageConstants.QUESTION_MARK)) {
             this.settingService.deleteIdentity(identity.adDomain).subscribe(
                 res => {
                     this.getIdentities();
-                    this.alertMessage = identity.adDomain + MessageConstants.IDENTITY_DELETE;
-                    this.successFlag = true;
+                    this.successAlertMessage = identity.adDomain + MessageConstants.IDENTITY_DELETE;
                     this.isLoading = false;
                 }, err => {
                     this.getIdentities();
-                    this.alertMessage = err.error.description;
-                    this.errorFlag = true;
+                    this.errorAlertMessage = err.error.description;
                     this.isLoading = false;
                 });
         } else {

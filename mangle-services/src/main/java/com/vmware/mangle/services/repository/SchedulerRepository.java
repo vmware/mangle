@@ -48,9 +48,6 @@ public interface SchedulerRepository extends CassandraRepository<SchedulerSpec, 
     void deleteByIdIn(Collection<String> taskIds);
 
     @Override
-    void deleteById(String taskId);
-
-    @Override
     Slice<SchedulerSpec> findAll(Pageable pageable);
 
     @AllowFiltering

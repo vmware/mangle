@@ -6,8 +6,7 @@ import { ClrLoadingState } from '@clr/angular';
 
 @Component({
     selector: 'app-password',
-    templateUrl: './password.component.html',
-    styleUrls: ['./password.component.css']
+    templateUrl: './password.component.html'
 })
 export class PasswordComponent implements OnInit {
 
@@ -20,6 +19,11 @@ export class PasswordComponent implements OnInit {
     public submitBtnState: ClrLoadingState = ClrLoadingState.DEFAULT;
 
     public loginModal: boolean = false;
+
+    public barLabel: string = '';
+    public barColors = ['#DD2C00', '#FF6D00', '#FFD600', '#AEEA00', '#00C853'];
+    public baseColor = '#DDD';
+    public strengthLabels = ['(Useless)', '(Weak)', '(Normal)', '(Strong)', '(Great!)'];
 
     public passwordFormData: any = {
         "currentPassword": null,

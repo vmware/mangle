@@ -64,7 +64,7 @@ public class EndpointCertificatesService {
         this.certificatesRepository = certificatesRepository;
     }
 
-    public List<CertificatesSpec> getAllCerficates() {
+    public List<CertificatesSpec> getAllCertificates() {
         log.debug("Received request to get all Certificates...");
         return certificatesRepository.findAll();
     }

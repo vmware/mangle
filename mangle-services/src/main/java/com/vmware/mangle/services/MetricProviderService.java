@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 import com.vmware.mangle.cassandra.model.MangleAdminConfigurationSpec;
 import com.vmware.mangle.cassandra.model.metricprovider.MetricProviderSpec;
 import com.vmware.mangle.model.enums.MetricProviderType;
+import com.vmware.mangle.services.hazelcast.HazelcastClusterSyncAware;
 import com.vmware.mangle.services.repository.AdminConfigurationRepository;
 import com.vmware.mangle.services.repository.MetricProviderRepository;
 import com.vmware.mangle.task.framework.metric.providers.MetricProviderClientFactory;
@@ -43,7 +44,7 @@ import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
  */
 @Service
 @Log4j2
-public class MetricProviderService {
+public class MetricProviderService implements HazelcastClusterSyncAware {
 
     @Autowired
     private MetricProviderRepository metricProviderRepository;
@@ -453,5 +454,26 @@ public class MetricProviderService {
 
         adminConfigSpec.setPropertyValue(String.valueOf(status));
         this.adminConfigurationRepository.save(adminConfigSpec);
+    }
+
+    @Override
+    public void resync(String objectIdentifier) {
+        log.debug("Enabling send metrics on the current node");
+        Optional<MangleAdminConfigurationSpec> optional =
+                this.adminConfigurationRepository.findByPropertyName(MetricProviderConstants.SENDING_MANGLE_METRICS);
+        MangleAdminConfigurationSpec configurationSpec = optional.orElse(null);
+        if (configurationSpec != null) {
+            if (Boolean.valueOf(configurationSpec.getPropertyValue())) {
+                try {
+                    sendMetrics();
+                } catch (MangleException e) {
+                    log.error("Enabling of the send metrics failed");
+                }
+            } else {
+                closeAllMetricCollection();
+            }
+
+        }
+
     }
 }

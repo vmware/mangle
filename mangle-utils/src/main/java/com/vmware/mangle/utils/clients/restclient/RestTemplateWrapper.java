@@ -11,11 +11,13 @@
 
 package com.vmware.mangle.utils.clients.restclient;
 
+import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.List;
+
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -25,6 +27,7 @@ import javax.net.ssl.X509TrustManager;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonSyntaxException;
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.io.xml.StaxDriver;
 import lombok.extern.log4j.Log4j2;
@@ -44,12 +47,16 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import com.vmware.mangle.utils.exceptions.MangleRuntimeException;
+import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
+
 /**
  * @author bkaranam (bhanukiran karanam)
  *
  *         Customized RestClient helper
  */
 @Log4j2
+@SuppressWarnings({"squid:S3510", "squid:S1186"})
 public class RestTemplateWrapper {
     private static final String POST_STARTS_MESSAGE =
             "*****************API POST STARTS*************************************";
@@ -342,6 +349,17 @@ public class RestTemplateWrapper {
             throw new RuntimeException(String.format("Failed to process Json : %s", object.toString()), e);
         }
         return json;
+    }
+
+    public static <T> T jsonToObject(String json, Class<T> object) {
+        try {
+            return new ObjectMapper().readValue(json, object);
+        } catch (JsonSyntaxException jse) {
+            log.error("Input String is not a valid json" + jse.getMessage());
+            return null;
+        } catch (IOException e) {
+            throw new MangleRuntimeException(e,ErrorCode.MALFORMED_PLUGIN_DESCRIPTOR);
+        }
     }
 
     public HttpMethod getMethod() {

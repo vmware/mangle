@@ -11,10 +11,13 @@
 
 package com.vmware.mangle.cassandra.model.faults.specs;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+
+import com.vmware.mangle.cassandra.model.scheduler.SchedulerInfo;
 
 /**
  * @author bkaranam
@@ -37,4 +40,10 @@ public class JVMCodeLevelFaultSpec extends JVMAgentFaultSpec {
     @ApiModelProperty(value = "String value. Value should be the name of the Method with in the class targeted "
             + "for code Injection", required = true, example = "testMethod")
     protected String methodName;
+
+    @JsonIgnore
+    @Override
+    public void setSchedule(SchedulerInfo schedulerInfo) {
+        super.setSchedule(schedule);
+    }
 }

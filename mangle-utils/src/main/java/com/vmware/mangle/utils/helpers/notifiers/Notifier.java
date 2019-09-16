@@ -18,5 +18,7 @@ import com.vmware.mangle.services.dto.FaultEventSpec;
  *
  */
 public interface Notifier {
-    public void sendEvent(FaultEventSpec faultEventSpec);
+    public boolean sendEvent(FaultEventSpec faultEventSpec);
+
+    public boolean closeEvent(String eventName);
 }

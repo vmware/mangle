@@ -42,6 +42,7 @@ import com.vmware.mangle.services.dto.FaultEventSpec;
 import com.vmware.mangle.utils.PopulateFaultEventData;
 import com.vmware.mangle.utils.helpers.notifiers.Notifier;
 
+
 /**
  * @author dbhat
  *
@@ -134,6 +135,7 @@ public class PopulateFaultEventDataTest extends PowerMockTestCase {
         Assert.assertEquals(faultStartTime, eventData.getFaultStartTime());
         Assert.assertEquals(taskID, eventData.getTaskId());
         Assert.assertEquals(TaskStatus.FAILED.name(), eventData.getFaultStatus());
+        Assert.assertNotNull(eventData.getFaultEndTime());
     }
 
     private void getFaultData() {

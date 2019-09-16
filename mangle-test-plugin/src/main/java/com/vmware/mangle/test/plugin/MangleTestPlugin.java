@@ -12,7 +12,6 @@
 package com.vmware.mangle.test.plugin;
 
 import lombok.extern.log4j.Log4j2;
-import org.pf4j.PluginException;
 import org.pf4j.PluginWrapper;
 import org.pf4j.spring.SpringPlugin;
 import org.springframework.context.ApplicationContext;
@@ -31,7 +30,7 @@ public class MangleTestPlugin extends SpringPlugin {
     }
 
     @Override
-    public void start() throws PluginException {
+    public void start() {
         log.info("Starting plugin {}", wrapper.getPluginId());
     }
 

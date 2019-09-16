@@ -28,13 +28,14 @@ import com.vmware.mangle.cassandra.model.faults.specs.JVMCodeLevelFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.K8SFaultTriggerSpec;
 import com.vmware.mangle.cassandra.model.tasks.FaultTriggeringTask;
 import com.vmware.mangle.cassandra.model.tasks.K8SSpecificArguments;
+import com.vmware.mangle.cassandra.model.tasks.RemediableTask;
 import com.vmware.mangle.cassandra.model.tasks.Task;
 import com.vmware.mangle.cassandra.model.tasks.TaskType;
-import com.vmware.mangle.faults.plugin.utils.TaskDescriptionUtils;
 import com.vmware.mangle.task.framework.endpoint.EndpointClientFactory;
 import com.vmware.mangle.task.framework.events.TaskSubstageEvent;
 import com.vmware.mangle.task.framework.helpers.AbstractTaskHelper;
 import com.vmware.mangle.task.framework.skeletons.IMultiTaskHelper;
+import com.vmware.mangle.task.framework.utils.TaskDescriptionUtils;
 import com.vmware.mangle.utils.clients.kubernetes.KubernetesCommandLineClient;
 import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
@@ -89,6 +90,7 @@ public class K8SFaultTriggerTaskHelper<T extends K8SFaultTriggerSpec, S extends 
     @Override
     public void executeTask(Task<T> task) throws MangleException {
         handleSubstages(task);
+        ((RemediableTask) task).setRemediated(true);
     }
 
     private void handleSubstages(Task<T> task) throws MangleException {
@@ -214,6 +216,7 @@ public class K8SFaultTriggerTaskHelper<T extends K8SFaultTriggerSpec, S extends 
         k8sFaultspec.setTimeoutInMilliseconds(parentFaultSpec.getTimeoutInMilliseconds());
         k8sFaultspec.setArgs(new HashMap<>(parentFaultSpec.getArgs()));
         k8sFaultspec.setSpecType(k8sFaultspec.getClass().getName());
+        k8sFaultspec.setTags(parentFaultSpec.getTags());
         log.debug("Spec for child task created successfully.");
         return (S) k8sFaultspec;
     }

@@ -25,6 +25,9 @@ import static com.vmware.mangle.utils.constants.FaultConstants.PORT_9091;
 import static com.vmware.mangle.utils.constants.FaultConstants.REMEDIATION_COMMAND_WITH_PORT;
 import static com.vmware.mangle.utils.constants.FaultConstants.SUBMIT_COMMAND_WITH_PORT;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import lombok.extern.log4j.Log4j2;
@@ -124,6 +127,16 @@ public class LinuxBytemanFaultHelperTest {
 
     }
 
+    @Test
+    public void testGetJVMAgentRemediationCommandInfoListforFileHandler() {
+        CommandExecutionFaultSpec fileHandlerFaultSpec = faultsMockData.getFilehandlerLeakFaultSpec();
+        Mockito.when(endpointClientFactory.getEndPointClient(null, fileHandlerFaultSpec.getEndpoint()))
+                .thenReturn(sshUtils);
+        List<CommandInfo> remediationCommands =
+                linuxBytemanFaultHelper.getRemediationCommandInfoList(fileHandlerFaultSpec);
+        log.info(RestTemplateWrapper.objectToJson(remediationCommands));
+        Assert.assertEquals(remediationCommands, Collections.emptyList());
+    }
 
     @Test
     public void testGetJVMCodeLevelInjectionCommandInfoList() {
@@ -158,11 +171,33 @@ public class LinuxBytemanFaultHelperTest {
                 springServiceExceptionFaultSpec.getEndpoint())).thenReturn(sshUtils);
         List<CommandInfo> remediationCommands =
                 linuxBytemanFaultHelper.getRemediationCommandInfoList(springServiceExceptionFaultSpec);
+
+        List<CommandInfo> expectedCommands = getJVMCodeLevelRemediationCommandInfoList();
+        Assert.assertEquals(remediationCommands, expectedCommands);
+
         log.info(RestTemplateWrapper.objectToJson(remediationCommands));
         log.info(String.format(SUBMIT_COMMAND_WITH_PORT, DEFAULT_TEMP_DIR, PORT_9091,
                 "-u " + DEFAULT_TEMP_DIR + "/123456;.btm"));
         Assert.assertTrue(remediationCommands.get(0).getCommand().contains(String.format(SUBMIT_COMMAND_WITH_PORT,
                 DEFAULT_TEMP_DIR + FORWARD_SLASH, PORT_9091, "-u " + DEFAULT_TEMP_DIR + "/123456;.btm")));
+    }
+
+    private List<CommandInfo> getJVMCodeLevelRemediationCommandInfoList() {
+        CommandInfo faultRemediationRequest = new CommandInfo();
+        faultRemediationRequest.setCommand(
+                "sudo -u bytemanUser bash -c \"export JAVA_HOME=/usr/java/latest;export PATH=$JAVA_HOME/bin:$PATH;/bin/sh /tmp/mangle-java-agent-2.0.0/bin/bmsubmit.sh -p 9091 -u /tmp/123456.btm\"");
+        faultRemediationRequest.setIgnoreExitValueCheck(false);
+        faultRemediationRequest.setExpectedCommandOutputList(Arrays.asList(new String[] { "uninstall RULE 123456" }));
+        faultRemediationRequest.setKnownFailureMap(null);
+
+        CommandInfo deleteBytemanRuleRequest = new CommandInfo();
+        deleteBytemanRuleRequest.setCommand("rm -rf /tmp/123456.btm");
+        deleteBytemanRuleRequest.setIgnoreExitValueCheck(true);
+
+        List<CommandInfo> commandInfoList = new ArrayList<>();
+        commandInfoList.add(faultRemediationRequest);
+        commandInfoList.add(deleteBytemanRuleRequest);
+        return commandInfoList;
     }
 
     @Test

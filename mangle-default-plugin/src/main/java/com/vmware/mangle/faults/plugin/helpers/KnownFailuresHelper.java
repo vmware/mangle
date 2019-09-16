@@ -21,6 +21,7 @@ import static com.vmware.mangle.utils.constants.KnownFailureConstants.AGENT_INST
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.AGENT_INSTALL_AGENT_INITIALIZATION_FAILURE_OUTPUT;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.AGENT_INSTALL_CONCURRENT_PORT_USAGE_FAILURE_MESSAGE;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.AGENT_INSTALL_CONCURRENT_PORT_USAGE_FAILURE_OUTPUT;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.AGENT_INSTALL_EXPECTED_MESSAGE_FOR_AGENT_INSTALL_SCRIPT_NOT_FOUND_OUTPUT;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.AGENT_INSTALL_GIVEN_AGENT_PORT_IN_USE_FAILURE_MESSAGE;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.AGENT_INSTALL_GIVEN_AGENT_PORT_IN_USE_FAILURE_OUTPUT;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.AGENT_INSTALL_INVALID_JAVAHOME_FAILURE_2_OUTPUT;
@@ -54,6 +55,10 @@ import static com.vmware.mangle.utils.constants.KnownFailureConstants.DISKIO_FAU
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.DISKIO_FAULT_TARGET_DIRECTORY_DOESNT_HAVE_PERMISSION_OUTPUT;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.DISKIO_FAULT_TARGET_DIRECTORY_NOT_FOUND_OUTPUT;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.DISKIO_FAULT_TARGET_DIRECTORY_NOT_FOUND_OUTPUT_MESSAGE;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.DISK_SPACE_FILL_PERCENTAGE_GREATER_THAN_USED_DISK_PERCENTAGE_FAILURE_MESSAGE;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.DISK_SPACE_FILL_PERCENTAGE_GREATER_THAN_USED_DISK_PERCENTAGE_FAILURE_OUTPUT;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.DISK_SPACE_NOT_FOUND_DIRECTORY_PATH_FAILURE_MESSAGE;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.DISK_SPACE_NOT_FOUND_DIRECTORY_PATH_FAILURE_OUTPUT;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.DOCKER_CONNECTION_FAILURE_OUTPUT;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.DOCKER_CONTAINER_IS_ALREADY_PAUSED_FAILURE_OUTPUT;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.DOCKER_CONTAINER_IS_ALREADY_PAUSED_MESSAGE;
@@ -70,17 +75,24 @@ import static com.vmware.mangle.utils.constants.KnownFailureConstants.DOCKER_STO
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.EXPECTED_MESSAGE_FOR_FILE_NOT_FOUND;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.FAULT_ALREADY_REMEDIATED;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.K8S_INVALID_POD_CONTAINER_MAPPING_FAILURE_OUTPUT;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.K8S_POD_TAR_NOT_AVAILABLE_AGENT_COPY_FAILURE_MESSAGE;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.K8S_POD_TAR_NOT_AVAILABLE_AGENT_COPY_FAILURE_OUTPUT;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.KILL_PROCESS_FOUND_MORE_THAN_ONE_PROCESS_FAILURE_MESSAGE;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.KILL_PROCESS_FOUND_MORE_THAN_ONE_PROCESS_FAILURE_OUTPUT;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.KILL_PROCESS_NOT_FOUND_IDENTIFIER_FAILURE_MESSAGE;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.KILL_PROCESS_NOT_FOUND_IDENTIFIER_FAILURE_OUTPUT;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.MEMORY_FAULT_CURRENT_MEMORY_USAGE_GREATER_THAN_REQUESTED_MEMORY_MESSAGE;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.MEMORY_FAULT_CURRENT_MEMORY_USAGE_GREATER_THAN_REQUESTED_MEMORY_OUTPUT;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.NETWORK_FAULT_INVALID_NIC_MESSAGE;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.NETWORK_FAULT_INVALID_NIC_OUTPUT;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.NETWORK_FAULT_REMEDIATION_FAIL_SOCKET_NOT_ESTABLISHED_MESSAGE;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.NETWORK_FAULT_REMEDIATION_FAIL_SOCKET_NOT_ESTABLISHED_OUTPUT;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.SYSTEM_RESOURCE_FAULT_ALREADY_REMEDIATED_OUTPUT;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.SYSTEM_RESOURCE_FAULT_ALREADY_RUNNING_OUTPUT;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.SYSTEM_RESOURCE_FAULT_DIRECTORY_NOT_FOUND_OUTPUT;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.SYSTEM_RESOURCE_FAULT_PARALLEL_EXECUTION_NOT_SUPPORTED_MESSAGE;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.SYSTEM_RESOURCE_FAULT_PRECHECK_FAILED_OUTPUT;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.SYSTEM_RESOURCE_SHELL_SCRIPT_FILE_NOT_FOUND_OUTPUT;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.VCENTER_ADAPTER_CONNECTION_FAILURE_OUTPUT;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.VCENTER_DISCONNECTED_DISK_NIC_ALREADY_INJECTED_OUTPUT;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.VCENTER_DISCONNECT_DISK_NIC_FAULT_ALREADY_REMEDIATED_OUTPUT;
@@ -135,6 +147,8 @@ public class KnownFailuresHelper {
                 AGENT_INSTALL_USER_WITHOUT_PERMISSION_FAILURE_MESSAGE);
         knownFailuresforAgentInstallation.put(AGENT_INSTALL_SUDO_NOT_AVAILABLE_FAILURE_OUTPUT,
                 AGENT_INSTALL_SUDO_NOT_AVAILABLE_FAILURE_MESSAGE);
+        knownFailuresforAgentInstallation.put(AGENT_INSTALL_EXPECTED_MESSAGE_FOR_AGENT_INSTALL_SCRIPT_NOT_FOUND_OUTPUT,
+                K8S_POD_TAR_NOT_AVAILABLE_AGENT_COPY_FAILURE_MESSAGE);
         return knownFailuresforAgentInstallation;
     }
 
@@ -143,6 +157,9 @@ public class KnownFailuresHelper {
         knownFailuresforAgentCopyOnK8sPod.put(EXPECTED_MESSAGE_FOR_FILE_NOT_FOUND,
                 AGENT_COPY_SUPPORT_SCRIPT_FILE_COPY_FAILURE);
         knownFailuresforAgentCopyOnK8sPod.put(K8S_INVALID_POD_CONTAINER_MAPPING_FAILURE_OUTPUT, null);
+        knownFailuresforAgentCopyOnK8sPod.put(K8S_POD_TAR_NOT_AVAILABLE_AGENT_COPY_FAILURE_OUTPUT,
+                K8S_POD_TAR_NOT_AVAILABLE_AGENT_COPY_FAILURE_MESSAGE);
+
         return knownFailuresforAgentCopyOnK8sPod;
     }
 
@@ -218,6 +235,11 @@ public class KnownFailuresHelper {
                 KILL_PROCESS_FOUND_MORE_THAN_ONE_PROCESS_FAILURE_MESSAGE);
         knownFailureMap.put(KILL_PROCESS_NOT_FOUND_IDENTIFIER_FAILURE_OUTPUT,
                 KILL_PROCESS_NOT_FOUND_IDENTIFIER_FAILURE_MESSAGE);
+        knownFailureMap.put(NETWORK_FAULT_INVALID_NIC_OUTPUT, NETWORK_FAULT_INVALID_NIC_MESSAGE);
+        knownFailureMap.put(DISK_SPACE_NOT_FOUND_DIRECTORY_PATH_FAILURE_OUTPUT,
+                DISK_SPACE_NOT_FOUND_DIRECTORY_PATH_FAILURE_MESSAGE);
+        knownFailureMap.put(DISK_SPACE_FILL_PERCENTAGE_GREATER_THAN_USED_DISK_PERCENTAGE_FAILURE_OUTPUT,
+                DISK_SPACE_FILL_PERCENTAGE_GREATER_THAN_USED_DISK_PERCENTAGE_FAILURE_MESSAGE);
 
         return knownFailureMap;
     }
@@ -227,6 +249,11 @@ public class KnownFailuresHelper {
         knownFailureMap.put(EXPECTED_MESSAGE_FOR_FILE_NOT_FOUND, FAULT_ALREADY_REMEDIATED);
         knownFailureMap.put(SYSTEM_RESOURCE_FAULT_PRECHECK_FAILED_OUTPUT, null);
         knownFailureMap.put(SYSTEM_RESOURCE_FAULT_ALREADY_REMEDIATED_OUTPUT, FAULT_ALREADY_REMEDIATED);
+        knownFailureMap.put(DISK_SPACE_NOT_FOUND_DIRECTORY_PATH_FAILURE_OUTPUT,
+                DISK_SPACE_NOT_FOUND_DIRECTORY_PATH_FAILURE_MESSAGE);
+        knownFailureMap.put(SYSTEM_RESOURCE_SHELL_SCRIPT_FILE_NOT_FOUND_OUTPUT, FAULT_ALREADY_REMEDIATED);
+        knownFailureMap.put(NETWORK_FAULT_REMEDIATION_FAIL_SOCKET_NOT_ESTABLISHED_OUTPUT,
+                NETWORK_FAULT_REMEDIATION_FAIL_SOCKET_NOT_ESTABLISHED_MESSAGE);
         return knownFailureMap;
     }
 

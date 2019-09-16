@@ -14,6 +14,7 @@ package com.vmware.mangle.services.config;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import javax.annotation.PostConstruct;
 
 import lombok.extern.log4j.Log4j2;
@@ -23,12 +24,14 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import com.vmware.mangle.cassandra.model.security.ADAuthProviderDto;
 import com.vmware.mangle.cassandra.model.security.UsernameDomain;
 import com.vmware.mangle.services.ADAuthProviderService;
 import com.vmware.mangle.services.PrivilegeService;
 import com.vmware.mangle.services.UserService;
+import com.vmware.mangle.services.hazelcast.HazelcastClusterSyncAware;
 
 /**
  * Custom Active dirctory authentication provider, maintains multiple AD authenticator details
@@ -37,7 +40,7 @@ import com.vmware.mangle.services.UserService;
  */
 @Log4j2
 @Component
-public class ADAuthProvider implements AuthenticationProvider {
+public class ADAuthProvider implements AuthenticationProvider, HazelcastClusterSyncAware {
 
     private static Map<String, AuthenticationProvider> adAuthProviderMap = new HashMap<>();
 
@@ -56,6 +59,7 @@ public class ADAuthProvider implements AuthenticationProvider {
     @PostConstruct
     public void init() {
         List<ADAuthProviderDto> adAuthProviderDtos = adAuthProviderService.getAllADAuthProvider();
+        adAuthProviderMap.clear();
         log.debug(String.format("Added %d authentication providers from db", adAuthProviderDtos.size()));
         for (ADAuthProviderDto adAuthProviderDto : adAuthProviderDtos) {
             if (adAuthProviderDto != null) {
@@ -168,5 +172,26 @@ public class ADAuthProvider implements AuthenticationProvider {
         String username = userAndDomain.substring(0, delim);
         String domain = userAndDomain.substring(delim + 1);
         return new UsernameDomain(username, domain);
+    }
+
+    public void refreshAdAuthProviderForDomain(String adDomain) {
+        log.debug("Refreshing the authProvider for domain: {}", adDomain);
+        ADAuthProviderDto adAuthProviderDto = adAuthProviderService.getADAuthProviderByAdDomain(adDomain);
+        if (adAuthProviderDto != null) {
+            AuthenticationProvider provider = activeDirectoryLdapAuthenticationProvider(adAuthProviderDto.getAdUrl(),
+                    adAuthProviderDto.getAdDomain());
+            adAuthProviderMap.put(adAuthProviderDto.getAdDomain(), provider);
+        } else {
+            adAuthProviderMap.remove(adDomain);
+        }
+    }
+
+    @Override
+    public void resync(String objectIdentifier) {
+        if (StringUtils.isEmpty(objectIdentifier)) {
+            init();
+        } else {
+            refreshAdAuthProviderForDomain(objectIdentifier);
+        }
     }
 }

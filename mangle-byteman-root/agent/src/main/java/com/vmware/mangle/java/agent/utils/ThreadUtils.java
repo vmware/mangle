@@ -54,7 +54,15 @@ public class ThreadUtils {
         ExecutorService executor = Executors.newFixedThreadPool(1);
         Runnable worker = new FileHandlerLeakSimulator(timeOut);
         futureList.add(executor.submit(worker));
+        executor.shutdown();
+        return futureList;
+    }
 
+    public static List<Future<?>> triggerThreadLeakSimulator(long timeOut, boolean enableOutOfMemory) {
+        List<Future<?>> futureList = new ArrayList<>();
+        ExecutorService executor = Executors.newFixedThreadPool(1);
+        Runnable worker = new ThreadLeakSimulator(timeOut, enableOutOfMemory);
+        futureList.add(executor.submit(worker));
         executor.shutdown();
         return futureList;
     }
@@ -80,5 +88,15 @@ public class ThreadUtils {
     public static void interrupt() {
         LOG.info("Fiaasco agent Interrupting Thread");
         Thread.interrupted();
+    }
+
+    public static long getSizeinBytes(double load) {
+        double currentUsage = RuntimeUtils.getCurrentHeapUsageInPercentage();
+        if (currentUsage >= load) {
+            return 1;
+        } else {
+            double loadToCreateInBytes = ((load - currentUsage) / 100) * RuntimeUtils.getMaxHeapSpace();
+            return (long) loadToCreateInBytes;
+        }
     }
 }

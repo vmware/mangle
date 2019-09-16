@@ -9,6 +9,7 @@ import { AppRoutingModule } from '../app-routing.module';
 import { LoginComponent } from './login/login.component';
 import { PasswordComponent } from './password/password.component';
 import { AuthService } from './auth.service';
+import { PasswordStrengthBarModule } from 'ng2-password-strength-bar';
 
 @NgModule({
   declarations: [LoginComponent, PasswordComponent],
@@ -18,8 +19,9 @@ import { AuthService } from './auth.service';
     FormsModule,
     HttpClientModule,
     ClarityModule,
-	  AppRoutingModule,
-    CommonModule
+    AppRoutingModule,
+    CommonModule,
+    PasswordStrengthBarModule
   ],
   providers: [
     AuthService

@@ -1,0 +1,19 @@
+<h1>Application Events</h1>
+<clr-datagrid [clrDgLoading]="isLoading">
+    <clr-dg-column [clrDgField]="'entityId'">Entity Id</clr-dg-column>
+    <clr-dg-column [clrDgField]="'entityClass'">Entity Class</clr-dg-column>
+    <clr-dg-column [clrDgField]="'eventDate'">Event Date</clr-dg-column>
+    <clr-dg-column [clrDgField]="'message'">Message</clr-dg-column>
+    <clr-dg-row *clrDgItems="let appEvent of appEvents" [clrDgItem]="appEvent">
+        <clr-dg-cell style="overflow:hidden;">{{appEvent.entityId}}</clr-dg-cell>
+        <clr-dg-cell style="overflow:hidden;">{{appEvent.entityClass}}</clr-dg-cell>
+        <clr-dg-cell style="overflow:hidden;">{{appEvent.eventDate | date: 'yyyy-MM-dd HH:mm:ss'}}</clr-dg-cell>
+        <clr-dg-cell style="overflow:hidden;">{{appEvent.message}}</clr-dg-cell>
+    </clr-dg-row>
+    <clr-dg-footer>
+        <clr-dg-pagination #pagination [clrDgPageSize]="10">
+            <clr-dg-page-size [clrPageSizeOptions]="[10,20,50,100]">Events per page</clr-dg-page-size>
+            {{pagination.firstItem + 1}} - {{pagination.lastItem + 1}} of {{pagination.totalItems}} events
+        </clr-dg-pagination>
+    </clr-dg-footer>
+</clr-datagrid>

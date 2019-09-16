@@ -28,7 +28,7 @@ import com.vmware.mangle.services.constants.CommonConstants;
 @EnableConfigurationProperties({ PluginProperties.class })
 public class SpringConfiguration {
 
-    @Bean
+    @Bean(name = "springPluginManager")
     public SpringPluginManager pluginManager(FileStorageService storageService, PluginProperties pluginProperties) {
         System.setProperty(CommonConstants.PF4J_PLUGINS_DIR, storageService.getFileStorageLocation().toString());
         System.setProperty(CommonConstants.PF4J_MODE, pluginProperties.getMode());//deployment or development

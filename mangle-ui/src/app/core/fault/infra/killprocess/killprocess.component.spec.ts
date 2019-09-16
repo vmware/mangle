@@ -44,6 +44,7 @@ describe('KillprocessComponent', () => {
         fixture.detectChanges();
         endpointService = TestBed.get(EndpointService);
         spyOn(endpointService, 'getAllEndpoints').and.returnValue(of([]));
+        spyOn(endpointService, 'getDockerContainers').and.returnValue(of([]));
         faultService = TestBed.get(FaultService);
         spyOn(faultService, 'executeKillProcessFault').and.returnValue(of({ "taskData": { "schedule": null } }));
         router = TestBed.get(Router);
@@ -57,6 +58,11 @@ describe('KillprocessComponent', () => {
     it('should execute kill process fault', () => {
         component.executeKillProcessFault(component.faultFormData);
         expect(faultService.executeKillProcessFault).toHaveBeenCalled();
+    });
+
+    it('should execute getDockerContainers', () => {
+        component.getDockerContainers("DOCKER",'');
+        expect(endpointService.getDockerContainers).toHaveBeenCalled();
     });
 
 });

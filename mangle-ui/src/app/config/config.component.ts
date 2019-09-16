@@ -6,8 +6,7 @@ import { MessageConstants } from '../common/message.constants';
 
 @Component({
   selector: 'app-config',
-  templateUrl: './config.component.html',
-  styleUrls: ['./config.component.css']
+  templateUrl: './config.component.html'
 })
 export class ConfigComponent implements OnInit {
 
@@ -17,6 +16,10 @@ export class ConfigComponent implements OnInit {
   public name: string = "admin@mangle.local";
   public oldPassword: string;
   public userFormData: any = { "name": this.name, "oldPassword": null, "password": null, "rePassword": null };
+  public barLabel: string = '';
+  public barColors = ['#DD2C00', '#FF6D00', '#FFD600', '#AEEA00', '#00C853'];
+  public baseColor = '#DDD';
+  public strengthLabels = ['(Useless)', '(Weak)', '(Normal)', '(Strong)', '(Great!)'];
 
   constructor(private configService: ConfigService, private router: Router) { }
 

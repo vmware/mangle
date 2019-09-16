@@ -12,9 +12,11 @@ export class ServiceConstants {
     public static readonly ENDPOINTS_CREDENTIALS_K8S = ServiceConstants.URL_PREFIX + "endpoints/credentials/k8s";
     public static readonly ENDPOINTS_CREDENTIALS_REMOTE_MACHINE = ServiceConstants.URL_PREFIX + "endpoints/credentials/remotemachine";
     public static readonly ENDPOINTS_CREDENTIALS_VCENTER = ServiceConstants.URL_PREFIX + "endpoints/credentials/vcenter";
+    public static readonly ENDPOINTS_CREDENTIALS_AWS = ServiceConstants.URL_PREFIX + "endpoints/credentials/aws";
     public static readonly ENDPOINTS_CERTIFICATES = ServiceConstants.URL_PREFIX + "endpoints/certificates";
     public static readonly ENDPOINTS_CERTIFICATES_DOCKER = ServiceConstants.URL_PREFIX + "endpoints/certificates/docker";
     public static readonly TEST_ENDPOINTS = ServiceConstants.URL_PREFIX + "endpoints/testEndpoint";
+    public static readonly ENDPOINTS_DOCKER_CONTAINER = ServiceConstants.ENDPOINTS + "/docker/containers"
 
     public static readonly USER_MANAGEMENT_USER = ServiceConstants.URL_PREFIX + "user-management/user";
     public static readonly USER_MANAGEMENT_PASSWORD = ServiceConstants.URL_PREFIX + "user-management/password";
@@ -35,9 +37,21 @@ export class ServiceConstants {
     public static readonly FAULTS_DOCKER = ServiceConstants.URL_PREFIX + "faults/docker";
     public static readonly FAULTS_K8S_DELETE_RESOURCE = ServiceConstants.URL_PREFIX + "faults/k8s/delete-resource";
     public static readonly FAULTS_K8S_RESOURCE_NOT_READY = ServiceConstants.URL_PREFIX + "faults/k8s/resource-not-ready";
+    public static readonly FAULTS_K8S_SERVICE_UNAVAILABLE = ServiceConstants.URL_PREFIX + "faults/k8s/service-unavailable";
     public static readonly FAULTS_VCENTER_DISK = ServiceConstants.URL_PREFIX + "faults/vcenter/disk";
     public static readonly FAULTS_VCENTER_NIC = ServiceConstants.URL_PREFIX + "faults/vcenter/nic";
     public static readonly FAULTS_VCENTER_STATE = ServiceConstants.URL_PREFIX + "faults/vcenter/state";
+    public static readonly PLUGINS_CUSTOM_FAULT = ServiceConstants.URL_PREFIX + "plugins/custom-fault";
+    public static readonly FAULTS_NETWORK = ServiceConstants.URL_PREFIX + "faults/network-fault";
+    public static readonly FAULTS_FILE_HANDLER_LEAK = ServiceConstants.URL_PREFIX + "faults/filehandler-leak";
+    public static readonly FAULTS_THREAD_LEAK = ServiceConstants.URL_PREFIX + "faults/thread-leak";
+    public static readonly FAULTS_AWS_EC2_STATE = ServiceConstants.URL_PREFIX + "faults/aws/ec2/state";
+    public static readonly FAULTS_AWS_EC2_NETWORK = ServiceConstants.URL_PREFIX + "faults/aws/ec2/network";
+    public static readonly FAULTS_JAVA_METHOD_LATENCY = ServiceConstants.URL_PREFIX + "faults/java-method-latency";
+    public static readonly FAULTS_SPRING_SERVICE_LATENCY = ServiceConstants.URL_PREFIX + "faults/spring-service-latency";
+    public static readonly FAULTS_SPRING_SERVICE_EXCEPTION = ServiceConstants.URL_PREFIX + "faults/spring-service-exception";
+    public static readonly FAULTS_KILL_JVM = ServiceConstants.URL_PREFIX + "faults/kill-jvm";
+    public static readonly FAULTS_SIMULATE_JAVA_EXCEPTION = ServiceConstants.URL_PREFIX + "faults/simulate-java-exception";
 
     public static readonly TASKS = ServiceConstants.URL_PREFIX + "tasks";
     public static readonly SCHEDULER = ServiceConstants.URL_PREFIX + "scheduler";
@@ -50,4 +64,14 @@ export class ServiceConstants {
     public static readonly METRIC_PROVIDERS_COLLECTION_STATUS = ServiceConstants.URL_PREFIX + "metric-providers/mangle-metrics-collection-status";
     public static readonly METRIC_PROVIDERS_TEST_CONNECTION = ServiceConstants.URL_PREFIX + "metric-providers/test-connection";
 
+    public static readonly CLUSTER_CONFIG = ServiceConstants.URL_PREFIX + "cluster-config";
+    public static readonly EVENTS = ServiceConstants.URL_PREFIX + "events";
+
+    public static readonly PLUGINS = ServiceConstants.URL_PREFIX + "plugins";
+    public static readonly PLUGIN_DETAILS = ServiceConstants.URL_PREFIX + "plugins/plugin-details";
+    public static readonly PLUGIN_FILES = ServiceConstants.URL_PREFIX + "plugins/files";
+    public static readonly PLUGIN_REQ_JSON = ServiceConstants.URL_PREFIX + "plugins/request-json";
+    public static readonly PLUGIN_CUSTOM_FAULT = ServiceConstants.URL_PREFIX + "plugins/custom-fault";
+    public static readonly FAULTS_DISK_SPACE = ServiceConstants.URL_PREFIX + "faults/disk-space";
+    public static readonly KERNEL_PANIC_FAULT_URL = ServiceConstants.URL_PREFIX + "faults/kernel-panic";
 }

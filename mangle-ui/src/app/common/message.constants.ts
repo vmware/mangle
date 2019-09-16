@@ -28,6 +28,7 @@ export class MessageConstants {
     public static readonly IDENTITY_DELETE = " identity source deleted successfully.";
 
     public static readonly LOGGER_UPDATE = "Logger updated successfully.";
+    public static readonly CLUSTER_UPDATE = "Cluster updated successfully.";
 
     public static readonly ROLE_ADD = " role created successfully.";
     public static readonly ROLE_UPDATE = " role updated successfully.";
@@ -46,6 +47,8 @@ export class MessageConstants {
 
     public static readonly TASK_DELETE = " task deleted successfully.";
     public static readonly REMEDIATION_TASK_TRIGGERED = " remediation task triggered successfully.";
+    public static readonly FAULT_TRIGGERED = "Fault re-triggered successfully.";
+    public static readonly REMEDIATION_RE_TRIGGERED = "Remediation of fault re-triggered successfully.";
 
     public static readonly SCHEDULE_DELETE = " schedule deletion request submitted successfully.";
     public static readonly SCHEDULE_CANCEL = " schedule cancellation request submitted successfully.";
@@ -54,9 +57,17 @@ export class MessageConstants {
 
     public static readonly DELETE_CONFIRM = "Are you sure you want to delete ";
     public static readonly REMEDIATE_CONFIRM = "Are you sure you want to remediate ";
+    public static readonly RERUN_FAULT_CONFIRM = "Are you sure you want to rerun the fault ";
     public static readonly DELETE_SCHEDULE_CONFIRM = "Deleting associated tasks. " + MessageConstants.DELETE_CONFIRM;
     public static readonly CANCEL_CONFIRM = "Are you sure you want to cancel ";
     public static readonly PAUSE_CONFIRM = "Are you sure you want to pause ";
     public static readonly RESUME_CONFIRM = "Are you sure you want to resume ";
+
+    public static readonly PLUGIN_UPLOADED = "Plugin uploaded successfully.";
+    public static readonly PLUGIN_ACTION_MESSAGE = " action on plugin: ";
+    public static readonly PLUGIN_ACTION_COMPLETED = " completed successfully.";
+    public static readonly PLUGIN_DELETE = " plugin deleted successfully.";
+    public static readonly PLUGIN_UPGRADED_ERR = "Can't edit and Re-trigger since the plugin is upgraded.";
+    public static readonly PLUGIN_UNAVAILABLE = "Plugin unavailable.";
 
 }

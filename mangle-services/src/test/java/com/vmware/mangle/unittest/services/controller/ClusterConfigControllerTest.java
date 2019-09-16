@@ -12,6 +12,7 @@
 package com.vmware.mangle.unittest.services.controller;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -26,6 +27,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import com.vmware.mangle.cassandra.model.hazelcast.HazelcastClusterConfig;
+import com.vmware.mangle.model.enums.MangleDeploymentMode;
 import com.vmware.mangle.services.ClusterConfigService;
 import com.vmware.mangle.services.controller.ClusterConfigController;
 import com.vmware.mangle.services.mockdata.ClusterConfigMockdata;
@@ -34,15 +36,14 @@ import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
 /**
  *
- *
  * @author chetanc
  */
+@SuppressWarnings("rawtypes")
 public class ClusterConfigControllerTest {
 
     @Mock
     private ClusterConfigService configService;
     private ClusterConfigController configController;
-
     private ClusterConfigMockdata mockdata = new ClusterConfigMockdata();
 
     @BeforeMethod
@@ -55,39 +56,28 @@ public class ClusterConfigControllerTest {
     public void testGetHazelcastConfig() {
         HazelcastClusterConfig config = mockdata.getClusterConfigObject();
         when(configService.getClusterConfiguration()).thenReturn(config);
-
         ResponseEntity responseEntity = configController.getHazelcastConfig();
-
         Assert.assertEquals(responseEntity.getStatusCode(), HttpStatus.OK);
-
         HazelcastClusterConfig persisted = (HazelcastClusterConfig) ((Resource) responseEntity.getBody()).getContent();
-
         Assert.assertNotNull(persisted);
         Assert.assertEquals(persisted.getValidationToken(), config.getValidationToken());
         Assert.assertEquals(persisted.getClusterName(), config.getClusterName());
         Assert.assertEquals(persisted.getMembers(), config.getMembers());
-
         verify(configService, times(1)).getClusterConfiguration();
     }
 
     @Test
     public void testUpdateHazelcastConfig() throws MangleException {
         HazelcastClusterConfig config = mockdata.getClusterConfigObject();
-
         when(configService.getClusterConfiguration()).thenReturn(config);
         when(configService.updateClusterConfiguration(config)).thenReturn(config);
-
         ResponseEntity responseEntity = configController.updateHazelcastConfig(config);
-
         Assert.assertEquals(responseEntity.getStatusCode(), HttpStatus.OK);
-
         HazelcastClusterConfig persisted = (HazelcastClusterConfig) ((Resource) responseEntity.getBody()).getContent();
-
         Assert.assertNotNull(persisted);
         Assert.assertEquals(persisted.getValidationToken(), config.getValidationToken());
         Assert.assertEquals(persisted.getClusterName(), config.getClusterName());
         Assert.assertEquals(persisted.getMembers(), config.getMembers());
-
         verify(configService, times(1)).getClusterConfiguration();
         verify(configService, times(1)).updateClusterConfiguration(any());
     }
@@ -96,12 +86,10 @@ public class ClusterConfigControllerTest {
     public void testUpdateHazelcastConfigFailure() throws MangleException {
         HazelcastClusterConfig config = mockdata.getClusterConfigObject();
         HazelcastClusterConfig config1 = mockdata.getModifiedClusterConfigObject();
-
         when(configService.getClusterConfiguration()).thenReturn(config);
         when(configService.updateClusterConfiguration(config)).thenReturn(config);
-
         try {
-            ResponseEntity responseEntity = configController.updateHazelcastConfig(config1);
+            configController.updateHazelcastConfig(config1);
         } catch (MangleException e) {
             Assert.assertEquals(e.getErrorCode(), ErrorCode.CLUSTER_CONFIG_MEMBER_MODIFICATION);
             verify(configService, times(1)).getClusterConfiguration();
@@ -109,5 +97,35 @@ public class ClusterConfigControllerTest {
         }
     }
 
+    @Test
+    public void testUpdateDeploymentMode() throws MangleException {
+        HazelcastClusterConfig config = mockdata.getClusterConfigObject();
+
+        when(configService.updateMangleDeploymentType(any())).thenReturn(config);
+
+        ResponseEntity<Resource<HazelcastClusterConfig>> responseEntity =
+                configController.updateDeploymentMode(MangleDeploymentMode.STANDALONE);
+        HazelcastClusterConfig persisted = (HazelcastClusterConfig) ((Resource) responseEntity.getBody()).getContent();
+
+        Assert.assertEquals(responseEntity.getStatusCode(), HttpStatus.OK);
+        Assert.assertEquals(persisted, config);
+
+        verify(configService, times(1)).updateMangleDeploymentType(any());
+    }
+
+    @Test
+    public void testUpdateQuorum() throws MangleException {
+        HazelcastClusterConfig config = mockdata.getClusterConfigObject();
+
+        when(configService.updateMangleQuorum(anyInt())).thenReturn(config);
+
+        ResponseEntity<Resource<HazelcastClusterConfig>> responseEntity = configController.updateQuorum(5);
+        HazelcastClusterConfig persisted = (HazelcastClusterConfig) ((Resource) responseEntity.getBody()).getContent();
+
+        Assert.assertEquals(responseEntity.getStatusCode(), HttpStatus.OK);
+        Assert.assertEquals(persisted, config);
+
+        verify(configService, times(1)).updateMangleQuorum(anyInt());
+    }
 
 }

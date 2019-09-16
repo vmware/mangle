@@ -1,0 +1,24 @@
+{
+	"pluginId": "mangle-test-plugin",
+	"faults": [
+		{
+			"faultParameters": {
+				"injectionHomeDir": "/tmp/",
+				"processIdentifier": "sleep",
+				"remediationCommand": "sleep 2m"
+			},
+			"extensionDetails": {
+				"modelExtensionName": "com.vmware.mangle.cassandra.test.plugin.model.faults.specs.CustomKillProcessFaultSpec",
+				"taskExtensionName": "com.vmware.mangle.test.plugin.helpers.CustomSystemResourceFaultTaskHelper",
+				"faultExtensionName": "com.vmware.mangle.test.plugin.helpers.faults.CustomKillProcessFault"
+			},
+			"faultName": "mangle-test-plugin-customkillprocessfault",
+			"supportedEndpoints": [
+				"MACHINE",
+				"K8S_CLUSTER",
+				"DOCKER"
+			],
+			"pluginId": "mangle-test-plugin"
+		}
+	]
+}

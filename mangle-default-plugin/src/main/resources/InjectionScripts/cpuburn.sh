@@ -97,20 +97,30 @@ preRequisitescheck()
     isAwkPresent
     isPgrepPresent
     isExprPresent
+    checkWritePermissionOfInjectionDir
     if [ ! -z "$precheckmessage" ]
     then
-        echo "Precheck Failed: $precheckmessage required to proceed with injection"
+        precheckmessage="Precheck Failed with pre-requisites : $precheckmessage"
+        length=$(echo $precheckmessage |wc -c)
+        echo ${precheckmessage} | cut -c 1-$(($length - 2))
         cleanup
         exit $errorExitCode
     fi
     echo "Precheck is successful"
 }
 
+checkWritePermissionOfInjectionDir()
+{
+    if [ ! -w "$basedirectory" ]
+    then
+      precheckmessage="$precheckmessage Write permission on ${basedirectory} required,"
+    fi
+}
 isAwkPresent(){
     awk > /dev/null 2>&1
     awkRetVal=$?
     if [ $awkRetVal -ne 0 -a $awkRetVal -ne 1 -a $awkRetVal -ne 2 ]; then
-        precheckmessage="awk"
+        precheckmessage="awk required,"
     fi
 }
 
@@ -118,7 +128,7 @@ isPgrepPresent(){
     pgrep  > /dev/null 2>&1
     pgrepRetVal=$?
     if [ $pgrepRetVal -ne 0 -a $pgrepRetVal -ne 1 -a $pgrepRetVal -ne 2 ]; then
-        precheckmessage="$precheckmessage,pgrep"
+        precheckmessage="$precheckmessage pgrep required,"
     fi
 }
 
@@ -126,7 +136,7 @@ isExprPresent(){
     expr > /dev/null 2>&1
     exprRetVal=$?
     if [ $exprRetVal -ne 0 -a $exprRetVal -ne 1 -a $exprRetVal -ne 2 ]; then
-        precheckmessage="$precheckmessage,expr"
+        precheckmessage="$precheckmessage expr required,"
     fi
 }
 

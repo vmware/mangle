@@ -33,7 +33,9 @@ import com.vmware.mangle.cassandra.model.security.Privilege;
 import com.vmware.mangle.cassandra.model.security.Role;
 import com.vmware.mangle.cassandra.model.security.User;
 import com.vmware.mangle.cassandra.model.security.UserAuthentication;
+import com.vmware.mangle.cassandra.model.security.UserLoginAttempts;
 import com.vmware.mangle.services.CustomUserDetailsService;
+import com.vmware.mangle.services.UserLoginAttemptsService;
 import com.vmware.mangle.services.UserService;
 import com.vmware.mangle.services.mockdata.RolesMockData;
 import com.vmware.mangle.services.mockdata.UserAuthenticationServiceMockData;
@@ -53,6 +55,9 @@ public class CustomUserDetailsServiceTest {
     @Mock
     private UserService userService;
 
+    @Mock
+    private UserLoginAttemptsService userLoginAttemptsService;
+
     private CustomUserDetailsService customUserDetailsService;
 
     private UserAuthenticationServiceMockData authMockData = new UserAuthenticationServiceMockData();
@@ -62,7 +67,7 @@ public class CustomUserDetailsServiceTest {
     @BeforeMethod
     public void initMocks() {
         MockitoAnnotations.initMocks(this);
-        customUserDetailsService = new CustomUserDetailsService(userService);
+        customUserDetailsService = new CustomUserDetailsService(userService, userLoginAttemptsService);
     }
 
     @Test
@@ -116,6 +121,51 @@ public class CustomUserDetailsServiceTest {
         verify(userService, times(0)).createUser(any());
     }
 
+    @Test
+    public void testLoadUserByUsernameLockedUser() throws MangleException {
+        Role role = rolesMockData.getDummy2Role();
+        List<Privilege> privileges = new ArrayList<>(role.getPrivileges());
+        User user = userMockData.getMockUser();
+        user.setAccountLocked(true);
+        UserLoginAttempts userLoginAttempts = userMockData.getUserLoginAttemptsForUser(user.getName());
+
+        when(userService.getPrivilegeForUser(anyString())).thenReturn(privileges);
+        when(userService.getUserByName(anyString())).thenReturn(user);
+        when(userLoginAttemptsService.getUserAttemptsForUser(user.getName())).thenReturn(userLoginAttempts);
+
+        UserDetails userDetails = customUserDetailsService.loadUserByUsername(user.getName());
+
+        Assert.assertNotNull(userDetails);
+        verify(userLoginAttemptsService, times(1)).getUserAttemptsForUser(user.getName());
+        verify(userService, times(1)).getUserByName(anyString());
+        verify(userService, times(1)).getPrivilegeForUser(anyString());
+        verify(userService, times(0)).getDefaultUserRole();
+        verify(userService, times(0)).createUser(any());
+    }
+
+    @Test
+    public void testLoadUserByUsernameLockedOlderUser() throws MangleException {
+        Role role = rolesMockData.getDummy2Role();
+        List<Privilege> privileges = new ArrayList<>(role.getPrivileges());
+        User user = userMockData.getMockUser();
+        user.setAccountLocked(true);
+        UserLoginAttempts userLoginAttempts = userMockData.getUserLoginAttemptsForUser(user.getName());
+
+
+        when(userService.getPrivilegeForUser(anyString())).thenReturn(privileges);
+        when(userService.getUserByName(anyString())).thenReturn(user);
+        when(userLoginAttemptsService.getUserAttemptsForUser(user.getName())).thenReturn(null);
+
+        UserDetails userDetails = customUserDetailsService.loadUserByUsername(user.getName());
+
+        Assert.assertNotNull(userDetails);
+        verify(userLoginAttemptsService, times(1)).getUserAttemptsForUser(user.getName());
+        verify(userService, times(1)).getUserByName(anyString());
+        verify(userService, times(1)).getPrivilegeForUser(anyString());
+        verify(userService, times(0)).getDefaultUserRole();
+        verify(userService, times(0)).createUser(any());
+    }
+
     @Test(expectedExceptions = UsernameNotFoundException.class)
     public void testLoadUserByUsernameUserNull() throws MangleException {
         User user = userMockData.getMockUser();
@@ -152,8 +202,6 @@ public class CustomUserDetailsServiceTest {
             verify(userService, times(0)).createUser(any());
             throw (UsernameNotFoundException) e;
         }
-
-
     }
 
 

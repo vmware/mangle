@@ -83,7 +83,6 @@ public class RemoteBase {
             log.info("identity added ");
         } else if (getPassword() != null) {
             session.setPassword(getPassword());
-            log.info("Password");
         }
         session.setTimeout(getTimeout());
         java.util.Properties config = new java.util.Properties();

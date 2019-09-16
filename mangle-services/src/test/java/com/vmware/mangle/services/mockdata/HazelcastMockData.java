@@ -22,9 +22,14 @@ import com.vmware.mangle.cassandra.model.endpoint.VCenterConnectionProperties;
 import com.vmware.mangle.cassandra.model.endpoint.VCenterCredentials;
 import com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.K8SFaultTriggerSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.TaskSpec;
+import com.vmware.mangle.cassandra.model.hazelcast.HazelcastClusterConfig;
+import com.vmware.mangle.cassandra.model.scheduler.SchedulerSpec;
 import com.vmware.mangle.cassandra.model.tasks.Task;
 import com.vmware.mangle.cassandra.model.tasks.TaskStatus;
 import com.vmware.mangle.model.enums.EndpointType;
+import com.vmware.mangle.model.enums.MangleDeploymentMode;
+import com.vmware.mangle.model.enums.SchedulerStatus;
 
 /**
  *
@@ -37,6 +42,10 @@ public class HazelcastMockData {
 
     EndpointMockData endpointMockData = new EndpointMockData();
     CredentialsSpecMockData credentialsSpecMockData = new CredentialsSpecMockData();
+
+    private static final String VALIDATION_TOKEN = "validation_token";
+    private static final int MANGLE_QUORUM_VALUE = 1;
+    private static final String CLUSTER_NAME = "cluster_name";
 
     public IMap<Object, Object> getTasks() {
         tasks.put(UUID.randomUUID().toString(), TaskStatus.IN_PROGRESS.name());
@@ -55,7 +64,7 @@ public class HazelcastMockData {
         return vcenterEndpointSpec;
     }
 
-    public CommandExecutionFaultSpec getMockFaultSpec() {
+    public TaskSpec getMockFaultSpec() {
         CommandExecutionFaultSpec commandExecutionFaultSpec = new CommandExecutionFaultSpec();
         commandExecutionFaultSpec.setEndpointName(getMockEndpointSpec().getName());
         return commandExecutionFaultSpec;
@@ -63,7 +72,7 @@ public class HazelcastMockData {
 
     public K8SFaultTriggerSpec getK8SFaultTriggerSpec() {
         K8SFaultTriggerSpec k8SFaultTriggerSpec = new K8SFaultTriggerSpec();
-        k8SFaultTriggerSpec.setFaultSpec(getMockFaultSpec());
+        k8SFaultTriggerSpec.setFaultSpec((CommandExecutionFaultSpec) getMockFaultSpec());
         return k8SFaultTriggerSpec;
     }
 
@@ -71,24 +80,40 @@ public class HazelcastMockData {
         return new VCenterCredentials();
     }
 
-    public Task getMockTask() {
-        TasksMockData<CommandExecutionFaultSpec> tasksMockData =
-                new TasksMockData<CommandExecutionFaultSpec>(getMockFaultSpec());
-        Task task = tasksMockData.getDummyTask();
+    public Task<TaskSpec> getMockTask() {
+        TasksMockData<TaskSpec> tasksMockData = new TasksMockData<TaskSpec>(getMockFaultSpec());
+        Task<TaskSpec> task = tasksMockData.getDummyTask();
         task.setScheduledTask(false);
         return task;
     }
 
-    public Task getMockSchedulerTask() {
-        Task<CommandExecutionFaultSpec> task = getMockTask();
+    public Task<TaskSpec> getMockSchedulerTask() {
+        Task<TaskSpec> task = getMockTask();
         task.setScheduledTask(true);
         return task;
+    }
+
+    public SchedulerSpec getSchedulerSpec() {
+        Task<TaskSpec> task = getMockTask();
+        SchedulerSpec schedulerSpec = new SchedulerSpec();
+        schedulerSpec.setId(task.getId());
+        schedulerSpec.setStatus(SchedulerStatus.SCHEDULED);
+        return schedulerSpec;
     }
 
     public VCenterConnectionProperties getVCenterConnectionPropertiess() {
         VCenterConnectionProperties vCenterConnectionProperties = new VCenterConnectionProperties();
         vCenterConnectionProperties.setHostname("127.0.0.1");
         return vCenterConnectionProperties;
+    }
+
+    public HazelcastClusterConfig getClusterConfig() {
+        HazelcastClusterConfig config = new HazelcastClusterConfig();
+        config.setClusterName(CLUSTER_NAME);
+        config.setDeploymentMode(MangleDeploymentMode.STANDALONE);
+        config.setQuorum(MANGLE_QUORUM_VALUE);
+        config.setValidationToken(VALIDATION_TOKEN);
+        return config;
     }
 
 

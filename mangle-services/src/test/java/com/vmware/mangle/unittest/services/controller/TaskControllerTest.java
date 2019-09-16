@@ -12,7 +12,6 @@
 package com.vmware.mangle.unittest.services.controller;
 
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.times;
@@ -89,27 +88,11 @@ public class TaskControllerTest {
      * @throws MangleException
      */
     @Test
-    public void testGetAllScheduledTasks() throws MangleException {
-        List<Task<TaskSpec>> tasks = tasksMockData.getDummyTasks();
-        when(taskService.getTaskByIsScheduledTask(anyBoolean())).thenReturn(tasks);
-        ResponseEntity<List<Task<TaskSpec>>> response = taskController.getAllTasks(true);
-        verify(taskService, times(1)).getTaskByIsScheduledTask(anyBoolean());
-        assertEquals(response.getStatusCode(), HttpStatus.OK);
-        assertEquals(response.getBody().size(), tasks.size());
-    }
-
-    /**
-     * Test method for
-     * {@link com.vmware.mangle.TaskController.TaskController#getAllTasks(java.lang.Boolean)}.
-     *
-     * @throws MangleException
-     */
-    @Test
     public void testGetAllTasks() throws MangleException {
         List<Task<TaskSpec>> tasks = tasksMockData.getDummyTasks();
-        when(taskService.getAllTasks()).thenReturn(tasks);
-        ResponseEntity<List<Task<TaskSpec>>> response = taskController.getAllTasks(null);
-        verify(taskService, times(1)).getAllTasks();
+        when(taskService.getAllTasks(any(), any())).thenReturn(tasks);
+        ResponseEntity<List<Task<TaskSpec>>> response = taskController.getAllTasks(null, null);
+        verify(taskService, times(1)).getAllTasks(any(), any());
         assertEquals(response.getStatusCode(), HttpStatus.OK);
         assertEquals(response.getBody().size(), tasks.size());
     }

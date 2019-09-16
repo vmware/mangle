@@ -16,6 +16,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import com.vmware.mangle.cassandra.model.hazelcast.HazelcastClusterConfig;
+import com.vmware.mangle.model.enums.MangleDeploymentMode;
 
 /**
  * @author chetanc
@@ -37,6 +38,8 @@ public class ClusterConfigMockdata {
         Set<String> members = new HashSet<>();
         members.add(ip);
         config.setMembers(members);
+        config.setDeploymentMode(MangleDeploymentMode.STANDALONE);
+        config.setQuorum(1);
         return config;
     }
 

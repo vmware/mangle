@@ -60,17 +60,17 @@ public class WavefrontMetricReporter implements MetricReporter {
      * @return
      */
     @Override
-    public Boolean sendMetric(String metricName, double metricValue, Map<String, String> tags) {
-        log.info(" Sending the Metric " + metricName + " with assosicated value: " + metricValue);
+    public Boolean sendMetric(String metricName, double metricValue, HashMap<String, String> tags) {
+        log.trace(" Sending the Metric " + metricName + " with assosicated value: " + metricValue);
         if (null == wavefrontReporter) {
             return false;
         }
         if (validateMetric(metricName, metricValue)) {
-            log.info("Sending the metric to wavefront Proxy");
+            log.trace("Sending the metric to wavefront Proxy");
             try {
                 double doubleEqMetricValue = MetricsHelper.getDoubleEquivalent(metricValue);
                 HashMap<String, String> allTags =
-                        (HashMap<String, String>) WavefrontMetricHelper.addStaticTags(tags, this.staticTags);
+                        (HashMap<String, String>) WavefrontMetricHelper.constructTags(tags, this.staticTags);
                 wavefrontReporter.send(metricName, doubleEqMetricValue, metricSource, allTags);
                 wavefrontReporter.flush();
             } catch (IOException e) {
@@ -78,10 +78,10 @@ public class WavefrontMetricReporter implements MetricReporter {
                 log.error(e);
                 return false;
             }
-            log.info(" Metric is sent");
+            log.trace(" Metric is sent");
             return true;
         }
-        log.info(" Sending the metric Failed ");
+        log.warn(" Sending the metric Failed ");
         return false;
     }
 
@@ -92,17 +92,17 @@ public class WavefrontMetricReporter implements MetricReporter {
      *          failed
      */
     public Boolean sendMetric(Metric metric) {
-        log.info(" Sending the Metric: " + metric.getMetricName() + " with assosicated value: "
+        log.trace(" Sending the Metric: " + metric.getMetricName() + " with assosicated value: "
                 + metric.getMetricValue());
         if (null == wavefrontReporter) {
             return false;
         }
         if (validateMetric(metric.getMetricName(), metric.getMetricValue())) {
-            log.info("Metric details: " + metric.toString());
+            log.trace("Metric details: " + metric.toString());
             try {
                 double metricValue = MetricsHelper.getDoubleEquivalent(metric.getMetricValue());
                 HashMap<String, String> allTags = (HashMap<String, String>) WavefrontMetricHelper
-                        .addStaticTags(metric.getTags(), this.staticTags);
+                        .constructTags(metric.getTags(), this.staticTags);
                 wavefrontReporter.send(metric.getMetricName(), metricValue, metric.getMetricTimeStamp(),
                         metric.getSource(), allTags);
                 wavefrontReporter.flush();
@@ -111,10 +111,10 @@ public class WavefrontMetricReporter implements MetricReporter {
                 log.error(e);
                 return false;
             }
-            log.info(" Metric is sent");
+            log.trace(" Metric is sent");
             return true;
         }
-        log.info(" Sending the metric Failed ");
+        log.warn(" Sending the metric Failed ");
         return false;
     }
 
@@ -127,7 +127,7 @@ public class WavefrontMetricReporter implements MetricReporter {
      *          reporting has failed.
      */
     public Boolean sendMetrics(List<Metric> metrics) {
-        log.info(" Sending list of metrics ");
+        log.debug(" Sending list of metrics ");
         if (null == wavefrontReporter) {
             return false;
         }
@@ -142,8 +142,8 @@ public class WavefrontMetricReporter implements MetricReporter {
                 metricsSent = false;
             }
         }
-        log.info("Completed sending the list of metrics and status of Sending the metric: " + metricsSent);
-        log.info(
+        log.debug("Completed sending the list of metrics and status of Sending the metric: " + metricsSent);
+        log.debug(
                 " NOTE: The status of sending metric will be marked as FAILED even if one of the metric send is failed in the list of metrics to send");
         return metricsSent;
     }
@@ -151,10 +151,10 @@ public class WavefrontMetricReporter implements MetricReporter {
     @Override
     public Boolean validateMetric(String metricName, Object metricValue) {
         if (MetricsHelper.isAValidMetricName(metricName) && MetricsHelper.isAValidMetricValue(metricValue)) {
-            log.info("Specified metric is a valid metric");
+            log.debug("Specified metric is a valid metric");
             return true;
         }
-        log.info(" Specified Metric is NOT a valid metric ");
+        log.debug(" Specified Metric is NOT a valid metric ");
         return false;
     }
 

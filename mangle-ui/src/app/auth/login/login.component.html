@@ -13,8 +13,8 @@
                     <option [value]="sourceAuth" *ngFor="let sourceAuth of authSources">{{sourceAuth}}</option>
                 </select>
             </div>
-            <input class="username" type="text" id="username" name="username" [(ngModel)]="authData.username" required>
-            <input class="password" type="password" id="password" name="password" [(ngModel)]="authData.password" required>
+            <input class="username" type="text" id="username" name="username" placeholder="User Id" [(ngModel)]="authData.username" required>
+            <input class="password" type="password" id="password" name="password" placeholder="Password" [(ngModel)]="authData.password" required>
             <div>
                 <clr-alert *ngIf="errorFlag" [clrAlertType]="'danger'">
                     <div class="alert-item">{{alertMessage}}</div>

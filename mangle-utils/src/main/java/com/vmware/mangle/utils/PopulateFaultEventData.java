@@ -30,6 +30,7 @@ import com.vmware.mangle.cassandra.model.faults.specs.TaskSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.VMDiskFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.VMNicFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.VMStateFaultSpec;
+import com.vmware.mangle.cassandra.model.tasks.RemediableTask;
 import com.vmware.mangle.cassandra.model.tasks.Task;
 import com.vmware.mangle.cassandra.model.tasks.TaskStatus;
 import com.vmware.mangle.cassandra.model.tasks.TaskTrigger;
@@ -124,10 +125,19 @@ public class PopulateFaultEventData<T extends Task<TaskSpec>> {
                 faultEventInfo.setFaultEndTimeInEpoch(faultTimeOutInMilis);
                 return;
             }
-        } else {
-            log.debug("Can't update the time out time as Time Out is not specified in the fault spec");
+            log.debug(" The task status is: " + task.getTaskStatus() + " hence updating the event endtime as now");
+            updateFaultEventEndTimeAsNow();
+            return;
+        } else if (task.getTaskType() == TaskType.REMEDIATION) {
+            log.debug("Can't update the event end time as Fault Time Out is not specified in the fault spec");
+            updateFaultEventEndTimeAsNow();
+            return;
         }
-        log.debug("The fault didn't run OR it's an Remediation task. Setting the end time as the current time ");
+        log.debug(" Fault timeout is NOT specified. Hence, corresponding fault event will have NO end time.");
+        log.debug(" The event corresponding to fault will automatically be closed once fault is remediated.");
+    }
+
+    private void updateFaultEventEndTimeAsNow() {
         String endTime = CommonUtils.getTime(System.currentTimeMillis() + MetricProviderConstants.ONE_SECOND_IN_MILLIS);
         faultEventInfo.setFaultEndTime(endTime);
         faultEventInfo.setFaultEndTimeInEpoch(CommonUtils.getDateObjectFor(endTime).getTime());
@@ -167,6 +177,9 @@ public class PopulateFaultEventData<T extends Task<TaskSpec>> {
     private void updateFaultEventTags() {
         Map<String, String> allTags = new HashMap<>();
         allTags.put("EndpointName", commandExecutionFaultSpec.getEndpointName());
+        if (task.getTaskType() == TaskType.REMEDIATION) {
+            allTags.put("FaultID_Remediated", ((RemediableTask) task).getInjectionTaskId());
+        }
         if (commandExecutionFaultSpec.getTags() != null) {
             allTags.putAll(commandExecutionFaultSpec.getTags());
         }

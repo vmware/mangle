@@ -14,6 +14,7 @@ package com.vmware.mangle.services.controller;
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
 
+import io.swagger.annotations.ApiOperation;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.Link;
@@ -21,12 +22,15 @@ import org.springframework.hateoas.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.vmware.mangle.cassandra.model.hazelcast.HazelcastClusterConfig;
+import com.vmware.mangle.model.enums.MangleDeploymentMode;
 import com.vmware.mangle.services.ClusterConfigService;
 import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
@@ -52,15 +56,14 @@ public class ClusterConfigController {
     public ResponseEntity<Resource<HazelcastClusterConfig>> getHazelcastConfig() {
         log.info("Fetching cluster information");
         HazelcastClusterConfig config = configService.getClusterConfiguration();
-
         Resource<HazelcastClusterConfig> configResource = new Resource<>(config);
         Link link = linkTo(methodOn(getClass()).getHazelcastConfig()).withSelfRel();
         configResource.add(link);
-
         return new ResponseEntity<>(configResource, HttpStatus.OK);
     }
 
     @PutMapping
+    @ApiOperation(value = "Update hazelcast config", nickname = "update-hazelcast-config", hidden = true)
     public ResponseEntity<Resource<HazelcastClusterConfig>> updateHazelcastConfig(
             @RequestBody HazelcastClusterConfig config) throws MangleException {
         log.info("Updating cluster information");
@@ -71,11 +74,31 @@ public class ClusterConfigController {
         }
         config.setId(persistenceConfig.getId());
         config = configService.updateClusterConfiguration(config);
-
         Resource<HazelcastClusterConfig> configResource = new Resource<>(config);
         Link link = linkTo(methodOn(getClass()).updateHazelcastConfig(null)).withSelfRel();
         configResource.add(link);
+        return new ResponseEntity<>(configResource, HttpStatus.OK);
+    }
 
+    @PostMapping
+    @ApiOperation(value = "Update mangle deployment type", nickname = "update-deployment-type")
+    public ResponseEntity<Resource<HazelcastClusterConfig>> updateDeploymentMode(
+            @RequestParam MangleDeploymentMode deploymentType) throws MangleException {
+        HazelcastClusterConfig config = configService.updateMangleDeploymentType(deploymentType);
+        Resource<HazelcastClusterConfig> configResource = new Resource<>(config);
+        Link link = linkTo(methodOn(getClass()).updateDeploymentMode(null)).withSelfRel();
+        configResource.add(link);
+        return new ResponseEntity<>(configResource, HttpStatus.OK);
+    }
+
+    @PostMapping("/quorum")
+    @ApiOperation(value = "Update mangle quorum", nickname = "update-quorum")
+    public ResponseEntity<Resource<HazelcastClusterConfig>> updateQuorum(@RequestParam int quorumValue)
+            throws MangleException {
+        HazelcastClusterConfig config = configService.updateMangleQuorum(quorumValue);
+        Resource<HazelcastClusterConfig> configResource = new Resource<>(config);
+        Link link = linkTo(methodOn(getClass()).updateQuorum(0)).withSelfRel();
+        configResource.add(link);
         return new ResponseEntity<>(configResource, HttpStatus.OK);
     }
 

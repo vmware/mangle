@@ -37,7 +37,7 @@ public class WavefrontMetricHelperTest extends PowerMockTestCase {
 
     @InjectMocks
     private WavefrontMetricHelper wavefrontMetricHelper;
-    private Map<String, String> staticTags;
+    private HashMap<String, String> staticTags;
 
     /**
      * @throws java.lang.Exception
@@ -72,9 +72,9 @@ public class WavefrontMetricHelperTest extends PowerMockTestCase {
      */
     @Test(description = "Verify the addition of statictags and customtags to the wavefrontMetricHelper, they should both be added into the same map")
     public void testAddStaticTags() {
-        Map<String, String> customTags = new HashMap<>();
+        HashMap<String, String> customTags = new HashMap<>();
         customTags.put(MetricReporterTestConstants.CPU_USAGE, "80.4");
-        Map<String, String> actualResult = WavefrontMetricHelper.addStaticTags(customTags, this.staticTags);
+        Map<String, String> actualResult = WavefrontMetricHelper.constructTags(customTags, this.staticTags);
         Assert.assertEquals(actualResult.size(), 2);
     }
 
@@ -86,7 +86,7 @@ public class WavefrontMetricHelperTest extends PowerMockTestCase {
     public void testAddStaticTags1() {
         Map<String, String> customTags = new HashMap<>();
         customTags.put(com.vmware.mangle.unittest.metric.constants.MetricReporterTestConstants.CPU_USAGE, "80.4");
-        Map<String, String> actualResult = WavefrontMetricHelper.addStaticTags(null, this.staticTags);
+        Map<String, String> actualResult = WavefrontMetricHelper.constructTags(null, this.staticTags);
         Assert.assertEquals(actualResult.size(), 1);
     }
 

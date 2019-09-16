@@ -23,8 +23,8 @@ import com.vmware.mangle.cassandra.model.tasks.SupportScriptInfo;
 import com.vmware.mangle.cassandra.model.tasks.Task;
 import com.vmware.mangle.cassandra.model.tasks.TaskType;
 import com.vmware.mangle.faults.plugin.helpers.vcenter.VCenterFaultHelper;
-import com.vmware.mangle.faults.plugin.utils.TaskDescriptionUtils;
 import com.vmware.mangle.task.framework.helpers.AbstractCommandExecutionTaskHelper;
+import com.vmware.mangle.task.framework.utils.TaskDescriptionUtils;
 import com.vmware.mangle.utils.ICommandExecutor;
 import com.vmware.mangle.utils.exceptions.MangleException;
 

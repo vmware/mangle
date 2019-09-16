@@ -48,6 +48,9 @@ public class ErrorConstants {
     public static final String USER = "User";
     public static final String USERAUTHENTICATION = "User authentication";
     public static final String ROLE = "Role";
+    public static final String DEPLOYMENT_MODE = "deploymentMode";
+    public static final String CLUSTER_QUORUM = "quorum";
+
     public static final String USER_ALREADY_EXISTS = "User %s already exists";
     public static final String TEST_CONNECTION_FAILED =
             "Test Connection failed for endpoint, Please reverify the credentials";
@@ -74,8 +77,14 @@ public class ErrorConstants {
             "Role could not be Deleted. Role has active associations with existing Users";
     public static final String DEFAULT_PLUGIN_ID_ERROR =
             "Deletion operation of the mangle default plugin is not allowed";
-    public static final String CLUSTER_CONFIG_MISMATCH =
+    public static final String CLUSTER_CONFIG_MISMATCH_VALIDATION_TOKEN =
             "Node spin up failed, mis-matching validation token with the one configured in db";
+    public static final String CLUSTER_CONFIG_MISMATCH_DEPLOYMENT_MODE =
+            "Node spin up failed, mis-matching deployment mode with the one configured in db";
+    public static final String CLUSTER_CONFIG_LESSER_QUORUM =
+            "Quorum could not be updated, below possible quorum value %s";
+    public static final String HZ_STANDALONE_ALREADY_EXISTS =
+            "Node spin up failed, cluster configured for standalone deployment already has a node %s running, change the deployment type to cluster to add more nodes";
     public static final String IS_SCHEDULED_TASK = "isScheduledTask";
     public static final String CREDENTIALS_DELETION_PRECHECK_FAIL =
             "Credentials delete operation failed, active association with the endpoints";
@@ -88,6 +97,8 @@ public class ErrorConstants {
     public static final String ALREADY_ACTIVE_METRIC_PROVIDER = "Provided metric provider is already active";
     public static final String TASK_DELETION_PRECHECK_FAIL =
             "Task deletion operation failed, active schedules asscociated for the tasks";
+    public static final String INPROGRESS_TASK_DELETION_FAILURE =
+            "Task deletion operation failed, in progress task %s can not be deleted";
     public static final String NO_RECORD_FOUND_MSG = "No Record Found for";
     public static final String SAME_RECORD = "Metric Provider of same type is already exists.";
     public static final String LOCAL_USER_EMPTY_ROLE_UPDATE_FAIL =
@@ -112,14 +123,20 @@ public class ErrorConstants {
 
     public static final String COMMAND_EXECUTION_FAILURE_FOR_EXPECTED_OUTPUT =
             "Execution of Command does not contain: %s, failed with output: %s";
+    public static final String FAULT_REMEDIATION_NOT_SUPPORTED = "%s does not support remediation";
     public static final String CLUSTER_VALIDATION_TOKEN_MISSING =
             "Node spin up failed, mandatory parameter validation token is not provided";
     public static final String PUBLIC_ADDRESS_MISSING =
             "Node spin up failed, mandatory parameter public address for the mangle instance is not provided";
     public static final String PUBLIC_ADDRESS_WRONG_FORMAT =
             "Node spin up failed, mandatory parameter public address provided is not valid ip4 address";
+    public static final String PLUGIN_DETAILS = "PluginDetails";
+    public static final String INVALID_QUERY_EXCEPTION = "Invalid query found";
 
-    //RemoteMAchine endpoint error constants
+    public static final String USER_ACCOUNT_LOCKED_ERROR_MSG = "User account is locked! Contact administrator or retry after 30 minutes";
+    public static final String AUTHENTICATION_FAILED_ERROR_MSG = "Invalid username or password";
+
+    // RemoteMAchine endpoint error constants
 
     public static final String RM_AUTH_FAIL = "Auth fail";
     public static final String RM_CONNECTION_REFUSED = "Connection refused";
@@ -136,9 +153,28 @@ public class ErrorConstants {
     public static final String COMMAND_EXEC_EXIT_CODE_ERROR =
             "Execution of Command: %s failed. errorCode: %s output: %s";
 
-    //Docker endpoint error constants
+    // Docker endpoint error constants
 
     public static final String DOCKER_BAD_CERTIFICATE = "bad_certificate";
     public static final String CURRENT_PWD_MISMATCH = "Wrong current password";
     public static final String DOCKER_HOST_NAME_NULL = "Host name may not be null";
+    public static final String DOCKER_INVALID_ENDPOINT = "Invalid DockerEndpoint";
+
+    //AWS endpoint error constants
+
+    public static final String AWS_INVALID_CREDS = "AWS was not able to validate the provided access credentials";
+    public static final String PRE_EXISTING_PLUGIN_FILE =
+            "Plugin file with same name is present in Mangle. Either rename your file or Delete the existing file.";
+    public static final String INTERNAL_SERVER_ERROR = "Internal server error";
+    public static final String FAULT_REMEDIATION_NOT_SUPPORTED_FOR_KERNELPANICFAULT =
+            "%s does not support remediation, please restart the target machine manually for remediation";
+
+
+    //Hazelcast Cluster error constants
+    public static final String CLUSTER_QUORUM_NOT_MET =
+            "Operation Failed. Error: The host %s is part of a cluster that does not meet quorum.";
+    public static final String CLUSTER_ALREADY_IN_STATE = "The cluster already in the requested state";
+    public static final String CLUSTER_TYPE_CONFIG_LESSER_QUORUM =
+            "Quorum could not be updated, cluster deployment mode cannot have quorum lesser than 2";
+
 }

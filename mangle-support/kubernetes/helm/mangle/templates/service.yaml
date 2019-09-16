@@ -1,0 +1,18 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ .Values.serviceName }}
+  labels:
+    app: {{ .Values.appName }}
+    environment:  {{ .Values.environment }}
+spec:
+  type: LoadBalancer
+  sessionAffinity: {{ .Values.sessionAffinity }}
+  selector:
+    app: {{ .Values.appName }}
+    environment: {{ .Values.environment }}
+  ports:
+  - name: mangle-https
+    port: 443
+    protocol: TCP
+    targetPort: {{ .Values.port }}

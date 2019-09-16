@@ -6,8 +6,7 @@ import { MessageConstants } from 'src/app/common/message.constants';
 
 @Component({
     selector: 'app-endpoint-credentials',
-    templateUrl: './endpoint-credentials.component.html',
-    styleUrls: ['./endpoint-credentials.component.css']
+    templateUrl: './endpoint-credentials.component.html'
 })
 export class EndpointCredentialsComponent implements OnInit {
 
@@ -18,9 +17,8 @@ export class EndpointCredentialsComponent implements OnInit {
     public k8sFileToUpload: any;
     public keyFileToUpload: any;
 
-    public errorFlag = false;
-    public successFlag = false;
-    public alertMessage: string;
+    public errorAlertMessage: string;
+    public successAlertMessage: string;
 
     public addEdit: string;
 
@@ -58,7 +56,6 @@ export class EndpointCredentialsComponent implements OnInit {
 
     public getCredentials() {
         this.isLoading = true;
-        this.errorFlag = false;
         this.endpointService.getCredentials().subscribe(
             res => {
                 if (res.code) {
@@ -70,8 +67,7 @@ export class EndpointCredentialsComponent implements OnInit {
                 }
             }, err => {
                 this.credentials = [];
-                this.alertMessage = err.error.description;
-                this.errorFlag = true;
+                this.errorAlertMessage = err.error.description;
                 this.isLoading = false;
             });
     }
@@ -93,24 +89,20 @@ export class EndpointCredentialsComponent implements OnInit {
         this.authErrorFlag = false;
         this.submitBtnState = ClrLoadingState.LOADING;
         delete credential["id"];
-        this.errorFlag = false;
-        this.successFlag = false;
         if (typeof this.keyFileToUpload != undefined || (typeof credential.password != undefined && credential.password != "" && credential.password != null)) {
             this.endpointService.addRemoteMachineCredential(credential, this.keyFileToUpload).subscribe(
                 res => {
                     this.getCredentials();
-                    this.alertMessage = credential.name + MessageConstants.CREDENTIAL_ADD;
-                    this.successFlag = true;
+                    this.successAlertMessage = credential.name + MessageConstants.CREDENTIAL_ADD;
                     this.submitBtnState = ClrLoadingState.DEFAULT;
                     credentialForm.reset();
                     this.machineCredential = false;
                 }, err => {
                     this.getCredentials();
-                    this.alertMessage = err.error.description;
-                    if (this.alertMessage === undefined) {
-                        this.alertMessage = err.error.error;
+                    this.errorAlertMessage = err.error.description;
+                    if (this.errorAlertMessage === undefined) {
+                        this.errorAlertMessage = err.error.error;
                     }
-                    this.errorFlag = true;
                     this.submitBtnState = ClrLoadingState.DEFAULT;
                     credentialForm.reset();
                     this.machineCredential = false;
@@ -127,24 +119,20 @@ export class EndpointCredentialsComponent implements OnInit {
         var credential = credentialForm.value;
         this.authErrorFlag = false;
         this.submitBtnState = ClrLoadingState.LOADING;
-        this.errorFlag = false;
-        this.successFlag = false;
         if (typeof this.keyFileToUpload != undefined || (typeof credential.password != undefined && credential.password != "" && credential.password != null)) {
             this.endpointService.updateRemoteMachineCredential(credential, this.keyFileToUpload).subscribe(
                 res => {
                     this.getCredentials();
-                    this.alertMessage = credential.name + MessageConstants.CREDENTIAL_UPDATE;
-                    this.successFlag = true;
+                    this.successAlertMessage = credential.name + MessageConstants.CREDENTIAL_UPDATE;
                     this.submitBtnState = ClrLoadingState.DEFAULT;
                     this.machineCredential = false;
                     credentialForm.reset();
                 }, err => {
                     this.getCredentials();
-                    this.alertMessage = err.error.description;
-                    if (this.alertMessage === undefined) {
-                        this.alertMessage = err.error.error;
+                    this.errorAlertMessage = err.error.description;
+                    if (this.errorAlertMessage === undefined) {
+                        this.errorAlertMessage = err.error.error;
                     }
-                    this.errorFlag = true;
                     this.submitBtnState = ClrLoadingState.DEFAULT;
                     this.machineCredential = false;
                     credentialForm.reset();
@@ -172,38 +160,30 @@ export class EndpointCredentialsComponent implements OnInit {
     public addKubernetesCredential(credential) {
         this.isLoading = true;
         delete credential["id"];
-        this.errorFlag = false;
-        this.successFlag = false;
         this.endpointService.addk8sCredential(credential, this.k8sFileToUpload).subscribe(
             res => {
                 this.getCredentials();
-                this.alertMessage = credential.name + MessageConstants.CREDENTIAL_ADD;
-                this.successFlag = true;
+                this.successAlertMessage = credential.name + MessageConstants.CREDENTIAL_ADD;
             }, err => {
                 this.getCredentials();
-                this.alertMessage = err.error.description;
-                this.errorFlag = true;
-                if (this.alertMessage === undefined) {
-                    this.alertMessage = err.error.error;
+                this.errorAlertMessage = err.error.description;
+                if (this.errorAlertMessage === undefined) {
+                    this.errorAlertMessage = err.error.error;
                 }
             });
     }
 
     public updateKubernetesCredential(credential) {
         this.isLoading = true;
-        this.errorFlag = false;
-        this.successFlag = false;
         this.endpointService.updatek8sCredential(credential, this.k8sFileToUpload).subscribe(
             res => {
                 this.getCredentials();
-                this.alertMessage = credential.name + MessageConstants.CREDENTIAL_UPDATE;
-                this.successFlag = true;
+                this.successAlertMessage = credential.name + MessageConstants.CREDENTIAL_UPDATE;
             }, err => {
                 this.getCredentials();
-                this.alertMessage = err.error.description;
-                this.errorFlag = true;
-                if (this.alertMessage === undefined) {
-                    this.alertMessage = err.error.error;
+                this.errorAlertMessage = err.error.description;
+                if (this.errorAlertMessage === undefined) {
+                    this.errorAlertMessage = err.error.error;
                 }
             });
     }
@@ -218,62 +198,90 @@ export class EndpointCredentialsComponent implements OnInit {
 
     public addVcenterCredential(credential) {
         this.isLoading = true;
-        this.errorFlag = false;
-        this.successFlag = false;
         delete credential["id"];
         this.endpointService.addVcenterCredential(credential).subscribe(
             res => {
                 this.getCredentials();
-                this.alertMessage = credential.name + MessageConstants.CREDENTIAL_ADD;
-                this.successFlag = true;
+                this.successAlertMessage = credential.name + MessageConstants.CREDENTIAL_ADD;
             }, err => {
                 this.getCredentials();
-                this.alertMessage = err.error.description;
-                this.errorFlag = true;
-                if (this.alertMessage === undefined) {
-                    this.alertMessage = err.error.error;
+                this.errorAlertMessage = err.error.description;
+                if (this.errorAlertMessage === undefined) {
+                    this.errorAlertMessage = err.error.error;
                 }
             });
     }
 
     public updateVcenterCredential(credential) {
         this.isLoading = true;
-        this.errorFlag = false;
-        this.successFlag = false;
         delete credential["type"];
         this.endpointService.updateVcenterCredential(credential).subscribe(
             res => {
                 this.getCredentials();
-                this.alertMessage = credential.name + MessageConstants.CREDENTIAL_UPDATE;
-                this.successFlag = true;
+                this.successAlertMessage = credential.name + MessageConstants.CREDENTIAL_UPDATE;
             }, err => {
                 this.getCredentials();
-                this.alertMessage = err.error.description;
-                this.errorFlag = true;
-                if (this.alertMessage === undefined) {
-                    this.alertMessage = err.error.error;
+                this.errorAlertMessage = err.error.description;
+                if (this.errorAlertMessage === undefined) {
+                    this.errorAlertMessage = err.error.error;
+                }
+            });
+    }
+
+    public addUpdateAwsCredential(credential) {
+        if (credential.id == null) {
+            this.addAwsCredential(credential);
+        } else {
+            this.updateAwsCredential(credential);
+        }
+    }
+
+    public addAwsCredential(credential) {
+        this.isLoading = true;
+        delete credential["id"];
+        this.endpointService.addAwsCredential(credential).subscribe(
+            res => {
+                this.getCredentials();
+                this.successAlertMessage = credential.name + MessageConstants.CREDENTIAL_ADD;
+            }, err => {
+                this.getCredentials();
+                this.errorAlertMessage = err.error.description;
+                if (this.errorAlertMessage === undefined) {
+                    this.errorAlertMessage = err.error.error;
+                }
+            });
+    }
+
+    public updateAwsCredential(credential) {
+        this.isLoading = true;
+        delete credential["type"];
+        this.endpointService.updateAwsCredential(credential).subscribe(
+            res => {
+                this.getCredentials();
+                this.successAlertMessage = credential.name + MessageConstants.CREDENTIAL_UPDATE;
+            }, err => {
+                this.getCredentials();
+                this.errorAlertMessage = err.error.description;
+                if (this.errorAlertMessage === undefined) {
+                    this.errorAlertMessage = err.error.error;
                 }
             });
     }
 
     public deleteCredential(credential) {
-        this.errorFlag = false;
-        this.successFlag = false;
         if (confirm(MessageConstants.DELETE_CONFIRM + credential.name + MessageConstants.QUESTION_MARK)) {
             this.isLoading = true;
             this.endpointService.deleteCredential(credential.name).subscribe(
                 res => {
                     this.getCredentials();
-                    this.alertMessage = credential.name + MessageConstants.CREDENTIAL_DELETE;
-                    this.successFlag = true;
+                    this.successAlertMessage = credential.name + MessageConstants.CREDENTIAL_DELETE;
                     this.isLoading = false;
                 }, err => {
                     this.getCredentials();
-                    this.alertMessage = err.error.description;
-                    this.errorFlag = true;
+                    this.errorAlertMessage = err.error.description;
                     this.isLoading = false;
-                    if (this.alertMessage === undefined) {
-                        this.alertMessage = err.error.error;
+                    if (this.errorAlertMessage === undefined) {
+                        this.errorAlertMessage = err.error.error;
                     }
                 });
         } else {

@@ -18,6 +18,8 @@ import org.springframework.core.ResolvableType;
 import org.springframework.core.ResolvableTypeProvider;
 import org.springframework.data.cassandra.core.mapping.Table;
 
+import com.vmware.mangle.model.enums.EventType;
+
 /**
  * @author hkilari
  *
@@ -33,9 +35,13 @@ public class EntityDeletedEvent extends Event implements ResolvableTypeProvider 
     private String entityClass;
 
     public EntityDeletedEvent(String entityId, String entityClass) {
-        super("EntityDeletedEvent", "Deleted entity: " + entityClass + " With Id: " + entityId);
+        super(EventType.ENTITY_DELETED_EVENT.getName(), "Deleted entity: " + entityClass + " With Id: " + entityId);
         this.entityId = entityId;
         this.entityClass = entityClass;
+    }
+
+    public EntityDeletedEvent() {
+        super();
     }
 
     @Override

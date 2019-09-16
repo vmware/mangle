@@ -21,12 +21,14 @@ import com.vmware.mangle.cassandra.model.tasks.TaskType;
 import com.vmware.mangle.model.enums.EndpointType;
 import com.vmware.mangle.services.enums.K8SResource;
 import com.vmware.mangle.services.helpers.faults.AbstractFault;
-import com.vmware.mangle.services.helpers.faults.SupportedEndpoints;
+import com.vmware.mangle.task.framework.helpers.faults.SupportedEndpoints;
 import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
 /**
- * @author bkaranam Abstract K8S Specific Fault to valid fault support on resource types
+ * @author bkaranam
+ *
+ *         Abstract K8S Specific Fault to valid fault support on resource types
  */
 @SupportedEndpoints(endPoints = { EndpointType.K8S_CLUSTER })
 public abstract class AbstractK8SSpecificFault extends AbstractFault {

@@ -15,25 +15,32 @@ import static com.vmware.mangle.services.constants.CommonConstants.IO_SIZE_ARG;
 import static com.vmware.mangle.services.constants.CommonConstants.LOAD_ARG;
 import static com.vmware.mangle.services.constants.CommonConstants.TARGET_DIRECTORY_ARG;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import com.vmware.mangle.cassandra.model.endpoint.AWSCredentials;
 import com.vmware.mangle.cassandra.model.endpoint.EndpointSpec;
 import com.vmware.mangle.cassandra.model.endpoint.K8SCredentials;
 import com.vmware.mangle.cassandra.model.endpoint.RemoteMachineCredentials;
 import com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.CpuFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.DiskIOFaultSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.DiskSpaceSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.DockerFaultSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.FilehandlerLeakFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.JVMAgentFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.JVMCodeLevelFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.JVMProperties;
 import com.vmware.mangle.cassandra.model.faults.specs.K8SDeleteResourceFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.K8SFaultTriggerSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.K8SResourceNotReadyFaultSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.K8SServiceUnavailableFaultSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.KernelPanicSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.KillProcessFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.MemoryFaultSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.ThreadLeakFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.VMDiskFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.VMNicFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.VMStateFaultSpec;
@@ -41,6 +48,10 @@ import com.vmware.mangle.cassandra.model.scheduler.SchedulerInfo;
 import com.vmware.mangle.cassandra.model.tasks.DockerSpecificArguments;
 import com.vmware.mangle.cassandra.model.tasks.K8SSpecificArguments;
 import com.vmware.mangle.cassandra.model.tasks.Task;
+import com.vmware.mangle.model.aws.AwsEC2NetworkFaults;
+import com.vmware.mangle.model.aws.AwsEC2StateFaults;
+import com.vmware.mangle.model.aws.faults.spec.AwsEC2InstanceStateFaultSpec;
+import com.vmware.mangle.model.aws.faults.spec.AwsEC2NetworkFaultSpec;
 import com.vmware.mangle.services.enums.AgentFaultName;
 import com.vmware.mangle.services.enums.BytemanFaultType;
 import com.vmware.mangle.services.enums.DockerFaultName;
@@ -237,9 +248,19 @@ public class FaultsMockData {
         k8SResourceNotReadyFaultSpec.setEndpoint(endpointMockData.k8sEndpointMockData());
         k8SResourceNotReadyFaultSpec.setEndpointName(endpointMockData.k8sEndpointMockData().getName());
         k8SResourceNotReadyFaultSpec.setCredentials(credentialsSpecMockData.getk8SCredentialsData());
-        //k8SResourceNotReadyFaultSpec.set
         k8SResourceNotReadyFaultSpec.setResourceType(K8SResource.POD);
         return k8SResourceNotReadyFaultSpec;
+    }
+
+    public K8SServiceUnavailableFaultSpec getK8SServiceUnavailableFaultSpec() {
+        K8SServiceUnavailableFaultSpec k8SServiceUnavailableFaultSpec = new K8SServiceUnavailableFaultSpec();
+        k8SServiceUnavailableFaultSpec.setEndpoint(endpointMockData.k8sEndpointMockData());
+        k8SServiceUnavailableFaultSpec.setEndpointName(endpointMockData.k8sEndpointMockData().getName());
+        k8SServiceUnavailableFaultSpec.setCredentials(credentialsSpecMockData.getk8SCredentialsData());
+        Map<String, String> resourceLabels = new HashMap<>();
+        resourceLabels.put("app", "app-inventory-service");
+        k8SServiceUnavailableFaultSpec.setResourceLabels(resourceLabels);
+        return k8SServiceUnavailableFaultSpec;
     }
 
     public K8SDeleteResourceFaultSpec getDeleteK8SResourceFaultSpec() {
@@ -302,6 +323,21 @@ public class FaultsMockData {
         return faultSpec;
     }
 
+    public DiskSpaceSpec getDiskSpaceSpec() {
+        EndpointSpec endpointSpec = endpointMockData.rmEndpointMockData();
+        DiskSpaceSpec faultSpec = new DiskSpaceSpec();
+        faultSpec.setEndpointName(endpointSpec.getName());
+        faultSpec.setDirectoryPath("/diskspacefault");
+        return faultSpec;
+    }
+
+    public KernelPanicSpec getKernelPanicSpec() {
+        EndpointSpec endpointSpec = endpointMockData.rmEndpointMockData();
+        KernelPanicSpec faultSpec = new KernelPanicSpec();
+        faultSpec.setEndpointName(endpointSpec.getName());
+        return faultSpec;
+    }
+
     public MemoryFaultSpec getMemoryFaultSpecOfRemoteMachine() {
         RemoteMachineCredentials credentialsSpec = credentialsSpecMockData.getRMCredentialsData();
         EndpointSpec endpointSpec = endpointMockData.rmEndpointMockData();
@@ -332,6 +368,53 @@ public class FaultsMockData {
         diskIOFaultSpec.setCredentials(credentialsSpec);
         diskIOFaultSpec.setIoSize(0);
         return diskIOFaultSpec;
+    }
+
+    public FilehandlerLeakFaultSpec getFileHandlerLeakFaultSpecOfDockerEndpoint() {
+        EndpointSpec endpointSpec = endpointMockData.dockerEndpointMockData();
+        FilehandlerLeakFaultSpec fileHandlerFaultSpec = new FilehandlerLeakFaultSpec();
+        fileHandlerFaultSpec.setFaultName(AgentFaultName.INJECT_FILE_HANDLER_FAULT.getValue());
+        fileHandlerFaultSpec.setTimeoutInMilliseconds(faultExecutionTimeout);
+        fileHandlerFaultSpec.setEndpointName(endpointSpec.getName());
+        fileHandlerFaultSpec.setEndpoint(endpointSpec);
+        return fileHandlerFaultSpec;
+    }
+
+    public ThreadLeakFaultSpec getThreadLeakFaultSpecOfDockerEndpoint() {
+        EndpointSpec endpointSpec = endpointMockData.dockerEndpointMockData();
+        ThreadLeakFaultSpec threadFaultSpec = new ThreadLeakFaultSpec();
+        threadFaultSpec.setFaultName(AgentFaultName.INJECT_THREAD_LEAK_FAULT.getValue());
+        threadFaultSpec.setEnableOOM(false);
+        threadFaultSpec.setTimeoutInMilliseconds(faultExecutionTimeout);
+        threadFaultSpec.setEndpointName(endpointSpec.getName());
+        threadFaultSpec.setEndpoint(endpointSpec);
+        return threadFaultSpec;
+    }
+
+    public AwsEC2InstanceStateFaultSpec getAwsEC2InstanceStateFaultSpec() {
+        AwsEC2InstanceStateFaultSpec faultSpec = new AwsEC2InstanceStateFaultSpec();
+        AWSCredentials creds = credentialsSpecMockData.getAwsCredentialsData();
+        EndpointSpec endpointSpec = endpointMockData.awsEndpointSpecMock();
+        faultSpec.setCredentials(creds);
+        faultSpec.setEndpoint(endpointSpec);
+        faultSpec.setFault(AwsEC2StateFaults.STOP_INSTANCES);
+        faultSpec.setInstanceIds(new ArrayList<>());
+        faultSpec.setFaultName(faultSpec.getFault().name());
+
+        return faultSpec;
+    }
+
+    public AwsEC2NetworkFaultSpec getAwsEC2BlockAllNetworkFaultSpec() {
+        AwsEC2NetworkFaultSpec faultSpec = new AwsEC2NetworkFaultSpec();
+        AWSCredentials creds = credentialsSpecMockData.getAwsCredentialsData();
+        EndpointSpec endpointSpec = endpointMockData.awsEndpointSpecMock();
+        faultSpec.setCredentials(creds);
+        faultSpec.setEndpoint(endpointSpec);
+        faultSpec.setFault(AwsEC2NetworkFaults.BLOCK_ALL_NETWORK_TRAFFIC);
+        faultSpec.setInstanceIds(new ArrayList<>());
+        faultSpec.setFaultName(faultSpec.getFault().name());
+
+        return faultSpec;
     }
 
     public CpuFaultSpec getScheduleFaultSpec() {

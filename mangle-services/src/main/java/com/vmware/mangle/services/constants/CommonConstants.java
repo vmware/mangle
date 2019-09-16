@@ -11,6 +11,15 @@
 
 package com.vmware.mangle.services.constants;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
+import com.vmware.mangle.services.ClusterConfigService;
+import com.vmware.mangle.services.MetricProviderService;
+import com.vmware.mangle.services.PluginDetailsService;
+import com.vmware.mangle.services.config.ADAuthProvider;
+import com.vmware.mangle.utils.constants.FaultConstants;
+
 /**
  * Add Constants Fields.
  *
@@ -20,6 +29,10 @@ public class CommonConstants {
 
     private CommonConstants() {
     }
+
+    @SuppressWarnings("rawtypes")
+    public static final ArrayList<Class> mergeResyncClass =
+            new ArrayList<>(Arrays.asList(ClusterConfigService.class, ADAuthProvider.class, MetricProviderService.class, PluginDetailsService.class));
 
     public static final String NO_RECORD_FOUND_FOR_ID = "Fault not found for given id ";
     public static final String NO_RECORD_FOUND_FOR_NAME = "Fault not found for given name ";
@@ -33,6 +46,7 @@ public class CommonConstants {
     public static final String CERTIFICATES_RESULT_FOUND = "Successfully retrieved all the certificates";
     public static final String CERTIFICATES_CREATED = "Created certificates successfully";
     public static final String CERTIFICATES_DELETED = "Deleted certificates successfully";
+    public static final String CONTAINERS_RESULT_FOUND = "Successfully retrieved all the containers";
 
     public static final String ENDPOINTS_DELETED = "Endpoints deleted successfully";
     public static final String TASKS_DELETED = "Tasks deleted successfully";
@@ -55,4 +69,23 @@ public class CommonConstants {
     public static final String INPROGRESS_TASK_FOR_CLEANUP = "Completed clean-up of inprogress tasks %s";
     public static final String SUPPORT_BUNDLE_PATH_NOT_NULL = "Support bundle path cannot be empty";
     public static final String MANGLE_SUPPORT_BUNDLE_FILE_NAME = "mangle-support-bundle-";
+    public static final String MODEL_EXTENSION_NAME = "modelExtensionName";
+    public static final String FAULT_EXTENSION_NAME = "faultExtensionName";
+    public static final String TASK_EXTENSION_NAME = "taskExtensionName";
+    public static final String FAULT_PARAMETERS_KEY_FOR_JSON_DATA = "\"" + FaultConstants.FAULT_PARAMETERS_KEY + "\"";
+    public static final String PLUGIN_FAULTS_KEY = "faults";
+    public static final String PLUGIN_FAULT_NAME_KEY = "faultName";
+    public static final String FAULT_OPERATION = "faultOperation";
+    public static final String FAULT_OPERATION_ARG = ARGUEMENT_PREFIX + FAULT_OPERATION;
+    public static final String LATENCY = "latency";
+    public static final String LATENCY_ARG = ARGUEMENT_PREFIX + LATENCY;
+    public static final String PERCENTAGE = "percentage";
+    public static final String PERCENTAGE_ARG = ARGUEMENT_PREFIX + PERCENTAGE;
+    public static final String NIC_NAME = "nicName";
+    public static final String NIC_NAME_ARG = ARGUEMENT_PREFIX + NIC_NAME;
+    public static final String ENABLE_OUT_OF_MEMORY = "enableOutOfMemory";
+    public static final String ENABLE_OUT_OF_MEMORY_ARG = ARGUEMENT_PREFIX + ENABLE_OUT_OF_MEMORY;
+    public static final String PLUGIN_DESCRIPTOR_FILE_NAME = "plugin-descriptor.json";
+    public static final String PLUGIN_PROPERTIES_FILE_NAME = "plugin.properties";
+    public static final String DISK_FILL_SIZE_RANGE_ERROR = "DiskFillSize value must be between 1 to 100";
 }

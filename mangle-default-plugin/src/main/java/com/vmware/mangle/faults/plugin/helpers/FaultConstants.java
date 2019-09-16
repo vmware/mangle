@@ -132,5 +132,5 @@ public class FaultConstants {
             "%s %s %s %s %s %s %s %s %s > %s 2>&1";
     public static final String DB_TRANSACTION_ERROR_INJECTION_COMMAND_WITH_ARGS =
             "%s %s %s %s %s %s %s %s %s > %s 2>&1";
-
+    public static final String MANUAL_REMEDIATION_NOT_SUPPORTED = "Manual remediation of %s is not supported. Hence setting the remediation commandinfo list to be empty.";
 }

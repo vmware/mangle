@@ -29,7 +29,7 @@
 	<parent>
 		<groupId>com.vmware.mangle</groupId>
 		<artifactId>mangle-root</artifactId>
-		<version>1.0.0</version>
+		<version>2.0.0</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
@@ -188,6 +188,7 @@
 		<module>agent</module>
 		<module>install</module>
 		<module>download</module>
+		<module>agent-integration-tests</module>
 	</modules>
 
 	<profiles>

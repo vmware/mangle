@@ -11,6 +11,9 @@
 
 package com.vmware.mangle.unittest.services.service;
 
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.validateMockitoUsage;
 import static org.mockito.Mockito.verify;
@@ -55,6 +58,7 @@ import com.vmware.mangle.utils.constants.Constants;
 import com.vmware.mangle.utils.constants.MetricProviderConstants;
 import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.MangleRuntimeException;
+import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
 /**
  * Unit Tests Case for MetricProviderService.
@@ -1092,5 +1096,50 @@ public class MetricProviderServiceTest extends PowerMockTestCase {
         when(this.adminConfigurationRepository.findByPropertyName(MetricProviderConstants.SENDING_MANGLE_METRICS))
                 .thenReturn(sendMetrics);
         Assert.assertEquals(this.metricProviderService.isMangleMetricsEnabled(), true);
+    }
+
+    @Test
+    public void testResyncWhenSendMetricsEnabled() throws MangleException {
+        MangleAdminConfigurationSpec activeMetricProvider = mockData.getAdminPropertyForSendingMetricStatusTrue();
+        Optional<MangleAdminConfigurationSpec> value = Optional.of(activeMetricProvider);
+        when(adminConfigurationRepository.findByPropertyName(MetricProviderConstants.SENDING_MANGLE_METRICS))
+                .thenReturn(value);
+        MetricProviderService providerService = spy(metricProviderService);
+        doReturn(true).when(providerService).sendMetrics();
+        providerService.resync("");
+
+        verify(adminConfigurationRepository, times(1))
+                .findByPropertyName(MetricProviderConstants.SENDING_MANGLE_METRICS);
+        verify(providerService, times(1)).sendMetrics();
+    }
+
+    @Test
+    public void testResyncException() throws MangleException {
+        MangleAdminConfigurationSpec activeMetricProvider = mockData.getAdminPropertyForSendingMetricStatusTrue();
+        Optional<MangleAdminConfigurationSpec> value = Optional.of(activeMetricProvider);
+        when(adminConfigurationRepository.findByPropertyName(MetricProviderConstants.SENDING_MANGLE_METRICS))
+                .thenReturn(value);
+        MetricProviderService providerService = spy(metricProviderService);
+        doThrow(new MangleException(ErrorCode.NO_RECORD_FOUND)).when(providerService).sendMetrics();
+        providerService.resync("");
+
+        verify(adminConfigurationRepository, times(1))
+                .findByPropertyName(MetricProviderConstants.SENDING_MANGLE_METRICS);
+        verify(providerService, times(1)).sendMetrics();
+    }
+
+    @Test
+    public void testResyncWhenSendMetricsDisabled() throws MangleException {
+        MangleAdminConfigurationSpec activeMetricProvider = mockData.getAdminPropertyForSendingMetricStatusFalse();
+        Optional<MangleAdminConfigurationSpec> value = Optional.of(activeMetricProvider);
+        when(adminConfigurationRepository.findByPropertyName(MetricProviderConstants.SENDING_MANGLE_METRICS))
+                .thenReturn(value);
+        MetricProviderService providerService = spy(metricProviderService);
+        doReturn(true).when(providerService).closeAllMetricCollection();
+        providerService.resync("");
+
+        verify(adminConfigurationRepository, times(1))
+                .findByPropertyName(MetricProviderConstants.SENDING_MANGLE_METRICS);
+        verify(providerService, times(1)).closeAllMetricCollection();
     }
 }

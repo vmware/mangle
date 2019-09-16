@@ -72,4 +72,54 @@ describe('FaultService', () => {
     expect(http.post).toHaveBeenCalled();
   });
 
+  it('should execute thread-leak fault', () => {
+    faultService.executeThreadLeakFault({});
+    expect(http.post).toHaveBeenCalled();
+  });
+
+  it('should execute filehandler-leak fault', () => {
+    faultService.executeFilehandlerLeakFault({});
+    expect(http.post).toHaveBeenCalled();
+  });
+
+  it('should execute java-method-latency fault', () => {
+    faultService.executeJavaMethodLatencyFault({});
+    expect(http.post).toHaveBeenCalled();
+  });
+
+  it('should execute spring-service-latency fault', () => {
+    faultService.executeSpringServiceLatencyFault({});
+    expect(http.post).toHaveBeenCalled();
+  });
+
+  it('should execute spring-service-exception fault', () => {
+    faultService.executeSpringServiceExceptionFault({});
+    expect(http.post).toHaveBeenCalled();
+  });
+
+  it('should execute kill-jvm fault', () => {
+    faultService.executeKillJVMFault({});
+    expect(http.post).toHaveBeenCalled();
+  });
+
+  it('should execute simulate-java-exception fault', () => {
+    faultService.executeSimulateJavaExceptionFault({});
+    expect(http.post).toHaveBeenCalled();
+  });
+
+  it('should execute network fault', () => {
+    faultService.executeNetworkFault({});
+    expect(http.post).toHaveBeenCalled();
+  });
+
+  it('should execute disk space fault', () => {
+    faultService.executeDiskSpaceFault({});
+    expect(http.post).toHaveBeenCalled();
+  });
+
+  it('should execute kernel panic fault', () => {
+    faultService.executeKernelPanicFault({});
+    expect(http.post).toHaveBeenCalled();
+  });
+
 });

@@ -14,7 +14,7 @@ package com.vmware.mangle.unittest.services.events.task;
 import static org.springframework.test.util.ReflectionTestUtils.getField;
 
 import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec;
@@ -35,7 +35,7 @@ public class TaskAssignedEventTest {
     private Task<CommandExecutionFaultSpec> task;
     private String eventMesage;
 
-    @BeforeClass
+    @BeforeMethod
     public void init() {
         MockTaskHelper<CommandExecutionFaultSpec> mockTask = new MockTaskHelper();
         task = mockTask.init(new CommandExecutionFaultSpec());

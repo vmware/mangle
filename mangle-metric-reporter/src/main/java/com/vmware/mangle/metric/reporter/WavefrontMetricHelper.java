@@ -11,10 +11,10 @@
 
 package com.vmware.mangle.metric.reporter;
 
-import java.util.Map;
+import java.util.HashMap;
 
 import lombok.extern.log4j.Log4j2;
-
+import org.springframework.util.CollectionUtils;
 
 /**
  * Wavefront Metric helper class hosting the helper methods corresponding to wavefront Reporter.
@@ -24,14 +24,16 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class WavefrontMetricHelper {
 
-    private WavefrontMetricHelper() {}
+    private WavefrontMetricHelper() {
+    }
 
-    public static Map<String, String> addStaticTags(Map<String, String> customTags, Map<String, String> staticTags) {
-        log.info(" Appending the static tags to the existing Tags");
-        if (null == customTags) {
-            return staticTags;
+    public static HashMap<String, String> constructTags(HashMap<String, String> customTags,
+            HashMap<String, String> staticTags) {
+        log.debug("Constructing tags for metric from static tags and custom tags");
+        HashMap<String, String> finalTags = new HashMap<>(staticTags);
+        if (!CollectionUtils.isEmpty(customTags)) {
+            finalTags.putAll(customTags);
         }
-        staticTags.putAll(customTags);
-        return staticTags;
+        return finalTags;
     }
 }

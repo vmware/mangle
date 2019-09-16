@@ -139,6 +139,22 @@ public class K8sSystemResourceFaultHelperTest {
         }
     }
 
+    @Test
+    public void testGetRemediationCommandInfoListforFileHandler() {
+        try {
+            CommandExecutionFaultSpec fileHandlerFaultSpec = faultsMockData.getFilehandlerLeakFaultSpec();
+            Mockito.when(endpointClientFactory.getEndPointClient(null, fileHandlerFaultSpec.getEndpoint()))
+                    .thenReturn(kubernetesCommandLineClient);
+            List<CommandInfo> remediationCommands =
+                    k8sSystemResourceFaultHelper.getRemediationcommandInfoList(fileHandlerFaultSpec);
+            log.info(RestTemplateWrapper.objectToJson(remediationCommands));
+            Assert.assertEquals(remediationCommands, Collections.emptyList());
+        } catch (MangleException e) {
+            log.error("testGetRemediationCommandInfoListforFileHandler failed with Exception: ", e);
+            Assert.assertTrue(false);
+        }
+    }
+
     private List<CommandInfo> getExpectedRemediationCommandsforCPUFault() {
         List<CommandInfo> list = new ArrayList<>();
         CommandInfo remediationCommand = new CommandInfo();

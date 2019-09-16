@@ -25,6 +25,7 @@ import com.vmware.mangle.cassandra.model.tasks.Task;
 import com.vmware.mangle.cassandra.model.tasks.TaskType;
 import com.vmware.mangle.model.enums.EndpointType;
 import com.vmware.mangle.services.helpers.FaultInjectionHelper;
+import com.vmware.mangle.task.framework.helpers.faults.SupportedEndpoints;
 import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 

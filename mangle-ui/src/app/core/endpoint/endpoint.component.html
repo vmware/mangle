@@ -1,9 +1,9 @@
 <div class="main-container">
     <div class="content-container">
-        <div class="content-area height-1200">
+        <div class="content-area">
             <router-outlet></router-outlet>
         </div>
-		<clr-vertical-nav [clrVerticalNavCollapsible]="settingCollapsible">
+		<clr-vertical-nav [clrVerticalNavCollapsible]="endpointCollapsible">
 			<clr-vertical-nav-group routerLinkActive="active">
 				<clr-icon shape="cloud" clrVerticalNavIcon></clr-icon>Endpoints
 				<clr-vertical-nav-group-children *clrIfExpanded="true">
@@ -11,6 +11,7 @@
 					<a clrVerticalNavLink [routerLink]="['kubernetes']" routerLinkActive="active">Kubernetes Cluster</a>
 					<a clrVerticalNavLink [routerLink]="['docker']" routerLinkActive="active">Docker</a>
 					<a clrVerticalNavLink [routerLink]="['vcenter']" routerLinkActive="active">VMware vCenter</a>
+					<a clrVerticalNavLink [routerLink]="['aws']" routerLinkActive="active">AWS</a>
 				</clr-vertical-nav-group-children>
 			</clr-vertical-nav-group>
 			<clr-vertical-nav-group routerLinkActive="active">
@@ -20,11 +21,12 @@
 				</clr-vertical-nav-group-children>
 			</clr-vertical-nav-group>
 			<clr-vertical-nav-group routerLinkActive="active">
-				<clr-icon shape="lock" clrVerticalNavIcon></clr-icon>Certificates
+				<clr-icon shape="certificate" clrVerticalNavIcon></clr-icon>Certificates
 				<clr-vertical-nav-group-children *clrIfExpanded="false">
 					<a clrVerticalNavLink [routerLink]="['endpoint-certificates']" routerLinkActive="active">Endpoint Certificates</a>
 				</clr-vertical-nav-group-children>
 			</clr-vertical-nav-group>
+			<a clrVerticalNavLink [routerLink]="['events']" routerLinkActive="active"><clr-icon shape="event" clrVerticalNavIcon></clr-icon>Application Events</a>
 		</clr-vertical-nav>
     </div>
 </div>

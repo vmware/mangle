@@ -193,7 +193,9 @@ public class CustomDockerClient implements EndpointClient {
 
     public void unPauseAllContainers() {
         log.info("UnPause all the containers which are Paused: ");
-        List<Container> containerPausedIDs = dockerClient.listContainersCmd().withStatusFilter("paused").exec();
+        List<String> statusFilterList = new ArrayList<>();
+        statusFilterList.add("paused");
+        List<Container> containerPausedIDs = dockerClient.listContainersCmd().withStatusFilter(statusFilterList).exec();
         for (Container containerID : containerPausedIDs) {
             dockerClient.unpauseContainerCmd(containerID.getId()).exec();
         }
@@ -225,6 +227,23 @@ public class CustomDockerClient implements EndpointClient {
 
     public List<Container> getAllContainers() {
         return this.dockerClient.listContainersCmd().exec();
+    }
+
+    public List<String> getAllContainerNames() throws MangleException {
+        List<Container> containers = null;
+        try {
+            containers = this.dockerClient.listContainersCmd().exec();
+        } catch (ProcessingException e) {
+            throw new MangleException(ErrorConstants.DOCKER_CONNECTION_FAILURE, ErrorCode.DOCKER_CONNECTION_FAILURE,
+                    e.getMessage());
+        }
+        List<String> containerList = new ArrayList<String>();
+        if (containers != null && !containers.isEmpty()) {
+            for (Container container : containers) {
+                containerList.add(container.getNames()[0].substring(1));
+            }
+        }
+        return containerList;
     }
 
     public List<Image> getAllDockerImageNames(DockerClient dockerClient) {
@@ -290,7 +309,9 @@ public class CustomDockerClient implements EndpointClient {
     }
 
     public boolean isContainerPaused(String containerID) {
-        List<Container> allContainers = dockerClient.listContainersCmd().withStatusFilter("paused").exec();
+        List<String> statusFilterList = new ArrayList<>();
+        statusFilterList.add("paused");
+        List<Container> allContainers = dockerClient.listContainersCmd().withStatusFilter(statusFilterList).exec();
         for (Container eachContaier : allContainers) {
             if (eachContaier.getId().equals(containerID)) {
                 return true;

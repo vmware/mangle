@@ -5,17 +5,16 @@ import { MessageConstants } from 'src/app/common/message.constants';
 
 @Component({
     selector: 'app-integration',
-    templateUrl: './integration.component.html',
-    styleUrls: ['./integration.component.css']
+    templateUrl: './integration.component.html'
 })
 export class IntegrationComponent implements OnInit {
 
     public metricProviderList: any = [];
 
     public isLoading: boolean = true;
-    public alertMessage: String;
-    public successFlag: boolean;
-    public errorFlag: boolean;
+
+    public errorAlertMessage: string;
+    public successAlertMessage: string;
 
     public testAlertMessage: String;
     public testSuccessFlag: boolean;
@@ -100,8 +99,7 @@ export class IntegrationComponent implements OnInit {
             }, err => {
                 this.metricProviderList = [];
                 this.isLoading = false;
-                this.alertMessage = err.error.description;
-                this.errorFlag = true;
+                this.errorAlertMessage = err.error.description;
             }
         );
     }
@@ -146,56 +144,44 @@ export class IntegrationComponent implements OnInit {
 
     public addMetricProvider(metricProvider) {
         delete metricProvider["id"];
-        this.errorFlag = false;
-        this.successFlag = false;
         this.isLoading = true;
         this.metricProviderService.addMetricProvider(metricProvider).subscribe(
             res => {
                 this.getMetricProviders();
-                this.alertMessage = metricProvider.name + MessageConstants.METRIC_PROVIDER_ADD;
-                this.successFlag = true;
+                this.successAlertMessage = metricProvider.name + MessageConstants.METRIC_PROVIDER_ADD;
                 this.isLoading = false;
             }, err => {
                 this.getMetricProviders();
-                this.alertMessage = err.error.description;
-                this.errorFlag = true;
+                this.errorAlertMessage = err.error.description;
                 this.isLoading = false;
             });
     }
 
     public updateMetricProvider(metricProvider) {
-        this.errorFlag = false;
-        this.successFlag = false;
         this.isLoading = true;
         this.metricProviderService.updateMetricProvider(metricProvider).subscribe(
             res => {
                 this.getMetricProviders();
-                this.alertMessage = metricProvider.name + MessageConstants.METRIC_PROVIDER_UPDATE;
-                this.successFlag = true;
+                this.successAlertMessage = metricProvider.name + MessageConstants.METRIC_PROVIDER_UPDATE;
                 this.isLoading = false;
             }, err => {
                 this.getMetricProviders();
-                this.alertMessage = err.error.description;
-                this.errorFlag = true;
+                this.errorAlertMessage = err.error.description;
                 this.isLoading = false;
             });
     }
 
     public deleteMetricProvider(metricProvider) {
-        this.errorFlag = false;
-        this.successFlag = false;
         if (confirm(MessageConstants.DELETE_CONFIRM + metricProvider.name + MessageConstants.QUESTION_MARK)) {
             this.isLoading = true;
             this.metricProviderService.deleteMetricProvider(metricProvider.name).subscribe(
                 res => {
                     this.getMetricProviders();
-                    this.alertMessage = metricProvider.name + MessageConstants.METRIC_PROVIDER_DELETE;
-                    this.successFlag = true;
+                    this.successAlertMessage = metricProvider.name + MessageConstants.METRIC_PROVIDER_DELETE;
                     this.isLoading = false;
                 }, err => {
                     this.getMetricProviders();
-                    this.alertMessage = err.error.description;
-                    this.errorFlag = true;
+                    this.errorAlertMessage = err.error.description;
                     this.isLoading = false;
                 });
         } else {
@@ -225,36 +211,28 @@ export class IntegrationComponent implements OnInit {
     }
 
     public updateMetricProviderStatus(metricProvider) {
-        this.errorFlag = false;
-        this.successFlag = false;
         this.isLoading = true;
         this.metricProviderService.updateMetricProviderStatus(metricProvider.name).subscribe(
             res => {
                 this.getMetricProviders();
-                this.alertMessage = metricProvider.name + MessageConstants.METRIC_PROVIDER_STATUS_UPDATE;
-                this.successFlag = true;
+                this.successAlertMessage = metricProvider.name + MessageConstants.METRIC_PROVIDER_STATUS_UPDATE;
                 this.isLoading = false;
             }, err => {
                 this.getMetricProviders();
-                this.alertMessage = err.error.description;
-                this.errorFlag = true;
+                this.errorAlertMessage = err.error.description;
                 this.isLoading = false;
             });
     }
 
     public updateMetricCollectionStatus() {
         this.collectionBtnState = ClrLoadingState.LOADING;
-        this.errorFlag = false;
-        this.successFlag = false;
         this.metricProviderService.updateMetricCollectionStatus(!this.metricCollectionStatus).subscribe(
             res => {
-                this.alertMessage = MessageConstants.METRIC_PROVIDER_COLLECTION_UPDATE;
-                this.successFlag = true;
+                this.successAlertMessage = MessageConstants.METRIC_PROVIDER_COLLECTION_UPDATE;
                 this.getMetricCollectionStatus();
                 this.collectionBtnState = ClrLoadingState.DEFAULT;
             }, err => {
-                this.alertMessage = err.error.description;
-                this.errorFlag = true;
+                this.errorAlertMessage = err.error.description;
                 this.getMetricCollectionStatus();
                 this.collectionBtnState = ClrLoadingState.DEFAULT;
             });

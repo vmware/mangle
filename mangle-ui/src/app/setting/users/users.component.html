@@ -1,63 +1,80 @@
-<clr-alert *ngIf="errorFlag" [clrAlertType]="'danger'">
-    <div class="alert-item">{{alertMessage}}</div>
-</clr-alert>
-<clr-alert *ngIf="successFlag" [clrAlertType]="'success'">
-    <div class="alert-item">{{alertMessage}}</div>
-</clr-alert>
+<app-alert [(errorAlertMessage)]="errorAlertMessage" [(successAlertMessage)]="successAlertMessage"
+    (errorAlertMessageChange)="errorAlertMessage = $event" (successAlertMessageChange)="successAlertMessage = $event">
+</app-alert>
 <clr-dg-action-bar>
     <div class="btn-group">
-        <button type="button" class="btn btn-sm btn-secondary" (click)="populateAddUserForm({'name':null,'password':null,'roleNames':[]});userModalAdd=true;"><clr-icon shape="plus"></clr-icon> Add User</button>
+        <button type="button" class="btn btn-sm btn-secondary"
+            (click)="populateAddUserForm({'name':null,'password':null,'roleNames':[]});userModalAdd=true;">
+            <clr-icon shape="plus"></clr-icon> Add User
+        </button>
     </div>
 </clr-dg-action-bar>
 <clr-datagrid [clrDgLoading]="isLoading">
-	<clr-dg-column>User Name</clr-dg-column>
+    <clr-dg-column [clrDgField]="'name'">User Name</clr-dg-column>
     <clr-dg-column>Roles</clr-dg-column>
+    <clr-dg-column>Locked</clr-dg-column>
     <clr-dg-row *clrDgItems="let user of userList" [clrDgItem]="user">
         <clr-dg-action-overflow *ngIf="user.name != 'admin@mangle.local'">
             <button class="action-item" (click)="populateEditUserForm(user);userModalEdit=true;">Edit</button>
             <button class="action-item" (click)="deleteUser(user)">Delete</button>
         </clr-dg-action-overflow>
-		<clr-dg-cell>{{user.name}}</clr-dg-cell>
-		<clr-dg-cell><span class="label label-light-blue" *ngFor="let roleName of user.roleNames">{{roleName}}</span></clr-dg-cell>
+        <clr-dg-cell>{{user.name}}</clr-dg-cell>
+        <clr-dg-cell><span class="label label-light-blue" *ngFor="let roleName of user.roleNames">{{roleName}}</span>
+        </clr-dg-cell>
+        <clr-dg-cell><input type="checkbox" clrToggle name="metricColl" [disabled]="!user.accountLocked"
+                [(ngModel)]="user.accountLocked" (change)="updateUserAccountLockStatus(user);" /></clr-dg-cell>
     </clr-dg-row>
-	<clr-dg-footer>
-		<clr-dg-pagination #pagination [clrDgPageSize]="10">
-			<clr-dg-page-size [clrPageSizeOptions]="[10,20,50,100]">User per page</clr-dg-page-size>
-			{{pagination.firstItem + 1}} - {{pagination.lastItem + 1}} of {{pagination.totalItems}} users
-		</clr-dg-pagination>
-	</clr-dg-footer>
+    <clr-dg-footer>
+        <clr-dg-pagination #pagination [clrDgPageSize]="10">
+            <clr-dg-page-size [clrPageSizeOptions]="[10,20,50,100]">User per page</clr-dg-page-size>
+            {{pagination.firstItem + 1}} - {{pagination.lastItem + 1}} of {{pagination.totalItems}} users
+        </clr-dg-pagination>
+    </clr-dg-footer>
 </clr-datagrid>
 <clr-modal [(clrModalOpen)]="userModalAdd" [clrModalClosable]="false">
     <h3 class="modal-title">Add User</h3>
     <div class="modal-body">
-        <form #addUserForm="ngForm" (ngSubmit)="addUser(addUserForm.value);userModalAdd=false;addUserForm.reset();" *ngIf="userFormData" ngNativeValidate>
+        <form #addUserForm="ngForm" (ngSubmit)="addUser(addUserForm.value);userModalAdd=false;addUserForm.reset();"
+            *ngIf="userFormData" ngNativeValidate>
             <section class="form-block">
-				<div class="form-group">
+                <div class="form-group">
                     <label for="name">User Name</label>
-					<input type="text" placeholder="user_id" name="name" pattern="^[A-Za-z0-9-_.]+$" title="alphanumeric and special characters (_ - .) are allowed" [(ngModel)]="userFormData.name" required>
+                    <input type="text" placeholder="user_id" name="name" pattern="^[A-Za-z0-9-_.]+$"
+                        title="alphanumeric and special characters (_ - .) are allowed" [(ngModel)]="userFormData.name"
+                        required>
                 </div>
                 <div class="form-group">
                     <label for="authSource">Auth Source</label>
-					<select name="authSource" [(ngModel)]="userFormData.authSource" required>
+                    <select name="authSource" [(ngModel)]="userFormData.authSource" required>
                         <ng-container *ngFor="let sourceAuth of authSources">
                             <option [value]="sourceAuth">{{sourceAuth}}</option>
                         </ng-container>
                     </select>
                 </div>
                 <div class="form-group" *ngIf="userFormData.authSource=='mangle.local'">
-                    <label for="name">Password</label>
-					<input type="password" name="password" [(ngModel)]="userFormData.password" [required]="userFormData.authSource=='mangle.local'">
+                    <label for="password">Password</label>
+                    <input type="password" name="password" [(ngModel)]="userFormData.password" minlength="8"
+                        maxlength="30" pattern="^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%!&+=]).{8,}$"
+                        title="should consists at least 8 chars, one digit, one lower alpha char, one upper alpha char, and one char within a set of special chars (@#$%!&+=)"
+                        [required]="userFormData.authSource=='mangle.local'">
+                    <ng2-password-strength-bar *ngIf="userFormData.password" [passwordToCheck]="userFormData.password"
+                        [barLabel]="barLabel" [barColors]="barColors" [baseColor]="baseColor"
+                        [strengthLabels]="strengthLabels">
+                    </ng2-password-strength-bar>
                 </div>
                 <div class="form-group">
                     <label for="privileges">Roles</label>
-					<ng-container *ngFor="let role of roleList">
+                    <ng-container *ngFor="let role of roleList">
                         <div>
-                            <input *ngIf="role.name !='ROLE_READONLY'" type="checkbox" name="role_add" (change)="updateCurrentSelectedRoles($event,role);" [checked]="false" /><span *ngIf="role.name !='ROLE_READONLY'">{{role.name}}&nbsp;&nbsp;</span>
+                            <input *ngIf="role.name !='ROLE_READONLY'" type="checkbox" name="role_add"
+                                (change)="updateCurrentSelectedRoles($event,role);" [checked]="false" /><span
+                                *ngIf="role.name !='ROLE_READONLY'">{{role.name}}&nbsp;&nbsp;</span>
                         </div>
-					</ng-container>
+                    </ng-container>
                 </div>
             </section>
-            <button type="button" class="btn btn-outline" (click)="userModalAdd=false;addUserForm.reset();ngOnInit();">CANCEL</button>
+            <button type="button" class="btn btn-outline"
+                (click)="userModalAdd=false;addUserForm.reset();ngOnInit();">CANCEL</button>
             <button type="submit" class="btn btn-primary">SUBMIT</button>
         </form>
     </div>
@@ -65,26 +82,26 @@
 <clr-modal [(clrModalOpen)]="userModalEdit" [clrModalClosable]="false">
     <h3 class="modal-title">Update User</h3>
     <div class="modal-body">
-        <form #updateUserForm="ngForm" (ngSubmit)="updateUser(updateUserForm.value);userModalEdit=false;" *ngIf="userFormData" ngNativeValidate>
+        <form #updateUserForm="ngForm" (ngSubmit)="updateUser(updateUserForm.value);userModalEdit=false;"
+            *ngIf="userFormData" ngNativeValidate>
             <section class="form-block">
-				<div class="form-group">
+                <div class="form-group">
                     <input type="text" name="id" [(ngModel)]="userFormData.id" [hidden]="true">
                 </div>
-				<div class="form-group">
+                <div class="form-group">
                     <label for="name">User</label>
-					<input type="text" placeholder="user_id" name="name" [(ngModel)]="userFormData.name" readonly>
-                </div>
-                <div class="form-group" *ngIf="passwordFieldRequired">
-                    <label for="name">Password</label>
-					<input type="password" name="password" [(ngModel)]="userFormData.password" [required]="passwordFieldRequired">
+                    <input type="text" placeholder="user_id" name="name" [(ngModel)]="userFormData.name" readonly>
                 </div>
                 <div class="form-group">
                     <label for="privileges">Roles</label>
-					<ng-container *ngFor="let role of roleList">
+                    <ng-container *ngFor="let role of roleList">
                         <div>
-                            <input *ngIf="role.name !='ROLE_READONLY'" type="checkbox" name="role_update" (change)="updateCurrentSelectedRoles($event,role);" [checked]="currentSelectedRoles.indexOf(role.name) > -1" /><span *ngIf="role.name !='ROLE_READONLY'">{{role.name}}&nbsp;&nbsp;</span>
+                            <input *ngIf="role.name !='ROLE_READONLY'" type="checkbox" name="role_update"
+                                (change)="updateCurrentSelectedRoles($event,role);"
+                                [checked]="currentSelectedRoles.indexOf(role.name) > -1" /><span
+                                *ngIf="role.name !='ROLE_READONLY'">{{role.name}}&nbsp;&nbsp;</span>
                         </div>
-					</ng-container>
+                    </ng-container>
                 </div>
             </section>
             <button type="button" class="btn btn-outline" (click)="userModalEdit=false;ngOnInit();">CANCEL</button>

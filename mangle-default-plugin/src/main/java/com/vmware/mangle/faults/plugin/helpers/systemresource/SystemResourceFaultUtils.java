@@ -13,16 +13,32 @@ package com.vmware.mangle.faults.plugin.helpers.systemresource;
 
 import static com.vmware.mangle.utils.constants.FaultConstants.BLOCK_SIZE_SCRIPT_ARG;
 import static com.vmware.mangle.utils.constants.FaultConstants.CPU_INJECTION_COMMAND_WITH_ARGS;
+import static com.vmware.mangle.utils.constants.FaultConstants.DIRECTORY_PATH;
+import static com.vmware.mangle.utils.constants.FaultConstants.DISK_FILL_SIZE;
+import static com.vmware.mangle.utils.constants.FaultConstants.DISK_FILL_SIZE_SCRIPT_ARG;
 import static com.vmware.mangle.utils.constants.FaultConstants.DISK_IO_INJECTION_COMMAND_WITH_ARGS;
+import static com.vmware.mangle.utils.constants.FaultConstants.DISK_SPACE_INJECTION_COMMAND_WITH_ARGS;
+import static com.vmware.mangle.utils.constants.FaultConstants.DISK_SPACE_REMEDIATION_COMMAND_WITH_ARGS;
 import static com.vmware.mangle.utils.constants.FaultConstants.FAULT_NAME;
+import static com.vmware.mangle.utils.constants.FaultConstants.FAULT_OPERATION;
+import static com.vmware.mangle.utils.constants.FaultConstants.FAULT_OPERATION_SCRIPT_ARG;
+import static com.vmware.mangle.utils.constants.FaultConstants.FILEHANDLER_INJECTION_COMMAND_WITH_ARGS;
 import static com.vmware.mangle.utils.constants.FaultConstants.FORWARD_SLASH;
 import static com.vmware.mangle.utils.constants.FaultConstants.IO_SIZE;
+import static com.vmware.mangle.utils.constants.FaultConstants.KERNELPANIC_INJECTION_COMMAND_WITH_ARGS;
 import static com.vmware.mangle.utils.constants.FaultConstants.KILL_PROCESS_REMEDIATION_COMMAND;
 import static com.vmware.mangle.utils.constants.FaultConstants.KILL_SERVICE_INJECTION_COMMAND_WITH_ARGS;
+import static com.vmware.mangle.utils.constants.FaultConstants.LATENCY;
+import static com.vmware.mangle.utils.constants.FaultConstants.LATENCY_SCRIPT_ARG;
 import static com.vmware.mangle.utils.constants.FaultConstants.LOAD;
 import static com.vmware.mangle.utils.constants.FaultConstants.LOAD_SCRIPT_ARG;
 import static com.vmware.mangle.utils.constants.FaultConstants.MEMORY_INJECTION_COMMAND_WITH_ARGS;
+import static com.vmware.mangle.utils.constants.FaultConstants.NETWORK_FAULT_INJECTION_COMMAND_WITH_ARGS;
+import static com.vmware.mangle.utils.constants.FaultConstants.NIC_NAME;
+import static com.vmware.mangle.utils.constants.FaultConstants.NIC_NAME_SCRIPT_ARG;
 import static com.vmware.mangle.utils.constants.FaultConstants.OPERATION_REMEDIATE;
+import static com.vmware.mangle.utils.constants.FaultConstants.PERCENTAGE;
+import static com.vmware.mangle.utils.constants.FaultConstants.PERCENTAGE_SCRIPT_ARG;
 import static com.vmware.mangle.utils.constants.FaultConstants.PROCESS_IDENTIFIER;
 import static com.vmware.mangle.utils.constants.FaultConstants.TARGET_DIRECTORY;
 import static com.vmware.mangle.utils.constants.FaultConstants.TARGET_DIRECTORY_SCRIPT_ARG;
@@ -33,24 +49,33 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec;
 import com.vmware.mangle.cassandra.model.tasks.SupportScriptInfo;
-import com.vmware.mangle.faults.plugin.helpers.FaultsHelper;
+import com.vmware.mangle.faults.plugin.helpers.FaultConstants;
 import com.vmware.mangle.services.enums.FaultName;
+import com.vmware.mangle.task.framework.helpers.faults.FaultsHelper;
 import com.vmware.mangle.utils.CommonUtils;
 import com.vmware.mangle.utils.exceptions.MangleRuntimeException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
 /**
- * @author bkaranam
+ * @author bkaranam,jayasankarr
  *
  */
 @Component
+@Log4j2
 public class SystemResourceFaultUtils {
 
+    private List<String> faultNames;
+
+    public SystemResourceFaultUtils() {
+        this.faultNames = getFaultNamesWithNoRemediationSupport();
+    }
 
     public String buildInjectionCommand(Map<String, String> args, String scriptBasePath) {
         Map<String, String> faultArgs = FaultsHelper.parseArgs(CommonUtils.convertMaptoDelimitedString(args, ","));
@@ -74,6 +99,18 @@ public class SystemResourceFaultUtils {
             case KILLPROCESSFAULT:
                 command = getKillServiceInjectionCommand(faultArgs, scriptBasePath);
                 break;
+            case NETWORKFAULT:
+                command = getNetworkFaultInjectionCommand(faultArgs, scriptBasePath);
+                break;
+            case FILEHANDLERFAULT:
+                command = getFilehandlerFaultnjectionCommand(faultArgs, scriptBasePath);
+                break;
+            case DISKSPACEFAULT:
+                command = getDiskSpaceInjectionCommand(faultArgs, scriptBasePath);
+                break;
+            case KERNELPANICFAULT:
+                command = getKernelPanicInjectionCommand(scriptBasePath);
+                break;
             default:
                 command = "";
             }
@@ -95,7 +132,6 @@ public class SystemResourceFaultUtils {
                 faultArgs.get(IO_SIZE), TIMEOUT_SCRIPT_ARG, faultArgs.get(TIMEOUT_IN_MILLI_SEC))).toString();
     }
 
-
     private String getCpuInjectionCommand(Map<String, String> faultArgs, String scriptBasePath) {
         return new StringBuilder(scriptBasePath).append(String.format(CPU_INJECTION_COMMAND_WITH_ARGS, LOAD_SCRIPT_ARG,
                 faultArgs.get(LOAD), TIMEOUT_SCRIPT_ARG, faultArgs.get(TIMEOUT_IN_MILLI_SEC))).toString();
@@ -105,6 +141,38 @@ public class SystemResourceFaultUtils {
         return new StringBuilder(scriptBasePath)
                 .append(String.format(KILL_SERVICE_INJECTION_COMMAND_WITH_ARGS, faultArgs.get(PROCESS_IDENTIFIER)))
                 .toString();
+    }
+
+    private String getNetworkFaultInjectionCommand(Map<String, String> faultArgs, String scriptBasePath) {
+        return new StringBuilder(scriptBasePath)
+                .append(String.format(NETWORK_FAULT_INJECTION_COMMAND_WITH_ARGS, FAULT_OPERATION_SCRIPT_ARG,
+                        faultArgs.get(FAULT_OPERATION), LATENCY_SCRIPT_ARG, faultArgs.get(LATENCY),
+                        PERCENTAGE_SCRIPT_ARG, faultArgs.get(PERCENTAGE), NIC_NAME_SCRIPT_ARG, faultArgs.get(NIC_NAME),
+                        TIMEOUT_SCRIPT_ARG, faultArgs.get(TIMEOUT_IN_MILLI_SEC)))
+                .toString();
+    }
+
+
+    private static String getFilehandlerFaultnjectionCommand(Map<String, String> faultArgs, String scriptBasePath) {
+        return new StringBuilder(scriptBasePath).append(String.format(FILEHANDLER_INJECTION_COMMAND_WITH_ARGS,
+                TIMEOUT_SCRIPT_ARG, faultArgs.get(TIMEOUT_IN_MILLI_SEC))).toString();
+    }
+
+    public String getDiskSpaceInjectionCommand(Map<String, String> faultArgs, String scriptBasePath) {
+        return scriptBasePath
+                + String.format(DISK_SPACE_INJECTION_COMMAND_WITH_ARGS, faultArgs.get(DIRECTORY_PATH),
+                        faultArgs.get(TIMEOUT_IN_MILLI_SEC))
+                + (StringUtils.hasLength(faultArgs.get(DISK_FILL_SIZE))
+                        ? " " + DISK_FILL_SIZE_SCRIPT_ARG + "=" + faultArgs.get(DISK_FILL_SIZE) : "");
+    }
+
+    /**
+     * @param faultArgs
+     * @param scriptBasePath
+     * @return
+     */
+    private String getKernelPanicInjectionCommand(String scriptBasePath) {
+        return new StringBuilder(scriptBasePath).append(KERNELPANIC_INJECTION_COMMAND_WITH_ARGS).toString();
     }
 
     private String getRemediationCommand(String scriptFileName, String scriptBasePath) {
@@ -137,6 +205,13 @@ public class SystemResourceFaultUtils {
                                     .append(faultArgs.get(KILL_PROCESS_REMEDIATION_COMMAND)).append("\"").toString();
                 }
                 break;
+            case NETWORKFAULT:
+                command = getRemediationCommand(getScriptNameforFault(FaultName.NETWORKFAULT), scriptBasePath);
+                break;
+            case DISKSPACEFAULT:
+                command = getDiskSpaceRemediationCommand(getScriptNameforFault(FaultName.DISKSPACEFAULT),
+                        scriptBasePath, faultArgs);
+                break;
             default:
                 command = "";
             }
@@ -145,6 +220,13 @@ public class SystemResourceFaultUtils {
         }
         return command;
 
+    }
+
+    private String getDiskSpaceRemediationCommand(String scriptFileName, String scriptBasePath,
+            Map<String, String> faultArgs) {
+        return new StringBuilder(scriptBasePath).append(scriptFileName)
+                .append(String.format(DISK_SPACE_REMEDIATION_COMMAND_WITH_ARGS, faultArgs.get(DIRECTORY_PATH)))
+                .toString();
     }
 
     public List<SupportScriptInfo> getAgentFaultScripts(CommandExecutionFaultSpec commandExecutorTaskInfo) {
@@ -168,5 +250,21 @@ public class SystemResourceFaultUtils {
     public FaultName getFaultName(Map<String, String> args) {
         Map<String, String> faultArgs = FaultsHelper.parseArgs(CommonUtils.convertMaptoDelimitedString(args, ","));
         return FaultName.valueOf(faultArgs.get(FAULT_NAME).toUpperCase());
+    }
+
+    public boolean isManualRemediationSupported(String faultName) {
+        this.faultNames = CollectionUtils.isEmpty(faultNames) ? getFaultNamesWithNoRemediationSupport() : faultNames;
+        if (getFaultNamesWithNoRemediationSupport().contains(faultName)) {
+            log.info(String.format(FaultConstants.MANUAL_REMEDIATION_NOT_SUPPORTED, faultName));
+            return false;
+        }
+        return true;
+    }
+
+    private List<String> getFaultNamesWithNoRemediationSupport() {
+        this.faultNames = new ArrayList<>();
+        faultNames.add(FaultName.FILEHANDLERFAULT.getValue());
+        faultNames.add(FaultName.KERNELPANICFAULT.getValue());
+        return faultNames;
     }
 }

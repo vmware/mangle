@@ -10,6 +10,7 @@ import { AppRoutingModule } from '../app-routing.module';
 import { EndpointModule } from './endpoint/endpoint.module';
 import { FaultModule } from './fault/fault.module';
 import { RequestsModule } from './requests/requests.module';
+import { SharedModule } from '../shared/shared.module';
 
 @NgModule({
   declarations: [CoreComponent],
@@ -24,7 +25,8 @@ import { RequestsModule } from './requests/requests.module';
     CommonModule,
     EndpointModule,
     FaultModule,
-    RequestsModule
+    RequestsModule,
+    SharedModule
   ]
 })
 export class CoreModule { }

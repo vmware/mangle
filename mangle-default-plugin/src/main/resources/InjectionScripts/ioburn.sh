@@ -152,9 +152,12 @@ preRequisitescheck()
     isExprPresent
     isPgrepPresent
     isStatPresent
+    checkWritePermissionOfInjectionDir
     if [ ! -z "$precheckmessage" ]
     then
-        echo "Precheck:Failed $precheckmessage required to proceed with injection"
+        precheckmessage="Precheck Failed with pre-requisites : $precheckmessage"
+        length=$(echo $precheckmessage |wc -c)
+        echo ${precheckmessage} | cut -c 1-$(($length - 2))
         cleanup
         exit $errorExitCode
     fi
@@ -165,7 +168,7 @@ isDDPresent(){
     dd --version > /dev/null 2>&1
     ddRetVal=$?
     if [ $ddRetVal -ne 0 -a $ddRetVal -ne 1 -a $ddRetVal -ne 2 ]; then
-        precheckmessage="dd"
+        precheckmessage="dd is required,"
     fi
 }
 
@@ -173,7 +176,7 @@ isExprPresent(){
     expr > /dev/null 2>&1
     exprRetVal=$?
     if [ $exprRetVal -ne 0 -a $exprRetVal -ne 1 -a $exprRetVal -ne 2 ]; then
-        precheckmessage="$precheckmessage,expr"
+        precheckmessage="$precheckmessage expr is required,"
     fi
 }
 
@@ -181,7 +184,7 @@ isPgrepPresent(){
     pgrep  > /dev/null 2>&1
     pgrepRetVal=$?
     if [ $pgrepRetVal -ne 0 -a $pgrepRetVal -ne 1 -a $pgrepRetVal -ne 2 ]; then
-        precheckmessage="$precheckmessage,pgrep"
+        precheckmessage="$precheckmessage pgrep is required,"
     fi
 }
 
@@ -189,7 +192,15 @@ isStatPresent(){
     stat  > /dev/null 2>&1
     statRetVal=$?
     if [ $statRetVal -ne 0 -a $statRetVal -ne 1 -a $statRetVal -ne 2 ]; then
-        precheckmessage="$precheckmessage,stat"
+        precheckmessage="$precheckmessage stat is required,"
+    fi
+}
+
+checkWritePermissionOfInjectionDir()
+{
+    if [ ! -w "$basedir" ]
+    then
+        precheckmessage="$precheckmessage Write permission on ${basedir} is required,"
     fi
 }
 

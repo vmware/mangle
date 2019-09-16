@@ -19,6 +19,8 @@ import org.pf4j.spring.SpringPluginManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 
+import com.vmware.mangle.services.PluginDetailsService;
+
 /**
  * Plugin Config class.
  *
@@ -29,16 +31,19 @@ import org.springframework.context.annotation.Configuration;
 public class PluginConfig {
 
     private SpringPluginManager pluginManager;
+    private PluginDetailsService pluginDetailsService;
 
     @Autowired
-    public PluginConfig(SpringPluginManager pm) {
+    public PluginConfig(SpringPluginManager pm, PluginDetailsService pluginDetailsService) {
         log.info("Plugin Config Start...");
         this.pluginManager = pm;
+        this.pluginDetailsService = pluginDetailsService;
     }
 
     @PostConstruct
     public void init() {
         log.info("Plugin init Start...");
+        pluginDetailsService.runToSyncPlugins(pluginManager.getPlugins());
     }
 
     @PreDestroy

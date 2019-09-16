@@ -70,7 +70,7 @@ public class AuthProviderController extends ResourceSupport {
     @ApiOperation(value = "API to get all the AD Authentication providers configured", nickname = "getAuthenticationProvider")
     @GetMapping(value = "/ad-auth-providers", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Resources<ADAuthProviderDto>> getAllADAuthProviders() {
-        log.info("Received request to retrieve all configured authentication providers...");
+        log.debug("Received request to retrieve all configured authentication providers...");
         List<ADAuthProviderDto> authProviderDtos = adAuthProviderService.getAllADAuthProvider();
 
         Resources<ADAuthProviderDto> authResource = new Resources<>(authProviderDtos);
@@ -93,7 +93,7 @@ public class AuthProviderController extends ResourceSupport {
     @PutMapping(value = "/ad-auth-providers", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Resource<ADAuthProviderDto>> updateADAuthProvider(
             @RequestBody ADAuthProviderDto adAuthProviderDto) throws MangleException {
-        log.info("Received request to update authentication provider");
+        log.debug("Received request to update authentication provider");
 
         ADAuthProviderDto persisted =
                 adAuthProviderService.getADAuthProviderByAdDomain(adAuthProviderDto.getAdDomain());
@@ -128,7 +128,7 @@ public class AuthProviderController extends ResourceSupport {
         }
 
         persisted = adAuthProviderService.updateADAuthProvider(adAuthProviderDto);
-
+        adAuthProvider.triggerMultiNodeResync(persisted.getAdDomain());
         Resource<ADAuthProviderDto> authResource = new Resource<>(persisted);
 
         Link link = linkTo(methodOn(AuthProviderController.class).updateADAuthProvider(null)).withSelfRel();
@@ -150,7 +150,7 @@ public class AuthProviderController extends ResourceSupport {
     @PostMapping(value = "/ad-auth-providers", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Resource<ADAuthProviderDto>> addADAuthProvider(
             @RequestBody ADAuthProviderDto adAuthProviderDto) throws MangleException {
-        log.info("Received request to add authentication provider");
+        log.debug("Received request to add authentication provider");
         /*
          * Check if there is an entry in the database to update
          * exception if there isn't one with the id
@@ -174,6 +174,7 @@ public class AuthProviderController extends ResourceSupport {
 
         ADAuthProviderDto persistedADAuthProviderDto = adAuthProviderService.addADAuthProvider(adAuthProviderDto);
 
+        adAuthProvider.triggerMultiNodeResync(persistedADAuthProviderDto.getAdDomain());
         Resource<ADAuthProviderDto> authResource = new Resource<>(persistedADAuthProviderDto);
         Link link = linkTo(methodOn(AuthProviderController.class).addADAuthProvider(null)).withSelfRel();
         authResource.add(link);
@@ -188,23 +189,22 @@ public class AuthProviderController extends ResourceSupport {
      */
     @ApiOperation(value = "API to delete the AD authentication provider", nickname = "addAuthenticationProvider")
     @DeleteMapping(value = "/ad-auth-providers", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity removeADAuthProvider(@RequestParam List<String> domainNames)
-            throws MangleException {
-        log.info(String.format("Received request to remove AD Authentication Providers: %s", domainNames.toString()));
-        adAuthProviderService.removeADAuthProvider(domainNames);
+    public ResponseEntity<Void> removeADAuthProvider(@RequestParam List<String> domainNames) throws MangleException {
+        log.debug(String.format("Received request to remove AD Authentication Providers: %s", domainNames.toString()));
+        domainNames = adAuthProviderService.removeADAuthProvider(domainNames);
         for (String domainName : domainNames) {
             adAuthProvider.removeAdAuthProvider(domainName);
+            adAuthProvider.triggerMultiNodeResync(domainName);
         }
 
-        return new ResponseEntity(HttpStatus.NO_CONTENT);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @ApiOperation(value = "API to get all the domains contained in the application", nickname = "retrieveAllDomains")
     @GetMapping(value = "/domains", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Resources<String>> getAlldomains() {
-        log.info("Received request to retrieve all Authentication Provider Domains.");
-        Set<String> domains = new HashSet<>();
-        domains.addAll(adAuthProviderService.getAllDomains());
+        log.debug("Received request to retrieve all Authentication Provider Domains.");
+        Set<String> domains = new HashSet<>(adAuthProviderService.getAllDomains());
         domains.add(userService.getDefaultDomainName());
 
         Resources<String> resources = new Resources<>(domains);

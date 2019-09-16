@@ -1,0 +1,93 @@
+<app-alert [(errorAlertMessage)]="errorAlertMessage" [(successAlertMessage)]="successAlertMessage" (errorAlertMessageChange)="errorAlertMessage = $event" (successAlertMessageChange)="successAlertMessage = $event"></app-alert>
+<div>
+    <h3 class="modal-title">{{faultDescription}}</h3>
+    <form #networkFaultForm="ngForm" (ngSubmit)="executeNetworkFault(networkFaultForm.value);" ngNativeValidate>
+        <section class="form-block">
+            <div class="form-group">
+                <label for="endpointName">Endpoint</label>
+                <clr-dropdown>
+                    <input autocomplete="off" clrDropdownTrigger type="text" name="endpointName" (input)="searchEndpoint($event.target.value);displayEndpointFields($event.target.value);" (focus)="searchEndpoint('');" [(ngModel)]="faultFormData.endpointName" />
+                    <clr-icon shape="caret down" clrDropdownTrigger size="24" (click)="searchEndpoint('');"></clr-icon>
+                    <clr-dropdown-menu *clrIfOpen class="menu-height" clrPosition="bottom-left">
+                        <ng-container *ngFor="let searchedEndpoint of searchedEndpoints">
+                            <button type="button" clrDropdownItem class="option-height" *ngIf="searchedEndpoint.endPointType == 'MACHINE'" (click)="setEndpointVal(searchedEndpoint.name);displayEndpointFields(searchedEndpoint.name);">{{searchedEndpoint.name}}</button>
+                        </ng-container>
+                    </clr-dropdown-menu>
+                </clr-dropdown>
+            </div>
+            <div class="form-group">
+                <label for="nicName">Nic Name</label>
+                <input type="text" name="nicName" [(ngModel)]="faultFormData.nicName" required>
+            </div>
+            <div class="form-group" [hidden]="!latencyHidden">
+                <label for="latency">Latency Milliseconds</label>
+                <input type="number" name="latency" [(ngModel)]="faultFormData.latency" min="1" [required]="latencyHidden">
+            </div>
+
+            <div class="form-group" [hidden]="!percentageHidden">
+                <label for="percentage">Percentage (%)</label>
+                <input type="number" name="percentage" [(ngModel)]="faultFormData.percentage" min="1" max="100" [required]="percentageHidden">
+            </div>
+            <div class="form-group">
+                <label for="timeoutInMilliseconds">Timeout Milliseconds</label>
+                <input type="number" min="1" max="2147483647" name="timeoutInMilliseconds" [(ngModel)]="faultFormData.timeoutInMilliseconds" required>
+            </div>
+            <div class="form-group">
+                <label for="injectionHomeDir">Injection Home Dir (optional)</label>
+                <input type="text" name="injectionHomeDir" [(ngModel)]="faultFormData.injectionHomeDir">
+            </div>
+            <fieldset ngModelGroup="schedule">
+                <div class="form-group">
+                    <label>Schedule</label>
+                    <div class="clr-control-container clr-control-inline">
+                        <div class="clr-radio-wrapper">
+                            <input type="radio" id="timeInMilliseconds" name="scheduleBody" value="timeInMilliseconds" class="clr-radio" (click)="setScheduleVal($event.target);">
+                            <label for="timeInMilliseconds" class="clr-control-label">One Time</label>
+                        </div>
+                        <div class="clr-radio-wrapper">
+                            <input type="radio" id="cronExpression" name="scheduleBody" value="cronExpression" class="clr-radio" (click)="setScheduleVal($event.target);">
+                            <label for="cronExpression" class="clr-control-label">Recurrence</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group" [hidden]="timeInMillisecondsHidden">
+                    <input type="number" min="1" max="9223372036854775807" name="timeInMilliseconds" [(ngModel)]="faultFormData.schedule.timeInMilliseconds" [required]="!timeInMillisecondsHidden" (input)="setSubmitButton();">&nbsp;&nbsp;<span style="height:39px;">Epoch Milliseconds</span>
+                </div>
+                <div class="form-group" [hidden]="cronExpressionHidden">
+                    <input type="text" name="cronExpression" [(ngModel)]="faultFormData.schedule.cronExpression" [required]="!cronExpressionHidden" (input)="setSubmitButton();">
+                    <clr-icon shape="calendar" style="width:21px;height:39px;" (click)="cronModal=true;"></clr-icon>
+                </div>
+                <div class="form-group" [hidden]="descriptionHidden">
+                    <input type="text" name="description" [(ngModel)]="faultFormData.schedule.description">&nbsp;&nbsp;<span style="height:39px;">Description (optional)</span>
+                </div>
+            </fieldset>
+            <div class="form-group">
+                <label for="tags">Tags</label>
+                <span class="label label-info" *ngFor="let item of tagsData | keyvalue">{{item.key}}={{item.value}}&nbsp;<clr-icon shape="times" size="12" (click)="removeTag(item.key);"></clr-icon></span>
+                <clr-icon shape="plus-circle" (click)="tagsModal=true;" style="width:21px;height:30px;"></clr-icon>
+            </div>
+        </section>
+        <button type="submit" class="btn btn-primary" [disabled]="disableSchedule">SCHEDULE FAULT</button>
+        <button type="submit" class="btn btn-primary" [clrLoading]="runBtnState" [disabled]="disableRun">RUN FAULT</button>
+    </form>
+</div>
+<app-cron [(cronModal)]="cronModal" [(cronValOrig)]="faultFormData.schedule.cronExpression" (cronMessageEvent)="setScheduleCron($event);"></app-cron>
+<clr-modal [(clrModalOpen)]="tagsModal">
+    <h3 class="modal-title">Add Tags</h3>
+    <div class="modal-body">
+        <form #tagsForm="ngForm" (ngSubmit)="updateTags(tagsForm.value);tagsModal=false;tagsForm.reset();">
+            <section class="form-block">
+                <div class="form-group">
+                    <label for="tagKey">Key</label>
+                    <input type="text" name="tagKey" ngModel>
+                </div>
+                <div class="form-group">
+                    <label for="tagValue">Value</label>
+                    <input type="text" name="tagValue" ngModel>
+                </div>
+            </section>
+            <button type="button" class="btn btn-outline" (click)="tagsModal=false;">CANCEL</button>
+            <button type="submit" class="btn btn-primary">ADD</button>
+        </form>
+    </div>
+</clr-modal>

@@ -73,13 +73,13 @@ describe('LocalComponent', () => {
     //add user
     spyOn(settingService, 'addLocalUser').and.returnValue(of(local_user_id));
     component.addOrUpdateLocalUser(local_user);
-    expect(component.successFlag).toBe(true);
+    expect(component.successAlertMessage).toBeTruthy();
     expect(settingService.addLocalUser).toHaveBeenCalled();
     expect(settingService.getLocalUserList).toHaveBeenCalled();
     //update user
     spyOn(settingService, 'updateLocalUser').and.returnValue(of(local_user_id));
     component.addOrUpdateLocalUser(local_user_id);
-    expect(component.successFlag).toBe(true);
+    expect(component.successAlertMessage).toBeTruthy();
     expect(settingService.updateLocalUser).toHaveBeenCalled();
     expect(settingService.getLocalUserList).toHaveBeenCalled();
   });
@@ -88,7 +88,7 @@ describe('LocalComponent', () => {
     spyOn(settingService, 'deleteLocalUser').and.returnValue(of({}));
     spyOn(window, 'confirm').and.callFake(function () { return true; });
     component.deleteLocalUser(local_user);
-    expect(component.successFlag).toBe(true);
+    expect(component.successAlertMessage).toBeTruthy();
     expect(settingService.deleteLocalUser).toHaveBeenCalled();
     expect(settingService.getLocalUserList).toHaveBeenCalled();
   });

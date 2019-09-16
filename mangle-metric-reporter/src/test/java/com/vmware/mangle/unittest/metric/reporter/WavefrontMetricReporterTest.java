@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import com.wavefront.integrations.Wavefront;
 import org.mockito.Mock;
@@ -59,7 +58,7 @@ public class WavefrontMetricReporterTest extends PowerMockTestCase {
     private Wavefront wavefront;
 
     private WaveFrontConnectionProperties waveFrontConnectionProperties;
-    private Map<String, String> pointTags;
+    private HashMap<String, String> pointTags;
 
     /**
      * @throws java.lang.Exception

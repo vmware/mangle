@@ -16,7 +16,11 @@ import java.util.List;
 import java.util.StringTokenizer;
 import java.util.UUID;
 
+import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang.StringUtils;
+
+import com.vmware.mangle.services.enums.MangleQuorumStatus;
+import com.vmware.mangle.utils.constants.HazelcastConstants;
 
 /**
  * Utility class for hazelcast cluster related helper methods
@@ -24,6 +28,7 @@ import org.apache.commons.lang.StringUtils;
  * @author chetanc
  *
  */
+@Log4j2
 public class HazelcastUtils {
 
     private HazelcastUtils() {
@@ -50,5 +55,17 @@ public class HazelcastUtils {
         }
         return validationToken;
     }
+
+    public static void updateHazelcastMangleQuorumValue(int quorumValue) {
+        log.debug("Updating the value of hazelcast quorum from {} to {}", HazelcastConstants.mangleQourum, quorumValue);
+        HazelcastConstants.mangleQourum = quorumValue;
+    }
+
+    public static void updateHazelcastQuorumStatus(MangleQuorumStatus quorumStatus) {
+        log.debug("Updating the value of hazelcast quorum status from {} to {}", HazelcastConstants.mangleQourumStatus,
+                quorumStatus);
+        HazelcastConstants.mangleQourumStatus = quorumStatus;
+    }
+
 
 }

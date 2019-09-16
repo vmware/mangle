@@ -11,6 +11,7 @@
 
 package com.vmware.mangle.cassandra.model.faults.specs;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -33,6 +34,7 @@ public class SpringServiceExceptionFaultSpec extends JavaMethodLatencyFaultSpec 
     @ApiModelProperty(value = "String value. You can provide multiple xenon services by Seperating them using '#'", required = false, example = "test/service1#servcie2")
     private String servicesString;
 
+    @JsonIgnore
     @ApiModelProperty(value = "boolean value. You can provide true to enable Latency for Service calls originating in same host.", required = false, example = "false")
     private boolean enableOnLocalRequests;
 

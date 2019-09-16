@@ -17,6 +17,7 @@ import java.util.Map;
 import com.vmware.mangle.cassandra.model.faults.specs.DockerFaultSpec;
 import com.vmware.mangle.cassandra.model.tasks.TaskType;
 import com.vmware.mangle.model.enums.EndpointType;
+import com.vmware.mangle.task.framework.helpers.faults.SupportedEndpoints;
 import com.vmware.mangle.utils.exceptions.MangleException;
 
 /**

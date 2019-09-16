@@ -11,6 +11,7 @@
 
 package com.vmware.mangle.utils.clients.docker;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.ws.rs.ProcessingException;
@@ -215,8 +216,10 @@ public class DockerOperations {
     }
 
     private static boolean isContainerPaused(CustomDockerClient customDockerClient, String containerID) {
+        List<String> statusFilterList = new ArrayList<>();
+        statusFilterList.add("paused");
         List<Container> allContainers =
-                customDockerClient.getDockerClient().listContainersCmd().withStatusFilter("paused").exec();
+                customDockerClient.getDockerClient().listContainersCmd().withStatusFilter(statusFilterList).exec();
         log.info("list of containers:" + allContainers);
         for (Container eachContainer : allContainers) {
             if (eachContainer.getId().equals(containerID)) {

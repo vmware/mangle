@@ -55,7 +55,7 @@ public class RoleService {
      * @return all the roles
      */
     public List<Role> getAllRoles() {
-        log.info("Retrieving all the users");
+        log.debug("Retrieving all the users");
         return roleRepository.findAll();
     }
 
@@ -66,7 +66,7 @@ public class RoleService {
      * @return role object from DB
      */
     public Role getRoleByName(String roleName) {
-        log.info("Retriving role for the rolename: " + roleName);
+        log.debug("Retriving role for the rolename: " + roleName);
         Role role = roleRepository.findByName(roleName);
         if (role != null) {
             role.setPrivileges(new HashSet<>(privilegeService.getPrivilegeByNames(role.getPrivilegeNames())));
@@ -81,7 +81,7 @@ public class RoleService {
      * @throws MangleException
      */
     public List<Role> getRolesByNames(Collection<String> roleNames) {
-        log.info("Retriving role for the rolename: " + roleNames);
+        log.debug("Retriving role for the rolename: " + roleNames);
         return roleRepository.findByNameIn(roleNames);
     }
 
@@ -107,7 +107,7 @@ public class RoleService {
     }
 
     public Role createRole(Role role) throws MangleException {
-        log.info("Creating role: " + role.getName());
+        log.debug("Creating role: " + role.getName());
 
         if (CollectionUtils.isEmpty(role.getPrivilegeNames())) {
             throw new MangleException(ErrorConstants.CUSTOM_ROLE_CREATION_FAILED_NO_PRVILEGES,

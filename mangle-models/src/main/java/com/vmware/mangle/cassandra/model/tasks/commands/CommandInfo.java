@@ -37,5 +37,4 @@ public class CommandInfo implements Serializable {
     private int timeout;
     private List<CommandOutputProcessingInfo> commandOutputProcessingInfoList;
     private Map<String, String> knownFailureMap;
-
 }

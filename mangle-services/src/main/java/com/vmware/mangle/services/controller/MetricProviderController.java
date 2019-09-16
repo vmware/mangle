@@ -175,7 +175,7 @@ public class MetricProviderController {
     /**
      * API to test connection of a metric provider
      *
-     * @param metricProviderName
+     * @param metricProviderSpec
      * @return ResponseEntity<MetricProviderResponse>
      * @throws MangleException
      */
@@ -231,6 +231,7 @@ public class MetricProviderController {
         if (enableMangleMetrics) {
             boolean status = false;
             status = this.metricProviderService.sendMetrics();
+            this.metricProviderService.triggerMultiNodeResync("");
             MetricProviderResponse mangleResponse = new MetricProviderResponse();
             mangleResponse.setResultStatus(status);
             HttpHeaders headers = new HttpHeaders();
@@ -238,6 +239,7 @@ public class MetricProviderController {
             return new ResponseEntity<>(mangleResponse, headers, HttpStatus.OK);
         } else {
             boolean status = this.metricProviderService.closeAllMetricCollection();
+            this.metricProviderService.triggerMultiNodeResync("");
             MetricProviderResponse mangleResponse = new MetricProviderResponse();
             mangleResponse.setResultStatus(status);
             HttpHeaders headers = new HttpHeaders();

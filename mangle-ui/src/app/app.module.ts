@@ -17,6 +17,7 @@ import { SettingModule } from './setting/setting.module';
 import { LocationStrategy, HashLocationStrategy } from '@angular/common';
 import { PagesModule } from './pages/pages.module';
 import { AuthGuardService } from './auth-guard.service';
+import { SharedModule } from './shared/shared.module';
 
 @NgModule({
   declarations: [
@@ -35,7 +36,8 @@ import { AuthGuardService } from './auth-guard.service';
     CoreModule,
     HomeModule,
     PagesModule,
-    SettingModule
+    SettingModule,
+    SharedModule
   ],
   providers: [
     ConfigGuardService,

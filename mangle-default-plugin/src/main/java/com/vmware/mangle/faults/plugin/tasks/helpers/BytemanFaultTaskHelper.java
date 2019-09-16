@@ -45,10 +45,11 @@ import com.vmware.mangle.cassandra.model.tasks.TaskType;
 import com.vmware.mangle.faults.plugin.helpers.byteman.BytemanFaultHelper;
 import com.vmware.mangle.faults.plugin.helpers.byteman.BytemanFaultHelperFactory;
 import com.vmware.mangle.faults.plugin.utils.PluginUtils;
-import com.vmware.mangle.faults.plugin.utils.TaskDescriptionUtils;
 import com.vmware.mangle.model.enums.EndpointType;
 import com.vmware.mangle.task.framework.endpoint.EndpointClientFactory;
 import com.vmware.mangle.task.framework.helpers.AbstractRemoteCommandExecutionTaskHelper;
+import com.vmware.mangle.task.framework.utils.TaskDescriptionUtils;
+import com.vmware.mangle.utils.CommandUtils;
 import com.vmware.mangle.utils.ConstantsUtils;
 import com.vmware.mangle.utils.ICommandExecutor;
 import com.vmware.mangle.utils.clients.docker.CustomDockerClient;
@@ -151,7 +152,7 @@ public class BytemanFaultTaskHelper<T extends CommandExecutionFaultSpec>
             for (SupportScriptInfo faultInjectionScriptInfo : listOfFaultInjectionScripts) {
                 String filePath = ConstantsUtils.getMangleSupportScriptDirectory() + File.separator + AGENT_NAME;
                 pluginUtils.copyScriptFileToMangleDirectory(faultInjectionScriptInfo);
-
+                CommandUtils.runCommand("chmod u+x " + filePath);
                 CustomDockerClient customDockerClient = (CustomDockerClient) (endpointClientFactory
                         .getEndPointClient(task.getTaskData().getCredentials(), task.getTaskData().getEndpoint()));
                 customDockerClient.copyFileToContainerByName(
@@ -159,7 +160,6 @@ public class BytemanFaultTaskHelper<T extends CommandExecutionFaultSpec>
                         faultInjectionScriptInfo.getTargetDirectoryPath());
                 log.info("Copied support script file: " + faultInjectionScriptInfo.getScriptFileName()
                         + " to docker machine");
-                commandInfoExecutionHelper.makeExecutable(getExecutor(task), faultInjectionScriptInfo);
             }
         }
     }

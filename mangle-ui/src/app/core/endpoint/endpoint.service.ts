@@ -41,6 +41,10 @@ export class EndpointService {
         return this.http.get(ServiceConstants.ENDPOINTS_CERTIFICATES);
     }
 
+    public getDockerContainers(endPointName): Observable<any> {
+        return this.http.get(ServiceConstants.ENDPOINTS_DOCKER_CONTAINER + ServiceConstants.FILE_SEPARATOR + endPointName);
+    }
+
     public addk8sCredential(credential, fileToUpload) {
         let body = new FormData();
         body.append(CommonConstants.name_var, credential.name);
@@ -106,6 +110,14 @@ export class EndpointService {
 
     public updateVcenterCredential(credential) {
         return this.http.put(ServiceConstants.ENDPOINTS_CREDENTIALS_VCENTER, credential);
+    }
+
+    public addAwsCredential(credential) {
+        return this.http.post(ServiceConstants.ENDPOINTS_CREDENTIALS_AWS, credential);
+    }
+
+    public updateAwsCredential(credential) {
+        return this.http.put(ServiceConstants.ENDPOINTS_CREDENTIALS_AWS, credential);
     }
     public deleteCredential(name) {
         return this.http.delete(ServiceConstants.ENDPOINTS_CREDENTIALS + CommonConstants.QUESTION_MARK + CommonConstants.credentialNames + CommonConstants.EQUALS_TO + name);

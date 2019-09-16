@@ -13,9 +13,12 @@ package com.vmware.mangle.unittest.services.config;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
@@ -156,5 +159,20 @@ public class ADAuthProviderTest extends PowerMockTestCase {
         log.info("Executing removeAdAuthProviderTest on method: ADAuthProvider#removeAdAuthProvider(String)");
         ADAuthProviderDto auth = dataProvider.getNewADAuthProviderDto();
         adAuthProvider.removeAdAuthProvider(auth.getId());
+    }
+
+    @Test(priority = 8)
+    public void testResyncWithEmptyIdentifier() {
+        doNothing().when(adAuthProvider).init();
+        adAuthProvider.resync("");
+        verify(adAuthProvider, times(2)).init();
+    }
+
+    @Test(priority = 9)
+    public void testResyncWithDomain() {
+        ADAuthProviderDto auth = dataProvider.getNewADAuthProviderDto();
+        doNothing().when(adAuthProvider).refreshAdAuthProviderForDomain(auth.getAdDomain());
+        adAuthProvider.resync(auth.getAdDomain());
+        verify(adAuthProvider, times(1)).refreshAdAuthProviderForDomain(auth.getAdDomain());
     }
 }

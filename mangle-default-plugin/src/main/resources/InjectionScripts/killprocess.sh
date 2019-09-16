@@ -88,9 +88,12 @@ preRequisitescheck()
     running_in_docker
     isPgrepPresent
     isKillPresent
+    checkWritePermissionOfInjectionDir
     if [ ! -z "$precheckmessage" ]
     then
-        echo "Precheck:Failed $precheckmessage required to proceed with injection"
+        precheckmessage="Precheck Failed with pre-requisites : $precheckmessage"
+        length=$(echo $precheckmessage |wc -c)
+        echo ${precheckmessage} | cut -c 1-$(($length - 2))
         cleanup
         exit $errorexitcode
     fi
@@ -101,7 +104,7 @@ isPgrepPresent(){
     pgrep  > /dev/null 2>&1
     pgrepRetVal=$?
     if [ $pgrepRetVal -ne 0 -a $pgrepRetVal -ne 1 -a $pgrepRetVal -ne 2 ]; then
-        precheckmessage="$precheckmessage,pgrep"
+        precheckmessage="$precheckmessage pgrep is required,"
     fi
 }
 
@@ -109,7 +112,7 @@ isKillPresent(){
     kill > /dev/null 2>&1
     killRetVal=$?
     if [ $killRetVal -ne 0 -a $killRetVal -ne 1 -a $killRetVal -ne 2 ]; then
-        precheckmessage="$precheckmessage,kill"
+        precheckmessage="$precheckmessage kill is required,"
     fi
 }
 
@@ -117,8 +120,16 @@ isAwkPresent(){
    awk > /dev/null 2>&1
    awkRetVal=$?
    if [ $awkRetVal -ne 0 -a $awkRetVal -ne 1 -a $awkRetVal -ne 2 ]; then
-      precheckmessage="$precheckmessage,awk"
+      precheckmessage="$precheckmessage awk is required,"
    fi
+}
+
+checkWritePermissionOfInjectionDir()
+{
+    if [ ! -w "$basedir" ]
+    then
+        precheckmessage="$precheckmessage Write permission on ${basedir} is required,"
+    fi
 }
 
 status(){

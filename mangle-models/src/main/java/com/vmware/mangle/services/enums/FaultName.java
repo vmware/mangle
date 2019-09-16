@@ -20,9 +20,9 @@ public enum FaultName {
     CPUFAULT("cpuFault", "cpuburn.sh"),
     MEMORYFAULT("memoryFault", "memoryspike.sh"),
     DISKFAULT("diskFault", "ioburn.sh"),
-    FILEHANDLERFAULT("fileHandlerFault", "filehandlerdepletion.sh"),
-    NETWORKLATENCYFAULT_WINDOWS("networkLatencyFault_windows", "networklatency_win.bat"),
-    NETWORKLATENCYFAULT("networkLatencyFault", "networklatency.sh"),
+    FILEHANDLERFAULT("fileHandlerFault", "filehandlerleak.sh"),
+    NETWORKFAULT_WINDOWS("networkFault_windows", "networklatency_win.bat"),
+    NETWORKFAULT("networkFault", "networkFault.sh"),
     DISKSPACEFAULT_WINDOWS("diskSpaceFault_windows", "diskspace_win.bat"),
     DISKSPACEFAULT("diskSpaceFault", "diskspace.sh"),
     KILLPROCESSFAULT("killProcessFault", "killprocess.sh"),
@@ -30,7 +30,9 @@ public enum FaultName {
     DISKFUSEFAULT("diskFUSEFault", "diskFUSEfault.py"),
     DBCONNECTIONLEAKFAULT("dbConnectionLeakFault", "pgdbconnectionleak.sh"),
     DBTRANSACTIONLATENCYFAULT("dbTransactionLatencyFault", "pgTransactionLatency.sh"),
-    DBTRANSACTIONERRORFAULT("dbTransactionErrorFault", "pgTransactionError.sh");
+    DBTRANSACTIONERRORFAULT("dbTransactionErrorFault", "pgTransactionError.sh"),
+    THREADLEAKFAULT("threadLeakFault"),
+    KERNELPANICFAULT("kernelPanicFault","kernelpanicfault.sh");
 
     private String value;
     private String[] scriptFileNames;

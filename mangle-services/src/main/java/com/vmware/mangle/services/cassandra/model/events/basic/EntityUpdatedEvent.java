@@ -18,6 +18,8 @@ import org.springframework.core.ResolvableType;
 import org.springframework.core.ResolvableTypeProvider;
 import org.springframework.data.cassandra.core.mapping.Table;
 
+import com.vmware.mangle.model.enums.EventType;
+
 /**
  * @author hkilari
  * @author ashrimali
@@ -33,13 +35,17 @@ public class EntityUpdatedEvent extends Event implements ResolvableTypeProvider 
     private String entityClass;
 
     public EntityUpdatedEvent(String entityId, String entityClass) {
-        super("EntityUpdatedEvent", "Updated entity: " + entityClass + " With Id: " + entityId);
+        super(EventType.ENTITY_UPDATED_EVENT.getName(), "Updated entity: " + entityClass + " With Id: " + entityId);
         this.entityId = entityId;
         this.entityClass = entityClass;
     }
 
     public EntityUpdatedEvent(String entityEvent) {
-        super("EntityUpdateEvent", " : " + entityEvent);
+        super(EventType.ENTITY_UPDATED_EVENT.getName(), " : " + entityEvent);
+    }
+
+    public EntityUpdatedEvent() {
+        super();
     }
 
     @Override

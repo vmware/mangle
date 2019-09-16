@@ -20,6 +20,8 @@ import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.FileUtils;
 import org.springframework.stereotype.Component;
 
+import com.vmware.mangle.cassandra.model.endpoint.AWSConnectionProperties;
+import com.vmware.mangle.cassandra.model.endpoint.AWSCredentials;
 import com.vmware.mangle.cassandra.model.endpoint.CredentialsSpec;
 import com.vmware.mangle.cassandra.model.endpoint.DockerCertificates;
 import com.vmware.mangle.cassandra.model.endpoint.DockerConnectionProperties;
@@ -30,6 +32,7 @@ import com.vmware.mangle.cassandra.model.endpoint.RemoteMachineConnectionPropert
 import com.vmware.mangle.cassandra.model.endpoint.RemoteMachineCredentials;
 import com.vmware.mangle.cassandra.model.endpoint.VCenterConnectionProperties;
 import com.vmware.mangle.cassandra.model.endpoint.VCenterCredentials;
+import com.vmware.mangle.utils.clients.aws.CustomAwsClient;
 import com.vmware.mangle.utils.clients.docker.CustomDockerClient;
 import com.vmware.mangle.utils.clients.endpoint.EndpointClient;
 import com.vmware.mangle.utils.clients.kubernetes.KubernetesCommandLineClient;
@@ -57,6 +60,8 @@ public class EndpointClientFactory {
             return getRemoteMachineClient(credentials, endpoint.getRemoteMachineConnectionProperties());
         case VCENTER:
             return getVCenterEndpoint(credentials, endpoint.getVCenterConnectionProperties());
+        case AWS:
+            return getAwsEndpoint(credentials, endpoint.getAwsConnectionProperties());
         default:
             return null;
         }
@@ -67,6 +72,12 @@ public class EndpointClientFactory {
         VCenterCredentials vCenterCredentials = (VCenterCredentials) DecryptFields.decrypt(credentialsSpec);
         return new VCenterClient(connProperties.getHostname(), vCenterCredentials.getUserName(),
                 vCenterCredentials.getPassword(), connProperties.getVCenterAdapterProperties());
+    }
+
+    public CustomAwsClient getAwsEndpoint(CredentialsSpec credentialsSpec, AWSConnectionProperties connProperties) {
+        AWSCredentials awsCredentials = (AWSCredentials) DecryptFields.decrypt(credentialsSpec);
+        return new CustomAwsClient(connProperties.getRegion(), awsCredentials.getAccessKeyId(),
+                awsCredentials.getSecretKey());
     }
 
     private CustomDockerClient getCustomDockerClient(DockerConnectionProperties dockerConnectionProps) {

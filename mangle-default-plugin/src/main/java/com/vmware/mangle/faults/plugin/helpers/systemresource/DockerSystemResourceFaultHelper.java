@@ -26,8 +26,8 @@ import com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec;
 import com.vmware.mangle.cassandra.model.tasks.SupportScriptInfo;
 import com.vmware.mangle.cassandra.model.tasks.commands.CommandInfo;
 import com.vmware.mangle.faults.plugin.helpers.KnownFailuresHelper;
-import com.vmware.mangle.faults.plugin.helpers.docker.DockerCommandUtils;
 import com.vmware.mangle.task.framework.endpoint.EndpointClientFactory;
+import com.vmware.mangle.task.framework.utils.DockerCommandUtils;
 import com.vmware.mangle.utils.ICommandExecutor;
 import com.vmware.mangle.utils.exceptions.MangleException;
 
@@ -73,6 +73,9 @@ public class DockerSystemResourceFaultHelper extends SystemResourceFaultHelper {
     @Override
     public List<CommandInfo> getRemediationcommandInfoList(CommandExecutionFaultSpec faultSpec) throws MangleException {
         List<CommandInfo> commandInfoList = new ArrayList<>();
+        if (!systemResourceFaultUtils.isManualRemediationSupported(faultSpec.getFaultName())) {
+            return Collections.emptyList();
+        }
         String remediationCommand =
                 systemResourceFaultUtils.buildRemediationCommand(faultSpec.getArgs(), faultSpec.getInjectionHomeDir());
         if (!StringUtils.isEmpty(remediationCommand)) {

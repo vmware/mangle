@@ -4,19 +4,16 @@ import { MessageConstants } from 'src/app/common/message.constants';
 
 @Component({
     selector: 'app-users',
-    templateUrl: './users.component.html',
-    styleUrls: ['./users.component.css']
+    templateUrl: './users.component.html'
 })
 export class UsersComponent implements OnInit {
 
     constructor(private settingService: SettingService) { }
 
-    public errorFlag = false;
-    public successFlag = false;
-    public alertMessage: string;
+    public errorAlertMessage: string;
+    public successAlertMessage: string;
 
     public userFormData;
-    public passwordFieldRequired: boolean = false;
     public currentSelectedRoles: any = [];
 
     public authSources: any = [];
@@ -24,6 +21,11 @@ export class UsersComponent implements OnInit {
     public roleList: any;
 
     public isLoading: boolean = true;
+
+    public barLabel: string = '';
+    public barColors = ['#DD2C00', '#FF6D00', '#FFD600', '#AEEA00', '#00C853'];
+    public baseColor = '#DDD';
+    public strengthLabels = ['(Useless)', '(Weak)', '(Normal)', '(Strong)', '(Great!)'];
 
     ngOnInit() {
         this.getUserList();
@@ -40,10 +42,8 @@ export class UsersComponent implements OnInit {
     public populateEditUserForm(editUserData) {
         this.getRoleList();
         this.userFormData = editUserData;
-        this.passwordFieldRequired = false;
         var userAndDomain = editUserData.name.split("@");
         if (userAndDomain[1] === "mangle.local") {
-            this.passwordFieldRequired = true;
             this.userFormData.password = null;
         }
         this.currentSelectedRoles = [];
@@ -73,8 +73,7 @@ export class UsersComponent implements OnInit {
             }, err => {
                 this.userList = [];
                 this.isLoading = false;
-                this.alertMessage = err.error.description;
-                this.errorFlag = true;
+                this.errorAlertMessage = err.error.description;
             });
     }
 
@@ -87,58 +86,46 @@ export class UsersComponent implements OnInit {
 
     public addUser(addUserFormValue) {
         addUserFormValue.roleNames = this.currentSelectedRoles;
-        this.errorFlag = false;
-        this.successFlag = false;
         this.isLoading = true;
         addUserFormValue.name = addUserFormValue.name + "@" + addUserFormValue.authSource;
         delete addUserFormValue["authSource"];
         this.settingService.addUser(addUserFormValue).subscribe(
             res => {
                 this.getUserList();
-                this.alertMessage = addUserFormValue.name + MessageConstants.USER_ADD;
-                this.successFlag = true;
+                this.successAlertMessage = addUserFormValue.name + MessageConstants.USER_ADD;
                 this.isLoading = false;
             }, err => {
                 this.getUserList();
-                this.alertMessage = err.error.description;
-                this.errorFlag = true;
+                this.errorAlertMessage = err.error.description;
                 this.isLoading = false;
             });
     }
 
     public updateUser(updateUserFormValue) {
         updateUserFormValue.roleNames = this.currentSelectedRoles;
-        this.errorFlag = false;
-        this.successFlag = false;
         this.isLoading = true;
         this.settingService.updateUser(updateUserFormValue).subscribe(
             res => {
                 this.ngOnInit();
-                this.alertMessage = updateUserFormValue.name + MessageConstants.USER_UPDATE;
-                this.successFlag = true;
+                this.successAlertMessage = updateUserFormValue.name + MessageConstants.USER_UPDATE;
                 this.isLoading = false;
             }, err => {
                 this.ngOnInit();
-                this.alertMessage = err.error.description;
-                this.errorFlag = true;
+                this.errorAlertMessage = err.error.description;
                 this.isLoading = false;
             });
     }
 
     public deleteUser(user) {
-        this.errorFlag = false;
-        this.successFlag = false;
         if (confirm(MessageConstants.DELETE_CONFIRM + user.name + MessageConstants.QUESTION_MARK)) {
             this.settingService.deleteUser(user.name).subscribe(
                 res => {
                     this.getUserList();
-                    this.alertMessage = user.name + MessageConstants.USER_DELETE;
-                    this.successFlag = true;
+                    this.successAlertMessage = user.name + MessageConstants.USER_DELETE;
                     this.isLoading = false;
                 }, err => {
                     this.getUserList();
-                    this.alertMessage = err.error.description;
-                    this.errorFlag = true;
+                    this.errorAlertMessage = err.error.description;
                     this.isLoading = false;
                 });
         } else {
@@ -158,6 +145,19 @@ export class UsersComponent implements OnInit {
                     this.authSources = [];
                 }
             });
+    }
+
+    public updateUserAccountLockStatus(user) {
+            this.settingService.updateUser(user).subscribe(
+              res => {
+                this.getUserList();
+                this.successAlertMessage = MessageConstants.USER_UPDATE;
+                this.isLoading = false;
+              }, err => {
+                this.getUserList();
+                this.errorAlertMessage = err.error.description;
+                this.isLoading = false;
+              });
     }
 
 }

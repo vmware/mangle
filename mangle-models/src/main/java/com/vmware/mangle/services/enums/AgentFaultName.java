@@ -18,8 +18,9 @@ package com.vmware.mangle.services.enums;
 public enum AgentFaultName {
     INJECT_CPU_FAULT("cpuFault"), INJECT_MEMORY_FAULT("memoryFault"), INJECT_DISK_IO_FAULT(
             "diskFault"), INJECT_FILE_HANDLER_FAULT("fileHandlerFault"), INJECT_NETWORK_LATENCY_FAULT(
-                    "networkLatencyFault"), INJECT_DISK_SPACE_FAULT("diskSpaceFault"), INJECT_KILL_PROCESS_FAULT(
-                            "killProcessFault"), INJECT_DISK_FUSE_FAULT("diskFUSEFault");
+                    "networkFault"), INJECT_DISK_SPACE_FAULT("diskSpaceFault"), INJECT_KILL_PROCESS_FAULT(
+                            "killProcessFault"), INJECT_DISK_FUSE_FAULT("diskFUSEFault"), INJECT_THREAD_LEAK_FAULT(
+                                    "threadLeakFault"), KERNEL_PANIC_FAULT("kernelPanicFault");
 
     private String value;
 

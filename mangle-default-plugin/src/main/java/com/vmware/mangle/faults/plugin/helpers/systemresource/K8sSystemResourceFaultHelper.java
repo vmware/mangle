@@ -101,6 +101,9 @@ public class K8sSystemResourceFaultHelper extends SystemResourceFaultHelper {
     @Override
     public List<CommandInfo> getRemediationcommandInfoList(CommandExecutionFaultSpec faultSpec) throws MangleException {
         List<CommandInfo> commandInfoList = new ArrayList<>();
+        if (!systemResourceFaultUtils.isManualRemediationSupported(faultSpec.getFaultName())) {
+            return Collections.emptyList();
+        }
         String remediationCommand =
                 systemResourceFaultUtils.buildRemediationCommand(faultSpec.getArgs(), faultSpec.getInjectionHomeDir());
         if (!StringUtils.isEmpty(remediationCommand)) {

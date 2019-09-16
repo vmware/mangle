@@ -11,7 +11,12 @@
 
 package com.vmware.mangle.model;
 
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Pattern;
+
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  *
@@ -19,7 +24,12 @@ import lombok.Data;
  * @author chetanc
  */
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class UserPasswordUpdateDTO {
+
+    @NotEmpty
     String currentPassword;
+    @Pattern(regexp = "(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%!&+=])(?=\\S+$).{8,}", message = "should consists at least 8 chars, one digit, one lower alpha char, one upper alpha char, and one char within a set of special chars (@#$%!&+=)")
     String newPassword;
 }

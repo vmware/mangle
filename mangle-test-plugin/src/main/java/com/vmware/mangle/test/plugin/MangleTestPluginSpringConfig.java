@@ -16,6 +16,12 @@ import org.springframework.context.annotation.Configuration;
 
 import com.vmware.mangle.task.framework.endpoint.EndpointClientFactory;
 import com.vmware.mangle.task.framework.helpers.CommandInfoExecutionHelper;
+import com.vmware.mangle.test.plugin.helpers.systemresource.CustomDockerSystemResourceFaultHelper;
+import com.vmware.mangle.test.plugin.helpers.systemresource.CustomK8sSystemResourceFaultHelper;
+import com.vmware.mangle.test.plugin.helpers.systemresource.CustomLinuxSystemResourceFaultHelper;
+import com.vmware.mangle.test.plugin.helpers.systemresource.CustomSystemResourceFaultHelperFactory;
+import com.vmware.mangle.test.plugin.helpers.systemresource.CustomSystemResourceFaultUtils;
+import com.vmware.mangle.test.plugin.utils.CustomPluginUtils;
 
 /**
  * MangleTestPlugin spring Configuration class.
@@ -35,5 +41,37 @@ public class MangleTestPluginSpringConfig {
         return new CommandInfoExecutionHelper();
     }
 
+    @Bean
+    public CustomSystemResourceFaultUtils systemResourceFaultUtils() {
+        return new CustomSystemResourceFaultUtils();
+    }
 
+    @Bean
+    public CustomLinuxSystemResourceFaultHelper linuxSystemResourceFaultHelper(
+            EndpointClientFactory endpointClientFactory, CustomSystemResourceFaultUtils systemResourceFaultUtils) {
+        return new CustomLinuxSystemResourceFaultHelper(endpointClientFactory, systemResourceFaultUtils);
+    }
+
+    @Bean
+    public CustomDockerSystemResourceFaultHelper dockerSystemResourceFaultHelper(
+            EndpointClientFactory endpointClientFactory, CustomSystemResourceFaultUtils systemResourceFaultUtils) {
+        return new CustomDockerSystemResourceFaultHelper(endpointClientFactory, systemResourceFaultUtils);
+    }
+
+    @Bean
+    public CustomK8sSystemResourceFaultHelper k8sSystemResourceFaultHelper(EndpointClientFactory endpointClientFactory,
+            CustomSystemResourceFaultUtils systemResourceFaultUtils) {
+        return new CustomK8sSystemResourceFaultHelper(endpointClientFactory, systemResourceFaultUtils);
+    }
+
+    @Bean
+    public CustomSystemResourceFaultHelperFactory systemResourceFaultHelperFactory() {
+        return new CustomSystemResourceFaultHelperFactory();
+
+    }
+
+    @Bean
+    public CustomPluginUtils pluginUtils() {
+        return new CustomPluginUtils();
+    }
 }

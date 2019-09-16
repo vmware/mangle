@@ -42,6 +42,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.testng.PowerMockTestCase;
 import org.testng.Assert;
@@ -60,6 +61,8 @@ import com.vmware.mangle.utils.mockdata.CommandResultUtils;
  * @author chetanc
  */
 @PrepareForTest(value = { CommonUtils.class })
+@PowerMockIgnore({ "javax.net.ssl.*", "javax.xml.parsers.*", "com.sun.org.apache.xerces.internal.jaxp.*",
+        "org.apache.logging.log4j.*" })
 public class CommonUtilsTest extends PowerMockTestCase {
 
     Double value = 234.1341361234132;

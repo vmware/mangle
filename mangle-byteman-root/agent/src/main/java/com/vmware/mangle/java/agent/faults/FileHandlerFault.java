@@ -37,4 +37,9 @@ public class FileHandlerFault extends AgentFault {
     public Map<String, String> getFaultSpecificParams() {
         return new HashMap<>();
     }
+
+    @Override
+    protected boolean isGCRequired() {
+        return true;
+    }
 }

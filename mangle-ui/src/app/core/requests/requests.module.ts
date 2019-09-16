@@ -9,6 +9,7 @@ import { AppRoutingModule } from '../../app-routing.module';
 import { ScheduledComponent } from './scheduled/scheduled.component';
 import { ProcessedComponent } from './processed/processed.component';
 import { RequestsComponent } from './requests.component';
+import { SharedModule } from 'src/app/shared/shared.module';
 
 @NgModule({
   declarations: [RequestsComponent, ScheduledComponent, ProcessedComponent],
@@ -20,7 +21,8 @@ import { RequestsComponent } from './requests.component';
     HttpClientModule,
     ClarityModule,
     AppRoutingModule,
-    CommonModule
+    CommonModule,
+    SharedModule
   ]
 })
 export class RequestsModule { }

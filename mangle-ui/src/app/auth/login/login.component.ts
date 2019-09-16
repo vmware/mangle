@@ -6,8 +6,7 @@ import { MessageConstants } from 'src/app/common/message.constants';
 
 @Component({
   selector: 'app-login',
-  templateUrl: './login.component.html',
-  styleUrls: ['./login.component.css']
+  templateUrl: './login.component.html'
 })
 export class LoginComponent implements OnInit {
 
@@ -40,7 +39,7 @@ export class LoginComponent implements OnInit {
         }
       }, err => {
         if (err.error) {
-          this.alertMessage = err.error.message;
+          this.alertMessage = err.error.description;
         } else {
           this.alertMessage = MessageConstants.AUTH_FAILED;
         }

@@ -3,16 +3,14 @@ import { SettingService } from '../setting.service';
 
 @Component({
     selector: 'app-local',
-    templateUrl: './local.component.html',
-    styleUrls: ['./local.component.css']
+    templateUrl: './local.component.html'
 })
 export class LocalComponent implements OnInit {
 
     constructor(private settingService: SettingService) { }
 
-    public errorFlag = false;
-    public successFlag = false;
-    public alertMessage: string;
+    public errorAlertMessage: string;
+    public successAlertMessage: string;
 
     public addEdit: string;
 
@@ -49,55 +47,43 @@ export class LocalComponent implements OnInit {
 
     public addLocalUser(localUserFormValue) {
         delete localUserFormValue["id"];
-        this.errorFlag = false;
-        this.successFlag = false;
         this.isLoading = true;
         this.settingService.addLocalUser(localUserFormValue).subscribe(
             res => {
                 this.getLocalUserList();
-                this.alertMessage = 'User added successfully!';
-                this.successFlag = true;
+                this.successAlertMessage = 'User added successfully!';
                 this.isLoading = false;
             }, err => {
                 this.getLocalUserList();
-                this.alertMessage = err.error.description;
-                this.errorFlag = true;
+                this.errorAlertMessage = err.error.description;
                 this.isLoading = false;
             });
     }
 
     public updateLocalUser(localUserFormValue) {
-        this.errorFlag = false;
-        this.successFlag = false;
         this.isLoading = true;
         this.settingService.updateLocalUser(localUserFormValue).subscribe(
             res => {
                 this.getLocalUserList();
-                this.alertMessage = 'User updated successfully!';
-                this.successFlag = true;
+                this.successAlertMessage = 'User updated successfully!';
                 this.isLoading = false;
             }, err => {
                 this.getLocalUserList();
-                this.alertMessage = err.error.description;
-                this.errorFlag = true;
+                this.errorAlertMessage = err.error.description;
                 this.isLoading = false;
             });
     }
 
     public deleteLocalUser(localUser) {
-        this.errorFlag = false;
-        this.successFlag = false;
         if (confirm('Do you want to delete: ' + localUser.username + ' user ?')) {
             this.settingService.deleteLocalUser(localUser.username).subscribe(
                 res => {
                     this.getLocalUserList();
-                    this.alertMessage = localUser.username + ' user deleted successfully!';
-                    this.successFlag = true;
+                    this.successAlertMessage = localUser.username + ' user deleted successfully!';
                     this.isLoading = false;
                 }, err => {
                     this.getLocalUserList();
-                    this.alertMessage = err.error.description;
-                    this.errorFlag = true;
+                    this.errorAlertMessage = err.error.description;
                     this.isLoading = false;
                 });
         } else {

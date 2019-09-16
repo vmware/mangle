@@ -14,9 +14,9 @@ package com.vmware.mangle.task.framework.helpers;
 import java.util.HashMap;
 import java.util.Stack;
 
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import com.vmware.mangle.cassandra.model.faults.specs.TaskSpec;
 import com.vmware.mangle.cassandra.model.tasks.RemediableTask;
@@ -54,11 +54,11 @@ public abstract class AbstractTaskHelper<T extends TaskSpec> implements ITaskHel
             return task;
         }
         task.setTaskClass(task.getClass().getName());
-        String className = this.getClass().getName();
+
         initTroubleshootingInfo(task, injectedTaskId);
         task.setExtensionName(this.getClass().getName());
         task.setTaskData(taskData);
-        task.setTaskName(className.substring(className.lastIndexOf('.') + 1) + "-" + System.currentTimeMillis());
+        updateTaskName(task, taskData);
         if (task.getTriggers() == null) {
             task.setTriggers(new Stack<>());
         }
@@ -67,9 +67,19 @@ public abstract class AbstractTaskHelper<T extends TaskSpec> implements ITaskHel
         return task;
     }
 
+    @SuppressWarnings("unused")
+    private void updateTaskName(Task<T> task, T taskData) {
+        String className = this.getClass().getName();
+        if (StringUtils.hasText(taskData.getTaskName())) {
+            task.setTaskName(taskData.getTaskName());
+        } else {
+            task.setTaskName(className.substring(className.lastIndexOf('.') + 1) + "-" + System.currentTimeMillis());
+        }
+    }
+
     @SuppressWarnings("unchecked")
     private void initTroubleshootingInfo(Task<T> task, String injectedTaskId) {
-        if (StringUtils.isNotEmpty(injectedTaskId)) {
+        if (!StringUtils.isEmpty(injectedTaskId)) {
             ((RemediableTask<TaskSpec>) task).setInjectionTaskId(injectedTaskId);
             task.setTaskType(TaskType.REMEDIATION);
             task.setTaskTroubleShootingInfo(task.getTaskTroubleShootingInfo());

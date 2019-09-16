@@ -86,6 +86,7 @@ public class Scheduler {
     public static final String PAUSE_SCHEDULE = "PAUSE";
     public static final String CANCEL_SCHEDULE = "CANCEL";
     public static final String DELETE_SCHEDULE = "DELETE";
+    public static final String DELETE_SCHEDULE_AND_TASKS = "DELETE_SCHEDULE_AND_TASKS";
 
     private Scheduler() {
         log.info("Initializing Mangle Scheduler...");
@@ -213,7 +214,7 @@ public class Scheduler {
      * @param jobIds
      * @return
      */
-    public Set<String> deleteScheduledJobs(List<String> jobIds) throws MangleException {
+    public Set<String> deleteScheduledJobs(List<String> jobIds, boolean deleteAssociatedTasks) throws MangleException {
         log.trace("Processing request to delete the schedules for the jobs: {}", jobIds.toString());
         Set<SchedulerSpec> schedulerSpecSet = schedulerService.getSchedulesForIds(jobIds);
         Set<String> scheduleIds = schedulerSpecSet.stream().map(SchedulerSpec::getId).collect(Collectors.toSet());
@@ -227,11 +228,15 @@ public class Scheduler {
                 .filter(schedulerSpec -> schedulerSpec.getStatus() == SchedulerStatus.SCHEDULED)
                 .map(SchedulerSpec::getId).collect(Collectors.toList());
 
-        log.trace("Deleting all the in-active scheduled");
-        schedulerDeletionService.deleteSchedulerDetailsByJobIds(inActiveSchedules);
+        log.trace("Deleting all the in-active schedules");
+        schedulerDeletionService.deleteSchedulerDetailsByJobIds(inActiveSchedules, deleteAssociatedTasks);
         log.trace("Submitting active schedule jobs {} for deletion", activeSchedules.toString());
+        String deletionOperationMode = DELETE_SCHEDULE;
+        if (deleteAssociatedTasks) {
+            deletionOperationMode = DELETE_SCHEDULE_AND_TASKS;
+        }
         for (String scheduleId : activeSchedules) {
-            eventPublisher.publishEvent(new ScheduleUpdatedEvent(scheduleId, DELETE_SCHEDULE));
+            eventPublisher.publishEvent(new ScheduleUpdatedEvent(scheduleId, deletionOperationMode));
         }
         return scheduleIds;
     }
@@ -289,7 +294,16 @@ public class Scheduler {
         return scheduledJobs.containsKey(jobId);
     }
 
-    public boolean removeSchedule(String jobId, String status) {
+
+    /**
+     * This method is used by the mangle to sync the schedules across the multi-node setup
+     *
+     * @param jobId
+     *            job id of the schedule that needs to be removed
+     * @param status
+     * @return
+     */
+    public boolean removeScheduleFromCurrentNode(String jobId, String status) {
         boolean isOperationSuccessful = false;
         if (PAUSE_SCHEDULE.equals(status)) {
             log.info("Pausing the schedule {}", jobId);
@@ -297,12 +311,15 @@ public class Scheduler {
         } else if (CANCEL_SCHEDULE.equals(status)) {
             log.info("Cancelling the schedule {}", jobId);
             isOperationSuccessful = cancelAndUpdateJobsMap(jobId, SchedulerStatus.CANCELLED);
-        } else if (DELETE_SCHEDULE.equals(status)) {
+        } else if (DELETE_SCHEDULE.equals(status) || DELETE_SCHEDULE_AND_TASKS.equals(status)) {
             log.info("Deleting the schedule {}", jobId);
             isOperationSuccessful = cancelAndUpdateJobsMap(jobId, SchedulerStatus.CANCELLED);
             if (isOperationSuccessful) {
                 try {
                     schedulerDeletionService.deleteSchedulerDetailsByJobId(jobId);
+                    if (DELETE_SCHEDULE_AND_TASKS.equals(status)) {
+                        taskDeletionService.deleteTaskById(jobId);
+                    }
                 } catch (MangleException e) {
                     log.error("Deletion of the job entry failed with the exception: {}", jobId);
                 }
@@ -311,12 +328,33 @@ public class Scheduler {
         return isOperationSuccessful;
     }
 
-    public boolean removeSchedule(String jobId) {
-        boolean cancelledStatus = this.scheduledJobs.get(jobId).cancel(true);
-        if (cancelledStatus) {
-            this.scheduledJobs.remove(jobId);
+    /**
+     * Cancel the job in the current node This is usually triggered when the partition to which the
+     * schedule belongs is migrated to the other node
+     *
+     * @param jobId
+     * @return
+     */
+    public boolean removeScheduleFromCurrentNode(String jobId) {
+        log.info("Removing schedule for the job {}", jobId);
+        ScheduledFuture<?> scheduledJob = this.scheduledJobs.get(jobId);
+        boolean cancelledStatus = false;
+        if (scheduledJob != null) {
+            cancelledStatus = scheduledJob.cancel(true);
+            if (cancelledStatus) {
+                this.scheduledJobs.remove(jobId);
+                log.debug("Successfully removed the scheduled job {}", jobId);
+            }
         }
         return cancelledStatus;
+    }
+
+    public void removeAllSchedulesFromCurrentNode() {
+        List<String> scheduledJobIds = new ArrayList<>(this.scheduledJobs.keySet());
+        for (String jobId : scheduledJobIds) {
+            removeScheduleFromCurrentNode(jobId);
+            eventPublisher.publishEvent(new ScheduleUpdatedEvent(jobId, SchedulerStatus.CANCELLED.name()));
+        }
     }
 
     /**
@@ -330,11 +368,15 @@ public class Scheduler {
     }
 
     private boolean cancelAndUpdateJobsMap(String jobID, SchedulerStatus status) {
-        boolean cancelledStatus = this.scheduledJobs.get(jobID).cancel(true);
-        if (cancelledStatus) {
-            schedulerService.updateSchedulerStatus(jobID, status);
-            this.scheduledJobs.remove(jobID);
-            eventPublisher.publishEvent(new ScheduleUpdatedEvent(jobID, status.name()));
+        ScheduledFuture<?> scheduledJob = this.scheduledJobs.get(jobID);
+        boolean cancelledStatus = false;
+        if (scheduledJob != null) {
+            cancelledStatus = scheduledJob.cancel(true);
+            if (cancelledStatus) {
+                schedulerService.updateSchedulerStatus(jobID, status);
+                this.scheduledJobs.remove(jobID);
+                eventPublisher.publishEvent(new ScheduleUpdatedEvent(jobID, status.name()));
+            }
         }
         return cancelledStatus;
     }

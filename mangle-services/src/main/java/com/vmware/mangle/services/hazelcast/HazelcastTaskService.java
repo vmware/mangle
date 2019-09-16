@@ -11,10 +11,14 @@
 
 package com.vmware.mangle.services.hazelcast;
 
+import static com.vmware.mangle.utils.constants.HazelcastConstants.HAZELCAST_NODE_TASKS_MAP;
+import static com.vmware.mangle.utils.constants.HazelcastConstants.HAZELCAST_TASKS_MAP;
+
 import java.util.HashSet;
 import java.util.Set;
 
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.HazelcastInstanceAware;
 import com.hazelcast.core.IMap;
 import com.hazelcast.core.Member;
 import lombok.Setter;
@@ -34,7 +38,6 @@ import com.vmware.mangle.services.TaskService;
 import com.vmware.mangle.services.helpers.FaultInjectionHelper;
 import com.vmware.mangle.services.scheduler.Scheduler;
 import com.vmware.mangle.services.tasks.executor.TaskExecutor;
-import com.vmware.mangle.utils.constants.URLConstants;
 import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.MangleRuntimeException;
 
@@ -63,7 +66,7 @@ import com.vmware.mangle.utils.exceptions.MangleRuntimeException;
  */
 @Service
 @Log4j2
-public class HazelcastTaskService {
+public class HazelcastTaskService implements HazelcastInstanceAware {
 
     @Autowired
     private TaskService taskService;
@@ -101,8 +104,10 @@ public class HazelcastTaskService {
         if (persistedData == null) {
             triggerTask = false;
         } else if (!CollectionUtils.isEmpty(persistedData.getTriggers())
-                && (!persistedData.isScheduledTask() && (persistedData.getTaskStatus() == TaskStatus.COMPLETED
-                        || persistedData.getTaskStatus() == TaskStatus.FAILED))) {
+                && (!persistedData.isScheduledTask()
+                        && (persistedData.getTaskStatus() == TaskStatus.COMPLETED
+                                || persistedData.getTaskStatus() == TaskStatus.FAILED)
+                        && !persistedData.isTaskRetriggered())) {
             log.debug("Task {} has completed execution with the status {}, will be removing from the cluster cache",
                     taskId, persistedData.getTaskStatus());
             triggerTask = false;
@@ -121,7 +126,7 @@ public class HazelcastTaskService {
         if (triggerTask) {
             submitTask(persistedData);
         } else {
-            IMap<String, Set<String>> taskMap = hazelcastInstance.getMap(URLConstants.HAZELCAST_TASKS_MAP);
+            IMap<String, Set<String>> taskMap = hazelcastInstance.getMap(HAZELCAST_TASKS_MAP);
             taskMap.remove(taskId);
         }
     }
@@ -160,14 +165,25 @@ public class HazelcastTaskService {
         Task<TaskSpec> task = taskService.getTaskById(taskId);
         if (task.isScheduledTask()) {
             log.debug("Triggering cleanup for the schedule job {}", taskId);
-            scheduler.removeSchedule(taskId, taskStatus);
+            scheduler.removeScheduleFromCurrentNode(taskId, taskStatus);
             removeTaskFromClusterNodeCache(taskId);
         }
     }
 
+    /**
+     * Removes the schedule job from the current node This can happen because of two reason:
+     *
+     * 1. When node leaves the cluster because of the network-partition, and loses the quorum
+     *
+     * 2. When a new node joins the cluster, and the task map partition ownership is assigned to a
+     * new node
+     *
+     * @param taskId
+     * @throws MangleException
+     */
     public void cleanUpTaskForMigration(String taskId) throws MangleException {
         Task<TaskSpec> task = taskService.getTaskById(taskId);
-        if (task.isScheduledTask() && scheduler.removeSchedule(taskId)) {
+        if (task.isScheduledTask() && scheduler.removeScheduleFromCurrentNode(taskId)) {
             log.debug("cleaned up schedule job {} as part of the migration event from the node {}", taskId,
                     hazelcastInstance.getCluster().getLocalMember().getAddress());
             removeTaskFromClusterNodeCache(taskId);
@@ -178,7 +194,7 @@ public class HazelcastTaskService {
         Member currentInstance = hazelcastInstance.getCluster().getLocalMember();
         log.debug("Added task to the mangle cluster node {} for execution", currentInstance.getAddress());
         String host = currentInstance.getUuid();
-        IMap<String, Set<String>> nodeToTaskMapping = hazelcastInstance.getMap(URLConstants.HAZELCAST_NODE_TASKS_MAP);
+        IMap<String, Set<String>> nodeToTaskMapping = hazelcastInstance.getMap(HAZELCAST_NODE_TASKS_MAP);
         Set<String> tasks = new HashSet<>();
         if (nodeToTaskMapping.containsKey(host)) {
             tasks = nodeToTaskMapping.get(host);
@@ -194,7 +210,7 @@ public class HazelcastTaskService {
         Member currentInstance = hazelcastInstance.getCluster().getLocalMember();
         log.debug("Removing task from the mangle cluster node {}'s execution context", currentInstance.getAddress());
         String host = currentInstance.getUuid();
-        IMap<String, Set<String>> nodeToTaskMapping = hazelcastInstance.getMap(URLConstants.HAZELCAST_NODE_TASKS_MAP);
+        IMap<String, Set<String>> nodeToTaskMapping = hazelcastInstance.getMap(HAZELCAST_NODE_TASKS_MAP);
         Set<String> tasks;
         if (nodeToTaskMapping.containsKey(host)) {
             tasks = nodeToTaskMapping.get(host);

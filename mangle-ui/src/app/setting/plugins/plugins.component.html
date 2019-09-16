@@ -1,0 +1,65 @@
+<app-alert [(errorAlertMessage)]="errorAlertMessage" [(successAlertMessage)]="successAlertMessage"
+    (errorAlertMessageChange)="errorAlertMessage = $event" (successAlertMessageChange)="successAlertMessage = $event">
+</app-alert>
+<clr-dg-action-bar>
+    <div class="btn-group">
+        <button type="button" class="btn btn-sm btn-secondary" (click)="pluginUploadModal=true;">
+            <clr-icon shape="plus"></clr-icon> Load Plugin
+        </button>
+    </div>
+</clr-dg-action-bar>
+<clr-datagrid [clrDgLoading]="isLoading">
+    <clr-dg-column [clrDgField]="'pluginName'">Plugin</clr-dg-column>
+    <clr-dg-column [clrDgField]="'pluginId'">Plugin Id</clr-dg-column>
+    <clr-dg-column [clrDgField]="'pluginVersion'">Plugin Version</clr-dg-column>
+    <clr-dg-column [clrDgField]="'isLoaded'">Loaded</clr-dg-column>
+    <clr-dg-column [clrDgField]="'isActive'">Active</clr-dg-column>
+    <clr-dg-column>Supported Faults</clr-dg-column>
+    <clr-dg-row *clrDgItems="let faultPlugin of pluginList" [clrDgItem]="faultPlugin">
+        <clr-dg-action-overflow>
+            <button class="action-item" (click)="performPluginAction('LOAD', faultPlugin.pluginName);"
+                *ngIf="faultPlugin.isLoaded == false || faultPlugin.pluginId == undefined">Load</button>
+            <button class="action-item" (click)="performPluginAction('UNLOAD', faultPlugin.pluginName);"
+                *ngIf="faultPlugin.isLoaded == true && faultPlugin.isActive == true">Unload</button>
+            <button class="action-item" (click)="performPluginAction('ENABLE', faultPlugin.pluginName);"
+                *ngIf="faultPlugin.isLoaded == true && faultPlugin.isActive == false">Enable</button>
+            <button class="action-item" (click)="performPluginAction('DISABLE', faultPlugin.pluginName);"
+                *ngIf="faultPlugin.isLoaded == true && faultPlugin.isActive == true">Disable</button>
+            <button class="action-item" (click)="removePlugin(faultPlugin);"
+                *ngIf="faultPlugin.isLoaded == true && (faultPlugin.isActive == true || faultPlugin.isActive == false)">Remove</button>
+            <button class="action-item" (click)="deletePluginFile(faultPlugin);"
+                *ngIf="faultPlugin.pluginId == undefined">Remove File</button>
+        </clr-dg-action-overflow>
+        <clr-dg-cell>{{faultPlugin.pluginName}}</clr-dg-cell>
+        <clr-dg-cell>{{faultPlugin.pluginId}}</clr-dg-cell>
+        <clr-dg-cell>{{faultPlugin.pluginVersion}}</clr-dg-cell>
+        <clr-dg-cell>{{faultPlugin.isLoaded}}</clr-dg-cell>
+        <clr-dg-cell>{{faultPlugin.isActive}}</clr-dg-cell>
+        <clr-dg-cell><span class="label label-info"
+                *ngFor="let item of faultPlugin.customFaultDescriptorMap | keyvalue">{{item.value.faultName}}</span>
+        </clr-dg-cell>
+    </clr-dg-row>
+    <clr-dg-footer>
+        <clr-dg-pagination #pagination [clrDgPageSize]="10">
+            <clr-dg-page-size [clrPageSizeOptions]="[10,20,50,100]">Plugins per page</clr-dg-page-size>
+            {{pagination.firstItem + 1}} - {{pagination.lastItem + 1}} of {{pagination.totalItems}} plugins
+        </clr-dg-pagination>
+    </clr-dg-footer>
+</clr-datagrid>
+<clr-modal [(clrModalOpen)]="pluginUploadModal" [clrModalClosable]="false">
+    <h3 class="modal-title">Load Plugin</h3>
+    <div class="modal-body">
+        <form #pluginForm="ngForm" (ngSubmit)="uploadCustomPlugin();pluginUploadModal=false;pluginForm.reset();"
+            ngNativeValidate>
+            <section class="form-block">
+                <div class="form-group">
+                    <label for="kubeConfig">Plugin Zip File</label>
+                    <input type="file" name="pluginFile" accept=".zip" (change)="getPluginFile($event)" ngModel>
+                </div>
+            </section>
+            <button type="button" class="btn btn-outline"
+                (click)="pluginUploadModal=false;pluginForm.reset();ngOnInit();">CANCEL</button>
+            <button type="submit" class="btn btn-primary">SUBMIT</button>
+        </form>
+    </div>
+</clr-modal>

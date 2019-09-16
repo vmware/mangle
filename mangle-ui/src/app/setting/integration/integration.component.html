@@ -1,9 +1,4 @@
-<clr-alert *ngIf="errorFlag" [clrAlertType]="'danger'">
-	<div class="alert-item">{{alertMessage}}</div>
-</clr-alert>
-<clr-alert *ngIf="successFlag" [clrAlertType]="'success'">
-	<div class="alert-item">{{alertMessage}}</div>
-</clr-alert>
+<app-alert [(errorAlertMessage)]="errorAlertMessage" [(successAlertMessage)]="successAlertMessage" (errorAlertMessageChange)="errorAlertMessage = $event" (successAlertMessageChange)="successAlertMessage = $event"></app-alert>
 <clr-dropdown>
 	<button type="button" class="btn btn-sm btn-secondary" clrDropdownTrigger>
 		<clr-icon shape="plus"></clr-icon> Monitoring Tool <clr-icon shape="caret down"></clr-icon>
@@ -17,7 +12,7 @@
 </clr-dropdown>&nbsp;&nbsp;
 <button class="btn btn-sm btn-link" [clrLoading]="collectionBtnState" (click)="updateMetricCollectionStatus();"
 	[disabled]="metricProviderList.length == 0">
-	<input type="radio" name="metricColl" [checked]="metricCollectionStatus" /> Send Metrics
+	<input type="checkbox" clrToggle name="metricColl" [checked]="metricCollectionStatus" /> Send Metrics
 </button>
 <clr-datagrid [clrDgLoading]="isLoading">
 	<clr-dg-column>Name</clr-dg-column>
@@ -35,7 +30,7 @@
 		<clr-dg-cell>{{mp.name}}</clr-dg-cell>
 		<clr-dg-cell>{{mp.metricProviderType}}</clr-dg-cell>
 		<clr-dg-cell>
-			<input type="radio" name="mp.name" [checked]="mp.isActive" (click)="updateMetricProviderStatus(mp);" />
+			<input type="checkbox" clrToggle name="mp.name" [checked]="mp.isActive" (click)="updateMetricProviderStatus(mp);" />
 		</clr-dg-cell>
 		<clr-dg-cell>
 			<span *ngIf="mp.metricProviderType == 'DATADOG'">https://app.datadoghq.com</span>

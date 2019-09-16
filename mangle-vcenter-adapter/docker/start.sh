@@ -7,4 +7,4 @@ cp $OPT_DIR/vmware/mangle/cert/server.* $OPT_DIR/mangle-vc-adapter-tomcat/config
 
 echo "starting tomcat service...................."
 
-java -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/var/opt/mangle-tomcat/logs -Xms512m -Xmx4G -jar $OPT_DIR/mangle-vc-adapter-tomcat/app.jar
+java -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/var/opt/mangle-vc-adapter-tomcat/logs -XX:+ExitOnOutOfMemoryError -Xms512m -Xmx4G -jar $OPT_DIR/mangle-vc-adapter-tomcat/app.jar

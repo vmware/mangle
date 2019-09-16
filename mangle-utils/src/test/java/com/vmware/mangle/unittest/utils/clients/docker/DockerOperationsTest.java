@@ -11,7 +11,7 @@
 
 package com.vmware.mangle.unittest.utils.clients.docker;
 
-import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.validateMockitoUsage;
@@ -100,7 +100,7 @@ public class DockerOperationsTest extends PowerMockTestCase {
     public void testdockerPause() throws Exception {
         ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
         when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
-        when(listContainersCmd.withStatusFilter(anyString())).thenReturn(listContainersCmd);
+        when(listContainersCmd.withStatusFilter(any())).thenReturn(listContainersCmd);
         Container container = mock(Container.class);
         List<Container> allContainers = new ArrayList<>();
         allContainers.add(container);
@@ -146,7 +146,7 @@ public class DockerOperationsTest extends PowerMockTestCase {
     public void testdockerUnPause() throws Exception {
         ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
         when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
-        when(listContainersCmd.withStatusFilter(anyString())).thenReturn(listContainersCmd);
+        when(listContainersCmd.withStatusFilter(any())).thenReturn(listContainersCmd);
         Container container = mock(Container.class);
         List<Container> allpausedContainers = new ArrayList<>();
         allpausedContainers.add(container);
@@ -167,7 +167,7 @@ public class DockerOperationsTest extends PowerMockTestCase {
     public void testdockerUnpause_V2() throws Exception {
         ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
         when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
-        when(listContainersCmd.withStatusFilter(anyString())).thenReturn(listContainersCmd);
+        when(listContainersCmd.withStatusFilter(any())).thenReturn(listContainersCmd);
         Container container = mock(Container.class);
         List<Container> allContainers = new ArrayList<>();
         allContainers.add(container);
@@ -190,7 +190,9 @@ public class DockerOperationsTest extends PowerMockTestCase {
         when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
         List<Container> allContainers = new ArrayList<>();
         allContainers.clear();
-        when(listContainersCmd.withStatusFilter("paused")).thenReturn((listContainersCmd));
+        List<String> statusFilterList = new ArrayList<>();
+        statusFilterList.add("paused");
+        when(listContainersCmd.withStatusFilter(statusFilterList)).thenReturn((listContainersCmd));
 
         when(listContainersCmd.exec()).thenReturn(allContainers);
         UnpauseContainerCmd unpauseContainercmd = mock(UnpauseContainerCmd.class);
@@ -275,7 +277,7 @@ public class DockerOperationsTest extends PowerMockTestCase {
     public void testdockerStop() throws Exception {
         ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
         when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
-        when(listContainersCmd.withStatusFilter(anyString())).thenReturn(listContainersCmd);
+        when(listContainersCmd.withStatusFilter(any())).thenReturn(listContainersCmd);
         Container container = mock(Container.class);
         List<Container> allstoppedContainers = new ArrayList<>();
         allstoppedContainers.add(container);
@@ -298,7 +300,7 @@ public class DockerOperationsTest extends PowerMockTestCase {
     public void testdockerStop_V2() throws Exception {
         ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
         when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
-        when(listContainersCmd.withStatusFilter(anyString())).thenReturn(listContainersCmd);
+        when(listContainersCmd.withStatusFilter(any())).thenReturn(listContainersCmd);
         Container container = mock(Container.class);
         List<Container> allContainers = new ArrayList<>();
         allContainers.add(container);

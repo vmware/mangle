@@ -34,6 +34,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -42,6 +43,7 @@ import com.vmware.mangle.cassandra.model.security.Role;
 import com.vmware.mangle.cassandra.model.security.User;
 import com.vmware.mangle.cassandra.model.security.UsernameDomain;
 import com.vmware.mangle.model.enums.DefaultRoles;
+import com.vmware.mangle.services.hazelcast.HazelcastClusterSyncAware;
 import com.vmware.mangle.services.repository.UserRepository;
 import com.vmware.mangle.utils.constants.Constants;
 import com.vmware.mangle.utils.constants.ErrorConstants;
@@ -55,7 +57,7 @@ import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
  */
 @Service
 @Log4j2
-public class UserService {
+public class UserService implements HazelcastClusterSyncAware {
 
     UserRepository userRepository;
 
@@ -67,7 +69,7 @@ public class UserService {
 
     PasswordEncoder passwordEncoder;
 
-    private Pattern BCRYPT_PATTERN = Pattern.compile("\\A\\$2a?\\$\\d\\d\\$[./0-9A-Za-z]{53}");
+    private Pattern bCryptPattern = Pattern.compile("\\A\\$2a?\\$\\d\\d\\$[./0-9A-Za-z]{53}");
 
     @Autowired
     private SessionRegistry sessionRegistry;
@@ -87,7 +89,7 @@ public class UserService {
     }
 
     public Set<Role> getRoleForUser(String username) {
-        log.info("Retrieving role for the user: " + username);
+        log.debug("Retrieving role for the user: " + username);
         Set<Role> roles = null;
         User user = userRepository.findByName(username);
         if (user != null) {
@@ -102,7 +104,7 @@ public class UserService {
     }
 
     public User getUserByName(String username) {
-        log.info("Retrieving User for the username: " + username);
+        log.debug("Retrieving User for the username: " + username);
         User user = userRepository.findByName(username);
         if (user != null) {
             user.setRoles(new HashSet<>(roleService.getRolesByNames(user.getRoleNames())));
@@ -117,8 +119,11 @@ public class UserService {
             log.error(String.format("Failed to find the user %s, execution of the updateUser failed", user.getName()));
             throw new MangleException(ErrorConstants.USER_NOT_FOUND, ErrorCode.USER_NOT_FOUND, user.getName());
         }
+        if (StringUtils.hasText(user.getPassword()) && !bCryptPattern.matcher(user.getPassword()).matches()) {
+            dbUser.setPassword(passwordEncoder.encode(user.getPassword()));
+        }
         dbUser.setRoleNames(user.getRoleNames());
-        dbUser.setPassword(user.getPassword());
+        dbUser.setAccountLocked(user.getAccountLocked());
         return createUser(dbUser);
     }
 
@@ -153,14 +158,14 @@ public class UserService {
 
         user.setRoles(getPersitentRoles(user.getRoleNames()));
         if (usernameDomain.getDomain().equals(getDefaultDomainName())
-                && !BCRYPT_PATTERN.matcher(user.getPassword()).matches()) {
+                && !bCryptPattern.matcher(user.getPassword()).matches()) {
             user.setPassword(passwordEncoder.encode(user.getPassword()));
         }
         return userRepository.save(user);
     }
 
     public List<User> getAllUsers() {
-        log.info("Retrieving all the users");
+        log.debug("Retrieving all the users");
         return userRepository.findAll();
     }
 
@@ -184,6 +189,7 @@ public class UserService {
     }
 
     public void deleteUsersByNames(List<String> usernames) throws MangleException {
+        log.info("Deleting users: {}", usernames);
         String currentUser = getCurrentUserName();
         List<User> persistedUsers = userRepository.findByNameIn(usernames);
         Set<String> persistedUserNames = persistedUsers.stream().map(User::getName).collect(Collectors.toSet());
@@ -193,7 +199,8 @@ public class UserService {
         }
 
         if (persistedUserNames.contains(Constants.MANGLE_DEFAULT_USER)) {
-            throw new MangleException(ErrorConstants.DEFAULT_MANGLE_USER_DELETE_FAIL, ErrorCode.DEFAULT_MANGLE_USER_DELETE_FAIL);
+            throw new MangleException(ErrorConstants.DEFAULT_MANGLE_USER_DELETE_FAIL,
+                    ErrorCode.DEFAULT_MANGLE_USER_DELETE_FAIL);
         }
 
         usernames.removeAll(persistedUserNames);
@@ -305,6 +312,10 @@ public class UserService {
             org.springframework.security.core.userdetails.User user =
                     (org.springframework.security.core.userdetails.User) principalObj;
             return user.getUsername();
+        } else if (principalObj instanceof org.springframework.security.ldap.userdetails.LdapUserDetailsImpl) {
+            org.springframework.security.ldap.userdetails.LdapUserDetailsImpl ldap_user =
+                    (org.springframework.security.ldap.userdetails.LdapUserDetailsImpl) principalObj;
+            return ldap_user.getUsername();
         }
         return null;
     }
@@ -331,8 +342,7 @@ public class UserService {
      *
      */
     public HashMap<String, List<SessionInformation>> allUserToSessionsMapping() {
-        HashMap<String, List<SessionInformation>> usersToSessionsMapping =
-                new HashMap<String, List<SessionInformation>>();
+        HashMap<String, List<SessionInformation>> usersToSessionsMapping = new HashMap<>();
         List<String> users = getUsersFromSessionRegistry();
         List<SessionInformation> sessions = getAllActiveSessions();
         if (!CollectionUtils.isEmpty(users) && !CollectionUtils.isEmpty(sessions)) {
@@ -341,7 +351,7 @@ public class UserService {
                 if (user != null) {
                     List<SessionInformation> sessionList;
                     if (!(usersToSessionsMapping.containsKey(user))) {
-                        sessionList = new ArrayList<SessionInformation>();
+                        sessionList = new ArrayList<>();
                     } else {
                         sessionList = usersToSessionsMapping.get(user);
                     }
@@ -349,9 +359,8 @@ public class UserService {
                     usersToSessionsMapping.put(user, sessionList);
                 }
             }
-            return usersToSessionsMapping;
         }
-        return null;
+        return usersToSessionsMapping;
     }
 
     /**
@@ -380,4 +389,9 @@ public class UserService {
         }
     }
 
+    @Override
+    public void resync(String objectIdentifier) {
+        log.debug("Triggering multi-node re-sync for user {}", objectIdentifier);
+        terminateUserSession(objectIdentifier);
+    }
 }

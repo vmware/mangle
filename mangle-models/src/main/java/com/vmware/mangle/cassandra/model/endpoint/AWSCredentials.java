@@ -11,11 +11,13 @@
 
 package com.vmware.mangle.cassandra.model.endpoint;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.springframework.data.cassandra.core.mapping.Table;
 
 import com.vmware.mangle.model.enums.EncryptField;
+import com.vmware.mangle.model.enums.EndpointType;
 
 /**
  * AWS Credentials model class.
@@ -28,12 +30,13 @@ import com.vmware.mangle.model.enums.EncryptField;
 public class AWSCredentials extends CredentialsSpec {
 
     private static final long serialVersionUID = 1L;
-    @EncryptField
+
     private String accessKeyId;
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @EncryptField
     private String secretKey;
 
     public AWSCredentials() {
-        //setType(EndpointType.AWS);
+        setType(EndpointType.AWS);
     }
 }

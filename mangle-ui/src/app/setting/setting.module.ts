@@ -11,10 +11,15 @@ import { UsersComponent } from './users/users.component';
 import { RolesComponent } from './roles/roles.component';
 import { IdentityComponent } from './identity/identity.component';
 import { LogLevelComponent } from './loggers/log-level.component';
-import { IntegrationComponent } from './integration/integration.component'
+import { IntegrationComponent } from './integration/integration.component';
+import { ClusterComponent } from './cluster/cluster.component';
+import { PluginsComponent } from './plugins/plugins.component';
+import { LocalComponent } from './local/local.component';
+import { SharedModule } from '../shared/shared.module';
+import { PasswordStrengthBarModule } from 'ng2-password-strength-bar';
 
 @NgModule({
-  declarations: [SettingComponent, UsersComponent, RolesComponent, IdentityComponent, LogLevelComponent, IntegrationComponent],
+  declarations: [SettingComponent, UsersComponent, RolesComponent, IdentityComponent, LogLevelComponent, IntegrationComponent, ClusterComponent, PluginsComponent, LocalComponent],
   imports: [
     BrowserAnimationsModule,
     BrowserModule,
@@ -23,7 +28,9 @@ import { IntegrationComponent } from './integration/integration.component'
     HttpClientModule,
     ClarityModule,
     AppRoutingModule,
-    CommonModule
+    CommonModule,
+    SharedModule,
+    PasswordStrengthBarModule
   ]
 })
 export class SettingModule { }

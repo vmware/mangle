@@ -11,6 +11,7 @@
 
 package com.vmware.mangle.cassandra.model.faults.specs;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -30,13 +31,18 @@ import com.vmware.mangle.services.enums.BytemanFaultType;
 public class JavaMethodLatencyFaultSpec extends JVMCodeLevelFaultSpec {
     private static final long serialVersionUID = 1L;
 
-    @ApiModelProperty(value = "String value. You can provide integer value in terms of milli seconds", required = true, example = "100")
-    protected String latency;
-
+    @ApiModelProperty(value = "Integer value. You can provide integer value in terms of milli seconds", required = true, example = "100")
+    private Integer latency;
 
     public JavaMethodLatencyFaultSpec() {
         setFaultType(BytemanFaultType.JAVA_METHOD_LATENCY.toString());
         setFaultName(BytemanFaultType.JAVA_METHOD_LATENCY.toString());
         setSpecType(this.getClass().getName());
+    }
+
+    @JsonIgnore
+    @Override
+    public void setTimeoutInMilliseconds(Integer timeoutinMilliseconds) {
+        super.setTimeoutInMilliseconds(timeoutinMilliseconds);
     }
 }

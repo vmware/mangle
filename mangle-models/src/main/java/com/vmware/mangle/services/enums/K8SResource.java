@@ -17,7 +17,7 @@ package com.vmware.mangle.services.enums;
  * @author bkaranam
  */
 public enum K8SResource {
-    POD, SERVICE, NODE, DEPLOYMENT, STATEFULSET, SECRET;
+    POD, SERVICE, NODE, DEPLOYMENT, STATEFULSET, SECRET, DAEMONSET, CONFIGMAP, JOB, REPLICASET, REPLICATIONCONTROLLER, PV, PVC;
 
     public String getValue() {
         return this.name().toLowerCase();

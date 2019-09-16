@@ -44,6 +44,7 @@ describe('DockerStateChangeComponent', () => {
         fixture.detectChanges();
         endpointService = TestBed.get(EndpointService);
         spyOn(endpointService, 'getAllEndpoints').and.returnValue(of([]));
+        spyOn(endpointService, 'getDockerContainers').and.returnValue(of([]));
         faultService = TestBed.get(FaultService);
         spyOn(faultService, 'executeDockerStateChangeFault').and.returnValue(of([component.faultFormData]));
         router = TestBed.get(Router);
@@ -57,6 +58,11 @@ describe('DockerStateChangeComponent', () => {
     it('should execute docker state change fault', () => {
         component.executeDockerStateChangeFault(component.faultFormData);
         expect(faultService.executeDockerStateChangeFault).toHaveBeenCalled();
+    });
+
+    it('should execute getDockerContainers', () => {
+        component.getDockerContainers("DOCKER",'');
+        expect(endpointService.getDockerContainers).toHaveBeenCalled();
     });
 
 });

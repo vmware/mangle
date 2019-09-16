@@ -21,6 +21,7 @@ import static com.vmware.mangle.utils.constants.FaultConstants.AGENT_NAME;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import lombok.extern.log4j.Log4j2;
@@ -35,6 +36,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.CpuFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.JVMAgentFaultSpec;
 import com.vmware.mangle.cassandra.model.tasks.SupportScriptInfo;
 import com.vmware.mangle.cassandra.model.tasks.commands.CommandExecutionResult;
@@ -128,6 +130,25 @@ public class K8sBytemanFaultHelperTest extends PowerMockTestCase {
         }
     }
 
+    @Test
+    public void testGetJVMAgentInjectionCommandInfoListForCPUFaultWithCustomJavaHome() {
+        try {
+            CommandExecutionFaultSpec cpuFaultSpec = getTestFaultSpecForCPUFault();
+            String javaHomePath = "/usr/bin";
+            ((CpuFaultSpec) cpuFaultSpec).getJvmProperties().setJavaHomePath(javaHomePath);
+            cpuFaultSpec.getArgs().put(FaultConstants.JAVA_HOME_PATH, javaHomePath);
+            Mockito.when(
+                    endpointClientFactory.getEndPointClient(cpuFaultSpec.getCredentials(), cpuFaultSpec.getEndpoint()))
+                    .thenReturn(kubernetesCommandLineClient);
+            List<CommandInfo> injectionCommands = k8sBytemanFaultHelper.getInjectionCommandInfoList(cpuFaultSpec);
+            List<CommandInfo> expectedCommands = getExpectedInjectionCommandsForJavaHomePath();
+            log.info(RestTemplateWrapper.objectToJson(injectionCommands));
+            assertEquals(injectionCommands, expectedCommands);
+        } catch (MangleException e) {
+            log.error("testGetJVMAgentInjectionCommandInfoList For CPU Fault on K8s failed with Exception: ", e);
+            assertTrue(false);
+        }
+    }
 
     @Test
     public void testGetJVMAgentRemediationCommandInfoListForCPUFault() {
@@ -144,6 +165,23 @@ public class K8sBytemanFaultHelperTest extends PowerMockTestCase {
             log.error("testGetJVMAgentRemediationCommandInfoList For CPU Fault on K8s failed with Exception: ", e);
             assertTrue(false);
         }
+    }
+
+    @Test
+    public void testGetJVMAgentRemediationCommandInfoListforFileHandler() {
+        CommandExecutionFaultSpec fileHandlerFaultSpec = faultsMockData.getFilehandlerLeakFaultSpec();
+        Mockito.when(endpointClientFactory.getEndPointClient(null, fileHandlerFaultSpec.getEndpoint()))
+                .thenReturn(kubernetesCommandLineClient);
+        List<CommandInfo> remediationCommands = null;
+        try {
+            remediationCommands = k8sBytemanFaultHelper.getRemediationCommandInfoList(fileHandlerFaultSpec);
+            log.info(RestTemplateWrapper.objectToJson(remediationCommands));
+            Assert.assertEquals(remediationCommands, Collections.emptyList());
+        } catch (MangleException e) {
+            log.error("testGetJVMAgentRemediationCommandInfoListforFileHandler failed with Exception: ", e);
+            Assert.assertTrue(false);
+        }
+
     }
 
     @Test
@@ -241,7 +279,12 @@ public class K8sBytemanFaultHelperTest extends PowerMockTestCase {
         remediationCommand.setNoOfRetries(0);
         remediationCommand.setRetryInterval(0);
         remediationCommand.setTimeout(0);
+
+        CommandInfo deleteBytemanRuleCommand = new CommandInfo();
+        deleteBytemanRuleCommand.setCommand("rm -rf /tmp/" + AGENT_NAME + "/123456.btm");
+        deleteBytemanRuleCommand.setIgnoreExitValueCheck(true);
         list.add(remediationCommand);
+        list.add(deleteBytemanRuleCommand);
         return list;
     }
 
@@ -300,6 +343,63 @@ public class K8sBytemanFaultHelperTest extends PowerMockTestCase {
         return list;
     }
 
+    private List<CommandInfo> getExpectedInjectionCommandsForJavaHomePath() {
+        List<CommandInfo> list = new ArrayList<>();
+        CommandInfo copyAgentCommand = new CommandInfo();
+        copyAgentCommand.setCommand("cp " + ConstantsUtils.getMangleSupportScriptDirectory() + AGENT_NAME
+                + " testPod:/testDirectory/" + AGENT_NAME + " -c testContainer");
+        copyAgentCommand.setIgnoreExitValueCheck(false);
+        copyAgentCommand.setNoOfRetries(0);
+        copyAgentCommand.setRetryInterval(0);
+        copyAgentCommand.setTimeout(0);
+        copyAgentCommand.setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentCopyOnK8sPod());
+
+        CommandInfo installAgentCommand = new CommandInfo();
+        //exec -it testPod -c testContainer -- /bin/sh -c "export JAVA_HOME=/usr/bin && /testDirectory/mangle-java-agent-2.0.0/bin/bminstall.sh -p 9091 -s -b null"
+        installAgentCommand.setCommand(
+                "exec -it testPod -c testContainer -- /bin/sh -c \"export JAVA_HOME=/usr/bin && /testDirectory/"
+                        + AGENT_NAME + "/bin/bminstall.sh -p 9091 -s -b null\"");
+        installAgentCommand.setIgnoreExitValueCheck(true);
+        installAgentCommand.setExpectedCommandOutputList(Arrays.asList(new String[] {
+                "Started Byteman Listener Successfully", "Agent is already running on requested process" }));
+        installAgentCommand.setNoOfRetries(10);
+        installAgentCommand.setRetryInterval(5);
+        installAgentCommand.setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentInstallationRequest());
+        installAgentCommand.setTimeout(0);
+
+        CommandInfo enableTroubleshootingCommand = new CommandInfo();
+        enableTroubleshootingCommand.setCommand("exec -it testPod -c testContainer -- /bin/sh /testDirectory/"
+                + AGENT_NAME + "/bin/bmsubmit.sh -p 9091 -enableTroubleshooting");
+        enableTroubleshootingCommand.setIgnoreExitValueCheck(true);
+        enableTroubleshootingCommand.setExpectedCommandOutputList(Arrays.asList(new String[] {
+                "install rule Trace - Capture Troubleshooting bundle.", "Troubleshooting Already Enabled." }));
+        enableTroubleshootingCommand.setNoOfRetries(10);
+        enableTroubleshootingCommand.setRetryInterval(5);
+        enableTroubleshootingCommand.setTimeout(0);
+
+        CommandInfo injectionCommand = new CommandInfo();
+        injectionCommand.setCommand("exec -it testPod -c testContainer -- /bin/sh /testDirectory/" + AGENT_NAME
+                + "/bin/bmsubmit.sh -p 9091 -if javaHomePath /usr/bin __faultName cpuFault __load 80 __timeOutInMilliSeconds 20000");
+        injectionCommand.setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentFaultInjectionRequest());
+        injectionCommand.setIgnoreExitValueCheck(false);
+        injectionCommand.setExpectedCommandOutputList(Arrays.asList(new String[] { "Created Fault Successfully" }));
+        injectionCommand.setNoOfRetries(10);
+        injectionCommand.setRetryInterval(5);
+        injectionCommand.setTimeout(0);
+        List<CommandOutputProcessingInfo> commandOutputProcessingInfoList = new ArrayList<>();
+        CommandOutputProcessingInfo commandOutputProcessingInfo = new CommandOutputProcessingInfo();
+        commandOutputProcessingInfo.setRegExpression("[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}");
+        commandOutputProcessingInfo.setExtractedPropertyName("faultId");
+        commandOutputProcessingInfoList.add(commandOutputProcessingInfo);
+        injectionCommand.setCommandOutputProcessingInfoList(commandOutputProcessingInfoList);
+
+        list.add(copyAgentCommand);
+        list.add(installAgentCommand);
+        list.add(enableTroubleshootingCommand);
+        list.add(injectionCommand);
+        return list;
+    }
+
     private List<CommandInfo> getExpectedInjectionCommandsForSpringException() {
         List<CommandInfo> list = new ArrayList<>();
         CommandInfo copyAgentCommand = new CommandInfo();
@@ -322,6 +422,11 @@ public class K8sBytemanFaultHelperTest extends PowerMockTestCase {
         installAgentCommand.setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentInstallationRequest());
         installAgentCommand.setTimeout(0);
 
+        CommandInfo k8sCopyBytemanRuleFileCommandInfo = new CommandInfo();
+        k8sCopyBytemanRuleFileCommandInfo.setCommand("cp " + ConstantsUtils.getMangleSupportScriptDirectory()
+                + "123456.btm" + " testPod:/tmp/" + AGENT_NAME + "/123456.btm -c testContainer");
+        k8sCopyBytemanRuleFileCommandInfo.setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentCopyOnK8sPod());
+
         CommandInfo enableTroubleshootingCommand = new CommandInfo();
         enableTroubleshootingCommand.setCommand("exec -it testPod -c testContainer -- /bin/sh /tmp/" + AGENT_NAME
                 + "/bin/bmsubmit.sh -p 9091 -enableTroubleshooting");
@@ -336,7 +441,8 @@ public class K8sBytemanFaultHelperTest extends PowerMockTestCase {
         injectionCommand.setCommand("exec -it testPod -c testContainer -- /bin/sh /tmp/" + AGENT_NAME
                 + "/bin/bmsubmit.sh -p 9091 /tmp/" + AGENT_NAME + "/123456.btm");
         injectionCommand.setIgnoreExitValueCheck(false);
-        injectionCommand.setExpectedCommandOutputList(Arrays.asList(new String[] { "install rule 123456" }));
+        injectionCommand.setExpectedCommandOutputList(
+                Arrays.asList(new String[] { "install rule 123456", "redefine rule 123456" }));
         injectionCommand.setNoOfRetries(10);
         injectionCommand.setRetryInterval(5);
         injectionCommand.setTimeout(0);
@@ -344,6 +450,7 @@ public class K8sBytemanFaultHelperTest extends PowerMockTestCase {
         list.add(copyAgentCommand);
         list.add(installAgentCommand);
         list.add(enableTroubleshootingCommand);
+        list.add(k8sCopyBytemanRuleFileCommandInfo);
         list.add(injectionCommand);
         return list;
     }

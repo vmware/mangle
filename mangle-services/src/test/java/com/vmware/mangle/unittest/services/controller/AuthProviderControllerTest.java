@@ -13,6 +13,7 @@ package com.vmware.mangle.unittest.services.controller;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -24,6 +25,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.hazelcast.core.Cluster;
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.Member;
 import lombok.extern.log4j.Log4j2;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -67,6 +71,9 @@ public class AuthProviderControllerTest {
     @Mock
     private UserService userService;
 
+    @Mock
+    private HazelcastInstance hazelcastInstance;
+
     private AuthProviderMockData authProviderMockData = new AuthProviderMockData();
 
     @BeforeTest
@@ -98,6 +105,13 @@ public class AuthProviderControllerTest {
     public void updateADAuthProviderTestDuplicateFailure() throws MangleException {
         log.info("Executing test: updateADAuthProvider failure; duplicate record");
         ADAuthProviderDto adAuth = authProviderMockData.getADAuthProviderDto();
+        Cluster cluster = mock(Cluster.class);
+        Member member = mock(Member.class);
+
+        when(hazelcastInstance.getCluster()).thenReturn(cluster);
+        when(cluster.getLocalMember()).thenReturn(member);
+
+
         when(adAuthProviderService.doesADAuthExists(adAuth)).thenReturn(true);
         when(adAuthProviderService.getADAuthProviderByAdDomain(anyString())).thenReturn(adAuth);
         try {
@@ -117,7 +131,11 @@ public class AuthProviderControllerTest {
         log.info("Executing test: updateADAuthProvider failure; Test connection failed to AD");
         ADAuthProviderDto adAuth = authProviderMockData.getADAuthProviderDto();
         ADAuthProviderDto adNewAuth = authProviderMockData.getNewADAuthProviderDto();
+        Cluster cluster = mock(Cluster.class);
+        Member member = mock(Member.class);
 
+        when(hazelcastInstance.getCluster()).thenReturn(cluster);
+        when(cluster.getLocalMember()).thenReturn(member);
         when(adAuthProviderService.doesADAuthExists(adNewAuth)).thenReturn(false);
         when(adAuthProviderService.getADAuthProviderByAdDomain(adNewAuth.getAdDomain())).thenReturn(adNewAuth);
         when(adAuthProvider.setAdAuthProvider(Mockito.anyString(), Mockito.anyString())).thenReturn(false);
@@ -141,7 +159,11 @@ public class AuthProviderControllerTest {
     public void updateADAuthProviderTestNoRecordFailure() throws MangleException {
         log.info("Executing test: updateADAuthProvider failure; No record found for the given id");
         ADAuthProviderDto adAuth = authProviderMockData.getADAuthProviderDto();
+        Cluster cluster = mock(Cluster.class);
+        Member member = mock(Member.class);
 
+        when(hazelcastInstance.getCluster()).thenReturn(cluster);
+        when(cluster.getLocalMember()).thenReturn(member);
         when(adAuthProviderService.doesADAuthExists(adAuth)).thenReturn(false);
         when(adAuthProviderService.getADAuthProviderByAdDomain(adAuth.getAdDomain())).thenReturn(null);
         try {
@@ -163,7 +185,11 @@ public class AuthProviderControllerTest {
         log.info("Executing test: updateADAuthProvider successful");
         ADAuthProviderDto adAuth = authProviderMockData.getADAuthProviderDto();
         ADAuthProviderDto adNewAuth = authProviderMockData.getNewADAuthProviderDto();
+        Cluster cluster = mock(Cluster.class);
+        Member member = mock(Member.class);
 
+        when(hazelcastInstance.getCluster()).thenReturn(cluster);
+        when(cluster.getLocalMember()).thenReturn(member);
         when(adAuthProviderService.doesADAuthExists(adNewAuth)).thenReturn(false);
         when(adAuthProviderService.getADAuthProviderByAdDomain(anyString())).thenReturn(adNewAuth);
         when(adAuthProviderService.updateADAuthProvider(any(ADAuthProviderDto.class))).thenReturn(adAuth);
@@ -184,7 +210,6 @@ public class AuthProviderControllerTest {
 
         when(adAuthProviderService.doesADAuthExists(adAuth)).thenReturn(false);
         when(adAuthProviderService.addADAuthProvider(adAuth)).thenReturn(adAuth);
-        Mockito.doNothing().when(adAuthProviderService).removeADAuthProvider(Collections.singletonList(adAuth.getId()));
         when(adAuthProvider.setAdAuthProvider(Mockito.anyString(), Mockito.anyString())).thenReturn(false);
 
         try {
@@ -225,7 +250,11 @@ public class AuthProviderControllerTest {
     public void addADAuthProviderTestSuccessfull() throws MangleException {
         log.info("Executing test: addADAuthProviderTestSuccessfull;");
         ADAuthProviderDto adAuth = authProviderMockData.getADAuthProviderDto();
+        Cluster cluster = mock(Cluster.class);
+        Member member = mock(Member.class);
 
+        when(hazelcastInstance.getCluster()).thenReturn(cluster);
+        when(cluster.getLocalMember()).thenReturn(member);
         when(adAuthProviderService.doesADAuthExists(adAuth)).thenReturn(false);
         when(adAuthProviderService.addADAuthProvider(adAuth)).thenReturn(adAuth);
         when(adAuthProvider.setAdAuthProvider(Mockito.anyString(), Mockito.anyString())).thenReturn(true);
@@ -240,7 +269,12 @@ public class AuthProviderControllerTest {
     public void removeADAuthProviderSuccessful() throws MangleException {
         log.info("Executing test: removeADAuthProviderSuccessful");
         List<String> authProvidersId = authProviderMockData.getListOfStrings();
-        Mockito.doNothing().when(adAuthProviderService).removeADAuthProvider(Mockito.anyList());
+        Cluster cluster = mock(Cluster.class);
+        Member member = mock(Member.class);
+
+        when(hazelcastInstance.getCluster()).thenReturn(cluster);
+        when(cluster.getLocalMember()).thenReturn(member);
+        when(adAuthProviderService.removeADAuthProvider(any())).thenReturn(Collections.emptyList());
 
         ResponseEntity response = authProviderController.removeADAuthProvider(authProvidersId);
         Assert.assertEquals(response.getStatusCode(), HttpStatus.NO_CONTENT);

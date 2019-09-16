@@ -16,7 +16,10 @@ import lombok.extern.log4j.Log4j2;
 import org.json.JSONObject;
 import org.springframework.core.convert.converter.Converter;
 
+import com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.FaultSpec;
+import com.vmware.mangle.services.PluginService;
+import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.MangleRuntimeException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
@@ -28,9 +31,11 @@ import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 @Log4j2
 public class FaultSpecReadingConverter implements Converter<String, FaultSpec> {
     private Gson gson;
+    private PluginService pluginService;
 
-    public FaultSpecReadingConverter() {
+    public FaultSpecReadingConverter(PluginService pluginService) {
         gson = new Gson();
+        this.pluginService = pluginService;
     }
 
     @Override
@@ -39,10 +44,27 @@ public class FaultSpecReadingConverter implements Converter<String, FaultSpec> {
         try {
             JSONObject jsonObject = new JSONObject(source);
             String specClassName = jsonObject.getString("specType");
-            Class specClass = Class.forName(specClassName);
+            Class<?> specClass = getSpecClass(specClassName);
             return (FaultSpec) gson.fromJson(source, specClass);
+        } catch (ClassNotFoundException e) {
+            log.error(e.getMessage());
+            return gson.fromJson(source, CommandExecutionFaultSpec.class);
         } catch (Exception e) {
             throw new MangleRuntimeException(e, ErrorCode.GENERIC_ERROR);
         }
+    }
+
+    private Class<?> getSpecClass(String specClassName) throws ClassNotFoundException {
+        Class<?> specClass;
+        try {
+            specClass = Class.forName(specClassName);
+        } catch (ClassNotFoundException e) {
+            try {
+                specClass = pluginService.getExtensionForModel(specClassName).getClass();
+            } catch (MangleException e1) {
+                throw new ClassNotFoundException("Class Not Found :" + specClassName, e1);
+            }
+        }
+        return specClass;
     }
 }

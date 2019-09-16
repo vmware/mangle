@@ -1,0 +1,22 @@
+# Default values for mangle.
+replicaCount: 1
+serviceName: mangle-service
+appName: mangle
+environment: mangle-test
+image:
+  repository: fiaasco/mangle
+  tag: "1.0"
+  externalRegistry: symphony-docker-local.jfrog.io
+  useSecret: true
+  secretName : "mangle-registry-secret"
+  user: 
+  pass: 
+sessionAffinity: None
+port: 8443
+service:
+  type: ClusterIP
+  port: 80
+limits:
+  cpu: 1000m
+  memory: 4000Mi
+

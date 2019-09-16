@@ -12,7 +12,6 @@
 package com.vmware.mangle.unittest.services.service.deletionutils;
 
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyList;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -29,7 +28,9 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import com.vmware.mangle.cassandra.model.scheduler.SchedulerSpec;
+import com.vmware.mangle.model.response.DeleteOperationResponse;
 import com.vmware.mangle.services.deletionutils.SchedulerDeletionService;
+import com.vmware.mangle.services.deletionutils.TaskDeletionService;
 import com.vmware.mangle.services.mockdata.SchedulerControllerMockData;
 import com.vmware.mangle.services.repository.SchedulerRepository;
 import com.vmware.mangle.utils.exceptions.MangleException;
@@ -43,6 +44,8 @@ public class SchedulerDeletionServiceTest {
 
     @Mock
     private SchedulerRepository schedulerRepository;
+    @Mock
+    private TaskDeletionService taskDeletionService;
 
     private SchedulerDeletionService schedulerDeletionService;
     private SchedulerControllerMockData mockData = new SchedulerControllerMockData();
@@ -50,7 +53,7 @@ public class SchedulerDeletionServiceTest {
     @BeforeMethod
     public void initMocks() {
         MockitoAnnotations.initMocks(this);
-        schedulerDeletionService = new SchedulerDeletionService(schedulerRepository);
+        schedulerDeletionService = new SchedulerDeletionService(schedulerRepository, taskDeletionService);
     }
 
     @Test
@@ -61,8 +64,8 @@ public class SchedulerDeletionServiceTest {
         tasks.add(mockData.getMangleSchedulerSpec().getId());
 
         doNothing().when(schedulerRepository).deleteByIdIn(any());
-        when(schedulerRepository.findByIds(anyList())).thenReturn(schedulerSpecSet);
-        schedulerDeletionService.deleteSchedulerDetailsByJobIds(tasks);
+        when(schedulerRepository.findByIds(any())).thenReturn(schedulerSpecSet);
+        schedulerDeletionService.deleteSchedulerDetailsByJobIds(tasks, false);
         verify(schedulerRepository, times(1)).deleteByIdIn(any());
     }
 
@@ -71,7 +74,45 @@ public class SchedulerDeletionServiceTest {
         List<String> tasks = new ArrayList<>();
         doNothing().when(schedulerRepository).deleteByIdIn(any());
 
-        schedulerDeletionService.deleteSchedulerDetailsByJobIds(tasks);
+        schedulerDeletionService.deleteSchedulerDetailsByJobIds(tasks, false);
         verify(schedulerRepository, times(0)).deleteByIdIn(any());
+    }
+
+    @Test
+    public void testDeleteSchedulerDetailsByJobId() throws MangleException {
+        List<String> tasks = new ArrayList<>();
+        Set<SchedulerSpec> schedulerSpecSet = new HashSet<>();
+        schedulerSpecSet.add(mockData.getMangleSchedulerSpec());
+        tasks.add(mockData.getMangleSchedulerSpec().getId());
+        List<String> tasksBeforeTrigger = new ArrayList<>(tasks);
+        DeleteOperationResponse deleteOperationResponse = new DeleteOperationResponse();
+
+        doNothing().when(schedulerRepository).deleteByIdIn(tasksBeforeTrigger);
+        when(taskDeletionService.deleteTasksByIds(tasksBeforeTrigger)).thenReturn(deleteOperationResponse);
+        when(schedulerRepository.findByIds(any())).thenReturn(schedulerSpecSet);
+
+        schedulerDeletionService.deleteSchedulerDetailsByJobIds(tasks, true);
+
+        verify(schedulerRepository, times(1)).deleteByIdIn(tasksBeforeTrigger);
+        verify(taskDeletionService, times(1)).deleteTasksByIds(tasksBeforeTrigger);
+    }
+
+    @Test
+    public void testDeleteSchedulerDetailsByJobIdNoTasks() throws MangleException {
+        List<String> tasks = new ArrayList<>();
+        Set<SchedulerSpec> schedulerSpecSet = new HashSet<>();
+        schedulerSpecSet.add(mockData.getMangleSchedulerSpec());
+        tasks.add(mockData.getMangleSchedulerSpec().getId());
+        List<String> tasksBeforeTrigger = new ArrayList<>(tasks);
+        DeleteOperationResponse deleteOperationResponse = new DeleteOperationResponse();
+
+        doNothing().when(schedulerRepository).deleteByIdIn(tasksBeforeTrigger);
+        when(taskDeletionService.deleteTasksByIds(tasksBeforeTrigger)).thenReturn(deleteOperationResponse);
+        when(schedulerRepository.findByIds(any())).thenReturn(schedulerSpecSet);
+
+        schedulerDeletionService.deleteSchedulerDetailsByJobIds(tasks, false);
+
+        verify(schedulerRepository, times(1)).deleteByIdIn(tasksBeforeTrigger);
+        verify(taskDeletionService, times(0)).deleteTasksByIds(tasksBeforeTrigger);
     }
 }

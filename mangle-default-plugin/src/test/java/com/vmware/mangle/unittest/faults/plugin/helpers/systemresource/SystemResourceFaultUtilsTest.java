@@ -15,11 +15,15 @@ package com.vmware.mangle.unittest.faults.plugin.helpers.systemresource;
 import static org.testng.Assert.assertEquals;
 
 import static com.vmware.mangle.utils.constants.FaultConstants.DEFAULT_TEMP_DIR;
+import static com.vmware.mangle.utils.constants.FaultConstants.DIRECTORY_PATH_ARG;
 import static com.vmware.mangle.utils.constants.FaultConstants.FAULT_NAME_ARG;
+import static com.vmware.mangle.utils.constants.FaultConstants.FAULT_OPERATION_ARG;
 import static com.vmware.mangle.utils.constants.FaultConstants.FORWARD_SLASH;
 import static com.vmware.mangle.utils.constants.FaultConstants.IO_SIZE_ARG;
 import static com.vmware.mangle.utils.constants.FaultConstants.KILL_PROCESS_REMEDIATION_COMMAND_ARG;
+import static com.vmware.mangle.utils.constants.FaultConstants.LATENCY_ARG;
 import static com.vmware.mangle.utils.constants.FaultConstants.LOAD_ARG;
+import static com.vmware.mangle.utils.constants.FaultConstants.NIC_NAME_ARG;
 import static com.vmware.mangle.utils.constants.FaultConstants.PROCESS_IDENTIFIER_UNDERSCORE;
 import static com.vmware.mangle.utils.constants.FaultConstants.TARGET_DIRECTORY_ARG;
 import static com.vmware.mangle.utils.constants.FaultConstants.TIMEOUT_IN_MILLI_SEC_ARG;
@@ -34,6 +38,8 @@ import org.testng.annotations.Test;
 
 import com.vmware.mangle.faults.plugin.helpers.systemresource.SystemResourceFaultUtils;
 import com.vmware.mangle.services.enums.FaultName;
+import com.vmware.mangle.services.enums.NetworkFaultType;
+import com.vmware.mangle.utils.constants.FaultConstants;
 import com.vmware.mangle.utils.exceptions.MangleRuntimeException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
@@ -119,6 +125,22 @@ public class SystemResourceFaultUtilsTest {
     }
 
     @Test
+    public void testBuildInjectionCommandNetworkFault() {
+        Map<String, String> args = new HashMap<>();
+        args.put(FAULT_NAME_ARG, FaultName.NETWORKFAULT.getValue());
+        args.put(FAULT_OPERATION_ARG, NetworkFaultType.NETWORK_DELAY_MILLISECONDS.networkFaultType());
+        args.put(LATENCY_ARG, "1000");
+        args.put(NIC_NAME_ARG, "eth0");
+        args.put(TIMEOUT_IN_MILLI_SEC_ARG, timeoutInMilliSec);
+        String command = systemResourceFaultUtils.buildInjectionCommand(args, scriptBasePath);
+        Assert.assertEquals(command,
+                String.format(
+                        "%s/networkFault.sh --operation=inject --faultOperation=%s --latency=%s --percentage=null --nicName=%s --timeout=%s",
+                        DEFAULT_TEMP_DIR, NetworkFaultType.NETWORK_DELAY_MILLISECONDS.networkFaultType(), 1000, "eth0",
+                        timeoutInMilliSec));
+    }
+
+    @Test
     public void testBuildRemediationCommandForCpuFault() {
         Map<String, String> args = new HashMap<>();
         args.put(FAULT_NAME_ARG, FaultName.CPUFAULT.getValue());
@@ -146,6 +168,14 @@ public class SystemResourceFaultUtilsTest {
         args.put(FAULT_NAME_ARG, FaultName.DISKFAULT.getValue());
         String command = systemResourceFaultUtils.buildRemediationCommand(args, scriptBasePath);
         Assert.assertEquals(command, "/tmp/ioburn.sh --operation=remediate");
+    }
+
+    @Test
+    public void testBuildRemediationCommandForNetworkFault() {
+        Map<String, String> args = new HashMap<>();
+        args.put(FAULT_NAME_ARG, FaultName.NETWORKFAULT.getValue());
+        String command = systemResourceFaultUtils.buildRemediationCommand(args, scriptBasePath);
+        Assert.assertEquals(command, "/tmp/networkFault.sh --operation=remediate");
     }
 
     @Test(expectedExceptions = { MangleRuntimeException.class, IllegalArgumentException.class })
@@ -196,5 +226,34 @@ public class SystemResourceFaultUtilsTest {
         args.put(KILL_PROCESS_REMEDIATION_COMMAND_ARG, "start test");
         String command = systemResourceFaultUtils.buildRemediationCommand(args, scriptBasePath);
         Assert.assertEquals(command, "/tmp/killprocess.sh --operation=remediate --remediationCommand=\"start test\"");
+    }
+
+    @Test
+    public void testBuildInjectionCommandDiskSpaceFault() {
+        Map<String, String> args = new HashMap<>();
+        args.put(FAULT_NAME_ARG, FaultName.DISKSPACEFAULT.getValue());
+        args.put(DIRECTORY_PATH_ARG, "/test");
+        args.put(TIMEOUT_IN_MILLI_SEC_ARG, timeoutInMilliSec);
+        args.put(FaultConstants.DISK_FILL_SIZE_ARG, String.valueOf(50));
+        String command = systemResourceFaultUtils.buildInjectionCommand(args, scriptBasePath);
+        Assert.assertEquals(command,
+                "/tmp/diskspace.sh --operation=inject --directoryPath=/test --timeout=100 --diskFillSize=50");
+    }
+
+    @Test
+    public void testBuildRemediationCommandForDiskSpaceFault() {
+        Map<String, String> args = new HashMap<>();
+        args.put(FAULT_NAME_ARG, FaultName.DISKSPACEFAULT.getValue());
+        args.put(DIRECTORY_PATH_ARG, "/test");
+        String command = systemResourceFaultUtils.buildRemediationCommand(args, scriptBasePath);
+        Assert.assertEquals(command, "/tmp/diskspace.sh --operation=remediate --directoryPath=/test");
+    }
+
+    @Test
+    public void testBuildInjectionCommandKernelPanicFault() {
+        Map<String, String> args = new HashMap<>();
+        args.put(FAULT_NAME_ARG, FaultName.KERNELPANICFAULT.getValue());
+        String command = systemResourceFaultUtils.buildInjectionCommand(args, scriptBasePath);
+        Assert.assertEquals(command, "/tmp/kernelpanicfault.sh --operation=inject");
     }
 }

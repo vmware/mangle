@@ -16,8 +16,11 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Pattern;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.springframework.data.annotation.Transient;
@@ -41,13 +44,18 @@ public class User {
     private String id;
 
     @PrimaryKeyColumn(value = "name", ordering = Ordering.ASCENDING, type = PrimaryKeyType.PARTITIONED)
+    @NotEmpty
     private String name;
 
     @Transient
     @JsonIgnore
     private Set<Role> roles;
 
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @Pattern(regexp = "(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%!&+=])(?=\\S+$).{8,}", message = "should consists at least 8 chars, one digit, one lower alpha char, one upper alpha char, and one char within a set of special chars (@#$%!&+=)")
     private String password;
+
+    private Boolean accountLocked;
 
     @Column
     @Indexed
@@ -57,6 +65,7 @@ public class User {
         this.name = name;
         this.roles = roles;
         this.password = password;
+        this.accountLocked = false;
     }
 
     public User(String name, String password, Role role) {
@@ -65,9 +74,11 @@ public class User {
         this.setRoleNames(roleSet.stream().map(Role::getName).collect(Collectors.toSet()));
         this.roles = roleSet;
         this.password = password;
+        this.accountLocked = false;
     }
 
     public User() {
         this.id = UUID.randomUUID().toString();
+        this.accountLocked = false;
     }
 }

@@ -39,6 +39,7 @@
 			<outputDirectory />
 			<includes>
 				<include>plugin.properties</include>
+				<include>plugin-descriptor.json</include>
 			</includes>
 		</fileSet>
 	</fileSets>

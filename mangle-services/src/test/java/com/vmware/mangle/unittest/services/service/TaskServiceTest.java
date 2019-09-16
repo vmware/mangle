@@ -90,6 +90,32 @@ public class TaskServiceTest {
     }
 
     /**
+     * Test method for {@link TaskService#getAllTasks(isScheduledTask,taskName)}.
+     *
+     */
+    @Test
+    public void getAllTasksWithFiltersTest() {
+        log.info("Executing test: getAllTasksTest on TaskService#getAllTasks(isScheduledTask,taskName)");
+        List<Task<TaskSpec>> tasks = tasksMockData.getDummyTasks();
+        Mockito.when(taskRepository.findAll()).thenReturn(tasks);
+        Mockito.when(taskRepository.findByIsScheduledTask(anyBoolean())).thenReturn(tasks);
+        Mockito.when(taskRepository.findByTaskNameAndIsScheduledTask(any(), anyBoolean())).thenReturn(tasks);
+        Mockito.when(taskRepository.findByTaskName(any())).thenReturn(tasks);
+        List<Task<TaskSpec>> response = taskService.getAllTasks(true, null);
+        verify(taskRepository, Mockito.times(1)).findByIsScheduledTask(anyBoolean());
+        Assert.assertEquals(response.size(), tasks.size());
+        response = taskService.getAllTasks(null, tasks.get(0).getTaskName());
+        verify(taskRepository, Mockito.times(1)).findByTaskName(any());
+        Assert.assertEquals(response.size(), tasks.size());
+        response = taskService.getAllTasks(true, tasks.get(0).getTaskName());
+        verify(taskRepository, Mockito.times(1)).findByTaskNameAndIsScheduledTask(any(),anyBoolean());
+        Assert.assertEquals(response.size(), tasks.size());
+        response = taskService.getAllTasks(null, null);
+        verify(taskRepository, Mockito.times(1)).findAll();
+        Assert.assertEquals(response.size(), tasks.size());
+    }
+
+    /**
      * Test method for {@link TaskService#getTaskById(String)}.
      *
      */
@@ -387,12 +413,7 @@ public class TaskServiceTest {
         tasks.add(tasksMockData.getDummyTask());
         Mockito.when(taskRepository.findByIsScheduledTask(anyBoolean())).thenReturn(tasks);
         List<Task<TaskSpec>> persistedTask = null;
-        try {
-            persistedTask = taskService.getTaskByIsScheduledTask(true);
-        } catch (MangleException e) {
-            log.error(e);
-            Assert.assertTrue(false, "Failed due to unexpected exception" + e.getMessage());
-        }
+        persistedTask = taskService.getTaskByIsScheduledTask(true);
         verify(taskRepository, Mockito.atLeastOnce()).findByIsScheduledTask(anyBoolean());
         Assert.assertEquals(persistedTask, tasks);
     }

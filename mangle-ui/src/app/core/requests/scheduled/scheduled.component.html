@@ -1,9 +1,4 @@
-<clr-alert *ngIf="errorFlag" [clrAlertType]="'danger'">
-    <div class="alert-item">{{alertMessage}}</div>
-</clr-alert>
-<clr-alert *ngIf="successFlag" [clrAlertType]="'success'">
-    <div class="alert-item">{{alertMessage}}</div>
-</clr-alert>
+<app-alert [(errorAlertMessage)]="errorAlertMessage" [(successAlertMessage)]="successAlertMessage" (errorAlertMessageChange)="errorAlertMessage = $event" (successAlertMessageChange)="successAlertMessage = $event"></app-alert>
 <h2>Scheduled Jobs</h2><clr-icon shape="refresh" (click)="getAllScheduleJobs();"></clr-icon><br />
 <clr-datagrid [clrDgLoading]="isLoadingScheduledJobs" id="scheduledg" name="scheduledg">
     <clr-dg-column [clrDgField]="'id'">ID</clr-dg-column>
@@ -13,9 +8,9 @@
     <clr-dg-column [clrDgField]="'description'">Description</clr-dg-column>
     <clr-dg-row *clrDgItems="let scheduledJob of scheduledJobs" [clrDgItem]="scheduledJob">
         <clr-dg-action-overflow>
-            <button class="action-item" [disabled]="!(scheduledJob.status == 'INITIALIZING' || scheduledJob.status == 'SCHEDULED')" (click)="cancelSchedule(scheduledJob);">Cancel</button>
-            <button class="action-item" [disabled]="!(scheduledJob.status == 'SCHEDULED')" (click)="pauseSchedule(scheduledJob);">Pause</button>
-            <button class="action-item" [disabled]="!(scheduledJob.status == 'PAUSED')" (click)="resumeSchedule(scheduledJob);">Resume</button>
+            <button class="action-item" *ngIf="(scheduledJob.status == 'INITIALIZING' || scheduledJob.status == 'SCHEDULED')" (click)="cancelSchedule(scheduledJob);">Cancel</button>
+            <button class="action-item" *ngIf="(scheduledJob.status == 'SCHEDULED')" (click)="pauseSchedule(scheduledJob);">Pause</button>
+            <button class="action-item" *ngIf="(scheduledJob.status == 'PAUSED')" (click)="resumeSchedule(scheduledJob);">Resume</button>
             <button class="action-item" (click)="getScheduledTaskDetails(scheduledJob);viewReportFlage=true;">Reports</button>
             <button class="action-item" (click)="deleteSchedule(scheduledJob);">Delete</button>
             <button class="action-item" (click)="deleteScheduleOnly(scheduledJob);">Delete Schedule Only</button>

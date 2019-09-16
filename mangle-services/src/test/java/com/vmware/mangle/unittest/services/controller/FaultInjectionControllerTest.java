@@ -36,16 +36,25 @@ import com.vmware.mangle.cassandra.model.endpoint.RemoteMachineCredentials;
 import com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.CpuFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.DiskIOFaultSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.DiskSpaceSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.DockerFaultSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.FilehandlerLeakFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.K8SDeleteResourceFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.K8SResourceNotReadyFaultSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.K8SServiceUnavailableFaultSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.KernelPanicSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.KillProcessFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.MemoryFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.TaskSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.ThreadLeakFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.VMDiskFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.VMNicFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.VMStateFaultSpec;
 import com.vmware.mangle.cassandra.model.tasks.Task;
+import com.vmware.mangle.model.aws.AwsEC2NetworkFaults;
+import com.vmware.mangle.model.aws.AwsEC2StateFaults;
+import com.vmware.mangle.model.aws.faults.spec.AwsEC2InstanceStateFaultSpec;
+import com.vmware.mangle.model.aws.faults.spec.AwsEC2NetworkFaultSpec;
 import com.vmware.mangle.services.controller.FaultInjectionController;
 import com.vmware.mangle.services.enums.AgentFaultName;
 import com.vmware.mangle.services.enums.DockerFaultName;
@@ -67,6 +76,7 @@ import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
  *
  * @author bkaranam
  * @author rpraveen
+ * @author jayasankarr
  */
 public class FaultInjectionControllerTest {
 
@@ -150,6 +160,27 @@ public class FaultInjectionControllerTest {
         Assert.assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
         Assert.assertEquals(((CommandExecutionFaultSpec) responseEntity.getBody().getTaskData()).getFaultName(),
                 K8SFaultName.NOTREADY_RESOURCE.name());
+        verify(faultInjectionHelper, times(1)).getTask(any());
+    }
+
+    @Test
+    public void testk8SServiceUnavailableFault() throws MangleException {
+        K8SServiceUnavailableFaultSpec faultSpec = faultsMockData.getK8SServiceUnavailableFaultSpec();
+        TasksMockData tasksMockData = new TasksMockData(faultSpec);
+        Task taskObj = tasksMockData.getDummyTask();
+        EndpointSpec endpointSpec = endpointMockData.k8sEndpointMockData();
+        CredentialsSpec credentialsSpec = credentialsMockData.getk8SCredentialsData();
+        faultSpec.setEndpoint(endpointSpec);
+        faultSpec.setCredentials(credentialsSpec);
+
+        doNothing().when(faultInjectionHelper).validateSpec(faultSpec);
+        when(faultInjectionHelper.getTask(any())).thenReturn(taskObj);
+
+        ResponseEntity<Task<TaskSpec>> responseEntity = faultInjectionController.K8SServiceUnavailableyFault(faultSpec);
+
+        Assert.assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+        Assert.assertEquals(((CommandExecutionFaultSpec) responseEntity.getBody().getTaskData()).getFaultName(),
+                K8SFaultName.SERVICE_UNAVAILABLE.name());
         verify(faultInjectionHelper, times(1)).getTask(any());
     }
 
@@ -401,5 +432,153 @@ public class FaultInjectionControllerTest {
                 DEFAULT_BLOCK_SIZE);
         verify(faultInjectionHelper, times(1)).getTask(any());
 
+    }
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @Test
+    public void testInjectFileHandlerLeakFault() throws MangleException {
+        FilehandlerLeakFaultSpec faultSpec = faultsMockData.getFileHandlerLeakFaultSpecOfDockerEndpoint();
+        TasksMockData tasksMockData = new TasksMockData(faultSpec);
+        Task taskObj = tasksMockData.getDummyTask();
+        EndpointSpec endpointSpec = endpointMockData.dockerEndpointMockData();
+        faultSpec.setEndpoint(endpointSpec);
+
+        doNothing().when(faultInjectionHelper).validateSpec(faultSpec);
+        when(faultInjectionHelper.getTask(any())).thenReturn(taskObj);
+
+        ResponseEntity<Task<TaskSpec>> responseEntity = faultInjectionController.injectfileHandlerLeakFault(faultSpec);
+        Assert.assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+        Assert.assertEquals(((CommandExecutionFaultSpec) responseEntity.getBody().getTaskData()).getFaultName(),
+                AgentFaultName.INJECT_FILE_HANDLER_FAULT.toString());
+        verify(faultInjectionHelper, times(1)).getTask(any());
+    }
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @Test
+    public void testInjectThreadLeakFault() throws MangleException {
+        ThreadLeakFaultSpec faultSpec = faultsMockData.getThreadLeakFaultSpecOfDockerEndpoint();
+        TasksMockData tasksMockData = new TasksMockData(faultSpec);
+        Task taskObj = tasksMockData.getDummyTask();
+        EndpointSpec endpointSpec = endpointMockData.dockerEndpointMockData();
+        faultSpec.setEndpoint(endpointSpec);
+
+        doNothing().when(faultInjectionHelper).validateSpec(faultSpec);
+        when(faultInjectionHelper.getTask(any())).thenReturn(taskObj);
+
+        ResponseEntity<Task<TaskSpec>> responseEntity = faultInjectionController.injectThreadLeakFault(faultSpec);
+        Assert.assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+        Assert.assertEquals(((CommandExecutionFaultSpec) responseEntity.getBody().getTaskData()).getFaultName(),
+                AgentFaultName.INJECT_THREAD_LEAK_FAULT.toString());
+        verify(faultInjectionHelper, times(1)).getTask(any());
+    }
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @Test
+    public void testInjectDiskSpaceFault() throws MangleException {
+        DiskSpaceSpec faultSpec = faultsMockData.getDiskSpaceSpec();
+        TasksMockData<?> tasksMockData = new TasksMockData<>(faultSpec);
+        Task taskObj = tasksMockData.getDummyTask();
+        RemoteMachineCredentials credentialsSpec = credentialsMockData.getRMCredentialsData();
+        EndpointSpec endpointSpec = endpointMockData.rmEndpointMockData();
+        faultSpec.setEndpoint(endpointSpec);
+        faultSpec.setCredentials(credentialsSpec);
+        doNothing().when(faultInjectionHelper).validateSpec(faultSpec);
+        doNothing().when(faultInjectionHelper).validateEndpointTypeSpecificArguments(faultSpec);
+        when(faultInjectionHelper.getTask(any())).thenReturn(taskObj);
+
+        ResponseEntity<Task<TaskSpec>> responseEntity = faultInjectionController.injectDiskSpaceFault(faultSpec);
+
+        Assert.assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+        Assert.assertEquals(((CommandExecutionFaultSpec) responseEntity.getBody().getTaskData()).getFaultName(),
+                AgentFaultName.INJECT_DISK_SPACE_FAULT.toString());
+        verify(faultInjectionHelper, times(1)).getTask(any());
+    }
+
+    @Test
+    public void testInjectionAwsEc2StateFault() throws MangleException {
+        AwsEC2InstanceStateFaultSpec faultSpec = faultsMockData.getAwsEC2InstanceStateFaultSpec();
+        TasksMockData tasksMockData = new TasksMockData(faultSpec);
+        EndpointSpec endpointSpec = endpointMockData.awsEndpointSpecMock();
+        CredentialsSpec credentialsSpec = credentialsMockData.getAWSCredentialsData();
+        Task taskObj = tasksMockData.getDummyTask();
+        faultSpec.setEndpoint(endpointSpec);
+        faultSpec.setCredentials(credentialsSpec);
+
+        doNothing().when(faultInjectionHelper).validateSpec(faultSpec);
+        when(faultInjectionHelper.getTask(any())).thenReturn(taskObj);
+
+        ResponseEntity<Task<TaskSpec>> responseEntity =
+                faultInjectionController.injectAwsEC2InstanceStateFault(faultSpec);
+
+        Assert.assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+        Assert.assertEquals(((CommandExecutionFaultSpec) responseEntity.getBody().getTaskData()).getFaultName(),
+                AwsEC2StateFaults.STOP_INSTANCES.name());
+    }
+
+    @Test
+    public void testInjectionAwsEc2BlockAllNetworkFault() throws MangleException {
+        AwsEC2NetworkFaultSpec faultSpec = faultsMockData.getAwsEC2BlockAllNetworkFaultSpec();
+        TasksMockData tasksMockData = new TasksMockData(faultSpec);
+        EndpointSpec endpointSpec = endpointMockData.awsEndpointSpecMock();
+        CredentialsSpec credentialsSpec = credentialsMockData.getAWSCredentialsData();
+        Task taskObj = tasksMockData.getDummyTask();
+        faultSpec.setEndpoint(endpointSpec);
+        faultSpec.setCredentials(credentialsSpec);
+
+        doNothing().when(faultInjectionHelper).validateSpec(faultSpec);
+        when(faultInjectionHelper.getTask(any())).thenReturn(taskObj);
+
+        ResponseEntity<Task<TaskSpec>> responseEntity =
+                faultInjectionController.injectAwsEC2InstanceBlockAllNetworkFault(faultSpec);
+
+        Assert.assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+        Assert.assertEquals(((CommandExecutionFaultSpec) responseEntity.getBody().getTaskData()).getFaultName(),
+                AwsEC2NetworkFaults.BLOCK_ALL_NETWORK_TRAFFIC.name());
+    }
+
+    @Test(expectedExceptions = MangleException.class)
+    public void testInjectionAwsEc2StateFaultFailure() throws MangleException {
+        AwsEC2InstanceStateFaultSpec faultSpec = faultsMockData.getAwsEC2InstanceStateFaultSpec();
+        TasksMockData tasksMockData = new TasksMockData(faultSpec);
+        Task taskObj = tasksMockData.getDummyTask();
+
+        EndpointSpec endpointSpec = endpointMockData.awsEndpointSpecMock();
+        CredentialsSpec credentialsSpec = credentialsMockData.getAWSCredentialsData();
+        faultSpec.setEndpoint(endpointSpec);
+        faultSpec.setCredentials(credentialsSpec);
+
+        doNothing().when(faultInjectionHelper).validateSpec(faultSpec);
+        when(faultInjectionHelper.getTask(any())).thenReturn(taskObj);
+
+        doThrow(new MangleException(ErrorCode.FIELD_VALUE_EMPTY, ErrorConstants.ENDPOINT_NAME))
+                .when(faultInjectionHelper).validateSpec(faultSpec);
+        try {
+            faultInjectionController.injectAwsEC2InstanceStateFault(faultSpec);
+        } catch (MangleException e) {
+            Assert.assertEquals(ErrorCode.FIELD_VALUE_EMPTY, e.getErrorCode());
+            throw e;
+        }
+    }
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @Test
+    public void testInjectKernelPanicFault() throws MangleException {
+        KernelPanicSpec faultSpec = faultsMockData.getKernelPanicSpec();
+        TasksMockData<?> tasksMockData = new TasksMockData<>(faultSpec);
+        Task taskObj = tasksMockData.getDummyTask();
+        RemoteMachineCredentials credentialsSpec = credentialsMockData.getRMCredentialsData();
+        EndpointSpec endpointSpec = endpointMockData.rmEndpointMockData();
+        faultSpec.setEndpoint(endpointSpec);
+        faultSpec.setCredentials(credentialsSpec);
+        doNothing().when(faultInjectionHelper).validateSpec(faultSpec);
+        doNothing().when(faultInjectionHelper).validateEndpointTypeSpecificArguments(faultSpec);
+        when(faultInjectionHelper.getTask(any())).thenReturn(taskObj);
+
+        ResponseEntity<Task<TaskSpec>> responseEntity = faultInjectionController.injectKernelPanicFault(faultSpec);
+
+        Assert.assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+        Assert.assertEquals(((CommandExecutionFaultSpec) responseEntity.getBody().getTaskData()).getFaultName(),
+                AgentFaultName.KERNEL_PANIC_FAULT.toString());
+        verify(faultInjectionHelper, times(1)).getTask(any());
     }
 }

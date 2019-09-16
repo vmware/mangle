@@ -62,7 +62,7 @@ public class TaskModifiedEventTest {
         Assert.assertEquals(event.getTask(), task);
     }
 
-    @Test
+    @Test(enabled = false)
     public void eventsShouldBeEqualWithDifferentIdsButTheSameName() {
         TaskModifiedEvent<?> event1 = new TaskModifiedEvent(task);
         TaskModifiedEvent<?> event2 = new TaskModifiedEvent(task);

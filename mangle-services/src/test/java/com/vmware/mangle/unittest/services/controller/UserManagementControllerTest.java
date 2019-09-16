@@ -13,7 +13,9 @@ package com.vmware.mangle.unittest.services.controller;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -21,6 +23,9 @@ import static org.mockito.Mockito.when;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.hazelcast.core.Cluster;
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.Member;
 import lombok.extern.log4j.Log4j2;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -35,6 +40,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.vmware.mangle.cassandra.model.security.User;
+import com.vmware.mangle.model.UserPasswordUpdateDTO;
 import com.vmware.mangle.services.PasswordResetService;
 import com.vmware.mangle.services.UserService;
 import com.vmware.mangle.services.controller.UserManagementController;
@@ -57,6 +63,9 @@ public class UserManagementControllerTest extends PowerMockTestCase {
 
     @Mock
     private PasswordResetService passwordResetService;
+
+    @Mock
+    private HazelcastInstance hazelcastInstance;
 
     private UserMockData dataProvider = new UserMockData();
 
@@ -130,11 +139,34 @@ public class UserManagementControllerTest extends PowerMockTestCase {
     /**
      * Test method for {@link UserManagementController#createUser(User)}
      */
+    @Test(expectedExceptions = MangleException.class)
+    public void createUserTestFailureUserNotFound() throws MangleException {
+        log.info("Executing test: createUserTestFailureUserNotFound on UserManagementController#createUser(User)");
+        User user = dataProvider.getMockUser();
+
+        doThrow(new MangleException(ErrorCode.USER_NOT_FOUND)).when(userService).createUser(any());
+        when(userService.getUserByName(anyString())).thenReturn(user);
+        try {
+            userManagementController.createUser(user);
+        } catch (MangleException e) {
+            Assert.assertEquals(e.getErrorCode(), ErrorCode.USER_ALREADY_EXISTS);
+            verify(userService, times(0)).createUser(any());
+            throw e;
+        }
+    }
+
+    /**
+     * Test method for {@link UserManagementController#createUser(User)}
+     */
     @Test
     public void updateUserTestSuccessful() throws MangleException {
         log.info("Executing test: createUserTestSuccessful on UserManagementController#createUser(User)");
         User user = dataProvider.getMockUser();
+        Cluster cluster = mock(Cluster.class);
+        Member member = mock(Member.class);
 
+        when(hazelcastInstance.getCluster()).thenReturn(cluster);
+        when(cluster.getLocalMember()).thenReturn(member);
         when(userService.updateUser(any())).thenReturn(user);
 
         ResponseEntity<Resource<User>> response = userManagementController.updateUser(user);
@@ -198,5 +230,41 @@ public class UserManagementControllerTest extends PowerMockTestCase {
         Assert.assertEquals(responseEntity.getStatusCode(), HttpStatus.OK);
         Assert.assertEquals(((Resource) responseEntity.getBody()).getContent(), true);
         verify(passwordResetService, times(1)).readResetStatus();
+    }
+
+    @Test
+    public void testUpdateUserPassword() throws MangleException {
+        User user = dataProvider.getMockUser();
+        UserPasswordUpdateDTO updateDTO = dataProvider.getUserPasswordUpdateDTO();
+
+        when(userService.getCurrentUserName()).thenReturn(user.getName());
+        doNothing().when(userService).updatePassword(anyString(), anyString(), anyString());
+        doNothing().when(userService).terminateUserSession(user.getName());
+        doNothing().when(userService).triggerMultiNodeResync(anyString());
+
+        ResponseEntity responseEntity = userManagementController.updateUserPassword(updateDTO);
+
+        Assert.assertEquals(responseEntity.getStatusCode(), HttpStatus.NO_CONTENT);
+
+        verify(userService, times(1)).getCurrentUserName();
+        verify(userService, times(1)).updatePassword(anyString(), anyString(), anyString());
+        verify(userService, times(1)).terminateCurrentSession();
+        verify(userService, times(1)).triggerMultiNodeResync(anyString());
+    }
+
+    @Test
+    public void testDeleteUsersByNames() throws MangleException {
+        List<String> usersList = dataProvider.getUsersList();
+
+        doNothing().when(userService).deleteUsersByNames(usersList);
+        doNothing().when(userService).triggerMultiNodeResync(any());
+
+        ResponseEntity responseEntity = userManagementController.deleteUsersByNames(usersList);
+
+        Assert.assertEquals(responseEntity.getStatusCode(), HttpStatus.NO_CONTENT);
+
+        verify(userService, times(1)).deleteUsersByNames(usersList);
+
+
     }
 }

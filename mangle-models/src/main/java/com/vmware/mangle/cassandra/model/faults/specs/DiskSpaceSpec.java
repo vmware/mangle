@@ -11,8 +11,12 @@
 
 package com.vmware.mangle.cassandra.model.faults.specs;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -26,21 +30,25 @@ import com.vmware.mangle.services.enums.AgentFaultName;
 @Data
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
-@JsonIgnoreProperties({ "timeoutinMilliseconds" })
 @SuppressWarnings("squid:MaximumInheritanceDepth")
 public class DiskSpaceSpec extends CommandExecutionFaultSpec {
 
     private static final long serialVersionUID = 1L;
+    @NotEmpty
     private String directoryPath;
+    @ApiModelProperty(value = "Integer value between 1 to 100 representing disk space usage %", example = "50")
+    private Integer diskFillSize;
 
     public DiskSpaceSpec() {
         setFaultName(AgentFaultName.INJECT_DISK_SPACE_FAULT.getValue());
         setSpecType(this.getClass().getName());
     }
 
-    @JsonIgnore
+    @NotNull
+    @Min(0)
+    @Max(2147483647)
     @Override
-    public void setTimeoutInMilliseconds(Integer timeoutinMilliseconds) {
-        super.setTimeoutInMilliseconds(timeoutinMilliseconds);
+    public Integer getTimeoutInMilliseconds() {
+        return timeoutInMilliseconds;
     }
 }

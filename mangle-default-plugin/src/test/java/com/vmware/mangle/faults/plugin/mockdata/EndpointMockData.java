@@ -69,17 +69,6 @@ public class EndpointMockData {
         vcenterIp = properties.getProperty("vcenter.ip");
     }
 
-    // Will be uncommented once we support AWS endpoint
-    /*public EndpointSpec awsEndpointMockData() {
-        EndpointSpec awsEndpointSpec = new EndpointSpec();
-        Properties properties = ReadProperty.readProperty(Constants.MOCKDATA_FILE);
-        awsEndpointSpec.setName(properties.getProperty("awsEndpointName"));
-        awsEndpointSpec.setEndPointType(EndpointType.AWS);
-        awsEndpointSpec.setCredentialsName(properties.getProperty("awsName"));
-        awsEndpointSpec.setAwsConnectionProperties(getAWSConnectionProperties());
-        return awsEndpointSpec;
-    }*/
-
     public EndpointSpec k8sEndpointMockData() {
         EndpointSpec k8sEndpointSpec = new EndpointSpec();
         Properties properties = ReadProperty.readProperty(Constants.MOCKDATA_FILE);
@@ -157,10 +146,25 @@ public class EndpointMockData {
         return vcenterEndpointSpec;
     }
 
+    public EndpointSpec awsEndpointSpecMock() {
+        EndpointSpec awsEndpointSpec = new EndpointSpec();
+        awsEndpointSpec.setName("awsMockEndpoint");
+        awsEndpointSpec.setEndPointType(EndpointType.AWS);
+        awsEndpointSpec.setCredentialsName("awsCreds");
+        awsEndpointSpec.setAwsConnectionProperties(getAwsConnectionPropertiess());
+        return awsEndpointSpec;
+    }
+
     public VCenterConnectionProperties getVCenterConnectionPropertiess() {
         VCenterConnectionProperties vCenterConnectionProperties = new VCenterConnectionProperties();
         vCenterConnectionProperties.setHostname(vcenterIp);
         return vCenterConnectionProperties;
+    }
+
+    public AWSConnectionProperties getAwsConnectionPropertiess() {
+        AWSConnectionProperties awsConnectionProperties = new AWSConnectionProperties();
+        awsConnectionProperties.setRegion(awsRegion);
+        return awsConnectionProperties;
     }
 
     public WaveFrontConnectionProperties getWaveFrontConnectionPropertiesMock() {

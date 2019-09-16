@@ -35,4 +35,5 @@ public class AgentRuleConstants {
     public static final String CLASS_NAME = "className";
     public static final String METHOD_NAME = "methodName";
     public static final String RULE_EVENT = "ruleEvent";
+    public static final String EXIT_CODE = "exitCode";
 }

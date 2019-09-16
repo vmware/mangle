@@ -12,6 +12,7 @@
 package com.vmware.mangle.unittest.faults.plugin.helpers.systemresource;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -130,6 +131,7 @@ public class LinuxSystemResourceFaultHelperTest {
         Mockito.when(endpointClientFactory.getEndPointClient(cpuFaultSpec.getCredentials(), cpuFaultSpec.getEndpoint()))
                 .thenReturn(sshUtils);
         Mockito.when(systemResourceFaultUtils.buildRemediationCommand(any(), any())).thenReturn(remediationCommand);
+        when(systemResourceFaultUtils.isManualRemediationSupported(anyString())).thenReturn(true);
         try {
             List<CommandInfo> remediationCommands =
                     linuxSystemResourceFaultHelper.getRemediationcommandInfoList(cpuFaultSpec);
@@ -141,6 +143,23 @@ public class LinuxSystemResourceFaultHelperTest {
             log.error("testGetInjectionCommandInfoListForCPU System resource Fault failed with Exception: ", e);
             Assert.assertTrue(false);
 
+        }
+    }
+
+    @Test
+    public void testGetRemediationCommandInfoListforFileHandler() {
+        try {
+            CommandExecutionFaultSpec fileHandlerFaultSpec = faultsMockData.getFilehandlerLeakFaultSpec();
+            Mockito.when(endpointClientFactory.getEndPointClient(null, fileHandlerFaultSpec.getEndpoint()))
+                    .thenReturn(sshUtils);
+            when(systemResourceFaultUtils.isManualRemediationSupported(anyString())).thenReturn(false);
+            List<CommandInfo> remediationCommands =
+                    linuxSystemResourceFaultHelper.getRemediationcommandInfoList(fileHandlerFaultSpec);
+            log.info(RestTemplateWrapper.objectToJson(remediationCommands));
+            Assert.assertEquals(remediationCommands, Collections.emptyList());
+        } catch (MangleException e) {
+            log.error("testGetRemediationCommandInfoListforFileHandler failed with Exception: ", e);
+            Assert.assertTrue(false);
         }
     }
 

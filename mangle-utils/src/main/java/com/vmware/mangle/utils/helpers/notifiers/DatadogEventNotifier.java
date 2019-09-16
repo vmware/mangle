@@ -40,16 +40,17 @@ public class DatadogEventNotifier implements Notifier {
         this.datadogClient = datadogClient;
     }
 
-    public void sendEvent(FaultEventSpec faultEventInfo) {
+    public boolean sendEvent(FaultEventSpec faultEventInfo) {
         DatadogEventDto eventSpec = getEventSpec(faultEventInfo);
         log.debug("Event Data constucted: " + eventSpec.toString());
         if (validateEventData(eventSpec)) {
             if (send(eventSpec)) {
                 log.debug("Sending the fault event to Datadog was successful");
             }
-            return;
+            return true;
         }
         log.error("Couldn't send the event to Datadog. Validation of Event Spec has failed");
+        return false;
     }
 
     public DatadogEventDto getEventSpec(FaultEventSpec faultEventInfo) {
@@ -111,6 +112,11 @@ public class DatadogEventNotifier implements Notifier {
                         datadogClient.objectToJson(eventSpec), String.class);
         log.debug("API Response : " + response);
         return !(StringUtils.isEmpty(response)) && (ApiUtils.isResponseCodeSuccess(response.getStatusCode().value()));
+    }
+
+    // Nothing to implement in close Event for now.
+    public boolean closeEvent(String eventName) {
+        return true;
     }
 
 }

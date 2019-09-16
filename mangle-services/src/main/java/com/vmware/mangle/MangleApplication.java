@@ -12,10 +12,14 @@
 package com.vmware.mangle;
 
 import lombok.extern.log4j.Log4j2;
+import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.cassandra.CassandraAutoConfiguration;
 import org.springframework.boot.autoconfigure.data.cassandra.CassandraDataAutoConfiguration;
+import org.springframework.context.ConfigurableApplicationContext;
+
+import com.vmware.mangle.utils.constants.Constants;
 
 /**
  * class is used to boot up the fiassco service.
@@ -25,9 +29,25 @@ import org.springframework.boot.autoconfigure.data.cassandra.CassandraDataAutoCo
 @SpringBootApplication(exclude = { CassandraAutoConfiguration.class, CassandraDataAutoConfiguration.class })
 @Log4j2
 public class MangleApplication {
+    private static ConfigurableApplicationContext context;
+
     public static void main(String[] args) {
         log.info("Application initialization inprogress...");
-        SpringApplication.run(MangleApplication.class, args);
+        context = SpringApplication.run(MangleApplication.class, args);
         log.info("Application initialization completed...");
+        if (Constants.SCHEMA_MIGRATED) {
+            log.info("Restarting the application after shcema upgrade");
+            restart();
+        }
+    }
+
+    public static void restart() {
+        ApplicationArguments args = context.getBean(ApplicationArguments.class);
+        Thread thread = new Thread(() -> {
+            context.close();
+            context = SpringApplication.run(MangleApplication.class, args.getSourceArgs());
+        });
+        thread.setDaemon(false);
+        thread.start();
     }
 }

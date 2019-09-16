@@ -44,6 +44,7 @@ describe('CpuComponent', () => {
         fixture.detectChanges();
         endpointService = TestBed.get(EndpointService);
         spyOn(endpointService, 'getAllEndpoints').and.returnValue(of([]));
+        spyOn(endpointService, 'getDockerContainers').and.returnValue(of([]));
         faultService = TestBed.get(FaultService);
         spyOn(faultService, 'executeCpuFault').and.returnValue(of({ "taskData": { "schedule": null } }));
         router = TestBed.get(Router);
@@ -57,6 +58,11 @@ describe('CpuComponent', () => {
     it('should execute cpu fault', () => {
         component.executeCpuFault(component.faultFormData);
         expect(faultService.executeCpuFault).toHaveBeenCalled();
+    });
+
+    it('should execute getDockerContainers', () => {
+        component.getDockerContainers("DOCKER", '');
+        expect(endpointService.getDockerContainers).toHaveBeenCalled();
     });
 
 });

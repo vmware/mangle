@@ -26,9 +26,12 @@ import com.vmware.mangle.cassandra.model.tasks.RemediableTask;
 import com.vmware.mangle.cassandra.model.tasks.Task;
 import com.vmware.mangle.cassandra.model.tasks.TaskStatus;
 import com.vmware.mangle.cassandra.model.tasks.TaskType;
+import com.vmware.mangle.model.aws.faults.spec.AwsEC2FaultSpec;
 import com.vmware.mangle.model.enums.EndpointType;
 import com.vmware.mangle.services.PluginService;
+import com.vmware.mangle.services.enums.FaultName;
 import com.vmware.mangle.task.framework.helpers.AbstractTaskHelper;
+import com.vmware.mangle.utils.constants.ErrorConstants;
 import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
@@ -74,6 +77,11 @@ public class FaultTaskFactory {
             return taskHelper.init(faultSpec, taskId);
         }
 
+        if (faultSpec instanceof AwsEC2FaultSpec) {
+            taskHelper = getExtension("com.vmware.mangle.faults.plugin.tasks.helpers.AwsEC2SpecificFaultTaskHelper");
+            return taskHelper.init(faultSpec, taskId);
+        }
+
         if (isK8SFaultTriggerTaskFault(faultSpec)) {
             K8SFaultTriggerSpec k8SFaultSpec = new K8SFaultTriggerSpec();
             k8SFaultSpec.setChildSpecType(faultSpec.getClass().getName());
@@ -115,7 +123,7 @@ public class FaultTaskFactory {
             faultSpec = (FaultSpec) injectedTask.getTaskData();
         }
 
-        return getTask(faultSpec, taskId);
+        return getTask(injectedTask, faultSpec, taskId);
     }
 
     /**
@@ -140,7 +148,40 @@ public class FaultTaskFactory {
         }
         if (injectedTask.getTaskData() instanceof CommandExecutionFaultSpec
                 && ((CommandExecutionFaultSpec) injectedTask.getTaskData()).getRemediationCommandInfoList().isEmpty()) {
-            throw new MangleException(ErrorCode.FAULT_REMEDIATION_NOT_SUPPORTED);
+            if (FaultName.KERNELPANICFAULT.getValue()
+                    .equals(((CommandExecutionFaultSpec) injectedTask.getTaskData()).getFaultName())) {
+                throw new MangleException(
+                        String.format(ErrorConstants.FAULT_REMEDIATION_NOT_SUPPORTED_FOR_KERNELPANICFAULT,
+                                ((CommandExecutionFaultSpec) injectedTask.getTaskData()).getFaultName()),
+                        ErrorCode.FAULT_REMEDIATION_NOT_SUPPORTED);
+            } else {
+                throw new MangleException(
+                        String.format(ErrorConstants.FAULT_REMEDIATION_NOT_SUPPORTED,
+                                ((CommandExecutionFaultSpec) injectedTask.getTaskData()).getFaultName()),
+                        ErrorCode.FAULT_REMEDIATION_NOT_SUPPORTED);
+            }
+        }
+    }
+
+    /**
+     * @param injectedTask
+     * @param faultSpec
+     * @param taskId
+     * @return
+     * @throws MangleException
+     */
+    private Task<TaskSpec> getTask(Task<TaskSpec> injectedTask, FaultSpec faultSpec, String taskId)
+            throws MangleException {
+        AbstractTaskHelper<TaskSpec> taskHelper = getExtension(injectedTask.getExtensionName());
+
+        if (isK8SFaultTriggerTaskFault(faultSpec)) {
+            K8SFaultTriggerSpec k8SFaultSpec = new K8SFaultTriggerSpec();
+            k8SFaultSpec.setChildSpecType(faultSpec.getClass().getName());
+            k8SFaultSpec.setFaultSpec((CommandExecutionFaultSpec) faultSpec);
+            k8SFaultSpec.setSchedule(faultSpec.getSchedule());
+            return taskHelper.init(k8SFaultSpec, taskId);
+        } else {
+            return taskHelper.init(faultSpec, taskId);
         }
     }
 }

@@ -13,6 +13,7 @@ package com.vmware.mangle.unittest.faults.plugin.helpers.k8s;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +35,7 @@ import com.vmware.mangle.task.framework.endpoint.EndpointClientFactory;
 import com.vmware.mangle.unittest.faults.plugin.helpers.CommandResultUtils;
 import com.vmware.mangle.utils.ICommandExecutor;
 import com.vmware.mangle.utils.clients.kubernetes.KubernetesCommandLineClient;
+import com.vmware.mangle.utils.clients.kubernetes.KubernetesTemplates;
 import com.vmware.mangle.utils.clients.restclient.RestTemplateWrapper;
 import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
@@ -43,6 +45,7 @@ import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
  * Test Class for K8sFaultHelper
  *
  * @author hkilari
+ * @author bkaranam
  *
  */
 @Log4j2
@@ -51,7 +54,8 @@ public class K8sFaultHelperTest {
     EndpointClientFactory endpointClientFactory;
     @Mock
     KubernetesCommandLineClient kubernetesCommandLineClient;
-
+    @Mock
+    ICommandExecutor executor;
     K8sFaultHelper k8sFaultHelper;
     private FaultsMockData faultsMockData = new FaultsMockData();
 
@@ -66,6 +70,13 @@ public class K8sFaultHelperTest {
         list.add("app-inventory-service-243-0");
         list.add("app-inventory-service-243-1");
         list.add("app-inventory-service-243-2");
+        return list;
+    }
+
+    public static List<String> getServicesAsList() {
+        List<String> list = new ArrayList<>();
+        list.add("app-inventory-service-0");
+        list.add("app-inventory-service-1");
         return list;
     }
 
@@ -299,21 +310,6 @@ public class K8sFaultHelperTest {
         }
     }
 
-
-    private boolean verifyInjectionCommandInfoListForDeleteResource(CommandInfo commandInfo,
-            CommandInfo injectionCommand) {
-        if (commandInfo.equals(getInjectionCommand(" delete  pod app-inventory-service-243-0"))) {
-            return true;
-        }
-        if (commandInfo.equals(getInjectionCommand(" delete  pod app-inventory-service-243-1"))) {
-            return true;
-        }
-        if (commandInfo.equals(getInjectionCommand(" delete  pod app-inventory-service-243-2"))) {
-            return true;
-        }
-        return false;
-    }
-
     @Test
     public void testgetInjectResourceNotReadyFault() {
         try {
@@ -330,8 +326,6 @@ public class K8sFaultHelperTest {
             List<CommandInfo> expectedCommands =
                     getExpectedInjectionCommandsForNonRandomResourceNotReadyFaultInjection();
             Assert.assertEquals(injectionCommands, expectedCommands);
-            /*Assert.assertEquals(injectionCommands.get(0), getInjectionCommand(
-                    " patch pod  app-inventory-service-243-0 -p '{\"spec\":{\"containers\":[{\"name\":\"testContainer\",\"image\":\"nginx\"}]}}' "));*/
             List<CommandInfo> remediationCommands =
                     k8sFaultHelper.getRemediationCommandInfoList(executor, k8sFaultSpec);
             log.info(RestTemplateWrapper.objectToJson(remediationCommands));
@@ -341,6 +335,87 @@ public class K8sFaultHelperTest {
             log.error("testgetInjectResourceNotReadyFault failed with Exception: ", e);
             Assert.assertTrue(false);
         }
+    }
+
+    @Test
+    public void testgetInjectServiceUnavailableFault() {
+        try {
+            K8SFaultSpec k8sFaultSpec = faultsMockData.getK8SServiceUnavailableFaultSpec();
+            Mockito.when(
+                    endpointClientFactory.getEndPointClient(k8sFaultSpec.getCredentials(), k8sFaultSpec.getEndpoint()))
+                    .thenReturn(kubernetesCommandLineClient);
+            ICommandExecutor executor = k8sFaultHelper.getExecutor(k8sFaultSpec);
+            k8sFaultSpec.setResourcesList(getServicesAsList());
+            log.info(k8sFaultSpec.getResourcesList());
+            Mockito.when(kubernetesCommandLineClient.executeCommand(Mockito.any()))
+                    .thenReturn(CommandResultUtils.getCommandResult(KubernetesTemplates.SERVICE_KEY_PREFIX + "app"));
+            List<CommandInfo> injectionCommands = k8sFaultHelper.getInjectionCommandInfoList(executor, k8sFaultSpec);
+            log.info(RestTemplateWrapper.objectToJson(injectionCommands));
+            List<CommandInfo> expectedCommands =
+                    getExpectedInjectionCommandsForNonRandomServiceUnavailableFaultInjection();
+            Assert.assertEquals(injectionCommands, expectedCommands);
+
+            Mockito.when(kubernetesCommandLineClient.executeCommand(Mockito.any()))
+                    .thenReturn(CommandResultUtils.getCommandResult("error"));
+            injectionCommands = k8sFaultHelper.getInjectionCommandInfoList(executor, k8sFaultSpec);
+            log.info(RestTemplateWrapper.objectToJson(injectionCommands));
+            Assert.assertEquals(injectionCommands, Collections.EMPTY_LIST);
+
+            Mockito.when(kubernetesCommandLineClient.executeCommand(Mockito.any()))
+                    .thenReturn(CommandResultUtils.getCommandResult(KubernetesTemplates.SERVICE_KEY_PREFIX));
+            injectionCommands = k8sFaultHelper.getInjectionCommandInfoList(executor, k8sFaultSpec);
+            log.info(RestTemplateWrapper.objectToJson(injectionCommands));
+            Assert.assertEquals(injectionCommands, Collections.EMPTY_LIST);
+        } catch (MangleException e) {
+            log.error("testgetInjectServiceUnavailableFault failed with Exception: ", e);
+            Assert.assertTrue(false);
+        }
+    }
+
+    @Test
+    public void testgetRemediateServiceUnavailableFault() {
+        try {
+            K8SFaultSpec k8sFaultSpec = faultsMockData.getK8SServiceUnavailableFaultSpec();
+            Mockito.when(
+                    endpointClientFactory.getEndPointClient(k8sFaultSpec.getCredentials(), k8sFaultSpec.getEndpoint()))
+                    .thenReturn(kubernetesCommandLineClient);
+            ICommandExecutor executor = k8sFaultHelper.getExecutor(k8sFaultSpec);
+            k8sFaultSpec.setResourcesList(getServicesAsList());
+            Mockito.when(kubernetesCommandLineClient.executeCommand(Mockito.any())).thenReturn(CommandResultUtils
+                    .getCommandResult(KubernetesTemplates.SELECTORS_PREFIX + "\"app\":\"app-inventory-service\""));
+            List<CommandInfo> remediationCommands =
+                    k8sFaultHelper.getRemediationCommandInfoList(executor, k8sFaultSpec);
+            log.info(RestTemplateWrapper.objectToJson(remediationCommands));
+            Assert.assertEquals(remediationCommands,
+                    getExpectedRemediationCommandsForServiceUnavailableFaultInjection());
+            Mockito.when(kubernetesCommandLineClient.executeCommand(Mockito.any()))
+                    .thenReturn(CommandResultUtils.getCommandResult("error"));
+            remediationCommands = k8sFaultHelper.getRemediationCommandInfoList(executor, k8sFaultSpec);
+            log.info(RestTemplateWrapper.objectToJson(remediationCommands));
+            Assert.assertEquals(remediationCommands, Collections.EMPTY_LIST);
+            Mockito.when(kubernetesCommandLineClient.executeCommand(Mockito.any()))
+                    .thenReturn(CommandResultUtils.getCommandResult(KubernetesTemplates.SELECTORS_PREFIX));
+            remediationCommands = k8sFaultHelper.getRemediationCommandInfoList(executor, k8sFaultSpec);
+            log.info(RestTemplateWrapper.objectToJson(remediationCommands));
+            Assert.assertEquals(remediationCommands, Collections.EMPTY_LIST);
+        } catch (MangleException e) {
+            log.error("testgetRemediateServiceUnavailableFault failed with Exception: ", e);
+            Assert.assertTrue(false);
+        }
+    }
+
+    private boolean verifyInjectionCommandInfoListForDeleteResource(CommandInfo commandInfo,
+            CommandInfo injectionCommand) {
+        if (commandInfo.equals(getInjectionCommand(" delete  pod app-inventory-service-243-0"))) {
+            return true;
+        }
+        if (commandInfo.equals(getInjectionCommand(" delete  pod app-inventory-service-243-1"))) {
+            return true;
+        }
+        if (commandInfo.equals(getInjectionCommand(" delete  pod app-inventory-service-243-2"))) {
+            return true;
+        }
+        return false;
     }
 
     public static List<CommandInfo> getExpectedInjectionCommandsForNonRandomResourceNotReadyFaultInjection() {
@@ -432,6 +507,94 @@ public class K8sFaultHelperTest {
         list.add(pod3VerifyReadinessProbeCommand);
         list.add(pod3PatchCommand);
         list.add(pod3VerifyReadyStateCommand);
+        return list;
+    }
+
+    public static List<CommandInfo> getExpectedInjectionCommandsForNonRandomServiceUnavailableFaultInjection() {
+        List<CommandInfo> list = new ArrayList<>();
+
+        CommandInfo service1PatchCommand = new CommandInfo();
+        service1PatchCommand.setCommand(
+                " patch service  app-inventory-service-0 -p '{\"spec\":{\"selector\":{\"app\":\"mangle\"}}}' ");
+        service1PatchCommand.setIgnoreExitValueCheck(false);
+        service1PatchCommand.setNoOfRetries(0);
+        service1PatchCommand.setRetryInterval(0);
+        service1PatchCommand.setTimeout(0);
+
+        CommandInfo service1VerifyEndpointsCommand = new CommandInfo();
+        service1VerifyEndpointsCommand
+                .setCommand(" get endpoints app-inventory-service-0 -o template  --template=\"{{.subsets}}\"");
+        service1VerifyEndpointsCommand.setIgnoreExitValueCheck(false);
+        service1VerifyEndpointsCommand.setNoOfRetries(30);
+        service1VerifyEndpointsCommand.setRetryInterval(10);
+        service1VerifyEndpointsCommand.setTimeout(0);
+        service1VerifyEndpointsCommand.setExpectedCommandOutputList(Arrays.asList("<no value>"));
+
+        CommandInfo service2PatchCommand = new CommandInfo();
+        service2PatchCommand.setCommand(
+                " patch service  app-inventory-service-1 -p '{\"spec\":{\"selector\":{\"app\":\"mangle\"}}}' ");
+        service2PatchCommand.setIgnoreExitValueCheck(false);
+        service2PatchCommand.setNoOfRetries(0);
+        service2PatchCommand.setRetryInterval(0);
+        service2PatchCommand.setTimeout(0);
+
+        CommandInfo service2VerifyEndpointsCommand = new CommandInfo();
+        service2VerifyEndpointsCommand
+                .setCommand(" get endpoints app-inventory-service-1 -o template  --template=\"{{.subsets}}\"");
+        service2VerifyEndpointsCommand.setIgnoreExitValueCheck(false);
+        service2VerifyEndpointsCommand.setNoOfRetries(30);
+        service2VerifyEndpointsCommand.setRetryInterval(10);
+        service2VerifyEndpointsCommand.setTimeout(0);
+        service2VerifyEndpointsCommand.setExpectedCommandOutputList(Arrays.asList("<no value>"));
+
+        list.add(service1PatchCommand);
+        list.add(service1VerifyEndpointsCommand);
+        list.add(service2PatchCommand);
+        list.add(service2VerifyEndpointsCommand);
+        return list;
+    }
+
+    public static List<CommandInfo> getExpectedRemediationCommandsForServiceUnavailableFaultInjection() {
+        List<CommandInfo> list = new ArrayList<>();
+
+        CommandInfo service1PatchCommand = new CommandInfo();
+        service1PatchCommand.setCommand(
+                " patch service  app-inventory-service-0 -p '{\"spec\":{\"selector\":\"app\":\"app-inventory-service\"}}' ");
+        service1PatchCommand.setIgnoreExitValueCheck(false);
+        service1PatchCommand.setNoOfRetries(0);
+        service1PatchCommand.setRetryInterval(0);
+        service1PatchCommand.setTimeout(0);
+
+        CommandInfo service1VerifyEndpointsCommand = new CommandInfo();
+        service1VerifyEndpointsCommand
+                .setCommand(" get endpoints app-inventory-service-0 -o template  --template=\"{{.subsets}}\"");
+        service1VerifyEndpointsCommand.setIgnoreExitValueCheck(false);
+        service1VerifyEndpointsCommand.setNoOfRetries(30);
+        service1VerifyEndpointsCommand.setRetryInterval(10);
+        service1VerifyEndpointsCommand.setTimeout(0);
+        service1VerifyEndpointsCommand.setExpectedCommandOutputList(Arrays.asList("addresses"));
+
+        CommandInfo service2PatchCommand = new CommandInfo();
+        service2PatchCommand.setCommand(
+                " patch service  app-inventory-service-1 -p '{\"spec\":{\"selector\":\"app\":\"app-inventory-service\"}}' ");
+        service2PatchCommand.setIgnoreExitValueCheck(false);
+        service2PatchCommand.setNoOfRetries(0);
+        service2PatchCommand.setRetryInterval(0);
+        service2PatchCommand.setTimeout(0);
+
+        CommandInfo service2VerifyEndpointsCommand = new CommandInfo();
+        service2VerifyEndpointsCommand
+                .setCommand(" get endpoints app-inventory-service-1 -o template  --template=\"{{.subsets}}\"");
+        service2VerifyEndpointsCommand.setIgnoreExitValueCheck(false);
+        service2VerifyEndpointsCommand.setNoOfRetries(30);
+        service2VerifyEndpointsCommand.setRetryInterval(10);
+        service2VerifyEndpointsCommand.setTimeout(0);
+        service2VerifyEndpointsCommand.setExpectedCommandOutputList(Arrays.asList("addresses"));
+
+        list.add(service1PatchCommand);
+        list.add(service1VerifyEndpointsCommand);
+        list.add(service2PatchCommand);
+        list.add(service2VerifyEndpointsCommand);
         return list;
     }
 

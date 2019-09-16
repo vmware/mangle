@@ -19,11 +19,12 @@ import com.vmware.mangle.cassandra.model.tasks.TaskType;
 import com.vmware.mangle.model.enums.EndpointType;
 import com.vmware.mangle.services.enums.K8SFaultName;
 import com.vmware.mangle.services.helpers.faults.AbstractFault;
-import com.vmware.mangle.services.helpers.faults.SupportedEndpoints;
+import com.vmware.mangle.task.framework.helpers.faults.SupportedEndpoints;
 import com.vmware.mangle.utils.exceptions.MangleException;
 
 /**
- * @author bkaranam K8S resource deletion Fault
+ * @author bkaranam
+ * K8S resource deletion Fault
  */
 @SupportedEndpoints(endPoints = { EndpointType.K8S_CLUSTER })
 public class DeleteK8SResourceFault extends AbstractFault {

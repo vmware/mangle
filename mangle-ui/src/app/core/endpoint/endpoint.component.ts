@@ -2,8 +2,7 @@ import { Component, OnInit } from '@angular/core';
 
 @Component({
   selector: 'app-endpoint',
-  templateUrl: './endpoint.component.html',
-  styleUrls: ['./endpoint.component.css']
+  templateUrl: './endpoint.component.html'
 })
 export class EndpointComponent implements OnInit {
 

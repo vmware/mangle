@@ -1,9 +1,4 @@
-<clr-alert *ngIf="errorFlag" [clrAlertType]="'danger'">
-    <div class="alert-item">{{alertMessage}}</div>
-</clr-alert>
-<clr-alert *ngIf="successFlag" [clrAlertType]="'success'">
-    <div class="alert-item">{{alertMessage}}</div>
-</clr-alert>
+<app-alert [(errorAlertMessage)]="errorAlertMessage" [(successAlertMessage)]="successAlertMessage" (errorAlertMessageChange)="errorAlertMessage = $event" (successAlertMessageChange)="successAlertMessage = $event"></app-alert>
 <div>
     <h3 class="modal-title">Execute K8S Resource Not Ready Fault</h3>
     <form #k8sResourceNotReadyForm="ngForm" (ngSubmit)="executeK8SResourceNotReadyFault(k8sResourceNotReadyForm.value);" ngNativeValidate>
@@ -11,11 +6,11 @@
             <div class="form-group">
                 <label for="endpointName">Endpoint</label>
                 <clr-dropdown>
-                    <input clrDropdownTrigger type="text" name="endpointName" (input)="searchEndpoint($event.target.value);displayEndpointFields($event.target.value);" [(ngModel)]="faultFormData.endpointName" />
+                    <input autocomplete="off" clrDropdownTrigger type="text" name="endpointName" (input)="searchEndpoint($event.target.value);displayEndpointFields($event.target.value);" (focus)="searchEndpoint('');" [(ngModel)]="faultFormData.endpointName" />
                     <clr-icon shape="caret down" clrDropdownTrigger size="24" (click)="searchEndpoint('');"></clr-icon>
-                    <clr-dropdown-menu *clrIfOpen clrPosition="bottom-left">
+                    <clr-dropdown-menu *clrIfOpen class="menu-height" clrPosition="bottom-left">
                         <ng-container *ngFor="let searchedEndpoint of searchedEndpoints">
-                            <button type="button" clrDropdownItem *ngIf="searchedEndpoint.endPointType == 'K8S_CLUSTER'" (click)="setEndpointVal(searchedEndpoint.name);displayEndpointFields(searchedEndpoint.name);">{{searchedEndpoint.name}}</button>
+                            <button type="button" clrDropdownItem class="option-height" *ngIf="searchedEndpoint.endPointType == 'K8S_CLUSTER'" (click)="setEndpointVal(searchedEndpoint.name);displayEndpointFields(searchedEndpoint.name);">{{searchedEndpoint.name}}</button>
                         </ng-container>
                     </clr-dropdown-menu>
                 </clr-dropdown>

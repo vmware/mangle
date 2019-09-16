@@ -11,6 +11,7 @@
 
 package com.vmware.mangle.services;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -29,6 +30,7 @@ import com.vmware.mangle.cassandra.model.endpoint.EndpointSpec;
 import com.vmware.mangle.model.enums.EndpointType;
 import com.vmware.mangle.services.repository.EndpointRepository;
 import com.vmware.mangle.task.framework.endpoint.EndpointClientFactory;
+import com.vmware.mangle.utils.clients.docker.CustomDockerClient;
 import com.vmware.mangle.utils.constants.ErrorConstants;
 import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.MangleRuntimeException;
@@ -86,6 +88,30 @@ public class EndpointService {
             log.error(ErrorConstants.ENDPOINT_TYPE + ErrorConstants.FIELD_VALUE_EMPTY);
             throw new MangleException(ErrorCode.FIELD_VALUE_EMPTY, ErrorConstants.ENDPOINT_TYPE);
         }
+    }
+
+    public List<String> getAllContainersByEndpointName(String endPointName) throws MangleException {
+        log.info("Geting all containers by endPointName : " + endPointName);
+        if (endPointName != null && !endPointName.isEmpty()) {
+            Optional<EndpointSpec> endpointSpec = endpointRepository.findByName(endPointName);
+            if (!endpointSpec.isPresent()) {
+                throw new MangleException(ErrorConstants.NO_RECORD_FOUND, ErrorCode.NO_RECORD_FOUND,
+                        ErrorConstants.ENDPOINT_NAME, endPointName);
+            }
+            if (endpointSpec.get().getEndPointType() != (EndpointType.DOCKER)) {
+                throw new MangleException(ErrorConstants.DOCKER_INVALID_ENDPOINT,
+                        ErrorCode.DOCKER_INVALID_ENDPOINT, endPointName);
+            }
+            if (endpointSpec.get().getEndPointType().equals(EndpointType.DOCKER)) {
+                CustomDockerClient dockerClient =
+                        new CustomDockerClient(endpointSpec.get().getDockerConnectionProperties().getDockerHostname(),
+                                endpointSpec.get().getDockerConnectionProperties().getDockerPort(),
+                                endpointSpec.get().getDockerConnectionProperties().getTlsEnabled(),
+                                endpointSpec.get().getDockerConnectionProperties().getCertificatesName());
+                return dockerClient.getAllContainerNames();
+            }
+        }
+        return Collections.emptyList();
     }
 
     public EndpointSpec updateEndpointByEndpointName(String name, EndpointSpec endpointSpec) throws MangleException {
@@ -213,6 +239,8 @@ public class EndpointService {
             return endpoint.getRemoteMachineConnectionProperties();
         case VCENTER:
             return endpoint.getVCenterConnectionProperties();
+        case AWS:
+            return endpoint.getAwsConnectionProperties();
         default:
             return null;
         }

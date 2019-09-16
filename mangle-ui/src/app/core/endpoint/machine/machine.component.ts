@@ -4,8 +4,7 @@ import { CommonEndpoint } from '../common.endpoint';
 
 @Component({
   selector: 'app-machine',
-  templateUrl: './machine.component.html',
-  styleUrls: ['./machine.component.css']
+  templateUrl: './machine.component.html'
 })
 export class MachineComponent extends CommonEndpoint implements OnInit {
   

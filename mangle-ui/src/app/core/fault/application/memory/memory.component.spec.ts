@@ -44,6 +44,7 @@ describe('MemoryComponent', () => {
         fixture.detectChanges();
         endpointService = TestBed.get(EndpointService);
         spyOn(endpointService, 'getAllEndpoints').and.returnValue(of([]));
+        spyOn(endpointService, 'getDockerContainers').and.returnValue(of([]));
         faultService = TestBed.get(FaultService);
         spyOn(faultService, 'executeMemoryFault').and.returnValue(of({ "taskData": { "schedule": null } }));
         router = TestBed.get(Router);
@@ -57,6 +58,11 @@ describe('MemoryComponent', () => {
     it('should execute memory fault', () => {
         component.executeMemoryFault(component.faultFormData);
         expect(faultService.executeMemoryFault).toHaveBeenCalled();
+    });
+
+    it('should execute getDockerContainers', () => {
+        component.getDockerContainers("DOCKER", '');
+        expect(endpointService.getDockerContainers).toHaveBeenCalled();
     });
 
 });

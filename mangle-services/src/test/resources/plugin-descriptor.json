@@ -1,0 +1,22 @@
+{
+	"pluginId": "mangle-test-plugin",
+	"faults": [
+		{
+			"faultParameters": {
+				"injectionHomeDir": "/tmp/",
+				"processIdentifier": "sleep",
+				"remediationCommand": "sleep 2m"
+			},
+			"extensionDetails": {
+				"modelExtensionName": "com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec",
+      			"taskExtensionName": "com.vmware.mangle.unittest.services.helpers.CustomTaskHelper",
+      			"faultExtensionName": "com.vmware.mangle.unittest.services.helpers.CustomFault"
+			},
+			"faultName": "mangle-test-plugin-customkillprocessfault",
+			"supportedEndpoints": [
+				"MACHINE"
+			],
+			"pluginId": "mangle-test-plugin"
+		}
+	]
+}

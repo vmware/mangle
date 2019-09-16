@@ -12,7 +12,6 @@
 package com.vmware.mangle.metric.reporter.common;
 
 import java.util.HashMap;
-import java.util.Map;
 
 import com.vmware.mangle.metric.reporter.helpers.metric.MetricsHelper;
 
@@ -25,7 +24,7 @@ public class Metric {
     String metricName;
     double metricValue;
     Long metricTimeStamp;
-    Map<String, String> tags = new HashMap<>();
+    HashMap<String, String> tags = new HashMap<>();
     String source;
 
     public Metric(String metricName, double metricValue, String source) {
@@ -36,7 +35,7 @@ public class Metric {
         this.source = source;
     }
 
-    public Metric(String metricName, double metricValue, Map<String, String> tags, String source) {
+    public Metric(String metricName, double metricValue, HashMap<String, String> tags, String source) {
         this.metricName = metricName;
         this.metricValue = metricValue;
         this.metricTimeStamp = MetricsHelper.getCurrentTimeStampInMillis();
@@ -44,7 +43,7 @@ public class Metric {
         this.source = source;
     }
 
-    public Metric(String metricName, double metricValue, Long metricTimeStamp, Map<String, String> tags,
+    public Metric(String metricName, double metricValue, Long metricTimeStamp, HashMap<String, String> tags,
             String source) {
         this.metricName = metricName;
         this.metricValue = metricValue;
@@ -77,11 +76,11 @@ public class Metric {
         this.metricTimeStamp = metricTimeStamp;
     }
 
-    public Map<String, String> getTags() {
+    public HashMap<String, String> getTags() {
         return tags;
     }
 
-    public void setTags(Map<String, String> tags) {
+    public void setTags(HashMap<String, String> tags) {
         this.tags = tags;
     }
 

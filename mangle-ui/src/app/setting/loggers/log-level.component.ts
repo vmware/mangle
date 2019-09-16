@@ -4,8 +4,7 @@ import { MessageConstants } from 'src/app/common/message.constants';
 
 @Component({
     selector: 'app-log-level',
-    templateUrl: './log-level.component.html',
-    styleUrls: ['./log-level.component.css']
+    templateUrl: './log-level.component.html'
 })
 export class LogLevelComponent implements OnInit {
 
@@ -15,9 +14,8 @@ export class LogLevelComponent implements OnInit {
     public levels: any = [];
     public loggerFormData: any = { "name": null, "configProp": { "configuredLevel": null, "effectiveLevel": null } };
 
-    public errorFlag = false;
-    public successFlag = false;
-    public alertMessage: string;
+    public errorAlertMessage: string;
+    public successAlertMessage: string;
 
     public addEdit: string;
 
@@ -40,26 +38,21 @@ export class LogLevelComponent implements OnInit {
                 this.levels = res.levels;
                 this.isLoading = false;
             }, err => {
-                this.alertMessage = err.error.description;
-                this.errorFlag = true;
+                this.errorAlertMessage = err.error.description;
                 this.isLoading = false;
             });
     }
 
     public updateLogger(loggerFormVal) {
-        this.errorFlag = false;
-        this.successFlag = false;
         this.isLoading = true;
         this.settingService.updateLogger(loggerFormVal).subscribe(
             res => {
                 this.getLoggers();
-                this.alertMessage = MessageConstants.LOGGER_UPDATE;
-                this.successFlag = true;
+                this.successAlertMessage = MessageConstants.LOGGER_UPDATE;
                 this.isLoading = false;
             }, err => {
                 this.getLoggers();
-                this.alertMessage = err.error.description;
-                this.errorFlag = true;
+                this.errorAlertMessage = err.error.description;
                 this.isLoading = false;
             });
     }

@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import lombok.extern.log4j.Log4j2;
+import org.springframework.util.CollectionUtils;
 
 import com.vmware.mangle.services.dto.OperationMetaData;
 
@@ -33,14 +34,25 @@ public class ReadFaultOperationProperties {
     public static final String PROPERTYFILE_FOLDER = "FaultOperationProperties";
     public static final String VCENTER_FAULT_OPERATION_PROPERTIES_FILE = "VCenterFaultOperations.properties";
     public static final String DOCKER_FAULT_OPERATION_PROPERTIES_FILE = "dockerFaultOperations.properties";
+    public static final String AWS_EC2_FAULT_OPERATION_PROPERTIES_FILE = "awsEC2FaultOperations.properties";
     private static Map<String, OperationMetaData> vCenterFaultOperationMap = new HashMap<>();
     private static Map<String, OperationMetaData> dockerFaultOperationMap = new HashMap<>();
+    private static Map<String, OperationMetaData> awsEC2FaultOperationMap = new HashMap<>();
 
     private ReadFaultOperationProperties() {
     }
 
+    public static synchronized Map<String, OperationMetaData> getAwsEC2FaultOperationMap() {
+        if (CollectionUtils.isEmpty(awsEC2FaultOperationMap)) {
+            Properties awsEC2Faultproperties = ReadProperty
+                    .readProperty(PROPERTYFILE_FOLDER + File.separator + AWS_EC2_FAULT_OPERATION_PROPERTIES_FILE);
+            awsEC2FaultOperationMap = extractFaultOperationMap(awsEC2Faultproperties);
+        }
+        return awsEC2FaultOperationMap;
+    }
+
     public static synchronized Map<String, OperationMetaData> getVcenterFaultOperationMap() {
-        if (vCenterFaultOperationMap.isEmpty()) {
+        if (CollectionUtils.isEmpty(vCenterFaultOperationMap)) {
             Properties vCenterFaultproperties = ReadProperty
                     .readProperty(PROPERTYFILE_FOLDER + File.separator + VCENTER_FAULT_OPERATION_PROPERTIES_FILE);
             vCenterFaultOperationMap = extractFaultOperationMap(vCenterFaultproperties);
@@ -49,7 +61,7 @@ public class ReadFaultOperationProperties {
     }
 
     public static synchronized Map<String, OperationMetaData> getDockerFaultOperationMap() {
-        if (dockerFaultOperationMap.isEmpty()) {
+        if (CollectionUtils.isEmpty(dockerFaultOperationMap)) {
             Properties dockerFaultproperties = ReadProperty
                     .readProperty(PROPERTYFILE_FOLDER + File.separator + DOCKER_FAULT_OPERATION_PROPERTIES_FILE);
             dockerFaultOperationMap = extractFaultOperationMap(dockerFaultproperties);

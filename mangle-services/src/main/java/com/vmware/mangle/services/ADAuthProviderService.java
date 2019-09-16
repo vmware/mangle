@@ -91,7 +91,7 @@ public class ADAuthProviderService {
      *
      * @param authProviderIds
      */
-    public void removeADAuthProvider(List<String> authProviderIds) throws MangleException {
+    public List<String> removeADAuthProvider(List<String> authProviderIds) throws MangleException {
         List<ADAuthProviderDto> persistedAdProviders = adAuthProviderRepository.findByAdDomains(authProviderIds);
         List<String> persistedAdProviderNames =
                 persistedAdProviders.stream().map(ADAuthProviderDto::getAdDomain).collect(Collectors.toList());
@@ -101,6 +101,7 @@ public class ADAuthProviderService {
                     authProviderIds.toString());
         }
         adAuthProviderRepository.deleteByAdDomainIn(persistedAdProviderNames);
+        return persistedAdProviderNames;
     }
 
     /**

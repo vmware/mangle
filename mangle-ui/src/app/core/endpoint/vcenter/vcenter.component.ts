@@ -4,8 +4,7 @@ import { CommonEndpoint } from '../common.endpoint';
 
 @Component({
   selector: 'app-vcenter',
-  templateUrl: './vcenter.component.html',
-  styleUrls: ['./vcenter.component.css']
+  templateUrl: './vcenter.component.html'
 })
 export class VcenterComponent extends CommonEndpoint implements OnInit {
   

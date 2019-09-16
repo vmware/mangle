@@ -2,3 +2,10 @@
 .height-1200 {
     height:1200px;
 }
+.menu-height {
+    max-height: 15rem;
+    overflow-y: scroll;
+}
+.option-height {
+    min-height: fit-content;
+}

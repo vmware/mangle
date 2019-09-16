@@ -14,12 +14,12 @@ package com.vmware.mangle.services;
 import java.util.List;
 
 import io.micrometer.wavefront.WavefrontMeterRegistry;
-import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.autoconfigure.metrics.MeterRegistryCustomizer;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import com.vmware.mangle.cassandra.model.metricprovider.MetricProviderSpec;

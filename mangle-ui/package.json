@@ -29,7 +29,8 @@
     "tslib": "1.9.0",
     "ts-helpers": "1.1.1",
     "web-animations-js": "2.3.1",
-    "zone.js": "0.8.26"
+    "zone.js": "0.8.26",
+    "ng2-password-strength-bar": "1.2.3"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "0.13.9",

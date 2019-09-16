@@ -1,9 +1,4 @@
-<clr-alert *ngIf="errorFlag" [clrAlertType]="'danger'">
-    <div class="alert-item">{{alertMessage}}</div>
-</clr-alert>
-<clr-alert *ngIf="successFlag" [clrAlertType]="'success'">
-    <div class="alert-item">{{alertMessage}}</div>
-</clr-alert>
+<app-alert [(errorAlertMessage)]="errorAlertMessage" [(successAlertMessage)]="successAlertMessage" (errorAlertMessageChange)="errorAlertMessage = $event" (successAlertMessageChange)="successAlertMessage = $event"></app-alert>
 <clr-datagrid [clrDgLoading]="isLoading">
     <clr-dg-action-bar>
         <div class="btn-group">

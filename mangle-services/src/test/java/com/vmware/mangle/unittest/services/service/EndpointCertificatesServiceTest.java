@@ -94,7 +94,7 @@ public class EndpointCertificatesServiceTest extends PowerMockTestCase {
         certificatesList.add(certificatesSpec);
         certificatesList.add(certificatesSpec1);
         when(certificatesRepository.findAll()).thenReturn(certificatesList);
-        List<CertificatesSpec> actualCertificatesSpecList = certificatesService.getAllCerficates();
+        List<CertificatesSpec> actualCertificatesSpecList = certificatesService.getAllCertificates();
         verify(certificatesRepository, times(1)).findAll();
         int expectedCount = 2;
         Assert.assertEquals(actualCertificatesSpecList.size(), expectedCount);

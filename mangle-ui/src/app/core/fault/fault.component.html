@@ -1,63 +1,125 @@
 <div class="main-container">
-		<div class="content-container">
-			<div class="content-area height-1200">
-				<router-outlet></router-outlet>
-			</div>
-			<clr-vertical-nav [clrVerticalNavCollapsible]="faultCollapsible">
-				<clr-vertical-nav-group routerLinkActive="active">
-					<clr-icon shape="cloud" clrVerticalNavIcon></clr-icon>Infrastructure Faults
-					<clr-vertical-nav-group-children *clrIfExpanded="false">
-						<a clrVerticalNavLink [routerLink]="['cpu-infra']" routerLinkActive="active">CPU</a>
-						<a clrVerticalNavLink [routerLink]="['memory-infra']" routerLinkActive="active">Memory</a>
-						<a clrVerticalNavLink [routerLink]="['diskio-infra']" routerLinkActive="active">Disk IO</a>
-						<a clrVerticalNavLink [routerLink]="['killprocess']" routerLinkActive="active">Kill Process</a>
-						<clr-vertical-nav-group routerLinkActive="active">
-							<span>&emsp;<clr-icon shape="container" clrVerticalNavIcon></clr-icon>Docker</span>
-							<clr-vertical-nav-group-children *clrIfExpanded="false">
-								<a clrVerticalNavLink [routerLink]="['docker-state-change']" routerLinkActive="active">&emsp;State Change</a>
-							</clr-vertical-nav-group-children>
-						</clr-vertical-nav-group>
-						<clr-vertical-nav-group routerLinkActive="active">
-							<span>&emsp;<clr-icon shape="cluster" clrVerticalNavIcon></clr-icon>K8S</span>
-							<clr-vertical-nav-group-children *clrIfExpanded="false">
-								<a clrVerticalNavLink [routerLink]="['delete-k8s-resource']" routerLinkActive="active">&emsp;Delete Resource</a>
-								<a clrVerticalNavLink [routerLink]="['k8s-resource-not-ready']" routerLinkActive="active">&emsp;Resource Not Ready</a>
-							</clr-vertical-nav-group-children>
-						</clr-vertical-nav-group>
-						<clr-vertical-nav-group routerLinkActive="active">
-							<span>&emsp;<clr-icon shape="vmw-app" clrVerticalNavIcon></clr-icon>vCenter</span>
-							<clr-vertical-nav-group-children *clrIfExpanded="false">
-								<a clrVerticalNavLink [routerLink]="['vcenter-disk']" routerLinkActive="active">&emsp;Disk</a>
-								<a clrVerticalNavLink [routerLink]="['vcenter-nic']" routerLinkActive="active">&emsp;Nic</a>
-								<a clrVerticalNavLink [routerLink]="['vcenter-state']" routerLinkActive="active">&emsp;State</a>
-							</clr-vertical-nav-group-children>
-						</clr-vertical-nav-group>
-						<a clrVerticalNavLink><font color="#A9B6BE">Disk Space</font></a>
-						<a clrVerticalNavLink><font color="#A9B6BE">Disk Fuse</font></a>
-						<a clrVerticalNavLink><font color="#A9B6BE">Network Fault</font></a>
-						<a clrVerticalNavLink><font color="#A9B6BE">Kernel Panic</font></a>
-						<a clrVerticalNavLink><font color="#A9B6BE">Fork Bomb</font></a>
-						<a clrVerticalNavLink><font color="#A9B6BE">DB Connection Leak</font></a>
-						<a clrVerticalNavLink><font color="#A9B6BE">DB Transaction Error</font></a>
-						<a clrVerticalNavLink><font color="#A9B6BE">DB Transaction Latency</font></a>
-					</clr-vertical-nav-group-children>
-				</clr-vertical-nav-group>
-				<clr-vertical-nav-group routerLinkActive="active">
-					<clr-icon shape="application" clrVerticalNavIcon></clr-icon>Application Faults
-					<clr-vertical-nav-group-children *clrIfExpanded="false">
-						<a clrVerticalNavLink [routerLink]="['cpu']" routerLinkActive="active">CPU</a>
-						<a clrVerticalNavLink [routerLink]="['memory']" routerLinkActive="active">Memory</a>
-						<a clrVerticalNavLink><font color="#A9B6BE">File Handler</font></a>
-						<a clrVerticalNavLink><font color="#A9B6BE">Kill JVM</font></a>
-						<a clrVerticalNavLink><font color="#A9B6BE">Java Exception</font></a>
-						<a clrVerticalNavLink><font color="#A9B6BE">Mock Java Method Return</font></a>
-						<a clrVerticalNavLink><font color="#A9B6BE">Java Method Latency</font></a>
-						<a clrVerticalNavLink><font color="#A9B6BE">Spring Service Exception</font></a>
-						<a clrVerticalNavLink><font color="#A9B6BE">Spring Service Latency</font></a>
-						<a clrVerticalNavLink><font color="#A9B6BE">Segmentation Fault</font></a>
-						<a clrVerticalNavLink><font color="#A9B6BE">Denial of Service Attack</font></a>
-					</clr-vertical-nav-group-children>
-				</clr-vertical-nav-group>
-			</clr-vertical-nav>
+	<div class="content-container">
+		<div class="content-area">
+			<router-outlet></router-outlet>
 		</div>
+		<clr-vertical-nav [clrVerticalNavCollapsible]="faultCollapsible">
+			<clr-vertical-nav-group routerLinkActive="active">
+				<clr-icon shape="cloud" clrVerticalNavIcon></clr-icon>Infrastructure Faults
+				<clr-vertical-nav-group-children *clrIfExpanded="infraExpand">
+					<a clrVerticalNavLink [routerLink]="['cpu-infra']" routerLinkActive="active">CPU</a>
+					<a clrVerticalNavLink [routerLink]="['memory-infra']" routerLinkActive="active">Memory</a>
+					<a clrVerticalNavLink [routerLink]="['diskio-infra']" routerLinkActive="active">Disk IO</a>
+					<a clrVerticalNavLink [routerLink]="['killprocess']" routerLinkActive="active">Kill Process</a>
+					<a clrVerticalNavLink [routerLink]="['filehandler-leak-infra']" routerLinkActive="active">File
+						Handler Leak</a>
+					<a clrVerticalNavLink [routerLink]="['disk-space']" routerLinkActive="active">Disk Space</a>
+					<a clrVerticalNavLink [routerLink]="['kernel-panic']" routerLinkActive="active">Kernel Panic</a>
+					<clr-vertical-nav-group routerLinkActive="active">
+						<span>&emsp;<clr-icon shape="network-globe" clrVerticalNavIcon></clr-icon>Network</span>
+						<clr-vertical-nav-group-children *clrIfExpanded="networkExpand">
+							<a clrVerticalNavLink [routerLink]="['packet-delay']" routerLinkActive="active">&emsp;Packet
+								Delay</a>
+							<a clrVerticalNavLink [routerLink]="['packet-duplicate']"
+								routerLinkActive="active">&emsp;Packet Duplicate</a>
+							<a clrVerticalNavLink [routerLink]="['packet-drop']" routerLinkActive="active">&emsp;Packet
+								Loss</a>
+							<a clrVerticalNavLink [routerLink]="['packet-corruption']"
+								routerLinkActive="active">&emsp;Packet Corruption</a>
+						</clr-vertical-nav-group-children>
+					</clr-vertical-nav-group>
+					<clr-vertical-nav-group routerLinkActive="active">
+						<span>&emsp;<clr-icon shape="container" clrVerticalNavIcon></clr-icon>Docker</span>
+						<clr-vertical-nav-group-children *clrIfExpanded="dockerExpand">
+							<a clrVerticalNavLink [routerLink]="['docker-state-change']"
+								routerLinkActive="active">&emsp;State Change</a>
+						</clr-vertical-nav-group-children>
+					</clr-vertical-nav-group>
+					<clr-vertical-nav-group routerLinkActive="active">
+						<span>&emsp;<clr-icon shape="cluster" clrVerticalNavIcon></clr-icon>K8S</span>
+						<clr-vertical-nav-group-children *clrIfExpanded="k8sExpand">
+							<a clrVerticalNavLink [routerLink]="['delete-k8s-resource']"
+								routerLinkActive="active">&emsp;Delete Resource</a>
+							<a clrVerticalNavLink [routerLink]="['k8s-resource-not-ready']"
+								routerLinkActive="active">&emsp;Resource Not Ready</a>
+								<a clrVerticalNavLink [routerLink]="['k8s-service-unavailable']"
+								routerLinkActive="active">&emsp;Service Unavailable</a>
+						</clr-vertical-nav-group-children>
+					</clr-vertical-nav-group>
+					<clr-vertical-nav-group routerLinkActive="active">
+						<span>&emsp;<clr-icon shape="vmw-app" clrVerticalNavIcon></clr-icon>vCenter</span>
+						<clr-vertical-nav-group-children *clrIfExpanded="vcenterExpand">
+							<a clrVerticalNavLink [routerLink]="['vcenter-disk']"
+								routerLinkActive="active">&emsp;Disk</a>
+							<a clrVerticalNavLink [routerLink]="['vcenter-nic']" routerLinkActive="active">&emsp;Nic</a>
+							<a clrVerticalNavLink [routerLink]="['vcenter-state']"
+								routerLinkActive="active">&emsp;State</a>
+						</clr-vertical-nav-group-children>
+					</clr-vertical-nav-group>
+					<clr-vertical-nav-group routerLinkActive="active">
+						<span style="margin-left: 25px"><img src="assets/images/aws/aws.png" height="20"
+								width="20" />&emsp;&emsp;AWS</span>
+						<clr-vertical-nav-group-children *clrIfExpanded="awsExpand">
+							<clr-vertical-nav-group routerLinkActive="active">
+								<span style="margin-left: 35px;"><img src="assets/images/aws/ec2.png" height="20"
+										width="20" />EC2</span>
+								<clr-vertical-nav-group-children *clrIfExpanded="awsEC2Expand">
+									<a clrVerticalNavLink style="margin-left: 45px;" [routerLink]="['aws-ec2-state']"
+										routerLinkActive="active">State</a>
+									<a clrVerticalNavLink style="margin-left: 45px;" [routerLink]="['aws-ec2-network']"
+										routerLinkActive="active">Network</a>
+								</clr-vertical-nav-group-children>
+							</clr-vertical-nav-group>
+						</clr-vertical-nav-group-children>
+					</clr-vertical-nav-group>
+					<a clrVerticalNavLink>
+						<font color="#A9B6BE">Disk Fuse</font>
+					</a>
+					<a clrVerticalNavLink>
+						<font color="#A9B6BE">Fork Bomb</font>
+					</a>
+					<a clrVerticalNavLink>
+						<font color="#A9B6BE">DB Connection Leak</font>
+					</a>
+					<a clrVerticalNavLink>
+						<font color="#A9B6BE">DB Transaction Error</font>
+					</a>
+					<a clrVerticalNavLink>
+						<font color="#A9B6BE">DB Transaction Latency</font>
+					</a>
+				</clr-vertical-nav-group-children>
+			</clr-vertical-nav-group>
+			<clr-vertical-nav-group routerLinkActive="active">
+				<clr-icon shape="application" clrVerticalNavIcon></clr-icon>Application Faults
+				<clr-vertical-nav-group-children *clrIfExpanded="appExpand">
+					<a clrVerticalNavLink [routerLink]="['cpu']" routerLinkActive="active">CPU</a>
+					<a clrVerticalNavLink [routerLink]="['memory']" routerLinkActive="active">Memory</a>
+					<a clrVerticalNavLink [routerLink]="['filehandler-leak']" routerLinkActive="active">File Handler
+						Leak</a>
+					<a clrVerticalNavLink [routerLink]="['thread-leak']" routerLinkActive="active">Thread Leak</a>
+					<a clrVerticalNavLink [routerLink]="['java-method-latency']" routerLinkActive="active">Java Method
+						Latency</a>
+					<a clrVerticalNavLink [routerLink]="['spring-service-latency']" routerLinkActive="active">Spring
+						Service Latency</a>
+					<a clrVerticalNavLink [routerLink]="['spring-service-exception']" routerLinkActive="active">Spring
+						Service Exception</a>
+					<a clrVerticalNavLink [routerLink]="['simulate-java-exception']" routerLinkActive="active">Simulate
+						Java Exception</a>
+					<a clrVerticalNavLink [routerLink]="['kill-jvm']" routerLinkActive="active">Kill JVM</a>
+					<a clrVerticalNavLink>
+						<font color="#A9B6BE">Mock Java Method Return</font>
+					</a>
+					<a clrVerticalNavLink>
+						<font color="#A9B6BE">Segmentation Fault</font>
+					</a>
+					<a clrVerticalNavLink>
+						<font color="#A9B6BE">Denial of Service Attack</font>
+					</a>
+				</clr-vertical-nav-group-children>
+			</clr-vertical-nav-group>
+			<a clrVerticalNavLink [routerLink]="['custom-fault']" routerLinkActive="active">
+				<clr-icon shape="plugin" clrVerticalNavIcon></clr-icon>Custom Fault
+			</a>
+		</clr-vertical-nav>
 	</div>
+</div>

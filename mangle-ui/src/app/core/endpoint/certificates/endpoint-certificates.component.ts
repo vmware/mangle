@@ -5,8 +5,7 @@ import { MessageConstants } from 'src/app/common/message.constants';
 
 @Component({
     selector: 'app-endpoint-certificates',
-    templateUrl: './endpoint-certificates.component.html',
-    styleUrls: ['./endpoint-certificates.component.css']
+    templateUrl: './endpoint-certificates.component.html'
 })
 export class EndpointCertificatesComponent implements OnInit {
 
@@ -18,9 +17,9 @@ export class EndpointCertificatesComponent implements OnInit {
     public dockerServerCertToUpload: any;
     public dockerPrivateKeyToUpload: any;
 
-    public errorFlag = false;
-    public successFlag = false;
-    public alertMessage: string;
+    public errorAlertMessage: string;
+    public successAlertMessage: string;
+
     public addEdit: string;
 
     public submitBtnState: ClrLoadingState = ClrLoadingState.DEFAULT;
@@ -37,7 +36,6 @@ export class EndpointCertificatesComponent implements OnInit {
 
     public getCertificates() {
         this.isLoading = true;
-        this.errorFlag = false;
         this.endpointService.getCertificates().subscribe(
             res => {
                 if (res.code) {
@@ -49,8 +47,7 @@ export class EndpointCertificatesComponent implements OnInit {
                 }
             }, err => {
                 this.certificates = [];
-                this.alertMessage = err.error.description;
-                this.errorFlag = true;
+                this.errorAlertMessage = err.error.description;
                 this.isLoading = false;
             });
     }
@@ -78,59 +75,47 @@ export class EndpointCertificatesComponent implements OnInit {
     public addDockerCertificates(certificates) {
         this.isLoading = true;
         delete certificates["id"];
-        this.errorFlag = false;
-        this.successFlag = false;
         this.endpointService.addDockerCertificates(certificates, this.dockerCaCertToUpload, this.dockerServerCertToUpload, this.dockerPrivateKeyToUpload).subscribe(
             res => {
                 this.getCertificates();
-                this.alertMessage = certificates.name + MessageConstants.CERTIFICATES_ADD;
-                this.successFlag = true;
+                this.successAlertMessage = certificates.name + MessageConstants.CERTIFICATES_ADD;
             }, err => {
                 this.getCertificates();
-                this.alertMessage = err.error.description;
-                this.errorFlag = true;
-                if (this.alertMessage === undefined) {
-                    this.alertMessage = err.error.error;
+                this.errorAlertMessage = err.error.description;
+                if (this.errorAlertMessage === undefined) {
+                    this.errorAlertMessage = err.error.error;
                 }
             });
     }
 
     public updateDockerCertificates(certificates) {
         this.isLoading = true;
-        this.errorFlag = false;
-        this.successFlag = false;
         this.endpointService.updateDockerCertificates(certificates, this.dockerCaCertToUpload, this.dockerServerCertToUpload, this.dockerPrivateKeyToUpload).subscribe(
             res => {
                 this.getCertificates();
-                this.alertMessage = certificates.name + MessageConstants.CERTIFICATES_UPDATE;
-                this.successFlag = true;
+                this.successAlertMessage = certificates.name + MessageConstants.CERTIFICATES_UPDATE;
             }, err => {
                 this.getCertificates();
-                this.alertMessage = err.error.description;
-                this.errorFlag = true;
-                if (this.alertMessage === undefined) {
-                    this.alertMessage = err.error.error;
+                this.errorAlertMessage = err.error.description;
+                if (this.errorAlertMessage === undefined) {
+                    this.errorAlertMessage = err.error.error;
                 }
             });
     }
 
     public deleteCertificates(certificates) {
         this.isLoading = true;
-        this.errorFlag = false;
-        this.successFlag = false;
         if (confirm(MessageConstants.DELETE_CONFIRM + certificates.name + MessageConstants.QUESTION_MARK)) {
             this.isLoading = true;
             this.endpointService.deleteCertificates(certificates.name).subscribe(
                 res => {
                     this.getCertificates();
-                    this.alertMessage = certificates.name + MessageConstants.CERTIFICATES_DELETE;
-                    this.successFlag = true;
+                    this.successAlertMessage = certificates.name + MessageConstants.CERTIFICATES_DELETE;
                 }, err => {
                     this.getCertificates();
-                    this.alertMessage = err.error.description;
-                    this.errorFlag = true;
-                    if (this.alertMessage === undefined) {
-                        this.alertMessage = err.error.error;
+                    this.errorAlertMessage = err.error.description;
+                    if (this.errorAlertMessage === undefined) {
+                        this.errorAlertMessage = err.error.error;
                     }
                 });
         } else {

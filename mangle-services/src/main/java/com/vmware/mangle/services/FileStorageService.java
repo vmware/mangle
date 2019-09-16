@@ -18,6 +18,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -26,7 +30,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.vmware.mangle.services.constants.CommonConstants;
 import com.vmware.mangle.services.plugin.config.PluginProperties;
+import com.vmware.mangle.utils.constants.ErrorConstants;
+import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.MangleRuntimeException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
@@ -51,7 +58,7 @@ public class FileStorageService {
         }
     }
 
-    public String storeFile(MultipartFile file) {
+    public String storeFile(MultipartFile file) throws MangleException {
         // Normalize file name
         String fileName = StringUtils.cleanPath(file.getOriginalFilename());
 
@@ -60,9 +67,11 @@ public class FileStorageService {
             if (fileName.contains("..")) {
                 throw new MangleRuntimeException(ErrorCode.INVALID_CHAR_IN_FILE_NAME, fileName);
             }
-
             // Copy file to the target location (Replacing existing file with the same name)
             Path targetLocation = this.fileStorageLocation.resolve(fileName);
+            if (targetLocation.toFile().exists()) {
+                throw new MangleException(ErrorCode.PRE_EXISTING_PLUGIN_FILE, ErrorConstants.PRE_EXISTING_PLUGIN_FILE);
+            }
             Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
             return fileName;
         } catch (IOException ex) {
@@ -119,14 +128,23 @@ public class FileStorageService {
      * @param fileName
      * @return
      */
-    public String getFileName(String fileName) {
+    public List<String> getFiles() {
         File[] files = new File(this.fileStorageLocation.toString())
-                .listFiles((dir, name) -> (name.toLowerCase().startsWith(fileName.toLowerCase())
-                        && (name.toLowerCase().endsWith(".zip") || name.toLowerCase().endsWith(".jar"))));
+                .listFiles((dir, name) -> (name.toLowerCase().endsWith(".zip") || name.toLowerCase().endsWith(".jar")));
+        ArrayList<String> fileNames = Arrays.asList(files).stream().map(File::getName)
+                .filter(fileName -> (!fileName.contains(CommonConstants.DEFAULT_PLUGIN_ID)))
+                .collect(Collectors.toCollection(ArrayList::new));
+        return fileNames;
+    }
 
-        for (File file : files) {
-            if (file.getName().contains(fileName)) {
-                return file.getName();
+    /**
+     * @param fileName
+     * @return
+     */
+    public String getFileName(String fileName) {
+        for (String file : getFiles()) {
+            if (file.contains(fileName)) {
+                return file;
             }
         }
         throw new MangleRuntimeException(ErrorCode.FILE_NAME_NOT_EXIST, fileName);

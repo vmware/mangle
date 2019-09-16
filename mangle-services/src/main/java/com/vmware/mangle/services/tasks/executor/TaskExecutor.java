@@ -116,7 +116,8 @@ public class TaskExecutor<T extends Task<? extends TaskSpec>> implements TaskRun
 
     public Task<? extends TaskSpec> submitTask(final T task) throws MangleException {
         Object taskData = task.getTaskData();
-        if ((TaskType.INJECTION.equals(task.getTaskType()) || task.getTaskName().startsWith(Constants.NODESTATUS_TASK_NAME))
+        if ((TaskType.INJECTION.equals(task.getTaskType())
+                || task.getTaskName().startsWith(Constants.NODESTATUS_TASK_NAME))
                 && TaskSpec.class.isAssignableFrom(task.getTaskData().getClass())
                 && null != ((TaskSpec) taskData).getSchedule()) {
             return scheduleTask(task);
@@ -124,11 +125,11 @@ public class TaskExecutor<T extends Task<? extends TaskSpec>> implements TaskRun
             log.info(String.format(TaskExecutionMessages.TASK_EXECUTION_START_MESSAGE, task.getTaskName()));
             try {
                 execute(task);
-            } catch (MangleException e) {
-                throw new MangleException(e, ErrorCode.TASK_EXECUTION_FAILED, task.getId(), task);
             } catch (InterruptedException e) {
                 log.error(e);
                 Thread.currentThread().interrupt();
+            } catch (Exception e) {
+                throw new MangleException(e, ErrorCode.TASK_EXECUTION_FAILED, task.getId(), task);
             }
             return task;
         }
@@ -193,7 +194,8 @@ public class TaskExecutor<T extends Task<? extends TaskSpec>> implements TaskRun
         final Runnable runnable = () -> {
             if (task instanceof FaultTriggeringTask) {
                 log.info("Waiting for Child Tasks Initialization...");
-                while (!((MultiTaskSpec) task.getTaskData()).isReadyForChildExecution()
+                while ((!((MultiTaskSpec) task.getTaskData()).isReadyForChildExecution()
+                        || CollectionUtils.isEmpty(((FaultTriggeringTask) task).getTaskObjmap()))
                         && task.getTaskStatus() == TaskStatus.IN_PROGRESS) {
                     CommonUtils.delayInSecondsWithDebugLog(1);
                 }
@@ -387,6 +389,9 @@ public class TaskExecutor<T extends Task<? extends TaskSpec>> implements TaskRun
         if (taskStatus == TaskStatus.FAILED || taskStatus == TaskStatus.COMPLETED
                 || taskStatus == TaskStatus.TASK_SKIPPED) {
             trigger.setEndTime(new Date(System.currentTimeMillis()).toGMTString());
+            if (task instanceof RemediableTask && !(task instanceof FaultTriggeringTask)) {
+                ((RemediableTask) task).setRemediated(false);
+            }
         }
         trigger.setTaskStatus(taskStatus);
         TaskInfo taskInfo = new TaskInfo();

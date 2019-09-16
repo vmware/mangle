@@ -4,8 +4,7 @@ import { CommonEndpoint } from '../common.endpoint';
 
 @Component({
   selector: 'app-docker',
-  templateUrl: './docker.component.html',
-  styleUrls: ['./docker.component.css']
+  templateUrl: './docker.component.html'
 })
 export class DockerComponent extends CommonEndpoint implements OnInit {
   constructor(endpointService: EndpointService) {

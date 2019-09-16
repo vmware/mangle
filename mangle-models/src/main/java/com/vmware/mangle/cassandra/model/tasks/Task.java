@@ -121,6 +121,27 @@ public class Task<T extends TaskSpec> extends MangleDto implements Serializable 
     }
 
     /**
+     * @return the taskStatus
+     */
+    @JsonIgnore
+    public boolean isTaskRetriggered() {
+        if (!CollectionUtils.isEmpty(getTriggers())) {
+            return getTriggers().peek().getTaskRetriggered();
+        }
+        return false;
+    }
+
+    /**
+     * @return the taskStatus
+     */
+    @JsonIgnore
+    public void setTaskRetriggered(boolean retriggerTask) {
+        if (!CollectionUtils.isEmpty(getTriggers())) {
+            getTriggers().peek().setTaskRetriggered(retriggerTask);
+        }
+    }
+
+    /**
      * @param taskStatus
      *            : the taskStatus to set
      */

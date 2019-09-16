@@ -12,11 +12,13 @@
 package com.vmware.mangle.cassandra.model.faults.specs;
 
 import java.io.Serializable;
+
 import javax.validation.Valid;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.springframework.data.cassandra.core.mapping.Indexed;
 
 import com.vmware.mangle.cassandra.model.MangleDto;
 import com.vmware.mangle.cassandra.model.scheduler.SchedulerInfo;
@@ -34,8 +36,10 @@ public class TaskSpec extends MangleDto implements Serializable {
     private String id;
     @Valid
     protected SchedulerInfo schedule;
-    @JsonIgnore
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private String specType;
+    @Indexed
+    private String taskName;
 
     public TaskSpec() {
         this.id = super.generateId();
@@ -45,4 +49,5 @@ public class TaskSpec extends MangleDto implements Serializable {
     public String getPrimaryKey() {
         return id;
     }
+
 }

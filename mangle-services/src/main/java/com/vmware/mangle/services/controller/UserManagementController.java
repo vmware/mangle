@@ -24,6 +24,7 @@ import org.springframework.hateoas.Resource;
 import org.springframework.hateoas.Resources;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -66,7 +67,7 @@ public class UserManagementController {
      *             when role is not found in mangle
      */
     @PostMapping(value = "users")
-    public ResponseEntity<Resource<User>> createUser(@RequestBody User user) throws MangleException {
+    public ResponseEntity<Resource<User>> createUser(@Validated @RequestBody User user) throws MangleException {
         log.info(String.format("Starting execution of createUser for user %s", user.getName()));
 
         if (userService.getUserByName(user.getName()) != null) {
@@ -93,15 +94,17 @@ public class UserManagementController {
      * @throws MangleException
      */
     @PutMapping(value = "users")
-    public ResponseEntity<Resource<User>> updateUser(@RequestBody User user) throws MangleException {
+    public ResponseEntity<Resource<User>> updateUser(@Validated @RequestBody User user) throws MangleException {
         log.info(String.format("Starting execution of updateUser for the user %s", user.getName()));
 
+        user.setAccountLocked(false);
         User persisted = userService.updateUser(user);
 
         Resource<User> userResource = new Resource<>(persisted);
         Link link = linkTo(methodOn(UserManagementController.class).updateUser(null)).withSelfRel();
         userResource.add(link);
         userService.terminateUserSession(user.getName());
+        userService.triggerMultiNodeResync(user.getName());
         return new ResponseEntity<>(userResource, HttpStatus.OK);
     }
 
@@ -115,14 +118,16 @@ public class UserManagementController {
      */
     @PutMapping(value = "/password")
     @ApiOperation(value = "API to update the current user password", nickname = "update password")
-    public ResponseEntity<Resource<User>> updateUserPassword(@RequestBody UserPasswordUpdateDTO userPasswordUpdateDTO)
-            throws MangleException {
+    public ResponseEntity<Resource<User>> updateUserPassword(
+            @Validated @RequestBody UserPasswordUpdateDTO userPasswordUpdateDTO) throws MangleException {
         String currentUser = userService.getCurrentUserName();
         log.info(String.format("Starting execution of updateUserPassword for the user %s", currentUser));
 
         userService.updatePassword(currentUser, userPasswordUpdateDTO.getCurrentPassword(),
                 userPasswordUpdateDTO.getNewPassword());
         userService.terminateCurrentSession();
+
+        userService.triggerMultiNodeResync(currentUser);
 
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
@@ -167,6 +172,7 @@ public class UserManagementController {
     public ResponseEntity<Void> deleteUsersByNames(@RequestParam List<String> usernames) throws MangleException {
         log.info("Received request to delete users by name for users: {}", usernames);
         userService.deleteUsersByNames(usernames);
+        userService.triggerMultiNodeResync(usernames.toArray(new String[0]));
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
@@ -185,14 +191,15 @@ public class UserManagementController {
      * API to reset admin password during the first boot
      *
      * @param user
-     *           new admin user configuration
+     *            new admin user configuration
      *
      * @return
      * @throws MangleException
      */
     @PutMapping(value = "users/admin")
     @ApiOperation(value = "Update admin user creds for the first login", nickname = "update-admin-creds", hidden = true)
-    public ResponseEntity<Resource<User>> resetAdminCredsForFirstLogin(@RequestBody User user) throws MangleException {
+    public ResponseEntity<Resource<User>> resetAdminCredsForFirstLogin(@Validated @RequestBody User user)
+            throws MangleException {
         log.info(String.format("Starting execution of updateUser for the user %s", user.getName()));
 
         User persisted = userService.updateUser(user);

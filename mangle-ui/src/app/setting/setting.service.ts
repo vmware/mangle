@@ -95,4 +95,34 @@ export class SettingService {
         return this.http.post(ServiceConstants.LOGGERS + ServiceConstants.FILE_SEPARATOR + logger.name, logger.configProp);
     }
 
+    public getCluster(): Observable<any> {
+        return this.http.get(ServiceConstants.CLUSTER_CONFIG);
+    }
+
+    public getPluginDetails(): Observable<any> {
+        return this.http.get(ServiceConstants.PLUGIN_DETAILS);
+    }
+
+    public getPluginFiles(): Observable<any> {
+        return this.http.get(ServiceConstants.PLUGIN_FILES);
+    }
+
+    public detelePluginFile(pluginFileName): Observable<any> {
+        return this.http.delete(ServiceConstants.PLUGIN_FILES + CommonConstants.QUESTION_MARK + CommonConstants.fileName + CommonConstants.EQUALS_TO + pluginFileName);
+    }
+
+    public uploadPlugin(pluginFileToUpload) {
+        let body = new FormData();
+        body.append(CommonConstants.file_var, pluginFileToUpload);
+        return this.http.post(ServiceConstants.PLUGIN_FILES, body);
+    }
+
+    public deletePlugin(pluginId) {
+        return this.http.delete(ServiceConstants.PLUGINS + CommonConstants.QUESTION_MARK + CommonConstants.pluginId + CommonConstants.EQUALS_TO + pluginId);
+    }
+
+    public performPluginAction(pluginInfo) {
+        return this.http.put(ServiceConstants.PLUGINS, pluginInfo);
+    }
+
 }

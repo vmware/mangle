@@ -14,6 +14,7 @@ package com.vmware.mangle.services.mockdata;
 import java.util.HashMap;
 import java.util.Properties;
 
+import com.vmware.mangle.cassandra.model.endpoint.AWSConnectionProperties;
 import com.vmware.mangle.cassandra.model.endpoint.DockerConnectionProperties;
 import com.vmware.mangle.cassandra.model.endpoint.EndpointSpec;
 import com.vmware.mangle.cassandra.model.endpoint.K8SConnectionProperties;
@@ -34,7 +35,7 @@ public class EndpointMockData {
 
     private Properties properties;
     // AWS Connection Properties
-    //private String awsRegion;
+    private String awsRegion;
 
     // Docker Connection Properties
     private String dockerHostname;
@@ -54,7 +55,7 @@ public class EndpointMockData {
 
     public EndpointMockData() {
         this.properties = ReadProperty.readProperty(Constants.MOCKDATA_FILE);
-        //this.awsRegion = properties.getProperty("awsRegion");
+        this.awsRegion = properties.getProperty("awsRegion");
         this.dockerHostname = properties.getProperty("dockerHostName");
         this.dockerPort = Integer.parseInt(properties.getProperty("dockerPort"));
         this.tlsEnabled = Boolean.parseBoolean(properties.getProperty("dockertlsEnabled"));
@@ -67,17 +68,6 @@ public class EndpointMockData {
 
         vcenterIp = properties.getProperty("vcenter.ip");
     }
-
-    //Will be uncommented when started supporting AWS endpoint
-    /*public EndpointSpec awsEndpointMockData() {
-        EndpointSpec awsEndpointSpec = new EndpointSpec();
-        Properties properties = ReadProperty.readProperty(Constants.MOCKDATA_FILE);
-        awsEndpointSpec.setName(properties.getProperty("awsEndpointName"));
-        awsEndpointSpec.setEndPointType(EndpointType.AWS);
-        awsEndpointSpec.setCredentialsName(properties.getProperty("awsName"));
-        awsEndpointSpec.setAwsConnectionProperties(getAWSConnectionProperties());
-        return awsEndpointSpec;
-    }*/
 
     public EndpointSpec k8sEndpointMockData() {
         EndpointSpec k8sEndpointSpec = new EndpointSpec();
@@ -118,15 +108,6 @@ public class EndpointMockData {
         return rmEndpointSpec;
     }
 
-    //Will be uncommented when we started supporting AWS endpoint
-    /*public AWSConnectionProperties getAWSConnectionProperties() {
-        AWSConnectionProperties awsConnectionProperties = new AWSConnectionProperties();
-        awsConnectionProperties.setRegion(awsRegion);
-        return awsConnectionProperties;
-    }*/
-    public void getA() {
-
-    }
 
     public K8SConnectionProperties getK8sConnectionProperties() {
         K8SConnectionProperties k8sConnectionProperties = new K8SConnectionProperties();
@@ -160,6 +141,15 @@ public class EndpointMockData {
         return vcenterEndpointSpec;
     }
 
+    public EndpointSpec awsEndpointSpecMock() {
+        EndpointSpec awsEndpointSpec = new EndpointSpec();
+        awsEndpointSpec.setName("awsMockEndpoint");
+        awsEndpointSpec.setEndPointType(EndpointType.AWS);
+        awsEndpointSpec.setCredentialsName("awsCreds");
+        awsEndpointSpec.setAwsConnectionProperties(getAwsConnectionPropertiess());
+        return awsEndpointSpec;
+    }
+
     public EndpointSpec getDockerEndpointSpecMock() {
         EndpointSpec dockerEndpointSpec = new EndpointSpec();
         dockerEndpointSpec.setName("dockerMockEndpoint");
@@ -172,6 +162,12 @@ public class EndpointMockData {
         VCenterConnectionProperties vCenterConnectionProperties = new VCenterConnectionProperties();
         vCenterConnectionProperties.setHostname(vcenterIp);
         return vCenterConnectionProperties;
+    }
+
+    public AWSConnectionProperties getAwsConnectionPropertiess() {
+        AWSConnectionProperties awsConnectionProperties = new AWSConnectionProperties();
+        awsConnectionProperties.setRegion(awsRegion);
+        return awsConnectionProperties;
     }
 
     public WaveFrontConnectionProperties getWaveFrontConnectionPropertiesMock() {

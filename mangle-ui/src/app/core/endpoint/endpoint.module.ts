@@ -11,20 +11,23 @@ import { MachineComponent } from './machine/machine.component';
 import { KubernetesComponent } from './kubernetes/kubernetes.component';
 import { DockerComponent } from './docker/docker.component';
 import { VcenterComponent } from './vcenter/vcenter.component';
+import { AWSComponent } from './aws/aws.component';
 import { EndpointCredentialsComponent } from './credentials/endpoint-credentials.component';
 import { EndpointCertificatesComponent } from './certificates/endpoint-certificates.component';
+import { SharedModule } from 'src/app/shared/shared.module';
 
 @NgModule({
-  declarations: [EndpointComponent, MachineComponent, KubernetesComponent, DockerComponent, VcenterComponent, EndpointCredentialsComponent, EndpointCertificatesComponent],
+  declarations: [EndpointComponent, MachineComponent, KubernetesComponent, DockerComponent, VcenterComponent, AWSComponent, EndpointCredentialsComponent, EndpointCertificatesComponent],
   imports: [
-	  BrowserAnimationsModule,
+    BrowserAnimationsModule,
     BrowserModule,
     FormsModule,
     ReactiveFormsModule,
     HttpClientModule,
     ClarityModule,
-	  AppRoutingModule,
-	  CommonModule
+    AppRoutingModule,
+    CommonModule,
+    SharedModule
   ]
 })
 export class EndpointModule { }

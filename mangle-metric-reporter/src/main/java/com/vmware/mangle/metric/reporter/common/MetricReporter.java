@@ -11,14 +11,14 @@
 
 package com.vmware.mangle.metric.reporter.common;
 
-import java.util.Map;
+import java.util.HashMap;
 
 /**
  *
  * @author dbhat
  */
 public interface MetricReporter {
-    public Boolean sendMetric(String metricName, double metricValue, Map<String, String> tags);
+    public Boolean sendMetric(String metricName, double metricValue, HashMap<String, String> tags);
 
     Boolean validateMetric(String metricName, Object metricValue);
 }

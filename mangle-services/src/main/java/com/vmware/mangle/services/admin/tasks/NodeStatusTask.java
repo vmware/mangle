@@ -11,7 +11,7 @@
 
 package com.vmware.mangle.services.admin.tasks;
 
-import static com.vmware.mangle.utils.constants.URLConstants.HAZELCAST_MANGLE_NODE_CURRENT_STATUS_ATTRIBUTE;
+import static com.vmware.mangle.utils.constants.HazelcastConstants.HAZELCAST_MANGLE_NODE_CURRENT_STATUS_ATTRIBUTE;
 import static com.vmware.mangle.utils.constants.URLConstants.TASKS_WAIT_TIME_SECONDS;
 
 import java.util.Calendar;

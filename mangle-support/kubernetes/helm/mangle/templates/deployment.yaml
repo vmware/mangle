@@ -1,0 +1,57 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ .Values.appName }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.appName }}
+        environment: {{ .Values.environment }}
+    spec:
+      volumes:
+      - name: procdir
+        hostPath:
+          path: /proc
+      - name: cgroups
+        hostPath:
+          path: /sys/fs/cgroup
+      - name: mangle-logs
+        emptyDir: {}
+      containers:
+      - name: {{ .Values.serviceName }}
+        image: {{ .Values.image.externalRegistry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}
+        livenessProbe:
+         httpGet:
+           path: "/mangle-services/application/health"
+           port: {{ .Values.port }}
+           scheme: HTTPS
+         initialDelaySeconds: 60
+         periodSeconds: 60
+        readinessProbe:
+         httpGet:
+           path: "/mangle-services/application/health"
+           port: {{ .Values.port }}
+           scheme: HTTPS
+         initialDelaySeconds: 60
+         periodSeconds: 60
+        ports:
+        - containerPort: {{ .Values.port }}
+        env:
+        - name: POD_IP
+          valueFrom:
+           fieldRef:
+            fieldPath: status.podIP
+        - name: DB_OPTIONS
+          value: "-DcassandraContactPoints=cassandra.{{ .Release.Namespace }}.svc.cluster.local -DcassandraSslEnabled=true -DcassandraUsername=cassandra -DcassandraPassword=cassandra -DcassandraClusterName=manglecassandracluster"
+        - name: CLUSTER_OPTIONS
+          value: "-DclusterValidationToken=mangle -DpublicAddress=$(POD_IP) -DclusterMembers={{ .Values.serviceName }}.{{ .Release.Namespace }}.svc.cluster.local"
+        volumeMounts:
+        - name: mangle-logs
+          mountPath: /var/opt/mangle-tomcat/logs
+        imagePullPolicy: Always
+        {{ include "set-resource-limits" . | indent 8 }}
+      restartPolicy: Always
+      imagePullSecrets:
+        - name: {{ .Values.image.secretName }}

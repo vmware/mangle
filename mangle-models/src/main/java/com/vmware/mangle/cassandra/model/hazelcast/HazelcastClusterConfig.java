@@ -22,6 +22,8 @@ import org.springframework.data.cassandra.core.mapping.Column;
 import org.springframework.data.cassandra.core.mapping.PrimaryKeyColumn;
 import org.springframework.data.cassandra.core.mapping.Table;
 
+import com.vmware.mangle.model.enums.MangleDeploymentMode;
+
 /**
  * @author chetanc
  *
@@ -38,6 +40,12 @@ public class HazelcastClusterConfig {
 
     @Column
     private Set<String> members;
+
+    private String master;
+
+    private Integer quorum;
+
+    private MangleDeploymentMode deploymentMode;
 
     public HazelcastClusterConfig() {
         this.id = UUID.randomUUID().toString();

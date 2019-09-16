@@ -35,6 +35,11 @@ describe('EndpointService', () => {
     expect(http.get).toHaveBeenCalled();
   });
 
+  it('should get dockerContainers', () => {
+    endpointService.getDockerContainers('');
+    expect(http.get).toHaveBeenCalled();
+  });
+
   it('should add endpoint', () => {
     endpointService.addEndpoint({});
     expect(http.post).toHaveBeenCalled();

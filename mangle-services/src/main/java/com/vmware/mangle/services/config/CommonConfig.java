@@ -13,8 +13,11 @@ package com.vmware.mangle.services.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import com.vmware.mangle.utils.constants.Constants;
 
 /**
  *
@@ -26,5 +29,13 @@ public class CommonConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public ThreadPoolTaskScheduler threadPoolTaskScheduler() {
+        ThreadPoolTaskScheduler threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
+        threadPoolTaskScheduler.setPoolSize(Constants.DEFAULT_THREAD_POOL_SIZE);
+        threadPoolTaskScheduler.setThreadNamePrefix(Constants.DEFAULT_TASK_SCHEDULER_THREAD_POOL_NAME);
+        return threadPoolTaskScheduler;
     }
 }

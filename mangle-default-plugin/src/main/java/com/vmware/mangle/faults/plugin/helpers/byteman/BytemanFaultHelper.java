@@ -30,6 +30,7 @@ import com.vmware.mangle.cassandra.model.tasks.SupportScriptInfo;
 import com.vmware.mangle.cassandra.model.tasks.commands.CommandInfo;
 import com.vmware.mangle.services.dto.AgentRuleConstants;
 import com.vmware.mangle.services.enums.BytemanFaultType;
+import com.vmware.mangle.services.enums.SysExitCodes;
 import com.vmware.mangle.utils.ICommandExecutor;
 import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
@@ -107,48 +108,25 @@ public abstract class BytemanFaultHelper {
                             .append(jvmAgentFaultSpec.getArgs().get(AgentRuleConstants.HTTP_METHODS_STRING).trim())
                             .append("\\\",method)").toString());
             break;
-        case XENON_SERVICE_LATENCY:
-            ruleString = ruleString.replace(AgentRuleConstants.HELPER_METHOD_INVOCATION_STRING,
-                    new StringBuilder().append("serviceLatency(\"")
-                            .append(jvmAgentFaultSpec.getArgs().get(AgentRuleConstants.SERVICES_STRING))
-                            .append("\",operation.toString(),")
-                            .append(jvmAgentFaultSpec.getArgs().get(AgentRuleConstants.LATENCY_STRING) + ")")
-                            .toString());
-            ruleString = ruleString.replace(AgentRuleConstants.CLASS_NAME_STRING,
-                    "com.vmware.xenon.common.http.netty.NettyHttpClientRequestHandler");
-            ruleString = ruleString.replace(AgentRuleConstants.METHOD_NAME_STRING, "submitRequest");
-            ruleString = ruleString.replace(AgentRuleConstants.RULE_EVENT_STRING, AgentRuleConstants.AT_ENTRY_STRING);
-            if (Boolean.parseBoolean(jvmAgentFaultSpec.getArgs().get("enableOnLocalRequests"))) {
-                bindString = "BIND operation:com.vmware.xenon.common.Operation=$2";
-            } else {
-                bindString = new StringBuilder().append("BIND operation:com.vmware.xenon.common.Operation=$2;")
-                        .append(LINE_SEPERATOR).append("context:io.netty.channel.ChannelHandlerContext=$1;")
-                        .append(LINE_SEPERATOR)
-                        .append("inetLocalAddress:java.net.InetSocketAddress=context.channel().localAddress();")
-                        .append(LINE_SEPERATOR)
-                        .append("inetRemoteAddress:java.net.InetSocketAddress=context.channel().remoteAddress();")
-                        .append(LINE_SEPERATOR)
-                        .append("localAddress:java.net.InetAddress=inetLocalAddress.getAddress();")
-                        .append(LINE_SEPERATOR)
-                        .append("remoteAddress:java.net.InetAddress=inetRemoteAddress.getAddress();").toString();
-                ruleString = ruleString.replace(AgentRuleConstants.IF_TRUE, "IF !localAddress.equals(remoteAddress)");
-            }
-            break;
         case JAVA_METHOD_LATENCY:
             ruleString = ruleString.replace(AgentRuleConstants.HELPER_METHOD_INVOCATION_STRING,
                     "sleep(" + jvmAgentFaultSpec.getArgs().get(AgentRuleConstants.LATENCY_STRING) + ")");
             break;
         case EXCEPTION:
             ruleString = ruleString.replace(AgentRuleConstants.HELPER_METHOD_INVOCATION_STRING,
-                    "throwException(\"" + jvmAgentFaultSpec.getArgs().get("exceptionClass") + "\", \""
-                            + jvmAgentFaultSpec.getArgs().get("exceptionMessage") + "\")");
+                    "throwException(\\\"" + jvmAgentFaultSpec.getArgs().get("exceptionClass") + "\\\", \\\""
+                            + jvmAgentFaultSpec.getArgs().get("exceptionMessage") + "\\\")");
             break;
         case THREAD_INTERRUPTION:
             ruleString = ruleString.replace(AgentRuleConstants.HELPER_METHOD_INVOCATION_STRING, "interrupt()");
             break;
         case KILL_JVM:
+            String enumExitCode =
+                    SysExitCodes.fromCode(Integer.parseInt(jvmAgentFaultSpec.getArgs().get("exitCode"))).toString();
             ruleString = ruleString.replace(AgentRuleConstants.HELPER_METHOD_INVOCATION_STRING,
-                    "killJVM(" + jvmAgentFaultSpec.getArgs().get("exitCode") + ")");
+                    new StringBuilder()
+                            .append("System.out.println(\\\"Calling killJVM with exitCode " + enumExitCode + "\\\")")
+                            .append("; killJVM(" + jvmAgentFaultSpec.getArgs().get("exitCode") + ")"));
             break;
         case KILL_THREAD:
             ruleString = ruleString.replace(AgentRuleConstants.HELPER_METHOD_INVOCATION_STRING, "killThread()");
@@ -168,22 +146,6 @@ public abstract class BytemanFaultHelper {
             ruleString = ruleString.replace(AgentRuleConstants.HELPER_METHOD_INVOCATION_STRING,
                     "System.out.println(objectValue)");
             break;
-        case MOCK_XENON_SERVICE_RESPONSE_CODES:
-            ruleString = ruleString.replace(AgentRuleConstants.HELPER_METHOD_INVOCATION_STRING,
-                    "response.setStatus(io.netty.handler.codec.http.HttpResponseStatus.SERVICE_UNAVAILABLE);");
-            ruleString = ruleString.replace(AgentRuleConstants.CLASS_NAME_STRING,
-                    "com.vmware.xenon.common.http.netty.NettyHttpClientRequestHandler");
-            ruleString = ruleString.replace(AgentRuleConstants.METHOD_NAME_STRING, "writeResponse");
-            ruleString = ruleString.replace(AgentRuleConstants.RULE_EVENT_STRING, AgentRuleConstants.AT_ENTRY_STRING);
-            bindString = new StringBuilder().append("BIND operation:com.vmware.xenon.common.Operation=$2;")
-                    .append(LINE_SEPERATOR).append(" response:io.netty.handler.codec.http.DefaultFullHttpResponse=$3;")
-                    .toString();
-            ruleString = ruleString.replace(AgentRuleConstants.IF_TRUE, new StringBuilder()
-                    .append("IF applyPercentageFilter(\"")
-                    .append(jvmAgentFaultSpec.getArgs().get(AgentRuleConstants.SERVICES_STRING))
-                    .append("\",operation.toString()," + jvmAgentFaultSpec.getArgs().get("failurePercentage") + ")")
-                    .toString());
-            break;
         default:
             throw new MangleException(ErrorCode.UNSUPPORTED_BYTEMAN_FAULT, bytemanFaultType);
         }
@@ -198,8 +160,8 @@ public abstract class BytemanFaultHelper {
             ruleString = ruleString.replace(AgentRuleConstants.RULE_EVENT_STRING,
                     jvmAgentFaultSpec.getArgs().get(RULE_EVENT));
         }
-        ruleString =
-                ruleString.replace("$HELPER_CLASS_NAME", "com.vmware.mangle.java.faults.helpers.BytemanRuleHelper");
+        ruleString = ruleString.replace("$HELPER_CLASS_NAME",
+                "com.vmware.mangle.java.agent.faults.helpers.BytemanRuleHelper");
 
         if (bindString != null) {
             ruleString = ruleString.replace("$BIND", bindString);

@@ -29,7 +29,9 @@ import com.vmware.mangle.services.enums.K8SResource;
 
 
 /**
- * @author bkaranam Api payload specification for K8S specific faults
+ * @author bkaranam
+ *
+ *         Api payload specification for K8S specific faults
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

@@ -13,14 +13,16 @@ package com.vmware.mangle.utils.exceptions.handler;
 
 import java.util.Date;
 
+import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.cassandra.CassandraConnectionFailureException;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.util.StringUtils;
 import org.springframework.validation.BindException;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
@@ -58,7 +60,11 @@ public class CustomizedResponseEntityExceptionHandler extends ResponseEntityExce
     @ExceptionHandler(Exception.class)
     public final ResponseEntity<ErrorDetails> handleAllExceptions(Exception ex, WebRequest request) {
         log.error("", ex);
-        ErrorDetails errorDetails = new ErrorDetails(new Date(), ErrorCode.UNKNOWN_ERROR.getCode(), ex.getMessage(),
+        String errorMessage = ex.getMessage();
+        if (!StringUtils.hasText(errorMessage)) {
+            errorMessage = ErrorConstants.INTERNAL_SERVER_ERROR;
+        }
+        ErrorDetails errorDetails = new ErrorDetails(new Date(), ErrorCode.UNKNOWN_ERROR.getCode(), errorMessage,
                 request.getDescription(false));
         HttpHeaders headers = new HttpHeaders();
         headers.add(ErrorConstants.REQUEST_FAILED_MESSAGE_HEADER, ErrorConstants.ERROR_MSG);
@@ -127,13 +133,16 @@ public class CustomizedResponseEntityExceptionHandler extends ResponseEntityExce
     @ExceptionHandler(MangleRuntimeException.class)
     public final ResponseEntity<ErrorDetails> handleMangleRuntimeException(MangleRuntimeException exception,
             WebRequest request) {
-        String customMessage =
-                exception.getMessage() == null ? customErrorMessage.getErrorMessage(exception) : exception.getMessage();
+        String errorDescription = customErrorMessage.getErrorMessage(exception);
+        String customMessage = exception.getMessage() == null ? errorDescription : exception.getMessage();
         log.error(ERROR_CODE_MSG + exception.getErrorCode().getCode() + ERROR_DESC_MSG + customMessage,
                 ((customMessage != null && customMessage.contains(ErrorConstants.NO_RECORD_FOUND_MSG)) ? null
                         : exception));
-        ErrorDetails errorDetails = new ErrorDetails(new Date(), exception.getErrorCode().getCode(),
-                customErrorMessage.getErrorMessage(exception), request.getDescription(false));
+
+        errorDescription = exception.getMessage() == null ? errorDescription
+                : String.format("%s Reason: %s", errorDescription, exception.getMessage());
+        ErrorDetails errorDetails = new ErrorDetails(new Date(), exception.getErrorCode().getCode(), errorDescription,
+                request.getDescription(false));
         HttpHeaders headers = new HttpHeaders();
         headers.add(ErrorConstants.REQUEST_FAILED_MESSAGE_HEADER, ErrorConstants.NO_RECORD_FOUND);
         return new ResponseEntity<>(errorDetails, headers, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -197,14 +206,16 @@ public class CustomizedResponseEntityExceptionHandler extends ResponseEntityExce
         return new ResponseEntity<>(errorDetails, headers, HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(CassandraConnectionFailureException.class)
-    public final ResponseEntity<ErrorDetails> handleCassandraConnectionFailureException(
-            CassandraConnectionFailureException exception, WebRequest request) {
+    @ExceptionHandler(DataAccessException.class)
+    public final ResponseEntity<ErrorDetails> handleCassandraException(DataAccessException exception,
+            WebRequest request) {
         String errorMsg = exception.getMessage();
         log.error(errorMsg);
         if (exception.getCause() instanceof NoHostAvailableException) {
             NoHostAvailableException hostAvailableException = (NoHostAvailableException) exception.getCause();
             errorMsg = hostAvailableException.getCustomMessage(Integer.MAX_VALUE, true, false);
+        } else if (exception.getCause() instanceof InvalidQueryException) {
+            errorMsg = ErrorConstants.INVALID_QUERY_EXCEPTION;
         }
         ErrorDetails errorDetails =
                 new ErrorDetails(new Date(), ErrorCode.DB_ERROR.getCode(), errorMsg, request.getDescription(false));

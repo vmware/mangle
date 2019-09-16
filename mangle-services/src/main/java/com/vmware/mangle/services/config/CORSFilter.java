@@ -12,6 +12,7 @@
 package com.vmware.mangle.services.config;
 
 import java.io.IOException;
+import java.util.Date;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -22,11 +23,20 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.RequestMethod;
 
+import com.vmware.mangle.model.response.ErrorDetails;
 import com.vmware.mangle.services.enums.MangleNodeStatus;
+import com.vmware.mangle.services.enums.MangleQuorumStatus;
+import com.vmware.mangle.utils.clients.restclient.RestTemplateWrapper;
+import com.vmware.mangle.utils.constants.ErrorConstants;
+import com.vmware.mangle.utils.constants.HazelcastConstants;
+import com.vmware.mangle.utils.constants.MetricProviderConstants;
 import com.vmware.mangle.utils.constants.URLConstants;
+import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
 /**
  * Filter component to have global controll on apis
@@ -36,6 +46,7 @@ import com.vmware.mangle.utils.constants.URLConstants;
 
 @Component
 public class CORSFilter implements Filter {
+
     @Override
     public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
             throws IOException, ServletException {
@@ -46,7 +57,14 @@ public class CORSFilter implements Filter {
         response.setHeader("Access-Control-Max-Age", "3600");
         response.setHeader("Access-Control-Allow-Headers", "x-requested-with, Content-Type");
 
-        if (URLConstants.getMangleNodeCurrentStatus().equals(MangleNodeStatus.ACTIVE)
+        if (verifyQuorumPreCheckFailure(request)) {
+            ErrorDetails errorDetails = new ErrorDetails(new Date(), ErrorCode.CLUSTER_QUORUM_NOT_MET.getCode(),
+                    String.format(ErrorConstants.CLUSTER_QUORUM_NOT_MET,
+                            System.getProperty(MetricProviderConstants.NODE_ADDRESS)),
+                    "");
+            response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
+            response.getWriter().write(RestTemplateWrapper.objectToJson(errorDetails));
+        } else if (URLConstants.getMangleNodeCurrentStatus().equals(MangleNodeStatus.ACTIVE)
                 || request.getRequestURI().contains("node-status") || request.getRequestURI().contains("swagger")
                 || request.getRequestURI().contains("v1/tasks")) {
             chain.doFilter(req, res);
@@ -78,6 +96,14 @@ public class CORSFilter implements Filter {
     @Override
     public void destroy() {
         //Not customized destroy Method
+    }
+
+    public boolean verifyQuorumPreCheckFailure(HttpServletRequest request) {
+        return (HazelcastConstants.mangleQourumStatus == MangleQuorumStatus.NOT_PRESENT
+                && !request.getMethod().equals(RequestMethod.GET.name())
+                && !(request.getRequestURI().contains(URLConstants.CLUSTER_CONFIG_URL)
+                        || request.getRequestURI().contains(URLConstants.DEFAULT_USER_UPDATE_FLAG_URL)
+                        || request.getRequestURI().contains(URLConstants.UPDATE_CURRENT_USER_PASSWORD)));
     }
 
 }

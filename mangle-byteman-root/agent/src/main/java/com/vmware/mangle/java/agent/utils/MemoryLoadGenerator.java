@@ -36,7 +36,7 @@ public class MemoryLoadGenerator implements Runnable {
         LOG.info("Fiaasco Injecting MemoryLoad Fault for duration: " + duration + "at Load: " + load);
         LOG.info("MaxHeapSize Available: " + RuntimeUtils.getMaxHeapSpace() / 100 + " kb");
         LOG.info("Current HeapUsage: " + RuntimeUtils.getUsedHeapSpace());
-        long size = getSizeinBytes(load);
+        long size = ThreadUtils.getSizeinBytes(load);
         LOG.info("Requested Consumption: " + size / 100);
         LinkedList<String> loadList = new LinkedList<>();
         long startTime = System.currentTimeMillis();
@@ -61,13 +61,5 @@ public class MemoryLoadGenerator implements Runnable {
         LOG.info("Fiaasco Exiting MemoryLoad Fault");
     }
 
-    private long getSizeinBytes(double load) {
-        double currentUsage = RuntimeUtils.getCurrentHeapUsageInPercentage();
-        if (currentUsage >= load) {
-            return 1;
-        } else {
-            double loadToCreateInBytes = ((load - currentUsage) / 100) * RuntimeUtils.getMaxHeapSpace();
-            return (long) loadToCreateInBytes;
-        }
-    }
+
 }

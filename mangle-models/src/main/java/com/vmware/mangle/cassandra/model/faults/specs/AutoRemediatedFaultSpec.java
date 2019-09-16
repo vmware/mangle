@@ -28,6 +28,6 @@ public class AutoRemediatedFaultSpec extends FaultSpec {
 
     private static final long serialVersionUID = 1L;
     @ApiModelProperty(value = "Integer Value to timeout/auto Remediate the Injected Fault")
-    @Min(0)
+    @Min(1)
     protected Integer timeoutInMilliseconds;
 }

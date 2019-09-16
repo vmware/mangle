@@ -44,6 +44,7 @@ describe('DiskioInfraComponent', () => {
         fixture.detectChanges();
         endpointService = TestBed.get(EndpointService);
         spyOn(endpointService, 'getAllEndpoints').and.returnValue(of([]));
+        spyOn(endpointService, 'getDockerContainers').and.returnValue(of([]));
         faultService = TestBed.get(FaultService);
         spyOn(faultService, 'executeDiskIOFault').and.returnValue(of({ "taskData": { "schedule": null } }));
         router = TestBed.get(Router);
@@ -57,6 +58,11 @@ describe('DiskioInfraComponent', () => {
     it('should execute diskio-infra fault', () => {
         component.executeDiskIOFault(component.faultFormData);
         expect(faultService.executeDiskIOFault).toHaveBeenCalled();
+    });
+
+    it('should execute getDockerContainers', () => {
+        component.getDockerContainers("DOCKER", '');
+        expect(endpointService.getDockerContainers).toHaveBeenCalled();
     });
 
 });

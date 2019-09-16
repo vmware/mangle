@@ -46,7 +46,6 @@ import com.vmware.mangle.services.hazelcast.HazelcastTaskCache;
 import com.vmware.mangle.services.helpers.MetricProviderHelper;
 import com.vmware.mangle.utils.PopulateFaultEventData;
 import com.vmware.mangle.utils.exceptions.MangleException;
-import com.vmware.mangle.utils.helpers.notifiers.WavefrontNotifier;
 
 /**
  *
@@ -170,7 +169,7 @@ public class TaskListenerTest {
     }
 
 
-    @Test(description = "Test to validate the case when FaultEventData is NULL ")
+    @Test(description = "Test to validate send Event gets triggered once TaskCompleted event is generated ")
     public void testTaskCompletedEventHandlerForNull() {
         initDefForMockObjectsForTaskCompletedEvent();
         when(commandExecutionFaultSpec.getEndpoint()).thenReturn(null);
@@ -178,25 +177,7 @@ public class TaskListenerTest {
         TaskCompletedEvent event = new TaskCompletedEvent(task);
         listener.handleTaskCompletedEvent(event);
 
-        verify(task, times(1)).getId();
-        verify(task, times(2)).getTaskData();
-    }
-
-    @Test(description = "Test to validate the case when FaultEventData constructed is not null")
-    public void testTaskCompletedEventHandler() {
-        WavefrontNotifier notifier = mock(WavefrontNotifier.class);
-        initDefForMockObjectsForTaskCompletedEvent();
-        when(mockTaskCompletedEvent.getTask()).thenReturn(task);
-        when(task.getTaskData()).thenReturn(commandExecutionFaultSpec);
-        when(commandExecutionFaultSpec.getEndpoint()).thenReturn(endpoint);
-        when(metricProvider.getActiveNotificationProvider()).thenReturn(notifier);
-        doNothing().when(notifier).sendEvent(faultEventInfo);
-
-        listener.handleTaskCompletedEvent(mockTaskCompletedEvent);
-        verify(mockTaskCompletedEvent, times(1)).getTask();
-        verify(task, times(3)).getId();
-        verify(task, times(2)).getTaskData();
-        verify(metricProvider, times(1)).getActiveNotificationProvider();
+        verify(metricProvider, times(1)).sendFaultEvent(task);
     }
 
     private void initDefForMockObjectsForTaskCompletedEvent() {

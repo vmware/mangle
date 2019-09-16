@@ -44,4 +44,9 @@ public class MemoryFaults extends AgentFault {
         }
         return params;
     }
+
+    @Override
+    protected boolean isGCRequired() {
+        return true;
+    }
 }

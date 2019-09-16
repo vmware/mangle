@@ -18,7 +18,7 @@ import com.vmware.mangle.cassandra.model.faults.specs.K8SResourceNotReadyFaultSp
 import com.vmware.mangle.model.enums.EndpointType;
 import com.vmware.mangle.services.enums.K8SFaultName;
 import com.vmware.mangle.services.enums.K8SResource;
-import com.vmware.mangle.services.helpers.faults.SupportedEndpoints;
+import com.vmware.mangle.task.framework.helpers.faults.SupportedEndpoints;
 import com.vmware.mangle.utils.exceptions.MangleException;
 
 /**

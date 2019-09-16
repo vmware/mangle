@@ -34,11 +34,12 @@ import com.vmware.mangle.faults.plugin.helpers.systemresource.SystemResourceFaul
 import com.vmware.mangle.faults.plugin.helpers.systemresource.SystemResourceFaultHelperFactory;
 import com.vmware.mangle.faults.plugin.helpers.systemresource.SystemResourceFaultUtils;
 import com.vmware.mangle.faults.plugin.utils.PluginUtils;
-import com.vmware.mangle.faults.plugin.utils.TaskDescriptionUtils;
 import com.vmware.mangle.model.enums.EndpointType;
 import com.vmware.mangle.services.enums.FaultName;
 import com.vmware.mangle.task.framework.endpoint.EndpointClientFactory;
 import com.vmware.mangle.task.framework.helpers.AbstractRemoteCommandExecutionTaskHelper;
+import com.vmware.mangle.task.framework.utils.TaskDescriptionUtils;
+import com.vmware.mangle.utils.CommandUtils;
 import com.vmware.mangle.utils.ConstantsUtils;
 import com.vmware.mangle.utils.ICommandExecutor;
 import com.vmware.mangle.utils.clients.docker.CustomDockerClient;
@@ -152,13 +153,13 @@ public class SystemResourceFaultTaskHelper<T extends CommandExecutionFaultSpec>
             for (SupportScriptInfo faultInjectionScriptInfo : listOfFaultInjectionScripts) {
                 String filePath = ConstantsUtils.getMangleSupportScriptDirectory() + File.separator
                         + faultInjectionScriptInfo.getScriptFileName();
+                CommandUtils.runCommand("chmod u+x " + filePath);
                 CustomDockerClient customDockerClient = (CustomDockerClient) (endpointClientFactory
                         .getEndPointClient(task.getTaskData().getCredentials(), task.getTaskData().getEndpoint()));
                 customDockerClient.copyFileToContainerByName(task.getTaskData().getDockerArguments().getContainerName(),
                         filePath, faultInjectionScriptInfo.getTargetDirectoryPath());
                 log.info("Copied Support Script File: " + faultInjectionScriptInfo.getScriptFileName()
                         + " to Docker Machine");
-                commandInfoExecutionHelper.makeExecutable(getExecutor(task), faultInjectionScriptInfo);
             }
         }
     }

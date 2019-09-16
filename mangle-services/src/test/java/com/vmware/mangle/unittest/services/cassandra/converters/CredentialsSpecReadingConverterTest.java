@@ -32,6 +32,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import com.vmware.mangle.cassandra.model.endpoint.AWSCredentials;
 import com.vmware.mangle.cassandra.model.endpoint.CredentialsSpec;
 import com.vmware.mangle.cassandra.model.endpoint.K8SCredentials;
 import com.vmware.mangle.cassandra.model.endpoint.RemoteMachineCredentials;
@@ -104,8 +105,7 @@ public class CredentialsSpecReadingConverterTest extends PowerMockTestCase {
      * Test method for
      * {@link com.vmware.mangle.cassandra.converters.CredentialsSpecReadingConverter#convert(com.datastax.driver.core.Row)}.
      */
-    //Will be uncommented when we started supporting AWS endpoint
-   /* @Test
+    @Test
     public void testConvertForAwsCase() {
         Row source = mock(Row.class);
         when(source.getString(anyString())).thenReturn(EndpointType.AWS.toString());
@@ -115,7 +115,7 @@ public class CredentialsSpecReadingConverterTest extends PowerMockTestCase {
         Assert.assertTrue(actualResult instanceof AWSCredentials);
         verify(source, times(1)).getString(anyString());
         verify(mappingCassandraConverter, times(1)).read(any(), any(Row.class));
-    }*/
+    }
 
     /**
      * Test method for

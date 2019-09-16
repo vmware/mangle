@@ -66,7 +66,8 @@ public abstract class AgentFault extends Thread {
                 future.cancel(true);
             }
         }
-        if (getFaultName().equals("fileHandlerFault") || getFaultName().equals("memoryFault")) {
+        if (isGCRequired()) {
+            LOG.info("Requesting GC as part of remediation");
             RuntimeUtils.runGc();
         }
         appendTaskActivity("Completed the Fault Remediation");
@@ -125,7 +126,7 @@ public abstract class AgentFault extends Thread {
         }
     }
 
-    private boolean getBoolean(String value) {
+    protected boolean getBoolean(String value) {
         return Boolean.parseBoolean(value);
     }
 
@@ -201,5 +202,9 @@ public abstract class AgentFault extends Thread {
         LOG.info("Initializing the Fault");
         faultInfo.appendTaskActivity("Initializing the Fault");
         faultInfo.setFaultStatus(FaultStatus.INITIALIZING);
+    }
+
+    protected boolean isGCRequired() {
+        return false;
     }
 }

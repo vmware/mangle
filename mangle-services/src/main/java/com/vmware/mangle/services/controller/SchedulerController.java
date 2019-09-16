@@ -101,10 +101,10 @@ public class SchedulerController {
 
     @ApiOperation(value = "API to delete scheduled jobs from Mangle", nickname = "deleteTasks")
     @RequestMapping(value = "", method = RequestMethod.DELETE, produces = "application/json")
-    public ResponseEntity<SchedulerRequestStatus> deleteScheduledJob(@RequestParam("jobIds") List<String> jobIds)
+    public ResponseEntity<SchedulerRequestStatus> deleteScheduledJob(@RequestParam("jobIds") List<String> jobIds, @RequestParam(value = "delete-associated-tasks", required = false) boolean deleteAssociatedTasks)
             throws MangleException {
         log.info("Received request to delete schedules: {}", jobIds.toString());
-        Set<String> processedJobs = scheduler.deleteScheduledJobs(jobIds);
+        Set<String> processedJobs = scheduler.deleteScheduledJobs(jobIds, deleteAssociatedTasks);
         return new ResponseEntity<>(
                 new SchedulerRequestStatus(
                         String.format("Received request to delete the schedules %s", processedJobs.toString())),

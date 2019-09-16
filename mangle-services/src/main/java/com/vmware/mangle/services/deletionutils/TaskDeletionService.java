@@ -12,6 +12,7 @@
 package com.vmware.mangle.services.deletionutils;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +27,7 @@ import org.springframework.util.CollectionUtils;
 import com.vmware.mangle.cassandra.model.faults.specs.TaskSpec;
 import com.vmware.mangle.cassandra.model.scheduler.SchedulerSpec;
 import com.vmware.mangle.cassandra.model.tasks.Task;
+import com.vmware.mangle.cassandra.model.tasks.TaskStatus;
 import com.vmware.mangle.model.response.DeleteOperationResponse;
 import com.vmware.mangle.services.SchedulerService;
 import com.vmware.mangle.services.repository.TaskRepository;
@@ -87,7 +89,12 @@ public class TaskDeletionService {
     public boolean deleteTaskById(String taskId) throws MangleException {
         log.info("Deleting Task by id : " + taskId);
         if (!StringUtils.isEmpty(taskId)) {
-            taskRepository.deleteById(taskId);
+            Task<TaskSpec> task = taskRepository.findById(taskId).orElse(null);
+            if (task != null && task.getTaskStatus() == TaskStatus.IN_PROGRESS) {
+                throw new MangleException(String.format(ErrorConstants.INPROGRESS_TASK_DELETION_FAILURE, taskId),
+                        ErrorCode.INPROGRESS_TASK_DELETION_FAILURE, taskId);
+            }
+            taskRepository.deleteByIdIn(Collections.singleton(taskId));
             return true;
         } else {
             log.warn(ErrorConstants.TASK_ID + ErrorConstants.FIELD_VALUE_EMPTY);

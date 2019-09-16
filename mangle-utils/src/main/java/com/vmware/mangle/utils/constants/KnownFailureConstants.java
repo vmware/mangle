@@ -28,6 +28,8 @@ public class KnownFailureConstants {
             "Failed to copy fault injection script to target.";
 
     //Command Outputs for Agent Installation
+    public static final String AGENT_INSTALL_EXPECTED_MESSAGE_FOR_AGENT_INSTALL_SCRIPT_NOT_FOUND_OUTPUT =
+            "bminstall.sh: " + EXPECTED_MESSAGE_FOR_FILE_NOT_FOUND;
     public static final String AGENT_INSTALL_GIVEN_AGENT_PORT_IN_USE_FAILURE_OUTPUT = "java.io.IOException: Given Port";
     public static final String AGENT_INSTALL_UNSUPPORTED_PROCESS_FAILURE_OUTPUT =
             "com.sun.tools.attach.AttachNotSupportedException: Unable to open socket file:";
@@ -105,6 +107,10 @@ public class KnownFailureConstants {
 
     //Command Outputs for Agent Copy
     public static final String K8S_INVALID_POD_CONTAINER_MAPPING_FAILURE_OUTPUT = "is not valid for pod";
+    public static final String K8S_POD_TAR_NOT_AVAILABLE_AGENT_COPY_FAILURE_OUTPUT =
+            "\"exec: \\\"tar\\\": executable file not found in $PATH\": unknown";
+    public static final String K8S_POD_TAR_NOT_AVAILABLE_AGENT_COPY_FAILURE_MESSAGE =
+            "Mangle Java Agent copy failed. Tar command is not available in target pod";
 
 
     //Failure reasons for DockerSpecific faults
@@ -136,6 +142,11 @@ public class KnownFailureConstants {
     public static final String KILL_PROCESS_NOT_FOUND_IDENTIFIER_FAILURE_OUTPUT = "no process found with identifier";
     public static final String KILL_PROCESS_FOUND_MORE_THAN_ONE_PROCESS_FAILURE_OUTPUT = "Found more than one process";
 
+    public static final String DISK_SPACE_NOT_FOUND_DIRECTORY_PATH_FAILURE_OUTPUT =
+            "The Provided directory path not found";
+    public static final String DISK_SPACE_FILL_PERCENTAGE_GREATER_THAN_USED_DISK_PERCENTAGE_FAILURE_OUTPUT =
+            "The Provided diskFill percentage should be greater than used disk percentage";
+
     public static final String SYSTEM_RESOURCE_FAULT_DIRECTORY_NOT_FOUND_OUTPUT = "Directory not found";
     public static final String DISKIO_FAULT_IOSIZE_GREATER_THAN_DISK_SIZE_OUTPUT =
             "The Provided iosize is greater than the maximum size of disk";
@@ -147,6 +158,8 @@ public class KnownFailureConstants {
     public static final String SYSTEM_RESOURCE_FAULT_PRECHECK_FAILED_OUTPUT = "Precheck:Failed";
     public static final String SYSTEM_RESOURCE_FAULT_ALREADY_REMEDIATED_OUTPUT = "Fault already remediated";
     public static final String SYSTEM_RESOURCE_FAULT_ALREADY_RUNNING_OUTPUT = "fault is already running";
+    public static final String SYSTEM_RESOURCE_SHELL_SCRIPT_FILE_NOT_FOUND_OUTPUT =
+            "input is not a terminal or the right kind of file";
 
     //Failure reasons for System Resource Fault Injection
     public static final String KILL_PROCESS_NOT_FOUND_IDENTIFIER_FAILURE_MESSAGE =
@@ -160,6 +173,10 @@ public class KnownFailureConstants {
     public static final String DISKIO_FAULT_TARGET_DIRECTORY_NOT_FOUND_OUTPUT_MESSAGE =
             "The provided target directory is invalid. Please provide an existing directory";
 
+    public static final String DISK_SPACE_NOT_FOUND_DIRECTORY_PATH_FAILURE_MESSAGE =
+            "Directory path not found in target machine";
+    public static final String DISK_SPACE_FILL_PERCENTAGE_GREATER_THAN_USED_DISK_PERCENTAGE_FAILURE_MESSAGE =
+            "The provided disk fill percentage should be greater than used disk percentage";
 
     //Command Outputs for vCenter adapter
     public static final String VCENTER_STATE_FAULT_ALREADY_REMEDIATED_OUTPUT = "Virtual machine is already powered on";
@@ -181,4 +198,13 @@ public class KnownFailureConstants {
     public static final String VCENTER_SERVER_CONNECTION_FAILURE_OUTPUT =
             "vCenter server connection could not be established";
 
+    //Command Outputs for NetworkFault
+    public static final String NETWORK_FAULT_INVALID_NIC_OUTPUT = "Given Nic name not found";
+    public static final String NETWORK_FAULT_REMEDIATION_FAIL_SOCKET_NOT_ESTABLISHED_OUTPUT =
+            "socket is not established";
+    //Failure messages for Network Fault
+    public static final String NETWORK_FAULT_INVALID_NIC_MESSAGE =
+            "Provided nic name is invalid.Please retrigger with a valid nic";
+    public static final String NETWORK_FAULT_REMEDIATION_FAIL_SOCKET_NOT_ESTABLISHED_MESSAGE =
+            "Manual remediation can't be done now as the injected latency is high.Please wait until autoremediation happens";
 }

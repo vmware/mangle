@@ -40,6 +40,8 @@ public class AgentFaultFactory {
                 return new MemoryFaults(faultArgs);
             case "fileHandlerFault":
                 return new FileHandlerFault(faultArgs);
+            case "threadLeakFault":
+                return new ThreadLeakFault(faultArgs);
             default:
                 throw new FiaascoException("Unsupported Fault name: " + faultName);
             }

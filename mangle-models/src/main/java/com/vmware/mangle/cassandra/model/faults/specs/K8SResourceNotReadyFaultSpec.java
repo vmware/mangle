@@ -19,7 +19,9 @@ import lombok.ToString;
 import com.vmware.mangle.services.enums.K8SFaultName;
 
 /**
- * @author bkaranam Api payload specification for K8S Delete Resource fault spec
+ * @author bkaranam
+ *
+ *         Api payload specification for K8S Delete Resource fault spec
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

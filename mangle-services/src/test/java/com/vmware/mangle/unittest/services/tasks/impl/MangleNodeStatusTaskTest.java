@@ -19,7 +19,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertNull;
 
-import static com.vmware.mangle.utils.constants.URLConstants.HAZELCAST_MANGLE_NODE_CURRENT_STATUS_ATTRIBUTE;
+import static com.vmware.mangle.utils.constants.HazelcastConstants.HAZELCAST_MANGLE_NODE_CURRENT_STATUS_ATTRIBUTE;
 
 import java.net.UnknownHostException;
 import java.util.HashSet;

@@ -64,14 +64,14 @@ describe('DockerComponent', () => {
     //add endpoint
     spyOn(endpointService, 'addEndpoint').and.returnValue(of(ep_data_id));
     component.addOrUpdateEndpoint(ep_data);
-    expect(component.successFlag).toBe(true);
+    expect(component.successAlertMessage).toBeTruthy();
     expect(component.endpoints[0].name).toBe("docker_ep");
     expect(endpointService.addEndpoint).toHaveBeenCalled();
     expect(endpointService.getEndpoints).toHaveBeenCalled();
     //update endpoint
     spyOn(endpointService, 'updateEndpoint').and.returnValue(of(ep_data_id));
     component.addOrUpdateEndpoint(ep_data_id);
-    expect(component.successFlag).toBe(true);
+    expect(component.successAlertMessage).toBeTruthy();
     expect(component.endpoints[0].name).toBe("docker_ep");
     expect(endpointService.updateEndpoint).toHaveBeenCalled();
     expect(endpointService.getEndpoints).toHaveBeenCalled();
@@ -81,14 +81,14 @@ describe('DockerComponent', () => {
     spyOn(endpointService, 'deleteEndpoint').and.returnValue(of({}));
     spyOn(window, 'confirm').and.callFake(function () { return true; });
     component.deleteEndpoint(ep_data.name);
-    expect(component.successFlag).toBe(true);
+    expect(component.successAlertMessage).toBeTruthy();
     expect(endpointService.deleteEndpoint).toHaveBeenCalled();
   });
 
   it('should test endpoint connection', () => {
     spyOn(endpointService, 'testEndpointConnection').and.returnValue(of(ep_data));
     component.testEndpointConnection(true, ep_data);
-    expect(component.successFlag).toBe(true);
+    expect(component.successAlertMessage).toBeTruthy();
     expect(component.disableSubmit).toBe(false);
     expect(endpointService.testEndpointConnection).toHaveBeenCalled();
   });

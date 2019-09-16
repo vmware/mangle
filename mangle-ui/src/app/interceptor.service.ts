@@ -17,15 +17,19 @@ export class InterceptorService implements HttpInterceptor {
         });
         return next.handle(xhr).pipe(tap((event: HttpEvent<any>) => {
             if (event instanceof HttpResponse) {
-                // do stuff with response if you want
+                event.headers.delete('Authorization');
             }
         }, (err: any) => {
             if (err instanceof HttpErrorResponse) {
+                err.headers.delete('Authorization');
                 if (err.status === 401) {
                     this.router.navigateByUrl('login');
                 }
-                if (err.status === 504 || err.status === 0) {
-                    this.router.navigateByUrl('unavailable')
+                if (err.status === 504) {
+                    this.router.navigateByUrl('unavailable');
+                }
+                if (err.status === 0) {
+                    window.location.reload();
                 }
             }
         }));

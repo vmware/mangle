@@ -25,6 +25,7 @@ import static com.vmware.mangle.utils.constants.FaultConstants.SUBMIT_COMMAND_WI
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import lombok.extern.log4j.Log4j2;
@@ -47,10 +48,10 @@ import com.vmware.mangle.cassandra.model.tasks.commands.CommandOutputProcessingI
 import com.vmware.mangle.faults.plugin.helpers.JavaAgentFaultUtils;
 import com.vmware.mangle.faults.plugin.helpers.KnownFailuresHelper;
 import com.vmware.mangle.faults.plugin.helpers.byteman.DockerBytemanFaultHelper;
-import com.vmware.mangle.faults.plugin.helpers.docker.DockerCommandUtils;
 import com.vmware.mangle.faults.plugin.mockdata.FaultsMockData;
 import com.vmware.mangle.faults.plugin.utils.PluginUtils;
 import com.vmware.mangle.task.framework.endpoint.EndpointClientFactory;
+import com.vmware.mangle.task.framework.utils.DockerCommandUtils;
 import com.vmware.mangle.utils.CommandUtils;
 import com.vmware.mangle.utils.ConstantsUtils;
 import com.vmware.mangle.utils.ICommandExecutor;
@@ -133,7 +134,7 @@ public class DockerBytemanFaultHelperTest extends PowerMockTestCase {
 
     private List<CommandInfo> getJVMAgentInjectionCommandInfo() {
         CommandInfo agentInstallation = new CommandInfo();
-        agentInstallation.setCommand("/bin/sh /tmp/mangle-java-agent-1.0.0/bin/bminstall.sh -p 9091 -s -b null");
+        agentInstallation.setCommand("/bin/sh /tmp/mangle-java-agent-2.0.0/bin/bminstall.sh -p 9091 -s -b null");
         agentInstallation.setIgnoreExitValueCheck(true);
         agentInstallation.setExpectedCommandOutputList(Arrays.asList(new String[] {
                 "Started Byteman Listener Successfully", "Agent is already running on requested process" }));
@@ -175,7 +176,7 @@ public class DockerBytemanFaultHelperTest extends PowerMockTestCase {
     private List<CommandInfo> getJVMAgentInjectionCommandInfoListWithJavaHomeSet() {
         CommandInfo agentInstallation = new CommandInfo();
         agentInstallation.setCommand(
-                "export JAVA_HOME=/usr/java/latest&&/bin/sh /tmp/mangle-java-agent-1.0.0/bin/bminstall.sh -p 9091 -s -b null");
+                "export JAVA_HOME=/usr/java/latest&&/bin/sh /tmp/mangle-java-agent-2.0.0/bin/bminstall.sh -p 9091 -s -b null");
         agentInstallation.setIgnoreExitValueCheck(true);
         agentInstallation.setExpectedCommandOutputList(Arrays.asList(new String[] {
                 "Started Byteman Listener Successfully", "Agent is already running on requested process" }));
@@ -239,10 +240,44 @@ public class DockerBytemanFaultHelperTest extends PowerMockTestCase {
         }
     }
 
+    @Test
+    public void testGetJVMAgentRemediationCommandInfoListforFileHandler() {
+        try {
+            CommandExecutionFaultSpec fileHandlerFaultSpec = faultsMockData.getFilehandlerLeakFaultSpec();
+            Mockito.when(endpointClientFactory.getEndPointClient(null, fileHandlerFaultSpec.getEndpoint()))
+                    .thenReturn(customDockerClient);
+            dockerBytemanFaultHelper.setJavaAgentFaultUtils(new JavaAgentFaultUtils());
+            List<CommandInfo> remediationCommands =
+                    dockerBytemanFaultHelper.getRemediationCommandInfoList(fileHandlerFaultSpec);
+            log.info(RestTemplateWrapper.objectToJson(remediationCommands));
+            Assert.assertEquals(remediationCommands, Collections.emptyList());
+        } catch (MangleException e) {
+            log.error("testGetJVMAgentRemediationCommandInfoListforFileHandler failed with Exception: ", e);
+            Assert.assertTrue(false);
+        }
+    }
+
+    @Test
+    public void testGetJVMAgentRemediationCommandInfoListforThreadLeakFault() {
+        try {
+            CommandExecutionFaultSpec threadLeakFaultSpec = faultsMockData.getThreadLeakFaultSpec();
+            Mockito.when(endpointClientFactory.getEndPointClient(null, threadLeakFaultSpec.getEndpoint()))
+                    .thenReturn(customDockerClient);
+            dockerBytemanFaultHelper.setJavaAgentFaultUtils(new JavaAgentFaultUtils());
+            List<CommandInfo> remediationCommands =
+                    dockerBytemanFaultHelper.getRemediationCommandInfoList(threadLeakFaultSpec);
+            log.info(RestTemplateWrapper.objectToJson(remediationCommands));
+            Assert.assertEquals(remediationCommands, Collections.emptyList());
+        } catch (MangleException e) {
+            log.error("test Get JVMAgent Remediation CommandInfoList for ThreadLeak failed with Exception: ", e);
+            Assert.assertTrue(false);
+        }
+    }
+
     private List<CommandInfo> getJVMAgentRemediationCommandInfoList() {
         CommandInfo faultRemediationRequest = new CommandInfo();
         faultRemediationRequest
-                .setCommand("/bin/sh /tmp/mangle-java-agent-1.0.0/bin/bmsubmit.sh -p 9091 -rf $FI_ADD_INFO_faultId");
+                .setCommand("/bin/sh /tmp/mangle-java-agent-2.0.0/bin/bmsubmit.sh -p 9091 -rf $FI_ADD_INFO_faultId");
         faultRemediationRequest.setIgnoreExitValueCheck(false);
         faultRemediationRequest.setExpectedCommandOutputList(
                 Arrays.asList(new String[] { "Received Remediation Request Successfully" }));
@@ -250,7 +285,7 @@ public class DockerBytemanFaultHelperTest extends PowerMockTestCase {
                 .setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentFaultRemediationRequest());
         CommandInfo faultInjection = new CommandInfo();
         faultInjection
-                .setCommand("/bin/sh /tmp/mangle-java-agent-1.0.0/bin/bmsubmit.sh -p 9091 -gf $FI_ADD_INFO_faultId");
+                .setCommand("/bin/sh /tmp/mangle-java-agent-2.0.0/bin/bmsubmit.sh -p 9091 -gf $FI_ADD_INFO_faultId");
         faultInjection.setIgnoreExitValueCheck(true);
         faultInjection.setExpectedCommandOutputList(Arrays.asList(new String[] { "\"faultStatus\":\"COMPLETED\"",
                 "Failed to process request: java.net.ConnectException: Connection refused" }));
@@ -282,12 +317,18 @@ public class DockerBytemanFaultHelperTest extends PowerMockTestCase {
     private List<CommandInfo> getJVMCodeLevelRemediationCommandInfoList() {
         CommandInfo faultRemediationRequest = new CommandInfo();
         faultRemediationRequest
-                .setCommand("/bin/sh /tmp/mangle-java-agent-1.0.0/bin/bmsubmit.sh -p 9091 -u /tmp/123456.btm");
+                .setCommand("/bin/sh /tmp/mangle-java-agent-2.0.0/bin/bmsubmit.sh -p 9091 -u /tmp/123456.btm");
         faultRemediationRequest.setIgnoreExitValueCheck(true);
         faultRemediationRequest.setExpectedCommandOutputList(Arrays.asList(new String[] { "uninstall RULE 123456" }));
         faultRemediationRequest.setKnownFailureMap(null);
+
+        CommandInfo deleteBytemanRuleRequest = new CommandInfo();
+        deleteBytemanRuleRequest.setCommand("rm -rf /tmp/123456.btm");
+        deleteBytemanRuleRequest.setIgnoreExitValueCheck(true);
+
         List<CommandInfo> commandInfoList = new ArrayList<>();
         commandInfoList.add(faultRemediationRequest);
+        commandInfoList.add(deleteBytemanRuleRequest);
         return commandInfoList;
     }
 

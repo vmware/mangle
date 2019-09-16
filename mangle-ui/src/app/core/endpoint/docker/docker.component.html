@@ -1,9 +1,4 @@
-<clr-alert *ngIf="errorFlag" [clrAlertType]="'danger'">
-	<div class="alert-item">{{alertMessage}}</div>
-</clr-alert>
-<clr-alert *ngIf="successFlag" [clrAlertType]="'success'">
-	<div class="alert-item">{{alertMessage}}</div>
-</clr-alert>
+<app-alert [(errorAlertMessage)]="errorAlertMessage" [(successAlertMessage)]="successAlertMessage" (errorAlertMessageChange)="errorAlertMessage = $event" (successAlertMessageChange)="successAlertMessage = $event"></app-alert>
 <div [hidden]="epDatagrid">
 	<clr-dg-action-bar>
 		<div class="btn-group">
@@ -85,9 +80,9 @@
 				<clr-icon shape="plus-circle" (click)="tagsModal=true;" style="width:21px;height:30px;"></clr-icon>
 			</div>
 		</section>
-		<button type="button" class="btn btn-outline" (click)="epDatagrid=false;epForm=true;ngOnInit();">CANCEL</button>
+		<button type="submit" class="btn btn-primary" [disabled]="disableSubmit">SUBMIT</button>
 		<button [clrLoading]="testEndpointBtnState" type="button" class="btn btn-outline" (click)="testEndpointConnection(nativeDockerForm.reportValidity(), dockerForm.value);">TEST CONNECTION</button>
-        <button type="submit" class="btn btn-primary" [disabled]="disableSubmit">SUBMIT</button>
+        <button type="button" class="btn btn-outline" (click)="epDatagrid=false;epForm=true;ngOnInit();">CANCEL</button>
     </form>
 </div>
 <clr-modal [(clrModalOpen)]="tagsModal">

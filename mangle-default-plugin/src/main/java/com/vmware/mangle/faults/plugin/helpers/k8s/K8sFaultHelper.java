@@ -65,7 +65,7 @@ public class K8sFaultHelper implements ICommandExecutionFaultHelper {
     @Override
     public List<CommandInfo> getInjectionCommandInfoList(ICommandExecutor executor,
             CommandExecutionFaultSpec k8sFaultSpec) throws MangleException {
-        return buildInjectionCommandList((K8SFaultSpec) k8sFaultSpec);
+        return buildInjectionCommandList(executor, (K8SFaultSpec) k8sFaultSpec);
     }
 
     @Override
@@ -79,6 +79,9 @@ public class K8sFaultHelper implements ICommandExecutionFaultHelper {
             break;
         case DELETE_RESOURCE:
             commandList = Collections.emptyList();
+            break;
+        case SERVICE_UNAVAILABLE:
+            commandList = getServiceUnavailableFaultRemediationCommand(executor, (K8SFaultSpec) k8sFaultSpec);
             break;
         default:
             throw new MangleException(ErrorCode.UNSUPPORTED_FAULT, operation);
@@ -105,7 +108,8 @@ public class K8sFaultHelper implements ICommandExecutionFaultHelper {
      * @return {@link String} command
      * @throws MangleException
      */
-    private List<CommandInfo> buildInjectionCommandList(K8SFaultSpec k8sFaultSpec) throws MangleException {
+    private List<CommandInfo> buildInjectionCommandList(ICommandExecutor executor, K8SFaultSpec k8sFaultSpec)
+            throws MangleException {
         String operation = k8sFaultSpec.getArgs().get(OPERATION);
         List<CommandInfo> commandList = null;
         switch (K8SFaultName.valueOf(operation)) {
@@ -114,6 +118,9 @@ public class K8sFaultHelper implements ICommandExecutionFaultHelper {
             break;
         case DELETE_RESOURCE:
             commandList = getInjectionCommandList(k8sFaultSpec);
+            break;
+        case SERVICE_UNAVAILABLE:
+            commandList = getServiceUnavailableFaultInjectionCommand(executor, k8sFaultSpec);
             break;
         default:
             throw new MangleException(ErrorCode.UNSUPPORTED_FAULT, operation);
@@ -124,7 +131,8 @@ public class K8sFaultHelper implements ICommandExecutionFaultHelper {
     /**
      * Method to generate remediation commands for ResourceNotReady fault
      *
-     * @param resourcesList
+     * @param executor
+     * @param
      */
     private List<CommandInfo> getResourceNotReadyFaultRemediationCommand(ICommandExecutor executor,
             K8SFaultSpec k8sFaultSpec) throws MangleException {
@@ -132,33 +140,22 @@ public class K8sFaultHelper implements ICommandExecutionFaultHelper {
         List<CommandInfo> commandInfoList = new ArrayList<>();
         for (String resourceName : k8sFaultSpec.getResourcesList()) {
             if (k8sFaultSpec.getResourceType().equals(K8SResource.POD)) {
-                CommandInfo k8sPatchCommandInfo = new CommandInfo();
-                k8sPatchCommandInfo.setIgnoreExitValueCheck(false);
                 String containerName = ((K8SResourceNotReadyFaultSpec) (k8sFaultSpec)).getAppContainerName();
                 String originalImage = executor
                         .executeCommand(
                                 String.format(KubernetesTemplates.GET_CONTAINER_IMAGE, resourceName, containerName))
                         .getCommandOutput().trim();
-                k8sPatchCommandInfo.setCommand(String.format(KubernetesTemplates.PATCH_CONTAINER_IMAGE_OF_POD,
-                        resourceName, containerName, originalImage));
-                commandInfoList.add(k8sPatchCommandInfo);
 
-                CommandInfo checkContainerStateInfo = new CommandInfo();
-                checkContainerStateInfo.setIgnoreExitValueCheck(false);
-                checkContainerStateInfo.setNoOfRetries(30);
-                checkContainerStateInfo.setRetryInterval(10);
-                checkContainerStateInfo
-                        .setCommand(String.format(KubernetesTemplates.IS_CONTAINER_READY, resourceName, containerName));
-                checkContainerStateInfo.setExpectedCommandOutputList(Arrays.asList("true"));
-                commandInfoList.add(checkContainerStateInfo);
+                CommandInfo k8sPatchContainerCommandInfo = K8sCommandInfoHelper
+                        .getK8sPatchContainerWithOriginalImageCommandInfo(resourceName, containerName, originalImage);
+                commandInfoList.add(k8sPatchContainerCommandInfo);
+                commandInfoList.add(K8sCommandInfoHelper.getK8sCheckContainerStateCommand(resourceName, containerName));
 
                 log.debug("Remediation command for K8S " + k8sFaultSpec.getResourceType().name() + "not ready fault:"
-                        + k8sPatchCommandInfo.getCommand());
+                        + k8sPatchContainerCommandInfo.getCommand());
 
             } else if (k8sFaultSpec.getResourceType().equals(K8SResource.NODE)) {
-                CommandInfo nodeUnCordonCommandInfo = new CommandInfo();
-                nodeUnCordonCommandInfo.setIgnoreExitValueCheck(false);
-                nodeUnCordonCommandInfo.setCommand(KubernetesTemplates.UNCORDON + resourceName);
+                CommandInfo nodeUnCordonCommandInfo = K8sCommandInfoHelper.getK8sNodeUnCordonCommand(resourceName);
                 commandInfoList.add(nodeUnCordonCommandInfo);
                 log.debug("Remediation command for K8S " + k8sFaultSpec.getResourceType().name() + "not ready fault:"
                         + nodeUnCordonCommandInfo.getCommand());
@@ -167,6 +164,39 @@ public class K8sFaultHelper implements ICommandExecutionFaultHelper {
             }
 
 
+        }
+        return commandInfoList;
+    }
+
+    /**
+     * Method to generate remediation commands for Service Unavailable fault
+     *
+     * @param executor
+     * @param k8sFaultSpec
+     * @return list of remediation commands
+     */
+    private List<CommandInfo> getServiceUnavailableFaultRemediationCommand(ICommandExecutor executor,
+            K8SFaultSpec k8sFaultSpec) throws MangleException {
+        String message = "Generating Remediation command for K8S Service Unavailable fault";
+        log.info(message);
+        List<CommandInfo> commandInfoList = new ArrayList<>();
+        for (String resourceName : k8sFaultSpec.getResourcesList()) {
+            String originalServiceSelectors =
+                    executor.executeCommand(String.format(KubernetesTemplates.GET_SERVICE_SELECTORS, resourceName))
+                            .getCommandOutput().trim();
+            if (StringUtils.startsWithIgnoreCase(originalServiceSelectors, KubernetesTemplates.SELECTORS_PREFIX)
+                    && originalServiceSelectors.split(KubernetesTemplates.SELECTORS_PREFIX).length > 0) {
+                originalServiceSelectors = originalServiceSelectors.split(KubernetesTemplates.SELECTORS_PREFIX)[1];
+
+                CommandInfo k8sServicePatchCommandInfo = K8sCommandInfoHelper
+                        .getK8sServicePatchWithSelectorsCommandInfo(resourceName, originalServiceSelectors);
+                commandInfoList.add(k8sServicePatchCommandInfo);
+
+                commandInfoList.add(K8sCommandInfoHelper.getK8sServiceEndpointsCommandInfo(resourceName, "addresses"));
+
+                log.debug("Remediation command for K8S " + k8sFaultSpec.getResourceType().name() + " unavailable fault:"
+                        + k8sServicePatchCommandInfo.getCommand());
+            }
         }
         return commandInfoList;
     }
@@ -184,27 +214,15 @@ public class K8sFaultHelper implements ICommandExecutionFaultHelper {
             if (k8sFaultSpec.getResourceType().equals(K8SResource.POD)) {
 
                 String containerName = ((K8SResourceNotReadyFaultSpec) (k8sFaultSpec)).getAppContainerName();
-                CommandInfo checkForReadinessProbeCommand = new CommandInfo();
-                checkForReadinessProbeCommand
-                        .setCommand(String.format(KubernetesTemplates.IS_CONTAINER_HAS_READINESS_PROBE, resourceName,
-                                containerName, containerName));
-                checkForReadinessProbeCommand.setExpectedCommandOutputList(Arrays.asList("ReadinessProbe Configured"));
-                commandInfoList.add(checkForReadinessProbeCommand);
 
-                CommandInfo k8sPatchCommandInfo = new CommandInfo();
-                k8sPatchCommandInfo.setIgnoreExitValueCheck(false);
-                k8sPatchCommandInfo.setCommand(String.format(KubernetesTemplates.PATCH_CONTAINER_IMAGE_OF_POD,
-                        resourceName, containerName, KubernetesTemplates.NGINX_CONTAINER_IMAGE));
+                commandInfoList
+                        .add(K8sCommandInfoHelper.getK8sCheckForReadinessProbeCommand(resourceName, containerName));
+
+                CommandInfo k8sPatchCommandInfo =
+                        K8sCommandInfoHelper.getK8sPatchContainerWithNginxImageCommandInfo(resourceName, containerName);
                 commandInfoList.add(k8sPatchCommandInfo);
-
-                CommandInfo checkContainerStateInfo = new CommandInfo();
-                checkContainerStateInfo.setIgnoreExitValueCheck(false);
-                checkContainerStateInfo.setNoOfRetries(30);
-                checkContainerStateInfo.setRetryInterval(10);
-                checkContainerStateInfo
-                        .setCommand(String.format(KubernetesTemplates.IS_CONTAINER_READY, resourceName, containerName));
-                checkContainerStateInfo.setExpectedCommandOutputList(Arrays.asList("false"));
-                commandInfoList.add(checkContainerStateInfo);
+                commandInfoList
+                        .add(K8sCommandInfoHelper.getK8sCheckContainerStateCommandInfo(resourceName, containerName));
                 log.debug("Injection command for K8S " + k8sFaultSpec.getResourceType().name() + " not ready fault:"
                         + k8sPatchCommandInfo.getCommand());
             } else if (k8sFaultSpec.getResourceType().equals(K8SResource.NODE)) {
@@ -217,6 +235,33 @@ public class K8sFaultHelper implements ICommandExecutionFaultHelper {
                         + nodeCordonCommandInfo.getCommand());
             } else {
                 throw new MangleException(ErrorCode.UNSUPPORTED_K8S_RESOURCE_TYPE);
+            }
+        }
+        return commandInfoList;
+    }
+
+    /**
+     * Method to generate injection commands for Service Unavailable fault
+     *
+     * @throws MangleException
+     */
+    private List<CommandInfo> getServiceUnavailableFaultInjectionCommand(ICommandExecutor executor,
+            K8SFaultSpec k8sFaultSpec) throws MangleException {
+        List<CommandInfo> commandInfoList = new ArrayList<>();
+        for (String resourceName : k8sFaultSpec.getResourcesList()) {
+            String originalServiceKey =
+                    executor.executeCommand(String.format(KubernetesTemplates.GET_SERVICE_SELECTORS_KEY, resourceName))
+                            .getCommandOutput().trim();
+            if (StringUtils.startsWithIgnoreCase(originalServiceKey, KubernetesTemplates.SERVICE_KEY_PREFIX)
+                    && originalServiceKey.split(KubernetesTemplates.SERVICE_KEY_PREFIX).length > 0) {
+                originalServiceKey = originalServiceKey.split(KubernetesTemplates.SERVICE_KEY_PREFIX)[1];
+                CommandInfo k8sServicePatchCommandInfo =
+                        K8sCommandInfoHelper.getK8sServicePatchWithSelectorsCommandInfo(resourceName, String
+                                .format(KubernetesTemplates.DEFAULT_MANGLE_SERVICE_SELECTORS, originalServiceKey));
+                commandInfoList.add(k8sServicePatchCommandInfo);
+                commandInfoList.add(K8sCommandInfoHelper.getK8sServiceEndpointsCommandInfo(resourceName, "<no value>"));
+                log.debug("Injection command for K8S " + k8sFaultSpec.getResourceType().name() + " unavailable fault:"
+                        + k8sServicePatchCommandInfo.getCommand());
             }
         }
         return commandInfoList;

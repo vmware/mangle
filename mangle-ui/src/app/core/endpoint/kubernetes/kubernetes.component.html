@@ -1,9 +1,4 @@
-<clr-alert *ngIf="errorFlag" [clrAlertType]="'danger'">
-    <div class="alert-item">{{alertMessage}}</div>
-  </clr-alert>
-  <clr-alert *ngIf="successFlag" [clrAlertType]="'success'">
-    <div class="alert-item">{{alertMessage}}</div>
-  </clr-alert>
+<app-alert [(errorAlertMessage)]="errorAlertMessage" [(successAlertMessage)]="successAlertMessage" (errorAlertMessageChange)="errorAlertMessage = $event" (successAlertMessageChange)="successAlertMessage = $event"></app-alert>
 <div [hidden]="epDatagrid">
 	<clr-dg-action-bar>
 		<div class="btn-group">
@@ -50,11 +45,11 @@
 			<div class="form-group">
                 <label for="credentialsName">Credential Name</label>
                 <clr-dropdown>
-                    <input clrDropdownTrigger type="text" name="credentialsName" (input)="searchCredentials($event.target.value);" [(ngModel)]="epFormData.credentialsName" />
+                    <input autocomplete="off" clrDropdownTrigger type="text" name="credentialsName" (input)="searchCredentials($event.target.value);" (focus)="searchCredentials('');" [(ngModel)]="epFormData.credentialsName" />
                     <clr-icon shape="caret down" clrDropdownTrigger size="24" (click)="searchCredentials('');"></clr-icon>
-                    <clr-dropdown-menu *clrIfOpen clrPosition="bottom-left">
+                    <clr-dropdown-menu *clrIfOpen class="menu-height" clrPosition="bottom-left">
                         <ng-container *ngFor="let searchedCredential of searchedCredentials">
-                            <button type="button" clrDropdownItem *ngIf="searchedCredential.type == 'K8S_CLUSTER'" (click)="setCredentialVal(searchedCredential.name);">{{searchedCredential.name}}</button>
+                            <button type="button" clrDropdownItem class="option-height" *ngIf="searchedCredential.type == 'K8S_CLUSTER'" (click)="setCredentialVal(searchedCredential.name);">{{searchedCredential.name}}</button>
                         </ng-container>
                     </clr-dropdown-menu>
                 </clr-dropdown><clr-icon shape="plus-circle" (click)="kubernetesCredential=true;" style="width:21px;height:39px;"></clr-icon>
@@ -71,9 +66,9 @@
                 <clr-icon shape="plus-circle" (click)="tagsModal=true;" style="width:21px;height:30px;"></clr-icon>
             </div>
         </section>
-        <button type="button" class="btn btn-outline" (click)="epDatagrid=false;epForm=true;ngOnInit();">CANCEL</button>
-        <button [clrLoading]="testEndpointBtnState" type="button" class="btn btn-outline" (click)="testEndpointConnection(nativeKubernetesForm.reportValidity(), kubernetesForm.value);">TEST CONNECTION</button>
         <button type="submit" class="btn btn-primary" [disabled]="disableSubmit">SUBMIT</button>
+        <button [clrLoading]="testEndpointBtnState" type="button" class="btn btn-outline" (click)="testEndpointConnection(nativeKubernetesForm.reportValidity(), kubernetesForm.value);">TEST CONNECTION</button>
+        <button type="button" class="btn btn-outline" (click)="epDatagrid=false;epForm=true;ngOnInit();">CANCEL</button>
     </form>
 </div>
 <clr-modal [(clrModalOpen)]="kubernetesCredential" [clrModalClosable]="false">

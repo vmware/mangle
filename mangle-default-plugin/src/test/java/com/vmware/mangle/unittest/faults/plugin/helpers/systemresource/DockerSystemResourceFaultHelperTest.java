@@ -12,6 +12,7 @@
 package com.vmware.mangle.unittest.faults.plugin.helpers.systemresource;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -137,6 +138,7 @@ public class DockerSystemResourceFaultHelperTest {
                 .thenReturn(customDockerClient);
 
         Mockito.when(systemResourceFaultUtils.buildRemediationCommand(any(), any())).thenReturn(remediationCommand);
+        when(systemResourceFaultUtils.isManualRemediationSupported(anyString())).thenReturn(true);
         try {
             List<CommandInfo> remediationCommands =
                     dockerSystemResourceFaultHelper.getRemediationcommandInfoList(cpuFaultSpec);
@@ -150,6 +152,23 @@ public class DockerSystemResourceFaultHelperTest {
 
         }
 
+    }
+
+    @Test
+    public void testGetRemediationCommandInfoListforFileHandler() {
+        try {
+            CommandExecutionFaultSpec fileHandlerFaultSpec = faultsMockData.getFilehandlerLeakFaultSpec();
+            Mockito.when(endpointClientFactory.getEndPointClient(null, fileHandlerFaultSpec.getEndpoint()))
+                    .thenReturn(customDockerClient);
+            when(systemResourceFaultUtils.isManualRemediationSupported(anyString())).thenReturn(false);
+            List<CommandInfo> remediationCommands =
+                    dockerSystemResourceFaultHelper.getRemediationcommandInfoList(fileHandlerFaultSpec);
+            log.info(RestTemplateWrapper.objectToJson(remediationCommands));
+            Assert.assertEquals(remediationCommands, Collections.emptyList());
+        } catch (MangleException e) {
+            log.error("testGetRemediationCommandInfoListforFileHandler failed with Exception: ", e);
+            Assert.assertTrue(false);
+        }
     }
 
     @Test

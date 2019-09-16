@@ -1,0 +1,34 @@
+<app-alert [(errorAlertMessage)]="errorAlertMessage" [(successAlertMessage)]="successAlertMessage" (errorAlertMessageChange)="errorAlertMessage = $event" (successAlertMessageChange)="successAlertMessage = $event"></app-alert>
+<table class="table table-vertical">
+    <tbody>
+        <tr>
+            <th class="left">Cluster Name</th>
+            <td class="left">
+                <span *ngIf="spinnerActive" class="spinner spinner-inline"></span>
+                <span *ngIf="!spinnerActive">
+                    {{clusterConfig.clusterName}}
+                </span>
+            </td>
+        </tr>
+        <tr>
+            <th class="left">Validation Token</th>
+            <td class="left">
+                <span *ngIf="spinnerActive" class="spinner spinner-inline"></span>
+                <span *ngIf="!spinnerActive">
+                    {{clusterConfig.validationToken}}
+                </span>
+            </td>
+        </tr>
+        <tr>
+            <th class="left">Members</th>
+            <td class="left">
+                <span *ngIf="!spinnerActive">
+                    <span class="label label-light-blue" *ngFor="let member of clusterConfig.members">
+                        {{member}}
+                    </span>
+                </span>
+                <span *ngIf="spinnerActive" class="spinner spinner-inline"></span>
+            </td>
+        </tr>
+    </tbody>
+</table>

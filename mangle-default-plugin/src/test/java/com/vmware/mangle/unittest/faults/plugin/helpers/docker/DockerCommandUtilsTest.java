@@ -23,9 +23,9 @@ import org.testng.annotations.Test;
 
 import com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec;
 import com.vmware.mangle.cassandra.model.tasks.commands.CommandExecutionResult;
-import com.vmware.mangle.faults.plugin.helpers.docker.DockerCommandUtils;
 import com.vmware.mangle.faults.plugin.mockdata.FaultsMockData;
 import com.vmware.mangle.task.framework.endpoint.EndpointClientFactory;
+import com.vmware.mangle.task.framework.utils.DockerCommandUtils;
 import com.vmware.mangle.utils.clients.docker.CustomDockerClient;
 import com.vmware.mangle.utils.constants.ErrorConstants;
 import com.vmware.mangle.utils.exceptions.MangleException;

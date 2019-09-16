@@ -1,9 +1,4 @@
-<clr-alert *ngIf="errorFlag" [clrAlertType]="'danger'">
-    <div class="alert-item">{{alertMessage}}</div>
-</clr-alert>
-<clr-alert *ngIf="successFlag" [clrAlertType]="'success'">
-    <div class="alert-item">{{alertMessage}}</div>
-</clr-alert>
+<app-alert [(errorAlertMessage)]="errorAlertMessage" [(successAlertMessage)]="successAlertMessage" (errorAlertMessageChange)="errorAlertMessage = $event" (successAlertMessageChange)="successAlertMessage = $event"></app-alert>
 <div>
     <h3 class="modal-title">Execute/Schedule Memory Fault</h3>
     <form #memoryForm="ngForm" (ngSubmit)="executeMemoryFault(memoryForm.value);" ngNativeValidate>
@@ -11,22 +6,26 @@
             <div class="form-group">
                 <label for="endpointName">Endpoint</label>
                 <clr-dropdown>
-                    <input clrDropdownTrigger type="text" name="endpointName" (input)="searchEndpoint($event.target.value);displayEndpointFields($event.target.value);" [(ngModel)]="faultFormData.endpointName" />
+                    <input autocomplete="off" clrDropdownTrigger type="text" name="endpointName" (input)="searchEndpoint($event.target.value);displayEndpointFields($event.target.value);" (focus)="searchEndpoint('');" [(ngModel)]="faultFormData.endpointName" />
                     <clr-icon shape="caret down" clrDropdownTrigger size="24" (click)="searchEndpoint('');"></clr-icon>
-                    <clr-dropdown-menu *clrIfOpen clrPosition="bottom-left">
+                    <clr-dropdown-menu *clrIfOpen class="menu-height" clrPosition="bottom-left">
                         <ng-container *ngFor="let searchedEndpoint of searchedEndpoints">
-                            <button type="button" clrDropdownItem *ngIf="searchedEndpoint.endPointType == 'MACHINE' || searchedEndpoint.endPointType == 'K8S_CLUSTER' || searchedEndpoint.endPointType == 'DOCKER'" (click)="setEndpointVal(searchedEndpoint.name);displayEndpointFields(searchedEndpoint.name);">{{searchedEndpoint.name}}</button>
+                            <button type="button" clrDropdownItem class="option-height"
+                                *ngIf="searchedEndpoint.endPointType == 'MACHINE' || searchedEndpoint.endPointType == 'K8S_CLUSTER' || searchedEndpoint.endPointType == 'DOCKER'"
+                                (click)="setEndpointVal(searchedEndpoint.name);displayEndpointFields(searchedEndpoint.name);getDockerContainers(searchedEndpoint.endPointType,searchedEndpoint.name);">{{searchedEndpoint.name}}</button>
                         </ng-container>
                     </clr-dropdown-menu>
                 </clr-dropdown>
             </div>
             <div class="form-group">
                 <label for="memoryLoad">Memory Load (%)</label>
-                <input type="number" name="memoryLoad" [(ngModel)]="faultFormData.memoryLoad" min="1" max="100" required>
+                <input type="number" name="memoryLoad" [(ngModel)]="faultFormData.memoryLoad" min="1" max="100"
+                    required>
             </div>
             <div class="form-group">
                 <label for="timeoutInMilliseconds">Timeout Milliseconds</label>
-                <input type="number" min="0" max="2147483647" name="timeoutInMilliseconds" [(ngModel)]="faultFormData.timeoutInMilliseconds" required>
+                <input type="number" min="1" max="2147483647" name="timeoutInMilliseconds"
+                    [(ngModel)]="faultFormData.timeoutInMilliseconds" required>
             </div>
             <div class="form-group">
                 <label for="injectionHomeDir">Injection Home Dir (optional)</label>
@@ -40,7 +39,19 @@
                 <fieldset ngModelGroup="dockerArguments">
                     <div class="form-group">
                         <label for="containerName">Container Name</label>
-                        <input type="text" name="containerName" [(ngModel)]="faultFormData.dockerArguments.containerName" [required]="!dockerHidden">
+                        <clr-dropdown>
+                            <input autocomplete="off" clrDropdownTrigger type="text" name="containerName"
+                                (input)="searchContainer($event.target.value);" (focus)="searchContainer('');"
+                                [(ngModel)]="faultFormData.dockerArguments.containerName" />
+                            <clr-icon shape="caret down" clrDropdownTrigger size="24" (click)="searchContainer('');">
+                            </clr-icon>
+                            <clr-dropdown-menu *clrIfOpen class="menu-height" clrPosition="bottom-left">
+                                <ng-container *ngFor="let searchedContainer of searchedContainers">
+                                    <button type="button" clrDropdownItem class="option-height"
+                                        (click)="setContainerVal(searchedContainer);">{{searchedContainer}}</button>
+                                </ng-container>
+                            </clr-dropdown-menu>
+                        </clr-dropdown>
                     </div>
                 </fieldset>
             </div>
@@ -52,16 +63,19 @@
                 <fieldset ngModelGroup="k8sArguments">
                     <div class="form-group">
                         <label for="containerName">Container Name</label>
-                        <input type="text" name="containerName" [(ngModel)]="faultFormData.k8sArguments.containerName" [required]="!k8sHidden">
+                        <input type="text" name="containerName" [(ngModel)]="faultFormData.k8sArguments.containerName"
+                            [required]="!k8sHidden">
                     </div>
                     <div class="form-group">
                         <label for="podLabels">Pod Labels</label>
-                        <input type="text" name="podLabels" [(ngModel)]="faultFormData.k8sArguments.podLabels" [required]="!k8sHidden">
+                        <input type="text" name="podLabels" [(ngModel)]="faultFormData.k8sArguments.podLabels"
+                            [required]="!k8sHidden">
                     </div>
                     <div class="form-group">
                         <label for="enableRandomInjection">Random Injection</label>
                         <div class="select">
-                            <select name="enableRandomInjection" [(ngModel)]="faultFormData.k8sArguments.enableRandomInjection" [required]="!k8sHidden">
+                            <select name="enableRandomInjection"
+                                [(ngModel)]="faultFormData.k8sArguments.enableRandomInjection" [required]="!k8sHidden">
                                 <option [ngValue]="true">true</option>
                                 <option [ngValue]="false">false</option>
                             </select>
@@ -78,37 +92,48 @@
                     <label>Schedule</label>
                     <div class="clr-control-container clr-control-inline">
                         <div class="clr-radio-wrapper">
-                            <input type="radio" id="timeInMilliseconds" name="scheduleBody" value="timeInMilliseconds" class="clr-radio" (click)="setScheduleVal($event.target);">
+                            <input type="radio" id="timeInMilliseconds" name="scheduleBody" value="timeInMilliseconds"
+                                class="clr-radio" (click)="setScheduleVal($event.target);">
                             <label for="timeInMilliseconds" class="clr-control-label">One Time</label>
                         </div>
                         <div class="clr-radio-wrapper">
-                            <input type="radio" id="cronExpression" name="scheduleBody" value="cronExpression" class="clr-radio" (click)="setScheduleVal($event.target);">
+                            <input type="radio" id="cronExpression" name="scheduleBody" value="cronExpression"
+                                class="clr-radio" (click)="setScheduleVal($event.target);">
                             <label for="cronExpression" class="clr-control-label">Recurrence</label>
                         </div>
                     </div>
                 </div>
                 <div class="form-group" [hidden]="timeInMillisecondsHidden">
-                    <input type="number" min="0" max="2147483647" name="timeInMilliseconds" [(ngModel)]="faultFormData.schedule.timeInMilliseconds" [required]="!timeInMillisecondsHidden" (input)="setSubmitButton();">&nbsp;&nbsp;<span style="height:39px;">Time Milliseconds</span>
+                    <input type="number" min="1" max="9223372036854775807" name="timeInMilliseconds"
+                        [(ngModel)]="faultFormData.schedule.timeInMilliseconds" [required]="!timeInMillisecondsHidden"
+                        (input)="setSubmitButton();">&nbsp;&nbsp;<span style="height:39px;">Epoch Milliseconds</span>
                 </div>
                 <div class="form-group" [hidden]="cronExpressionHidden">
-                    <input type="text" name="cronExpression" [(ngModel)]="faultFormData.schedule.cronExpression" [required]="!cronExpressionHidden" (input)="setSubmitButton();">
+                    <input type="text" name="cronExpression" [(ngModel)]="faultFormData.schedule.cronExpression"
+                        [required]="!cronExpressionHidden" (input)="setSubmitButton();">
                     <clr-icon shape="calendar" style="width:21px;height:39px;" (click)="cronModal=true;"></clr-icon>
                 </div>
                 <div class="form-group" [hidden]="descriptionHidden">
-                    <input type="text" name="description" [(ngModel)]="faultFormData.schedule.description">&nbsp;&nbsp;<span style="height:39px;">Description (optional)</span>
+                    <input type="text" name="description"
+                        [(ngModel)]="faultFormData.schedule.description">&nbsp;&nbsp;<span
+                        style="height:39px;">Description (optional)</span>
                 </div>
             </fieldset>
             <div class="form-group">
                 <label for="tags">Tags</label>
-                <span class="label label-info" *ngFor="let item of tagsData | keyvalue">{{item.key}}={{item.value}}&nbsp;<clr-icon shape="times" size="12" (click)="removeTag(item.key);"></clr-icon></span>
+                <span class="label label-info"
+                    *ngFor="let item of tagsData | keyvalue">{{item.key}}={{item.value}}&nbsp;<clr-icon shape="times"
+                        size="12" (click)="removeTag(item.key);"></clr-icon></span>
                 <clr-icon shape="plus-circle" (click)="tagsModal=true;" style="width:21px;height:30px;"></clr-icon>
             </div>
         </section>
         <button type="submit" class="btn btn-primary" [disabled]="disableSchedule">SCHEDULE FAULT</button>
-        <button type="submit" class="btn btn-primary" [clrLoading]="runBtnState" [disabled]="disableRun">RUN FAULT</button>
+        <button type="submit" class="btn btn-primary" [clrLoading]="runBtnState" [disabled]="disableRun">RUN
+            FAULT</button>
     </form>
 </div>
-<app-cron [(cronModal)]="cronModal" [(cronValOrig)]="faultFormData.schedule.cronExpression" (cronMessageEvent)="setScheduleCron($event);"></app-cron>
+<app-cron [(cronModal)]="cronModal" [(cronValOrig)]="faultFormData.schedule.cronExpression"
+    (cronMessageEvent)="setScheduleCron($event);"></app-cron>
 <clr-modal [(clrModalOpen)]="tagsModal">
     <h3 class="modal-title">Add Tags</h3>
     <div class="modal-body">

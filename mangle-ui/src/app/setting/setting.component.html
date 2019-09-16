@@ -1,6 +1,6 @@
 <div class="main-container">
     <div class="content-container">
-        <div class="content-area height-1200">
+        <div class="content-area">
             <router-outlet></router-outlet>
         </div>
 		<clr-vertical-nav [clrVerticalNavCollapsible]="settingCollapsible">
@@ -13,17 +13,15 @@
 				</clr-vertical-nav-group-children>
 			</clr-vertical-nav-group>
 			<clr-vertical-nav-group routerLinkActive="active">
-				<clr-icon shape="filter-grid-circle" clrVerticalNavIcon></clr-icon>Loggers
-				<clr-vertical-nav-group-children *clrIfExpanded="false">
-					<a clrVerticalNavLink [routerLink]="['log-levels']" routerLinkActive="active">Log Levels</a>
-				</clr-vertical-nav-group-children>
-				</clr-vertical-nav-group>
-			<clr-vertical-nav-group routerLinkActive="active">
-				<clr-icon shape="line-chart" clrVerticalNavIcon></clr-icon>Integrations
+				<clr-icon shape="link" clrVerticalNavIcon></clr-icon>Integrations
 				<clr-vertical-nav-group-children *clrIfExpanded="false">
 					<a clrVerticalNavLink [routerLink]="['integration']" routerLinkActive="active">Metric Providers</a>
 				</clr-vertical-nav-group-children>
 			</clr-vertical-nav-group>
+			<a clrVerticalNavLink [routerLink]="['log-levels']" routerLinkActive="active"><clr-icon shape="filter-grid-circle" clrVerticalNavIcon></clr-icon>Log Levels</a>
+			<a clrVerticalNavLink [routerLink]="['cluster']" routerLinkActive="active"><clr-icon shape="cluster" clrVerticalNavIcon></clr-icon>Cluster Information</a>
+			<a clrVerticalNavLink [routerLink]="['plugins']" routerLinkActive="active"><clr-icon shape="plugin" clrVerticalNavIcon></clr-icon>Fault Plugins</a>
+			<a clrVerticalNavLink [routerLink]="['events']" routerLinkActive="active"><clr-icon shape="event" clrVerticalNavIcon></clr-icon>Application Events</a>
 		</clr-vertical-nav>
     </div>
 </div>

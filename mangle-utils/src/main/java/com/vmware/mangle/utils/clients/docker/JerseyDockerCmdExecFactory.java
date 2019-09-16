@@ -21,6 +21,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
@@ -50,6 +51,7 @@ import com.github.dockerjava.api.command.EventsCmd;
 import com.github.dockerjava.api.command.ExecCreateCmd;
 import com.github.dockerjava.api.command.ExecStartCmd;
 import com.github.dockerjava.api.command.InfoCmd;
+import com.github.dockerjava.api.command.InitializeSwarmCmd.Exec;
 import com.github.dockerjava.api.command.InspectContainerCmd;
 import com.github.dockerjava.api.command.InspectExecCmd;
 import com.github.dockerjava.api.command.InspectImageCmd;
@@ -190,6 +192,9 @@ public class JerseyDockerCmdExecFactory implements DockerCmdExecFactory {
     private DockerClientConfig dockerClientConfig;
 
     private PoolingHttpClientConnectionManager connManager = null;
+
+    private static final String NOT_SUPPORTING_DOCKER_SWARM_MESSAGE =
+            "Currently mangle doesn't support docker swarm, hence not implementing method: ";
 
     @Override
     public void init(DockerClientConfig dockerClientConfig) {
@@ -679,5 +684,101 @@ public class JerseyDockerCmdExecFactory implements DockerCmdExecFactory {
     public void releaseConnection(long idleSeconds) {
         this.connManager.closeExpiredConnections();
         this.connManager.closeIdleConnections(idleSeconds, TimeUnit.SECONDS);
+    }
+
+    @Override
+    public Exec createInitializeSwarmCmdExec() {
+        log.info(NOT_SUPPORTING_DOCKER_SWARM_MESSAGE + "createInitializeSwarmCmdExec");
+        return null;
+    }
+
+    @Override
+    public com.github.dockerjava.api.command.InspectSwarmCmd.Exec createInspectSwarmCmdExec() {
+        log.info(NOT_SUPPORTING_DOCKER_SWARM_MESSAGE + "createInspectSwarmCmdExec");
+        return null;
+    }
+
+    @Override
+    public com.github.dockerjava.api.command.JoinSwarmCmd.Exec createJoinSwarmCmdExec() {
+        log.info(NOT_SUPPORTING_DOCKER_SWARM_MESSAGE + "createJoinSwarmCmdExec");
+        return null;
+    }
+
+    @Override
+    public com.github.dockerjava.api.command.LeaveSwarmCmd.Exec createLeaveSwarmCmdExec() {
+        log.info(NOT_SUPPORTING_DOCKER_SWARM_MESSAGE + "createLeaveSwarmCmdExec");
+        return null;
+    }
+
+    @Override
+    public com.github.dockerjava.api.command.UpdateSwarmCmd.Exec createUpdateSwarmCmdExec() {
+        log.info(NOT_SUPPORTING_DOCKER_SWARM_MESSAGE + "createUpdateSwarmCmdExec");
+        return null;
+    }
+
+    @Override
+    public com.github.dockerjava.api.command.ListServicesCmd.Exec createListServicesCmdExec() {
+        log.info(NOT_SUPPORTING_DOCKER_SWARM_MESSAGE + "createListServicesCmdExec");
+        return null;
+    }
+
+    @Override
+    public com.github.dockerjava.api.command.CreateServiceCmd.Exec createCreateServiceCmdExec() {
+        log.info(NOT_SUPPORTING_DOCKER_SWARM_MESSAGE + "createCreateServiceCmdExec");
+        return null;
+    }
+
+    @Override
+    public com.github.dockerjava.api.command.InspectServiceCmd.Exec createInspectServiceCmdExec() {
+        log.info(NOT_SUPPORTING_DOCKER_SWARM_MESSAGE + "createInspectServiceCmdExec");
+        return null;
+    }
+
+    @Override
+    public com.github.dockerjava.api.command.UpdateServiceCmd.Exec createUpdateServiceCmdExec() {
+        log.info(NOT_SUPPORTING_DOCKER_SWARM_MESSAGE + "createUpdateServiceCmdExec");
+        return null;
+    }
+
+    @Override
+    public com.github.dockerjava.api.command.RemoveServiceCmd.Exec createRemoveServiceCmdExec() {
+        log.info(NOT_SUPPORTING_DOCKER_SWARM_MESSAGE + "createRemoveServiceCmdExec");
+        return null;
+    }
+
+    @Override
+    public com.github.dockerjava.api.command.LogSwarmObjectCmd.Exec logSwarmObjectExec(String endpoint) {
+        log.info(NOT_SUPPORTING_DOCKER_SWARM_MESSAGE + "logSwarmObjectExec");
+        return null;
+    }
+
+    @Override
+    public com.github.dockerjava.api.command.ListSwarmNodesCmd.Exec listSwarmNodeCmdExec() {
+        log.info(NOT_SUPPORTING_DOCKER_SWARM_MESSAGE + "listSwarmNodeCmdExec");
+        return null;
+    }
+
+    @Override
+    public com.github.dockerjava.api.command.InspectSwarmNodeCmd.Exec inspectSwarmNodeCmdExec() {
+        log.info(NOT_SUPPORTING_DOCKER_SWARM_MESSAGE + "inspectSwarmNodeCmdExec");
+        return null;
+    }
+
+    @Override
+    public com.github.dockerjava.api.command.RemoveSwarmNodeCmd.Exec removeSwarmNodeCmdExec() {
+        log.info(NOT_SUPPORTING_DOCKER_SWARM_MESSAGE + "removeSwarmNodeCmdExec");
+        return null;
+    }
+
+    @Override
+    public com.github.dockerjava.api.command.UpdateSwarmNodeCmd.Exec updateSwarmNodeCmdExec() {
+        log.info(NOT_SUPPORTING_DOCKER_SWARM_MESSAGE + "updateSwarmNodeCmdExec");
+        return null;
+    }
+
+    @Override
+    public com.github.dockerjava.api.command.ListTasksCmd.Exec listTasksCmdExec() {
+        log.info(NOT_SUPPORTING_DOCKER_SWARM_MESSAGE + "listTasksCmdExec");
+        return null;
     }
 }

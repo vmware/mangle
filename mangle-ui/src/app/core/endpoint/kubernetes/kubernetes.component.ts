@@ -4,8 +4,7 @@ import { CommonEndpoint } from '../common.endpoint';
 
 @Component({
   selector: 'app-kubernetes',
-  templateUrl: './kubernetes.component.html',
-  styleUrls: ['./kubernetes.component.css']
+  templateUrl: './kubernetes.component.html'
 })
 export class KubernetesComponent extends CommonEndpoint implements OnInit {
   

@@ -11,6 +11,8 @@
 
 package com.vmware.mangle.services.hazelcast;
 
+import static com.vmware.mangle.utils.constants.HazelcastConstants.HAZELCAST_TASKS_MAP;
+
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceAware;
 import com.hazelcast.core.IMap;
@@ -19,7 +21,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.vmware.mangle.utils.constants.ErrorConstants;
-import com.vmware.mangle.utils.constants.URLConstants;
 
 /**
  * @author chetanc
@@ -59,10 +60,17 @@ public class HazelcastTaskCache implements HazelcastInstanceAware {
         return taskMap.remove(taskId);
     }
 
+    public void cleanTaskMapForQuorumFailure() {
+        log.debug("Removing all the task as quorum has failed");
+        if (taskMap != null) {
+            taskMap.evictAll();
+        }
+    }
+
     @Override
     public void setHazelcastInstance(HazelcastInstance hazelcastInstance) {
         hz = hazelcastInstance;
-        taskMap = hz.getMap(URLConstants.HAZELCAST_TASKS_MAP);
+        taskMap = hz.getMap(HAZELCAST_TASKS_MAP);
         taskMap.addLocalEntryListener(listener);
     }
 }

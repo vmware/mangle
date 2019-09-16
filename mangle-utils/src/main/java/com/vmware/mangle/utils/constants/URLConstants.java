@@ -27,7 +27,6 @@ public class URLConstants {
     public static final String MANGLE_CURRENT_STATUS_MESSAGE = "Current Mangle status:";
     //Due to some of the testexecutor tasks are taking more time so increasing the wait time for task to complete while upgrading mangle.
     public static final int TASKS_WAIT_TIME_SECONDS = 3600;
-    public static final int RETRIGGER_THRESHOLD_TIME_IN_MINS = 30;
     public static final String SYSTEM_STATUS_OK = "Healthy";
 
     public static class UserUrl {
@@ -41,19 +40,16 @@ public class URLConstants {
     public static final String CONTAINER_NAME = "containerName";
 
     public static final String API_V1 = "/api/v1/";
-
+    public static final String CLUSTER_CONFIG_URL = API_V1 + "cluster-config";
     public static final String INJECTION_URL = API_V1 + "faults";
     public static final String ENDPOINT_URL = API_V1 + "endpoints";
+    public static final String DEFAULT_USER_UPDATE_FLAG_URL = API_V1 + "user-management/users/admin";
+    public static final String UPDATE_CURRENT_USER_PASSWORD = API_V1 + "user-management/password";
 
     public static final String VCENTER_STATE_FAULT_API = INJECTION_URL + "/vcenter/state";
     public static final String VCENTER_NIC_FAULT_API = INJECTION_URL + "/vcenter/nic";
     public static final String VCENTER_DISK_FAULT_API = INJECTION_URL + "/vcenter/disk";
     public static final String DOCKER_FAULT_API = INJECTION_URL + "/docker";
-
-    public static final String HAZELCAST_NODE_TASKS_MAP = "nodeTasks";
-    public static final String HAZELCAST_TASKS_MAP = "tasks";
-    public static final String HAZELCAST_MANGLE_NODE_CURRENT_STATUS_ATTRIBUTE = "mangleNodeCurrentStatus";
-
 
     public static MangleNodeStatus getMangleNodeCurrentStatus() {
         return mangleNodeCurrentStatus;

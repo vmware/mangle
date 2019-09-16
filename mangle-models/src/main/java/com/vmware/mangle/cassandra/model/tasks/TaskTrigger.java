@@ -26,7 +26,7 @@ import org.springframework.data.cassandra.core.mapping.UserDefinedType;
  *
  *
  */
-@UserDefinedType("TaskTrigger")
+@UserDefinedType(value = "TaskTrigger")
 @Data
 @EqualsAndHashCode(callSuper = false)
 public class TaskTrigger implements Serializable {
@@ -45,4 +45,5 @@ public class TaskTrigger implements Serializable {
     @JsonIgnore
     private String currentStage;
     private String node;
+    private Boolean taskRetriggered = false;
 }

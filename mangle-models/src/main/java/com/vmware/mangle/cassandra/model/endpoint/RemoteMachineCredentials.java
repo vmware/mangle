@@ -13,6 +13,7 @@ package com.vmware.mangle.cassandra.model.endpoint;
 
 import com.datastax.driver.core.DataType.Name;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.springframework.data.cassandra.core.mapping.CassandraType;
@@ -35,6 +36,7 @@ public class RemoteMachineCredentials extends CredentialsSpec {
     private static final long serialVersionUID = 1L;
     private String username;
 
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @EncryptField
     private String password;
 

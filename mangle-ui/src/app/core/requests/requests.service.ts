@@ -51,8 +51,16 @@ export class RequestsService {
         return this.http.delete(ServiceConstants.FAULTS + taskID);
     }
 
+    public rerunFault(taskID) {
+        return this.http.post(ServiceConstants.FAULTS + taskID, null);
+    }
+
     public getLogFile(): Observable<any> {
         return this.http.get(ServiceConstants.LOGFILE);
+    }
+
+    public getPluginDetails(pluginId): Observable<any> {
+        return this.http.get(ServiceConstants.PLUGIN_DETAILS + CommonConstants.QUESTION_MARK + CommonConstants.pluginId + CommonConstants.EQUALS_TO + pluginId);
     }
 
 }

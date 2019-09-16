@@ -22,6 +22,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import com.vmware.mangle.cassandra.model.plugin.PluginMetaInfo;
 import com.vmware.mangle.cassandra.model.tasks.DockerSpecificArguments;
 import com.vmware.mangle.cassandra.model.tasks.K8SSpecificArguments;
 
@@ -56,4 +57,6 @@ public class FaultSpec extends TaskSpec implements Serializable {
     @ApiModelProperty(value = "Tags to be used while sending the events, metrics to monitoring system configured. Example: \"environment\" : \"production\"")
     private Map<String, String> tags;
 
+    @Valid
+    private PluginMetaInfo pluginMetaInfo;
 }
