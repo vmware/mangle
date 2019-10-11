@@ -201,7 +201,7 @@ public class MangleBootInitializer {
 
                 config.setMembers(activeMembers);
                 config.setMaster(clusterActiveMembers.iterator().next().getAddress().getHost());
-                if (HazelcastConstants.mangleQourum > config.getQuorum()) {
+                if (config.getQuorum() == null || HazelcastConstants.mangleQourum > config.getQuorum()) {
                     config.setQuorum(HazelcastConstants.mangleQourum);
                 }
                 config.setDeploymentMode(extractMangleDeploymentMode(hazelcastInstance.getConfig()

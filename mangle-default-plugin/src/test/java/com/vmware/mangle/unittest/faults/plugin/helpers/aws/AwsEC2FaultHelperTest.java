@@ -42,7 +42,6 @@ import com.vmware.mangle.utils.ICommandExecutor;
 import com.vmware.mangle.utils.clients.aws.AWSCommandExecutor;
 import com.vmware.mangle.utils.clients.aws.AWSCommonUtils;
 import com.vmware.mangle.utils.clients.aws.CustomAwsClient;
-import com.vmware.mangle.utils.clients.vcenter.VCenterClient;
 import com.vmware.mangle.utils.exceptions.MangleException;
 
 
@@ -52,7 +51,7 @@ import com.vmware.mangle.utils.exceptions.MangleException;
  * @author bkaranam
  *
  */
-@PrepareForTest({ AWSCommonUtils.class })
+@PrepareForTest({ AWSCommonUtils.class, AwsEC2FaultHelper.class })
 @PowerMockIgnore({ "javax.xml.parsers.*", "com.sun.org.apache.xerces.internal.jaxp.*", "org.apache.logging.log4j.*" })
 public class AwsEC2FaultHelperTest extends PowerMockTestCase {
 
@@ -156,7 +155,7 @@ public class AwsEC2FaultHelperTest extends PowerMockTestCase {
         AwsEC2FaultSpec spec = mockData.getAwsEC2InstanceStateFaultSpec();
         AwsEC2FaultHelper helper = new AwsEC2FaultHelper(factory);
         AWSCommandExecutor awsCommandExecutor = Mockito.mock(AWSCommandExecutor.class);
-        PowerMockito.whenNew(AWSCommandExecutor.class).withArguments(any(VCenterClient.class))
+        PowerMockito.whenNew(AWSCommandExecutor.class).withArguments(any(CustomAwsClient.class))
                 .thenReturn(awsCommandExecutor);
         when(factory.getEndPointClient(any(), any())).thenReturn(awsClient);
 
