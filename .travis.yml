@@ -3,6 +3,4 @@ jdk:
   - openjdk8
 language:
   java
-before_install: 
-  - mvn compile -DskipTests=true -U
-install: mvn test
+install: mvn clean install
