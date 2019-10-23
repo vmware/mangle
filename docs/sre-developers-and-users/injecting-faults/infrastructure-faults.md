@@ -1,5 +1,30 @@
 # Infrastructure Faults
 
+For **version 1.0**, Mangle supported the following types of infrastructure faults: 
+
+1. CPU Fault
+2. Memory Fault
+3. Disk IO Fault
+4. Kill Process Fault
+5. Docker State Change Faults
+6. Kubernetes Delete Resource Fault
+7. Kubernetes Resource Not Ready Fault
+8. vCenter Disk Fault
+9. vCenter NIC Fault
+10. vCenter VM State Change Fault
+
+From **version 2.0**,  apart from the faults listed above, support has been extended to the following new faults:
+
+1. File Handler Leak Fault
+2. Disk Space Fault
+3. Kernel Panic Fault
+4. Network Faults: Packet Delay, Packet Duplication, Packet Loss, Packet Corruption
+5. Kubernetes  Service Unavailable Fault
+6. AWS EC2 State Change Fault
+7. AWS EC2 Network Fault
+
+Minor improvements have also been included for Kill Process Fault in version 2 of Mangle.
+
 ## CPU Fault
 
 CPU fault enables spiking cpu usage values for a selected endpoint by a percentage specified by the user. With the help of a timeout field the duration for the fault run can be specified after which Mangle triggers the automatic remediation procedure.
@@ -100,7 +125,45 @@ Kill Process fault enables abrupt termination of any process that is running on 
 
       ![](../../.gitbook/assets/wavefrontevents.png) 
 
-## Docker State Change Faults
+## File Handler Leak Fault
+
+File Handler Leak fault enables you to simulate conditions where a program requests for a handle to a resource but does not release it when the resource is no longer in use. This condition if left over extended periods of time, will lead to "Too many open file handles" errors and will cause performance degradation or crashes. With the help of a timeout field the duration for the fault run can be specified after which Mangle triggers the automatic remediation procedure.
+
+**Steps to follow:** 
+
+1. Login as a user with read and write privileges to Mangle.
+2. Navigate to Fault Execution tab ---&gt; Infrastructure Faults ---&gt; File Handler Leak.
+3. Select an Endpoint.
+4. Provide "Injection Home Dir" only if you would like Mangle to push the script files needed to simulate the fault to a specific location on the endpoint. Else the default temp location will be used.
+5. Provide a "Timeout" value in milliseconds. For eg: if you need the out of file handles error to be sustained for a duration of 1 hour then you should provide the timeout value as 3600000 \(1 hour = 3600000 ms\). After this duration, Mangle will ensure remediation of the fault without any manual intervention.
+6. Schedule options are required only if the fault needs to be re-executed at regular intervals against an endpoint.
+7. Tags are key value pairs that will be send to the active monitoring tool under Mangle Admin settings ---&gt; Metric Providers at the time of publishing events for fault injection and remediation. They are not mandatory.
+8. Click on Run Fault.
+9. The user will be re-directed to the Processed Requests section under Requests & Reports tab.
+10. If Mangle was able to successfully trigger the fault, the status of the task will change to "COMPLETED". The option to trigger a remediation request at anytime can be found on clicking the ![](../../.gitbook/assets/supportedactionsbutton.png) button against the task in the Processed Requests table.
+11. For monitoring purposes, log into either Wavefront or Datadog once it is configured as an active Metric provider in Mangle and refer to the Events section. Events similar to the screenshots provided below will be available on the monitoring tool for tracking purposes.
+
+## Disk Space Fault
+
+Disk Space Fault enables you to simulate out of disk or low disk space conditions. With the help of a timeout field the duration for the fault run can be specified after which Mangle triggers the automatic remediation procedure.
+
+**Steps to follow:** 
+
+1. Login as a user with read and write privileges to Mangle.
+2. Navigate to Fault Execution tab ---&gt; Infrastructure Faults ---&gt; Disk Space.
+3. Select an Endpoint.
+4. Provide a "Target Directory" so Mangle can target a specific directory location or partition to write to for simulating the low disk space condition. 
+5. Provide a "Load" value. For eg: 80 to simulate a Disk usage of 80% of the total disk size or space allocated for a partition, on the selected Endpoint.
+6. Provide "Injection Home Dir" only if you would like Mangle to push the script files needed to simulate the fault to a specific location on the endpoint. Else the default temp location will be used.
+7. Provide a "Timeout" value in milliseconds. For eg: if you need the low disk or out of disk condition to be sustained for a duration of 1 hour then you should provide the timeout value as 3600000 \(1 hour = 3600000 ms\). After this duration, Mangle will ensure remediation of the fault without any manual intervention.
+8. Schedule options are required only if the fault needs to be re-executed at regular intervals against an endpoint.
+9. Tags are key value pairs that will be send to the active monitoring tool under Mangle Admin settings ---&gt; Metric Providers at the time of publishing events for fault injection and remediation. They are not mandatory.
+10. Click on Run Fault.
+11. The user will be re-directed to the Processed Requests section under Requests & Reports tab.
+12. If Mangle was able to successfully trigger the fault, the status of the task will change to "COMPLETED". The option to trigger a remediation request at anytime can be found on clicking the ![](../../.gitbook/assets/supportedactionsbutton.png) button against the task in the Processed Requests table.
+13. For monitoring purposes, log into either Wavefront or Datadog once it is configured as an active Metric provider in Mangle and refer to the Events section. Events similar to the screenshots provided below will be available on the monitoring tool for tracking purposes.
+
+## Docker State Change Fault
 
 Docker State Change faults enable you to abruptly stop or pause containers running on a Docker host. Unlike other infrastructure faults like CPU, Memory and Disk IO this fault is specific to the Docker endpoint and does not have a timeout field because the fault completes very quickly. Some containers may be configured for auto-start and some might require a manual start command to be executed. For the first case, auto-remediation through Mangle is not needed. For the second case, a manual remediation can be triggered from the Requests and Reports tab after the fault completes.
 
@@ -124,7 +187,7 @@ Docker State Change faults enable you to abruptly stop or pause containers runni
 
       ![](../../.gitbook/assets/wavefrontevents.png) 
 
-## Kubernetes Delete Resource Faults
+## Kubernetes Delete Resource Fault
 
 Kubernetes \(K8s\) Delete Resource faults enable you to abruptly delete pods or nodes within a K8s cluster. Unlike other infrastructure faults like CPU, Memory and Disk IO this fault is specific to the K8s endpoint and does not have a timeout field because the fault completes very quickly. In most cases, K8s will automatically replace the deleted resource. This fault allows you see how the applications hosted on these pods behave in the event of rescheduling when a K8s resource is deleted and re-created.
 
@@ -150,7 +213,7 @@ Kubernetes \(K8s\) Delete Resource faults enable you to abruptly delete pods or 
 
       ![](../../.gitbook/assets/wavefrontevents.png) 
 
-## Kubernetes Resource Not Ready Faults
+## Kubernetes Resource Not Ready Fault
 
 Kubernetes \(K8s\) Resource Not Ready faults enable you to abruptly put pods or nodes within a K8s cluster into a state that is not suitable for scheduling. 
 
@@ -177,7 +240,7 @@ Kubernetes \(K8s\) Resource Not Ready faults enable you to abruptly put pods or 
 
       ![](../../.gitbook/assets/wavefrontevents.png)
 
-## vCenter Disk Faults
+## vCenter Disk Fault
 
 vCenter Disk faults enable you to abruptly disconnect disks from a virtual machine in its inventory. It requires the VM Disk ID and VM Name to trigger the fault. For all vCenter faults, Mangle talks to the mangle-vc-adapter to connect and perform the required action on VC. So it is mandatory that you install the mangle-vc-adapter container prior to adding vCenter Endpoints or running vCenter faults. To find how to install and configure the mangle-vc-adapter, please refer [here](https://app.gitbook.com/@vmware-1/s/workspace/mangle-administration/supported-deployment-models#deploying-the-mangle-vcenter-adapter-container).
 
@@ -204,7 +267,7 @@ vCenter Disk faults enable you to abruptly disconnect disks from a virtual machi
 
       ![](../../.gitbook/assets/wavefrontevents.png)
 
-## vCenter NIC Faults
+## vCenter NIC Fault
 
 vCenter NIC faults enable you to abruptly disconnect network interface cards from a virtual machine in its inventory. It requires the VM Nic ID and VM Name to trigger the fault. For all vCenter faults, Mangle talks to the mangle-vc-adapter to connect and perform the required action on VC. So it is mandatory that you install the mangle-vc-adapter container prior to adding vCenter Endpoints or running vCenter faults. To find how to install and configure the mangle-vc-adapter, please refer [here](https://app.gitbook.com/@vmware-1/s/workspace/mangle-administration/supported-deployment-models#deploying-the-mangle-vcenter-adapter-container).
 
@@ -231,7 +294,7 @@ vCenter NIC faults enable you to abruptly disconnect network interface cards fro
 
       ![](../../.gitbook/assets/wavefrontevents.png)
 
-## vCenter VM State Change Faults
+## vCenter VM State Change Fault
 
 vCenter VM State Change faults enable you to abruptly power-off, reset or suspend any virtual machine in its inventory. It requires just the VM Name to trigger the fault. For all vCenter faults, Mangle talks to the mangle-vc-adapter to connect and perform the required action on VC. So it is mandatory that you install the mangle-vc-adapter container prior to adding vCenter Endpoints or running vCenter faults. To find how to install and configure the mangle-vc-adapter, please refer [here](https://app.gitbook.com/@vmware-1/s/workspace/mangle-administration/supported-deployment-models#deploying-the-mangle-vcenter-adapter-container).
 

@@ -2,14 +2,20 @@
 
 ## Supported Endpoints
 
-Endpoint in Mangle refers to an infrastructure component that will be the primary target for your chaos engineering experiments. For version 1.0, Mangle supports four types of endpoints:
+Endpoint in Mangle refers to an infrastructure component that will be the primary target for your chaos engineering experiments. 
+
+For **version 1.0**, Mangle supported four types of endpoints: 
 
 1. Kubernetes
 2. Docker
 3. VMware vCenter
 4. Remote Machine
 
-#### Kubernetes Endpoint
+From **version 2.0**,  apart from the four endpoints listed above, support has been extended to the following new endpoint:
+
+1. AWS \(Amazon Web Services\)
+
+### Kubernetes Endpoint
 
 Mangle supports K8s clusters as endpoints or targets for injection. It needs a kubeconfig file to connect to the cluster and run the supported faults. If a kubeconfig file is not provided, Mangle assumes that it is running on a K8s cluster and targets the same cluster for fault injection.
 
@@ -27,7 +33,7 @@ Mangle supports K8s clusters as endpoints or targets for injection. It needs a k
 6. A success message is displayed and the table for Endpoints will be updated with the new entry.
 7. Click on ![](../.gitbook/assets/supportedactionsbutton.png) against a table entry to see the supported operations.
 
-#### Docker Endpoint
+### Docker Endpoint
 
 Mangle supports docker hosts as endpoints or targets for injection. It needs the IP/Hostname, port details and certificate details \(if TLS is enabled for the docker host with --tlsverify option specified\) to connect to the docker host and run the supported faults.
 
@@ -47,7 +53,7 @@ Mangle supports docker hosts as endpoints or targets for injection. It needs the
 6. A success message is displayed and the table for Endpoints will be updated with the new entry.
 7. Click on ![](../.gitbook/assets/supportedactionsbutton.png) against a table entry to see the supported operations.
 
-#### VMware vCenter Endpoint
+### VMware vCenter Endpoint
 
 Mangle supports VMware vCenter as endpoints or targets for injection. It needs the IP/Hostname, credentials and a vCenter adapter URL to connect to the vCenter instance and run the supported faults.
 
@@ -76,7 +82,7 @@ When the vCenter adapter is deployed on the same machine on which Mangle is runn
 `docker inspect --format '{{.NetworkSettings.IPAddress}}' *mangle-vc-adapter`
 {% endhint %}
 
-#### Remote Machine Endpoint
+### Remote Machine Endpoint
 
 Mangle supports any remote machine with ssh enabled as endpoints or targets for injection. It needs the IP/Hostname, credentials \(either password or private key\), ssh details, OS type and tags to connect to the remote machine and run the supported faults.
 
@@ -95,6 +101,20 @@ Mangle supports any remote machine with ssh enabled as endpoints or targets for 
 2. Navigate to Endpoint tab.
 3. Click on ![](../.gitbook/assets/remotemachinebutton.png).
 4. Enter a name, IP/Hostname, credentials \(either password or private key\), ssh port, ssh timeout, OS type, tags \(refers to additional tags that should be send to the enabled metric provider to uniquely identify faults against that endpoint\) and click on **Test Connection**.
+5. If **Test Connection** succeeds click on **Submit**.
+6. A success message is displayed and the table for Endpoints will be updated with the new entry.
+7. Click on ![](../.gitbook/assets/supportedactionsbutton.png) against a table entry to see the supported operations.
+
+### AWS \(Amazon Web Services\)
+
+Mangle supports AWS as endpoint or target for injection. It needs the Region, credentials \(Access key ID and Secret key\) and tags to connect to AWS and run the supported faults. Currently the only supported service is EC2. However,  there are plans to extend this to other important services in AWS.
+
+**Steps to follow:** 
+
+1. Login as an user with read and write privileges to Mangle.
+2. Navigate to Endpoint tab.
+3. Click on ![](../.gitbook/assets/aws.png).
+4. Enter a name, Region, credentials \(Access key ID and Secret key\), tags \(refers to additional tags that should be send to the enabled metric provider to uniquely identify faults against that endpoint\) and click on **Test Connection**.
 5. If **Test Connection** succeeds click on **Submit**.
 6. A success message is displayed and the table for Endpoints will be updated with the new entry.
 7. Click on ![](../.gitbook/assets/supportedactionsbutton.png) against a table entry to see the supported operations.
