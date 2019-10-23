@@ -3,4 +3,4 @@ jdk:
   - openjdk8
 language:
   java
-install: mvn clean install
+install: mvn clean install -q
