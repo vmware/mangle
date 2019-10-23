@@ -3,4 +3,8 @@ jdk:
   - openjdk8
 language:
   java
+# Cache the Maven dependencies directory for faster builds
+cache:
+  directories:
+  - $HOME/.m2
 install: mvn clean install -q
