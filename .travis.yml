@@ -1,10 +1,13 @@
 language: java
 jdk:
   - openjdk8
-language:
-  java
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
 # Cache the Maven dependencies directory for faster builds
 cache:
   directories:
   - $HOME/.m2
 install: mvn clean install -q
+env:
+  global:
+  - CODECOV_TOKEN="d9aa088c-5b6f-4903-9e0e-b6f51be54761"
