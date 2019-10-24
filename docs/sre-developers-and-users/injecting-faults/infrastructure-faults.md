@@ -110,14 +110,15 @@ Kill Process fault enables abrupt termination of any process that is running on 
 2. Navigate to Fault Execution tab ---&gt; Infrastructure Faults ---&gt; Kill Process.
 3. Select an Endpoint.
 4. Provide a "Process Identifier". This can either be a process id or process name. A process name is preferred if the fault is expected to be scheduled.
-5. Provide a "Remediation Command". For eg: To start the sshd process that was killed on an Ubuntu 17 Server, specify the remediation command as _"sudo service ssh start" ._
-6. Provide "Injection Home Dir" only if you would like Mangle to push the script files needed to simulate the fault to a specific location on the endpoint. Else the default temp location will be used.
-7. Schedule options are required only if the fault needs to be re-executed at regular intervals against an endpoint.
-8. Tags are key value pairs that will be send to the active monitoring tool under Mangle Admin settings ---&gt; Metric Providers at the time of publishing events for fault injection and remediation. They are not mandatory.
-9. Click on Run Fault.
-10. The user will be re-directed to the Processed Requests section under Requests & Reports tab.
-11. If Mangle was able to successfully trigger the fault, the status of the task will change to "COMPLETED". The option to trigger a remediation request at anytime can be found on clicking the ![](../../.gitbook/assets/supportedactionsbutton.png) button against the task in the Processed Requests table.
-12. For monitoring purposes, log into either Wavefront or Datadog once it is configured as an active Metric provider in Mangle and refer to the Events section. Events similar to the screenshots provided below will be available on the monitoring tool for tracking purposes.
+5. From version 2.0 onward,  Kill Process fault can  kill multiple processes with the same  process descriptor. This can be done by setting the "Kill All" drop down to true. If set to false, it will fail if the process descriptor is not unique. Alternatively, you can also use the process id to uniquely identify and kill a process.
+6. Provide a "Remediation Command". For eg: To start the sshd process that was killed on an Ubuntu 17 Server, specify the remediation command as _"sudo service ssh start" ._
+7. Provide "Injection Home Dir" only if you would like Mangle to push the script files needed to simulate the fault to a specific location on the endpoint. Else the default temp location will be used.
+8. Schedule options are required only if the fault needs to be re-executed at regular intervals against an endpoint.
+9. Tags are key value pairs that will be send to the active monitoring tool under Mangle Admin settings ---&gt; Metric Providers at the time of publishing events for fault injection and remediation. They are not mandatory.
+10. Click on Run Fault.
+11. The user will be re-directed to the Processed Requests section under Requests & Reports tab.
+12. If Mangle was able to successfully trigger the fault, the status of the task will change to "COMPLETED". The option to trigger a remediation request at anytime can be found on clicking the ![](../../.gitbook/assets/supportedactionsbutton.png) button against the task in the Processed Requests table.
+13. For monitoring purposes, log into either Wavefront or Datadog once it is configured as an active Metric provider in Mangle and refer to the Events section. Events similar to the screenshots provided below will be available on the monitoring tool for tracking purposes.
 
      ![](../../.gitbook/assets/datadogevents.png) 
 
@@ -143,6 +144,14 @@ File Handler Leak fault enables you to simulate conditions where a program reque
 10. If Mangle was able to successfully trigger the fault, the status of the task will change to "COMPLETED". The option to trigger a remediation request at anytime can be found on clicking the ![](../../.gitbook/assets/supportedactionsbutton.png) button against the task in the Processed Requests table.
 11. For monitoring purposes, log into either Wavefront or Datadog once it is configured as an active Metric provider in Mangle and refer to the Events section. Events similar to the screenshots provided below will be available on the monitoring tool for tracking purposes.
 
+
+
+     ![](../../.gitbook/assets/datadogevents.png) 
+
+
+
+      ![](../../.gitbook/assets/wavefrontevents.png) 
+
 ## Disk Space Fault
 
 Disk Space Fault enables you to simulate out of disk or low disk space conditions. With the help of a timeout field the duration for the fault run can be specified after which Mangle triggers the automatic remediation procedure.
@@ -162,6 +171,159 @@ Disk Space Fault enables you to simulate out of disk or low disk space condition
 11. The user will be re-directed to the Processed Requests section under Requests & Reports tab.
 12. If Mangle was able to successfully trigger the fault, the status of the task will change to "COMPLETED". The option to trigger a remediation request at anytime can be found on clicking the ![](../../.gitbook/assets/supportedactionsbutton.png) button against the task in the Processed Requests table.
 13. For monitoring purposes, log into either Wavefront or Datadog once it is configured as an active Metric provider in Mangle and refer to the Events section. Events similar to the screenshots provided below will be available on the monitoring tool for tracking purposes.
+
+
+
+     ![](../../.gitbook/assets/datadogevents.png) 
+
+
+
+      ![](../../.gitbook/assets/wavefrontevents.png) 
+
+## Kernel Panic Fault
+
+Kernel Panic Fault simulates conditions where the operating system abruptly stops to prevent further damages, security breaches or data corruption and facilitate diagnosis of a sudden hardware or software failure. 
+
+{% hint style="info" %}
+**REMEDIATION OPTIONS FOR KERNEL PANIC**
+
+Remediation for Kernel Panic is controlled by the operating system itself.  Typically on Linux systems, Kernel Panic is usually followed by a system reboot. But in some cases due to the settings specified under file  /etc/sysctl.d/99-sysctl.conf the automatic system reboot may not occur. For such cases, a manual reboot needs to be triggered on the endpoint to  bring it back to a usable state.
+
+To modify this setting as a one-time option, please run the following command on the endpoint  `sysctl --system`
+
+To modify this setting permanently, remotely log in to the endpoint, modify file   /etc/sysctl.d/99-sysctl.conf and add the following command
+
+`kernel.panic = 20`
+{% endhint %}
+
+**Steps to follow:** 
+
+1. Login as a user with read and write privileges to Mangle.
+2. Navigate to Fault Execution tab ---&gt; Infrastructure Faults ---&gt; Kernel Panic.
+3. Select an Endpoint.
+4. Provide "Injection Home Dir" only if you would like Mangle to push the script files needed to simulate the fault to a specific location on the endpoint. Else the default temp location will be used.
+5. Schedule options are required only if the fault needs to be re-executed at regular intervals against an endpoint.
+6. Tags are key value pairs that will be send to the active monitoring tool under Mangle Admin settings ---&gt; Metric Providers at the time of publishing events for fault injection and remediation. They are not mandatory.
+7. Click on Run Fault.
+8. The user will be re-directed to the Processed Requests section under Requests & Reports tab.
+9. If Mangle was able to successfully trigger the fault, the status of the task will change to "COMPLETED". The option to trigger a remediation request at anytime can be found on clicking the ![](../../.gitbook/assets/supportedactionsbutton.png) button against the task in the Processed Requests table.
+10. For monitoring purposes, log into either Wavefront or Datadog once it is configured as an active Metric provider in Mangle and refer to the Events section. Events similar to the screenshots provided below will be available on the monitoring tool for tracking purposes.
+
+
+
+     ![](../../.gitbook/assets/datadogevents.png) 
+
+
+
+      ![](../../.gitbook/assets/wavefrontevents.png) 
+
+## Network Faults
+
+Network Faults enables you to simulate unfavorable conditions such as packet delay, packet duplication, packet loss and packet corruption. With the help of a timeout field the duration for the fault run can be specified after which Mangle triggers the automatic remediation procedure.
+
+### Packet Delay
+
+**Steps to follow:** 
+
+1. Login as a user with read and write privileges to Mangle.
+2. Navigate to Fault Execution tab ---&gt; Infrastructure Faults ---&gt; Network ---&gt; Packet Delay.
+3. Select an Endpoint.
+4. Provide a "Nic Name".  For eg:  For a remote machine endpoint Nic name could be eth0, eth1 etc depending on what adapter you would want to target for the fault.
+5. Provide a "Latency" value in milliseconds. For eg: 1000 to simulate a packet delay of 1 second on a particular network interface of an Endpoint.
+6. Provide "Injection Home Dir" only if you would like Mangle to push the script files needed to simulate the fault to a specific location on the endpoint. Else the default temp location will be used.
+7. Provide a "Timeout" value in milliseconds. For eg: if you need the packet delay to be sustained for a duration of 1 hour then you should provide the timeout value as 3600000 \(1 hour = 3600000 ms\). After this duration, Mangle will ensure remediation of the fault without any manual intervention.
+8. Schedule options are required only if the fault needs to be re-executed at regular intervals against an endpoint.
+9. Tags are key value pairs that will be send to the active monitoring tool under Mangle Admin settings ---&gt; Metric Providers at the time of publishing events for fault injection and remediation. They are not mandatory.
+10. Click on Run Fault.
+11. The user will be re-directed to the Processed Requests section under Requests & Reports tab.
+12. If Mangle was able to successfully trigger the fault, the status of the task will change to "COMPLETED". The option to trigger a remediation request at anytime can be found on clicking the ![](../../.gitbook/assets/supportedactionsbutton.png) button against the task in the Processed Requests table.
+13. For monitoring purposes, log into either Wavefront or Datadog once it is configured as an active Metric provider in Mangle and refer to the Events section. Events similar to the screenshots provided below will be available on the monitoring tool for tracking purposes.
+
+
+
+     ![](../../.gitbook/assets/datadogevents.png) 
+
+
+
+      ![](../../.gitbook/assets/wavefrontevents.png)
+
+### Packet Duplication
+
+**Steps to follow:** 
+
+1. Login as a user with read and write privileges to Mangle.
+2. Navigate to Fault Execution tab ---&gt; Infrastructure Faults ---&gt; Network ---&gt; Packet Duplicate.
+3. Select an Endpoint.
+4. Provide a "Nic Name".  For eg:  For a remote machine endpoint Nic name could be eth0, eth1 etc depending on what adapter you would want to target for the fault.
+5. Provide a "Percentage" value to specify what percentage of the packets should be duplicated. For eg: 10 to simulate a packet duplication of 10 percentage on a particular network interface of an Endpoint.
+6. Provide "Injection Home Dir" only if you would like Mangle to push the script files needed to simulate the fault to a specific location on the endpoint. Else the default temp location will be used.
+7. Provide a "Timeout" value in milliseconds. For eg: if you need the packet duplication to be sustained for a duration of 1 hour then you should provide the timeout value as 3600000 \(1 hour = 3600000 ms\). After this duration, Mangle will ensure remediation of the fault without any manual intervention.
+8. Schedule options are required only if the fault needs to be re-executed at regular intervals against an endpoint.
+9. Tags are key value pairs that will be send to the active monitoring tool under Mangle Admin settings ---&gt; Metric Providers at the time of publishing events for fault injection and remediation. They are not mandatory.
+10. Click on Run Fault.
+11. The user will be re-directed to the Processed Requests section under Requests & Reports tab.
+12. If Mangle was able to successfully trigger the fault, the status of the task will change to "COMPLETED". The option to trigger a remediation request at anytime can be found on clicking the ![](../../.gitbook/assets/supportedactionsbutton.png) button against the task in the Processed Requests table.
+13. For monitoring purposes, log into either Wavefront or Datadog once it is configured as an active Metric provider in Mangle and refer to the Events section. Events similar to the screenshots provided below will be available on the monitoring tool for tracking purposes.
+
+
+
+     ![](../../.gitbook/assets/datadogevents.png) 
+
+
+
+      ![](../../.gitbook/assets/wavefrontevents.png) 
+
+### Packet Loss
+
+**Steps to follow:** 
+
+1. Login as a user with read and write privileges to Mangle.
+2. Navigate to Fault Execution tab ---&gt; Infrastructure Faults ---&gt; Network ---&gt; Packet Loss.
+3. Select an Endpoint.
+4. Provide a "Nic Name".  For eg:  For a remote machine endpoint Nic name could be eth0, eth1 etc depending on what adapter you would want to target for the fault.
+5. Provide a "Percentage" value to specify what percentage of the packets should be dropped. For eg: 10 to simulate a packet drop of 10 percentage on a particular network interface of an Endpoint.
+6. Provide "Injection Home Dir" only if you would like Mangle to push the script files needed to simulate the fault to a specific location on the endpoint. Else the default temp location will be used.
+7. Provide a "Timeout" value in milliseconds. For eg: if you need the packet drop to be sustained for a duration of 1 hour then you should provide the timeout value as 3600000 \(1 hour = 3600000 ms\). After this duration, Mangle will ensure remediation of the fault without any manual intervention.
+8. Schedule options are required only if the fault needs to be re-executed at regular intervals against an endpoint.
+9. Tags are key value pairs that will be send to the active monitoring tool under Mangle Admin settings ---&gt; Metric Providers at the time of publishing events for fault injection and remediation. They are not mandatory.
+10. Click on Run Fault.
+11. The user will be re-directed to the Processed Requests section under Requests & Reports tab.
+12. If Mangle was able to successfully trigger the fault, the status of the task will change to "COMPLETED". The option to trigger a remediation request at anytime can be found on clicking the ![](../../.gitbook/assets/supportedactionsbutton.png) button against the task in the Processed Requests table.
+13. For monitoring purposes, log into either Wavefront or Datadog once it is configured as an active Metric provider in Mangle and refer to the Events section. Events similar to the screenshots provided below will be available on the monitoring tool for tracking purposes.
+
+
+
+     ![](../../.gitbook/assets/datadogevents.png) 
+
+
+
+      ![](../../.gitbook/assets/wavefrontevents.png) 
+
+### Packet Corruption
+
+**Steps to follow:** 
+
+1. Login as a user with read and write privileges to Mangle.
+2. Navigate to Fault Execution tab ---&gt; Infrastructure Faults ---&gt; Network ---&gt; Packet Corruption.
+3. Select an Endpoint.
+4. Provide a "Nic Name".  For eg:  For a remote machine endpoint Nic name could be eth0, eth1 etc depending on what adapter you would want to target for the fault.
+5. Provide a "Percentage" value to specify what percentage of the packets should be corrupted. For eg: 10 to simulate a packet corruption of 10 percentage on a particular network interface of an Endpoint.
+6. Provide "Injection Home Dir" only if you would like Mangle to push the script files needed to simulate the fault to a specific location on the endpoint. Else the default temp location will be used.
+7. Provide a "Timeout" value in milliseconds. For eg: if you need the packet corruption to be sustained for a duration of 1 hour then you should provide the timeout value as 3600000 \(1 hour = 3600000 ms\). After this duration, Mangle will ensure remediation of the fault without any manual intervention.
+8. Schedule options are required only if the fault needs to be re-executed at regular intervals against an endpoint.
+9. Tags are key value pairs that will be send to the active monitoring tool under Mangle Admin settings ---&gt; Metric Providers at the time of publishing events for fault injection and remediation. They are not mandatory.
+10. Click on Run Fault.
+11. The user will be re-directed to the Processed Requests section under Requests & Reports tab.
+12. If Mangle was able to successfully trigger the fault, the status of the task will change to "COMPLETED". The option to trigger a remediation request at anytime can be found on clicking the ![](../../.gitbook/assets/supportedactionsbutton.png) button against the task in the Processed Requests table.
+13. For monitoring purposes, log into either Wavefront or Datadog once it is configured as an active Metric provider in Mangle and refer to the Events section. Events similar to the screenshots provided below will be available on the monitoring tool for tracking purposes.
+
+
+
+     ![](../../.gitbook/assets/datadogevents.png) 
+
+
+
+      ![](../../.gitbook/assets/wavefrontevents.png) 
 
 ## Docker State Change Fault
 
