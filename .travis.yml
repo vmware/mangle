@@ -3,6 +3,7 @@ jdk:
   - openjdk8
 after_success:
   - bash <(curl -s https://codecov.io/bash)
+  
 # Cache the Maven dependencies directory for faster builds
 cache:
   directories:
