@@ -196,6 +196,18 @@ You need at least 4 docker hosts for setting up a multi node Mangle instance; 1 
 
 A multi node setup of Mangle is implemented using Hazelcast. Mangle multi node setup uses TCP connection to communicate with each other. The configuration of the setup is handled by providing the right arguments to the docker container run command, which identifies the cluster.
 
+The docker container takes an environmental variable "**CLUSTER\_OPTIONS**", which can take a list of java arguments identifying the properties of the cluster. Following are the different arguments that should be part of "CLUSTER\_OPTIONS":  
+  
+**clusterName** - A unique string that identifies the cluster to which the current mangle app will be joining. If not provided, the Mangle app will by default use string "mangle" as the clusterName, and if this doesn't match the one already configured with the cluster, the node is trying to join to, container start fails.  
+  
+**clusterValidationToken** - A unique string which will act similar to a password for a member to get validated against the existing cluster. If the validation token doesn't match with the one that is being used by the cluster, the container will fail to start.
+
+**publicAddress** - IP of the docker host on which the mangle application will be deployed. This is the IP that mangle will use to establish a connection with the other members that are already part of the cluster, and hence it is necessary to provide the host IP and make sure the docker host is discoverable from other nodes  
+  
+**clusterMembers** - This is an optional property that takes a comma-separated list of IP addresses that are part of the cluster. If not provided, Mangle will query DB and find the members of the cluster that is using the DB and will try connecting to that automatically. It is enough for mangle to connect to at least one member to become part of the cluster.
+
+**deploymentMode** - Takes either CLUSTER/STANDALONE value. Deployment Mode parameter is mandatory for the multi-node deployment, with the value set to CLUSTER on every node that will be part of the cluster, where as for the single node deployment, this field can be ignored, which by default will be STANDALONE. If DB was used by one type of deployment setup, one needs to update this parameter to support the other type, either though the mangle or by directly going in to DB.
+
 {% hint style="info" %}
 **NOTE:** 
 
@@ -215,16 +227,75 @@ Deploy the Mangle cluster by bringing up the mangle container in each docker hos
 **For the first node in the cluster:**
 
 ```text
-docker run --name mangle -d -v /var/opt/mangle-tomcat/logs:/var/opt/mangle-tomcat/logs -e DB_OPTIONS="-DcassandraContactPoints=<Cassandra-IP>" -e CLUSTER_OPTIONS="-DclusterName=<CLUSTER-NAME> -DclusterValidationToken=<CLUSTER-VALIDATION-TOKEN> -DpublicAddress=<DOCKER-HOST-IP-1>" -p 8080:8080 -p 443:8443 -p 5701:5701 mangleuser/mangle:<VERSION>
+docker run --name mangle -d -v /var/opt/mangle-tomcat/logs:/var/opt/mangle-tomcat/logs -e DB_OPTIONS="-DcassandraContactPoints=<Cassandra-IP>" -e CLUSTER_OPTIONS="-DclusterName=<CLUSTER-NAME> -DclusterValidationToken=<CLUSTER-VALIDATION-TOKEN> -DpublicAddress=<DOCKER-HOST-IP-1> -DdeploymentMode=CLUSTER" -p 8080:8080 -p 443:8443 -p 5701:5701 mangleuser/mangle:<VERSION>
 ```
 
 **For the subsequent nodes in the cluster:**
 
 ```text
-docker run --name mangle -d -v /var/opt/mangle-tomcat/logs:/var/opt/mangle-tomcat/logs -e DB_OPTIONS="-DcassandraContactPoints=<Cassandra-IP>" -e CLUSTER_OPTIONS="-DclusterName=<CLUSTER-NAME> -DclusterValidationToken=<CLUSTER-VALIDATION-TOKEN> -DpublicAddress=<DOCKER-HOST-IP-2> -DclusterMembers=<DOCKER-HOST-IP-1>" -p 8080:8080 -p 443:8443 -p 5701:5701 mangleuser/mangle:<VERSION>
+docker run --name mangle -d -v /var/opt/mangle-tomcat/logs:/var/opt/mangle-tomcat/logs -e DB_OPTIONS="-DcassandraContactPoints=<Cassandra-IP>" -e CLUSTER_OPTIONS="-DclusterName=<CLUSTER-NAME> -DclusterValidationToken=<CLUSTER-VALIDATION-TOKEN> -DpublicAddress=<DOCKER-HOST-IP-2> -DclusterMembers=<DOCKER-HOST-IP-1> -DdeploymentMode=CLUSTER" -p 8080:8080 -p 443:8443 -p 5701:5701 mangleuser/mangle:<VERSION>
 ```
 
 ```text
-docker run --name mangle -d -v /var/opt/mangle-tomcat/logs:/var/opt/mangle-tomcat/logs -e DB_OPTIONS="-DcassandraContactPoints=<Cassandra-IP>" -e CLUSTER_OPTIONS="-DclusterName=<CLUSTER-NAME> -DclusterValidationToken=<CLUSTER-VALIDATION-TOKEN> -DpublicAddress=<DOCKER-HOST-IP-3> -DclusterMembers=<DOCKER-HOST-IP-1, DOCKER-HOST-IP-2>" -p 8080:8080 -p 443:8443 -p 5701:5701 mangleuser/mangle:<VERSION>
+docker run --name mangle -d -v /var/opt/mangle-tomcat/logs:/var/opt/mangle-tomcat/logs -e DB_OPTIONS="-DcassandraContactPoints=<Cassandra-IP>" -e CLUSTER_OPTIONS="-DclusterName=<CLUSTER-NAME> -DclusterValidationToken=<CLUSTER-VALIDATION-TOKEN> -DpublicAddress=<DOCKER-HOST-IP-3> -DclusterMembers=<DOCKER-HOST-IP-1, DOCKER-HOST-IP-2> -DdeploymentMode=CLUSTER" -p 8080:8080 -p 443:8443 -p 5701:5701 mangleuser/mangle:<VERSION>
 ```
+
+## Deployment Mode and Quorum
+
+Mangle implements quorum strategy to for supporting HA and to avoid any split brain scenarios when deployed as a cluster.
+
+Mangle can be deployed in two different deployment modes
+
+1. **STANDALONE**: quorum value is 1, cannot be updated to any other value
+2. **CLUSTER**: min quorum value is 2, cannot be set to value lesser than ceil\(\(n + 1\)/2\), n being number of nodes currently in the cluster
+
+If a node is deployed initially in the STANDALONE mode, and user changes the deployment mode to CLUSTER, the quorum will automatically be updated to 2. When user keeps adding new nodes to the cluster, the quorum value updates depending on the number of nodes in the cluster.  
+eg: when user adds new node to 3 node cluster\(quorum=2\) making it 4 nodes in the cluster, the quorum value is updated to 3. Determined by the formula, ceil\(\(n + 1\)/2\)
+
+If a node is deployed initially in the CLUSTER mode, and user changes the deployment mode to STANDALONE mode, all other nodes except for the Hazelcast master will shutdown. They will lose the connection with the existing node, and won't take any post calls, and will entries will be removed from the cluster table.
+
+{% hint style="info" %}
+**NOTE:** 
+
+Active members list of the active quorum will be maintained in DB under the table cluster. Similarly, master instance entry will also be maintained in the db under the same table.
+{% endhint %}
+
+### **Actions triggered when Mangle loses quorum**
+
+1. All the schedules will be paused
+2. No post calls can be made against mangle
+3. Task that were triggered on any node will continue to be executed until Failed/Completed
+4. Removes its entry from the cluster table's members list
+5. If the node was the last known master, it will remove it's entry as master from the table
+
+### **Actions triggered when Mangle gets a quorum \(from no quorum in any of the cluster member\)**
+
+1. All the schedules that are in the scheduled state and all the schedules that were paused because of the quorum failure will be triggered
+2. All the tasks that are in progress will be queue to executed after 5minutes of quorum created event \(This is to avoid any simultaneous Execution\)
+3. Master \(Oldest member in the cluster\) will take care of adding the list of active members to the cluster table, and updating itself as master
+
+### **Actions triggered when a Mangle instance joins one active cluster**
+
+1. Some of the schedules will be assigned to the new the node due to migration
+2. Some of the tasks will assigned to the new node, and they will be queued for triggering after 5mins
+3. Existing tasks that in-progress will continue to execute in the old node
+4. Master \(Oldest member in the cluster\) will take care of adding new member's entry to the list of active members to the cluster table
+
+### **Scenarios around quorum**
+
+#### **Scenario 1:** When a mangle instance in 3 node cluster, leaves a cluster due to network partition, and the quorum value is 2
+
+* Let us consider 3 instances a, b, c in the CLUSTER
+* a leaves the cluster due to network partition
+* a is not able to communicate with b, c
+* two cluster will be created, one having only a, and the other have b and c
+* since for the cluster having a doesn't have quorum\(2\), it loses the quorum, and removes itself as active member from cluster config
+* cluster having nodes b and c continue execute since they have enough nodes to satisfy the quorum
+
+#### Scenario 2: When mangle instance in 2 node cluster leaves a cluster due to network partition, and the quorum value is 2
+
+* Let us consider 2 instances a, b in the CLUSTER
+* a leaves the cluster due to network partition, a cannot communicate with b and vice versa
+* two clusters are created with each having one node
+* both the cluster loses the quorum\(2\)
 

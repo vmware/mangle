@@ -104,12 +104,12 @@ To download the Cassandra client as DevCenter form [DevCenter](https://academy.d
 Create seed Node : 
 
 ```text
-docker run --name mangle-cassandra -v /cassandra/storage/:/var/lib/cassandra -p 9042:9042 -d -e CASSANDRA_DC="DC1" -e CASSANDRA_RACK="rack1" -e CASSANDRA_ENDPOINT_SNITCH="GossipingPropertyFileSnitch" mangleuser/mangle:$MANGLE_VERSION
+docker run --name mangle-cassandradb -v /cassandra/storage/:/var/lib/cassandra -p 9042:9042 -p 7000:7000 -p 7001:7001 -d -e CASSANDRA_BROADCAST_ADDRESS=<Node IP> -e CASSANDRA_SEEDS=<Node IP> -e CASSANDRA_CLUSTER_NAME="manglecassandracluster" -e CASSANDRA_DC="DC1" -e CASSANDRA_RACK="rack1" -e CASSANDRA_ENDPOINT_SNITCH="GossipingPropertyFileSnitch"  mangleuser/mangle_cassandradb:1.0
 ```
 
 Join the Other Node to Seed Node : 
 
 ```text
-docker run --name mangle-cassandra-n1 -v /cassandra/n1storage/:/var/lib/cassandra -p 9043:9042 -d -e CASSANDRA_SEEDS="$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' mangle-cassandra)" -e CASSANDRA_DC="DC1" -e CASSANDRA_RACK="rack1" -e CASSANDRA_ENDPOINT_SNITCH="GossipingPropertyFileSnitch" mangleuser/mangle:$MANGLE_VERSION 
+docker run --name mangle-cassandradb -v /cassandra/storage/:/var/lib/cassandra -p 9042:9042 -p 7000:7000 -p 7001:7001 -d -e CASSANDRA_BROADCAST_ADDRESS=<Node IP> -e CASSANDRA_SEEDS=<Seed Node IP> -e CASSANDRA_CLUSTER_NAME="manglecassandracluster" -e CASSANDRA_DC="DC1" -e CASSANDRA_RACK="rack1" -e CASSANDRA_ENDPOINT_SNITCH="GossipingPropertyFileSnitch"  mangleuser/mangle_cassandradb:1.0
 ```
 
