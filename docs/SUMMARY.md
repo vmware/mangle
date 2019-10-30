@@ -11,6 +11,7 @@
   * [Injecting Faults](sre-developers-and-users/injecting-faults/README.md)
     * [Infrastructure Faults](sre-developers-and-users/injecting-faults/infrastructure-faults.md)
     * [Application Faults](sre-developers-and-users/injecting-faults/application-faults.md)
+    * [Custom Faults](sre-developers-and-users/injecting-faults/custom-faults.md)
   * [Requests and Reports](sre-developers-and-users/requests-and-reports.md)
 * [Mangle Troubleshooting Guide](troubleshooting-guide/README.md)
   * [Deployment Stage](troubleshooting-guide/deployment-stage.md)
