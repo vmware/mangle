@@ -186,6 +186,26 @@ _https://&lt;NODE-IP&gt;:&lt;PORT&gt;:/mangle-vc-adapter/swagger-ui.html_
 The vCenter adapter requires authentication against any API calls. It supports only one user, _admin_ with password _admin_. All the post APIs that are supported by the adapter will take the vCenter information as a request body.
 {% endhint %}
 
+### Deploying Mangle on Kubernetes
+
+All the relevant YAML files are available under the Mangle git repository under location 'mangle\mangle-support\kubernetes'
+
+1. Create a namespace called 'mangle' under the K8s cluster.
+
+   `kubectl --kubeconfig=`_`<kubeconfig file>`_ `create namespace mangle`
+
+2. Create Cassandra pod and service.
+
+   `kubectl --kubeconfig=`_`<kubeconfig file>`_ `-n mangle apply -f` _`<path>`_`/cassandra.yaml`
+
+   `kubectl --kubeconfig=`_`<kubeconfig file>`_ `-n mangle apply -f` _`<path>`_`/cassandra-service.yaml`
+
+3. Create Mangle pod and service
+
+   `kubectl --kubeconfig=`_`<kubeconfig file>`_ `-n mangle apply -f` _`<path>`_`/mangle.yaml`
+
+   `kubectl --kubeconfig=`_`<kubeconfig file>`_ `-n mangle apply -f` _`<path>`_`/mangle-service.yaml`
+
 ## Multi Node Deployment
 
 A multi-node setup for Mangle ensures availability in case of unexpected failures. We recommend that you use a 3 node Mangle setup. 
