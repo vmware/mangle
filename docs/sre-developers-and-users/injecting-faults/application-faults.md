@@ -1,5 +1,20 @@
 # Application Faults
 
+For **version 1.0**, Mangle supported the following types of application faults: 
+
+1. CPU Fault
+2. Memory Fault
+
+From **version 2.0**,  apart from the faults listed above, support has been extended to the following new faults:
+
+1. File Handler Leak Fault
+2. Thread Leak Fault
+3. Java Method Latency Fault
+4. Spring Service Latency Fault
+5. Spring Service Exception Fault
+6. Simulate Java Exception
+7. Kill JVM Fault
+
 ## CPU Fault
 
 CPU fault enables spiking cpu usage values for a selected application within a specified endpoint by a percentage specified by the user. Mangle uses a modified Byteman agent to simulate this fault and supports only Java based applications at present. With the help of a timeout field the duration for the fault run can be specified after which Mangle triggers the automatic remediation procedure which includes a cleanup of the Byteman agent from the target endpoint.

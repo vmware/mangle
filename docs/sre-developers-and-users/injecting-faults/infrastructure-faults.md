@@ -325,7 +325,7 @@ Network Faults enables you to simulate unfavorable conditions such as packet del
 
       ![](../../.gitbook/assets/wavefrontevents.png) 
 
-## Docker State Change Fault
+## Docker State Change
 
 Docker State Change faults enable you to abruptly stop or pause containers running on a Docker host. Unlike other infrastructure faults like CPU, Memory and Disk IO this fault is specific to the Docker endpoint and does not have a timeout field because the fault completes very quickly. Some containers may be configured for auto-start and some might require a manual start command to be executed. For the first case, auto-remediation through Mangle is not needed. For the second case, a manual remediation can be triggered from the Requests and Reports tab after the fault completes.
 
@@ -349,7 +349,7 @@ Docker State Change faults enable you to abruptly stop or pause containers runni
 
       ![](../../.gitbook/assets/wavefrontevents.png) 
 
-## Kubernetes Delete Resource Fault
+## Kubernetes Delete Resource
 
 Kubernetes \(K8s\) Delete Resource faults enable you to abruptly delete pods or nodes within a K8s cluster. Unlike other infrastructure faults like CPU, Memory and Disk IO this fault is specific to the K8s endpoint and does not have a timeout field because the fault completes very quickly. In most cases, K8s will automatically replace the deleted resource. This fault allows you see how the applications hosted on these pods behave in the event of rescheduling when a K8s resource is deleted and re-created.
 
@@ -375,7 +375,7 @@ Kubernetes \(K8s\) Delete Resource faults enable you to abruptly delete pods or 
 
       ![](../../.gitbook/assets/wavefrontevents.png) 
 
-## Kubernetes Resource Not Ready Fault
+## Kubernetes Resource Not Ready
 
 Kubernetes \(K8s\) Resource Not Ready faults enable you to abruptly put pods or nodes within a K8s cluster into a state that is not suitable for scheduling. 
 
@@ -395,6 +395,31 @@ Kubernetes \(K8s\) Resource Not Ready faults enable you to abruptly put pods or 
 12. The user will be re-directed to the Processed Requests section under Requests & Reports tab.
 13. If Mangle was able to successfully trigger the fault, the status of the task will change to "COMPLETED". Remediation requests are not supported for this fault.
 14. For monitoring purposes, log into either Wavefront or Datadog once it is configured as an active Metric provider in Mangle and refer to the Events section. Events similar to the screenshots provided below will be available on the monitoring tool for tracking purposes.
+
+     ![](../../.gitbook/assets/datadogevents.png) 
+
+
+
+      ![](../../.gitbook/assets/wavefrontevents.png)
+
+## Kubernetes Service Not Available
+
+Kubernetes \(K8s\) Resource Not Ready faults enable you to abruptly put pods or nodes within a K8s cluster into a state that is not suitable for scheduling. 
+
+**Steps to follow:** 
+
+1. Login as a user with read and write privileges to Mangle.
+2. Navigate to Fault Execution tab ---&gt; Infrastructure Faults ---&gt; K8S ---&gt; Service Unavailable.
+3. Select an Endpoint \(Only K8S endpoints are listed\).
+4. Choose the appropriate service identifier: Service Name or Service Labels.
+5. If you choose Service Name, enter an appropriate string.
+6. If you choose Service Labels provide a key value pair for eg: app=mangle. Since multiple resources can have the same label, you also need to specify if you are interested in a Random Injection. If "Random Injection" is set to true, Mangle will randomly choose one resource in a list of resources identified using the label, for introducing the fault. If "Random Injection" is set to false, it will introduce fault into all resources identified using the resource label.
+7. Schedule options are not available for this fault.
+8. Tags are key value pairs that will be send to the active monitoring tool under Mangle Admin settings ---&gt; Metric Providers at the time of publishing events for fault injection and remediation. They are not mandatory.
+9. Click on Run Fault.
+10. The user will be re-directed to the Processed Requests section under Requests & Reports tab.
+11. If Mangle was able to successfully trigger the fault, the status of the task will change to "COMPLETED". Remediation requests are not supported for this fault.
+12. For monitoring purposes, log into either Wavefront or Datadog once it is configured as an active Metric provider in Mangle and refer to the Events section. Events similar to the screenshots provided below will be available on the monitoring tool for tracking purposes.
 
      ![](../../.gitbook/assets/datadogevents.png) 
 
@@ -467,6 +492,54 @@ vCenter VM State Change faults enable you to abruptly power-off, reset or suspen
 3. Select an Endpoint \(Only vCenter endpoints are listed\).
 4. Select one of the faults: Poweroff, Suspend or Reset VM.
 5. Provide the VM Name.
+6. Schedule options are not available for this fault.
+7. Tags are key value pairs that will be send to the active monitoring tool under Mangle Admin settings ---&gt; Metric Providers at the time of publishing events for fault injection and remediation. They are not mandatory.
+8. Click on Run Fault.
+9. The user will be re-directed to the Processed Requests section under Requests & Reports tab.
+10. If Mangle was able to successfully trigger the fault, the status of the task will change to "COMPLETED". The option to trigger a remediation request at anytime can be found on clicking the ![](../../.gitbook/assets/supportedactionsbutton.png) button against the task in the Processed Requests table.
+11. For monitoring purposes, log into either Wavefront or Datadog once it is configured as an active Metric provider in Mangle and refer to the Events section. Events similar to the screenshots provided below will be available on the monitoring tool for tracking purposes.
+
+     ![](../../.gitbook/assets/datadogevents.png) 
+
+
+
+      ![](../../.gitbook/assets/wavefrontevents.png)
+
+## AWS EC2 State Change Fault
+
+AWS EC2 State Change fault enables you to abruptly terminate, stop or reboot any EC2 instance. It requires AWS tags to uniquely identify instances against which the fault should run. 
+
+**Steps to follow:** 
+
+1. Login as a user with read and write privileges to Mangle.
+2. Navigate to Fault Execution tab ---&gt; Infrastructure Faults ---&gt; AWS ---&gt; EC2 ---&gt; State.
+3. Select an Endpoint \(Only AWS accounts are listed\).
+4. Select one of the faults: Terminate\_Instances, Stop\_Instances, Reboot\_Instances.
+5. Provide the AWS tag \(key value pair to uniquely identify the instance\(s\). Since multiple instances can have the same tag, you also need to specify if you are interested in a Random Injection. If "Random Injection" is set to true, Mangle will randomly choose one instance from a list of instances identified using the tag, for introducing the fault. If "Random Injection" is set to false, it will introduce the fault into all the instances identified using the tag.
+6. Schedule options are not available for this fault.
+7. Tags are key value pairs that will be send to the active monitoring tool under Mangle Admin settings ---&gt; Metric Providers at the time of publishing events for fault injection and remediation. They are not mandatory.
+8. Click on Run Fault.
+9. The user will be re-directed to the Processed Requests section under Requests & Reports tab.
+10. If Mangle was able to successfully trigger the fault, the status of the task will change to "COMPLETED". The option to trigger a remediation request at anytime can be found on clicking the ![](../../.gitbook/assets/supportedactionsbutton.png) button against the task in the Processed Requests table.
+11. For monitoring purposes, log into either Wavefront or Datadog once it is configured as an active Metric provider in Mangle and refer to the Events section. Events similar to the screenshots provided below will be available on the monitoring tool for tracking purposes.
+
+     ![](../../.gitbook/assets/datadogevents.png) 
+
+
+
+      ![](../../.gitbook/assets/wavefrontevents.png)
+
+## AWS EC2 Network Fault
+
+AWS EC2 Network fault enable you to abruptly terminate, stop or reboot any EC2 instance. It requires AWS tags to uniquely identify instances against which the fault should run. 
+
+**Steps to follow:** 
+
+1. Login as a user with read and write privileges to Mangle.
+2. Navigate to Fault Execution tab ---&gt; Infrastructure Faults ---&gt; AWS ---&gt; EC2 ---&gt; Network.
+3. Select an Endpoint \(Only AWS accounts are listed\).
+4. Select the faults: Block\_All\_Network\_Traffic.
+5. Provide the AWS tag \(key value pair to uniquely identify the instance\(s\). Since multiple instances can have the same tag, you also need to specify if you are interested in a Random Injection. If "Random Injection" is set to true, Mangle will randomly choose one instance from a list of instances identified using the tag, for introducing the fault. If "Random Injection" is set to false, it will introduce the fault into all the instances identified using the tag.
 6. Schedule options are not available for this fault.
 7. Tags are key value pairs that will be send to the active monitoring tool under Mangle Admin settings ---&gt; Metric Providers at the time of publishing events for fault injection and remediation. They are not mandatory.
 8. Click on Run Fault.
