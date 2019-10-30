@@ -4,7 +4,7 @@
 
 ## Version 2.0 (Released 4th November 2019)
 
-Key Features Included are
+Key Features and Improvements included are
 
 - Support for endpoint AWS (Amazon Web Services)
 - Support for new infrastructure faults:
@@ -23,6 +23,8 @@ Key Features Included are
 	- Spring Service Exception Fault
 	- Simulate Java Exception
 	- Kill JVM Fault
+- Support for custom faults
+- Improvements to Mangle multi node deployment
 
 ## Version 1.0 (Released 21st May 2019)
 
