@@ -3,11 +3,16 @@ MAINTAINER Chethan C <chetanc@vmware.com>
 LABEL Description="This image is used by VMware Mangle web services for VC fault injection."
 
 # Install libraries and required components
-RUN tdnf -y install openjre
+RUN tdnf -y install openjre shadow.x86_64
+
+# Creating local user and group named "mangle"
+RUN useradd -ms /bin/bash mangle \
+&& groupadd mangle \
+&& usermod -aG mangle mangle
 
 # Making tomcat directories
-ENV TOMCAT_DIR=/var/opt/mangle-vc-adapter-tomcat
-ENV OPT_DIR=/var/opt
+ENV TOMCAT_DIR=/home/mangle/var/opt/mangle-vc-adapter-tomcat
+ENV OPT_DIR=/home/mangle/var/opt
 RUN echo $TOMCAT_DIR
 RUN echo $OPT_DIR
 RUN mkdir -p $TOMCAT_DIR
@@ -21,6 +26,10 @@ COPY docker/generateCert.sh $OPT_DIR/vmware/mangle/cert/
 COPY target/mangle-vcenter-adapter-2.0.0.jar $TOMCAT_DIR/app.jar
 COPY docker/jacocoagent.jar $OPT_DIR/
 COPY docker/jacococli.jar $OPT_DIR/
+
+# Changing ownership of all files\directories of OPT_DIR
+RUN chown -R mangle:mangle $OPT_DIR
+USER mangle
 
 # Setting working directory for web service
 WORKDIR $TOMCAT_DIR

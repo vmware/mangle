@@ -1,3 +1,4 @@
+#Its placeholder for codecov to fail build below certain coverage percentage, currently the rule is not working with mangle github repo.
 coverage:
   precision: 2
   round: down

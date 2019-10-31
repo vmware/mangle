@@ -99,7 +99,10 @@ public class FaultConstants {
     public static final String TARGET_DIRECTORY_ARG = ARGUEMENT_PREFIX + TARGET_DIRECTORY;
     public static final String TARGET_DIRECTORY_SCRIPT_ARG = SCRIPT_ARGUEMENT_PREFIX + TARGET_DIRECTORY;
     public static final String PROCESS_IDENTIFIER = "processIdentifier";
+    public static final String KILL_ALL = "killAll";
+    public static final String PROCESS_ID = "processId";
     public static final String PROCESS_IDENTIFIER_UNDERSCORE = ARGUEMENT_PREFIX + PROCESS_IDENTIFIER;
+    public static final String PROCESS_ID_UNDERSCORE = ARGUEMENT_PREFIX + PROCESS_ID;
     public static final String KILL_PROCESS_REMEDIATION_COMMAND = "remediationCommand";
     public static final String KILL_PROCESS_REMEDIATION_COMMAND_ARG =
             ARGUEMENT_PREFIX + KILL_PROCESS_REMEDIATION_COMMAND;
@@ -134,7 +137,7 @@ public class FaultConstants {
                     .toString();
     public static final String KILL_SERVICE_INJECTION_COMMAND_WITH_ARGS =
             new StringBuilder(FaultName.KILLPROCESSFAULT.getScriptFileName()).append(OPERATION_INJECT)
-                    .append("--processIdentifier=\"%s\"").toString();
+                    .append("--processIdentifier=\"%s\" --killAll=%s --processId=\"%s\"").toString();
     public static final String NETWORK_FAULT_INJECTION_COMMAND_WITH_ARGS =
             new StringBuilder(FaultName.NETWORKFAULT.getScriptFileName()).append(OPERATION_INJECT)
                     .append("%s=%s %s=%s %s=%s %s=%s %s=%s").toString();

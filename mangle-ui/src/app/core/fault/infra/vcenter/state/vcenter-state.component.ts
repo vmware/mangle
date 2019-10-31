@@ -12,8 +12,8 @@ import { CommonUtils } from 'src/app/shared/commonUtils';
 })
 export class VcenterStateComponent implements OnInit {
 
-  public errorAlertMessage: string;
-  public successAlertMessage: string;
+  public alertMessage: string;
+  public isErrorMessage: boolean;
 
   public endpoints: any = [];
   public stateFaultTypes: any = ["POWEROFF_VM", "SUSPEND_VM", "RESET_VM"];
@@ -45,7 +45,8 @@ export class VcenterStateComponent implements OnInit {
         }
       }, err => {
         this.endpoints = [];
-        this.errorAlertMessage = err.error.description;
+        this.isErrorMessage= true;
+        this.alertMessage = err.error.description;
       });
     if (this.dataService.sharedData != null) {
       this.populateFaultData();
@@ -102,9 +103,10 @@ export class VcenterStateComponent implements OnInit {
         this.tagsData = {};
         this.router.navigateByUrl('core/requests');
       }, err => {
-        this.errorAlertMessage = err.error.description;
-        if (this.errorAlertMessage === undefined) {
-          this.errorAlertMessage = err.error.error;
+        this.isErrorMessage= true;
+        this.alertMessage = err.error.description;
+        if (this.alertMessage === undefined) {
+          this.alertMessage = err.error.error;
         }
         this.runBtnState = ClrLoadingState.DEFAULT;
       });

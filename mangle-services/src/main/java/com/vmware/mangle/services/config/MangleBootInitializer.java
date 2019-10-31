@@ -90,7 +90,7 @@ public class MangleBootInitializer {
         if (null != hazelcastInstance
                 && hazelcastInstance.getCluster().getMembers().iterator().next().getAddress() == hazelcastInstance
                         .getCluster().getLocalMember().getAddress()
-                && HazelcastConstants.mangleQourumStatus == MangleQuorumStatus.PRESENT) {
+                && HazelcastConstants.getMangleQourumStatus() == MangleQuorumStatus.PRESENT) {
             log.info("Mangle cluster has only one node, will be triggering scheduled tasks and in-progress tasks");
             scheduleMisfiredJobs();
             retriggerInProgressTasks();
@@ -191,7 +191,7 @@ public class MangleBootInitializer {
      */
     public void updateClusterConfigObject() {
         log.info("Updating mangle cluster configuration");
-        if (hazelcastInstance != null && HazelcastConstants.mangleQourumStatus == MangleQuorumStatus.PRESENT) {
+        if (hazelcastInstance != null && HazelcastConstants.getMangleQourumStatus() == MangleQuorumStatus.PRESENT) {
             synchronized (configService) {
                 HazelcastClusterConfig config = configService.getClusterConfiguration();
                 Set<Member> clusterActiveMembers = hazelcastInstance.getCluster().getMembers();
@@ -201,8 +201,8 @@ public class MangleBootInitializer {
 
                 config.setMembers(activeMembers);
                 config.setMaster(clusterActiveMembers.iterator().next().getAddress().getHost());
-                if (config.getQuorum() == null || HazelcastConstants.mangleQourum > config.getQuorum()) {
-                    config.setQuorum(HazelcastConstants.mangleQourum);
+                if (null == config.getQuorum() || HazelcastConstants.getMangleQourum() > config.getQuorum()) {
+                    config.setQuorum(HazelcastConstants.getMangleQourum());
                 }
                 config.setDeploymentMode(extractMangleDeploymentMode(hazelcastInstance.getConfig()
                         .getProperty(HazelcastConstants.HAZELCAST_PROPERTY_DEPLOYMENT_MODE)));

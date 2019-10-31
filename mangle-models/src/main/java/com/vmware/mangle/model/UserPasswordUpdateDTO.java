@@ -18,6 +18,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import com.vmware.mangle.model.constants.Constants;
+
 /**
  *
  *
@@ -30,6 +32,6 @@ public class UserPasswordUpdateDTO {
 
     @NotEmpty
     String currentPassword;
-    @Pattern(regexp = "(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%!&+=])(?=\\S+$).{8,}", message = "should consists at least 8 chars, one digit, one lower alpha char, one upper alpha char, and one char within a set of special chars (@#$%!&+=)")
+    @Pattern(regexp = Constants.AUTH_PD_PATTERN, message = Constants.AUTH_PATTERN_MESSAGE)
     String newPassword;
 }

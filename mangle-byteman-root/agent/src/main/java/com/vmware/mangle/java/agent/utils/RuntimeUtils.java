@@ -37,7 +37,7 @@ public class RuntimeUtils {
     }
 
     public static double getCurrentHeapUsageInPercentage() {
-        return (getUsedHeapSpace() / getMaxHeapSpace()) * 100;
+        return Math.round(((double) getUsedHeapSpace() * 100) / (double) getMaxHeapSpace());
     }
 
     public static double round(double value, int places) {

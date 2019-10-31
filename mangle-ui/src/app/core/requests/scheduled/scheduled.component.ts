@@ -14,8 +14,8 @@ export class ScheduledComponent implements OnInit {
 
   }
 
-  public errorAlertMessage: string;
-  public successAlertMessage: string;
+  public alertMessage: string;
+  public isErrorMessage: boolean;
 
   public scheduledJobs: any = [];
   public scheduledTaskDetails: any = {};
@@ -42,7 +42,8 @@ export class ScheduledComponent implements OnInit {
         }
       }, err => {
         this.scheduledJobs = [];
-        this.errorAlertMessage = err.error.description;
+        this.isErrorMessage= true;
+        this.alertMessage = err.error.description;
         this.isLoadingScheduledJobs = false;
       }
     );
@@ -53,14 +54,17 @@ export class ScheduledComponent implements OnInit {
       this.requestsService.deleteScheduleOnly(scheduleTask.id).subscribe(
         res => {
           this.getAllScheduleJobs();
-          this.successAlertMessage = scheduleTask.id + MessageConstants.SCHEDULE_DELETE;
+          this.isErrorMessage= false;
+          this.alertMessage = scheduleTask.id + MessageConstants.SCHEDULE_DELETE;
           this.isLoadingScheduledJobs = false;
         }, err => {
           this.getAllScheduleJobs();
-          this.errorAlertMessage = err.error.description;
+          this.isErrorMessage= true;
+          this.alertMessage = err.error.description;
           this.isLoadingScheduledJobs = false;
-          if (this.errorAlertMessage === undefined) {
-            this.errorAlertMessage = err.error.error;
+          if (this.alertMessage === undefined) {
+            this.isErrorMessage= true;
+            this.alertMessage = err.error.error;
           }
         });
     } else {
@@ -73,14 +77,17 @@ export class ScheduledComponent implements OnInit {
       this.requestsService.deleteSchedule(scheduleTask.id).subscribe(
         res => {
           this.getAllScheduleJobs();
-          this.successAlertMessage = scheduleTask.id + MessageConstants.SCHEDULE_DELETE;
+          this.isErrorMessage= false;
+          this.alertMessage = scheduleTask.id + MessageConstants.SCHEDULE_DELETE;
           this.isLoadingScheduledJobs = false;
         }, err => {
           this.getAllScheduleJobs();
-          this.errorAlertMessage = err.error.description;
+          this.isErrorMessage= true;
+          this.alertMessage = err.error.description;
           this.isLoadingScheduledJobs = false;
-          if (this.errorAlertMessage === undefined) {
-            this.errorAlertMessage = err.error.error;
+          if (this.alertMessage === undefined) {
+            this.isErrorMessage= true;
+            this.alertMessage = err.error.error;
           }
         });
     } else {
@@ -93,14 +100,17 @@ export class ScheduledComponent implements OnInit {
       this.requestsService.cancelSchedule(scheduleTask.id).subscribe(
         res => {
           this.getAllScheduleJobs();
-          this.successAlertMessage = scheduleTask.id + MessageConstants.SCHEDULE_CANCEL;
+          this.isErrorMessage= false;
+          this.alertMessage = scheduleTask.id + MessageConstants.SCHEDULE_CANCEL;
           this.isLoadingScheduledJobs = false;
         }, err => {
           this.getAllScheduleJobs();
-          this.errorAlertMessage = err.error.description;
+          this.isErrorMessage= true;
+          this.alertMessage = err.error.description;
           this.isLoadingScheduledJobs = false;
-          if (this.errorAlertMessage === undefined) {
-            this.errorAlertMessage = err.error.error;
+          if (this.alertMessage === undefined) {
+            this.isErrorMessage= true;
+            this.alertMessage = err.error.error;
           }
         });
     } else {
@@ -113,14 +123,17 @@ export class ScheduledComponent implements OnInit {
       this.requestsService.pauseSchedule(scheduleTask.id).subscribe(
         res => {
           this.getAllScheduleJobs();
-          this.successAlertMessage = scheduleTask.id + MessageConstants.SCHEDULE_PAUSE;
+          this.isErrorMessage= false;
+          this.alertMessage = scheduleTask.id + MessageConstants.SCHEDULE_PAUSE;
           this.isLoadingScheduledJobs = false;
         }, err => {
           this.getAllScheduleJobs();
-          this.errorAlertMessage = err.error.description;
+          this.isErrorMessage= true;
+          this.alertMessage = err.error.description;
           this.isLoadingScheduledJobs = false;
-          if (this.errorAlertMessage === undefined) {
-            this.errorAlertMessage = err.error.error;
+          if (this.alertMessage === undefined) {
+            this.isErrorMessage= true;
+            this.alertMessage = err.error.error;
           }
         });
     } else {
@@ -133,14 +146,16 @@ export class ScheduledComponent implements OnInit {
       this.requestsService.resumeSchedule(scheduleTask.id).subscribe(
         res => {
           this.getAllScheduleJobs();
-          this.successAlertMessage = scheduleTask.id + MessageConstants.SCHEDULE_RESUME;
+          this.isErrorMessage= false;
+          this.alertMessage = scheduleTask.id + MessageConstants.SCHEDULE_RESUME;
           this.isLoadingScheduledJobs = false;
         }, err => {
           this.getAllScheduleJobs();
-          this.errorAlertMessage = err.error.description;
+          this.isErrorMessage= true;
+          this.alertMessage = err.error.description;
           this.isLoadingScheduledJobs = false;
-          if (this.errorAlertMessage === undefined) {
-            this.errorAlertMessage = err.error.error;
+          if (this.alertMessage === undefined) {
+            this.alertMessage = err.error.error;
           }
         });
     } else {
@@ -153,7 +168,8 @@ export class ScheduledComponent implements OnInit {
     this.requestsService.getTaskById(scheduleTask.id).subscribe(
       res => {
         if (res.code) {
-          this.errorAlertMessage = res.description;
+          this.isErrorMessage= true;
+          this.alertMessage = res.description;
           this.isLoadingScheduledTaskDetails = false;
         } else {
           this.scheduledTaskDetails = res;
@@ -168,7 +184,8 @@ export class ScheduledComponent implements OnInit {
           this.isLoadingScheduledTaskDetails = false;
         }
       }, err => {
-        this.errorAlertMessage = err.error.description;
+        this.isErrorMessage= true;
+        this.alertMessage = err.error.description;
         this.isLoadingScheduledTaskDetails = false;
       }
     );

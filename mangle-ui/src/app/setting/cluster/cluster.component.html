@@ -1,4 +1,4 @@
-<app-alert [(errorAlertMessage)]="errorAlertMessage" [(successAlertMessage)]="successAlertMessage" (errorAlertMessageChange)="errorAlertMessage = $event" (successAlertMessageChange)="successAlertMessage = $event"></app-alert>
+<app-alert [(alertMessage)]="alertMessage" [(isErrorMessage)]="isErrorMessage" (alertMessageChange)="alertMessage = $event"></app-alert>
 <table class="table table-vertical">
     <tbody>
         <tr>
@@ -30,5 +30,57 @@
                 <span *ngIf="spinnerActive" class="spinner spinner-inline"></span>
             </td>
         </tr>
+        <tr>
+            <th class="left">Quorum</th>
+            <td class="left">
+                <span *ngIf="!spinnerActive">
+                  {{clusterConfig.quorum}}
+                </span>
+                <span *ngIf="spinnerActive" class="spinner spinner-inline"></span>
+                <clr-icon class="edit-cluster-item is-solid" shape="pencil" (click)="onQuorumEditTrigger()"></clr-icon>
+            </td>
+        </tr>
+        <tr>
+            <th class="left">Deployment mode</th>
+            <td class="left">
+                <span *ngIf="!spinnerActive">
+                  {{clusterConfig.deploymentMode}}
+                </span>
+                <span *ngIf="spinnerActive" class="spinner spinner-inline"></span>
+                <clr-icon class="edit-cluster-item is-solid" shape="pencil" (click)="onDeploymentEditTrigger()"></clr-icon>
+            </td>
+        </tr>
     </tbody>
 </table>
+
+<clr-modal [(clrModalOpen)]="clusterEditModal" *ngIf="clusterConfigEdit">
+  <h3 class="modal-title">{{clusterEditModalTitle}}</h3>
+  <div class="modal-body">
+    <form #clusterForm="ngForm" (ngSubmit)="updateClusterInfo(clusterForm);">
+      <section class="form-block">
+        <div class="form-group">
+          <label for="clusterName">Cluster Name</label>
+          <input type="text" name="clusterName" [(ngModel)]="clusterConfigEdit.clusterName" disabled>
+        </div>
+        <div class="form-group">
+          <label for="validationToken">Validation Token</label>
+          <input type="text" name="validationToken" [(ngModel)]="clusterConfigEdit.validationToken" disabled>
+        </div>
+        <div class="form-group">
+          <label for="quorum">Quorum</label>
+          <input type="text" name="quorum" [(ngModel)]="clusterConfigEdit.quorum" [disabled]="isEditDeployment">
+        </div>
+        <div class="form-group">
+          <label for="deploymentMode">Deployment Mode</label>
+          <select name="authSource" [(ngModel)]="clusterConfigEdit.deploymentMode" [disabled]="isEditQuorum">
+            <ng-container *ngFor="let deploymentMode of deploymentModes">
+              <option [value]="deploymentMode">{{deploymentMode}}</option>
+            </ng-container>
+          </select>
+        </div>
+      </section>
+      <button type="button" class="btn btn-outline" (click)="cancelClusterEdition(clusterForm)">CANCEL</button>
+      <button type="submit" class="btn btn-primary">ADD</button>
+    </form>
+  </div>
+</clr-modal>

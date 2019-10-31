@@ -1,0 +1,20 @@
+#!/bin/bash
+#Un comment to send the output of this script to a logfile
+exec > /opt/vmware/var/log/subsequentboot 2>&1
+
+echo This script is executed on all boots, except the first one.
+#/usr/lib/bootstrap/everyboot
+
+ln -sf /run/systemd/resolve/resolv.conf /etc/resolv.conf
+
+systemctl restart docker
+systemctl daemon-reload
+
+echo starting mangle DB container
+docker start mangleDB
+
+echo sleeping for 20 seconds...
+sleep 20
+
+echo starting mangle WEB container
+docker start mangleWEB

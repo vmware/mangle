@@ -156,7 +156,7 @@ public class ErrorConstants {
     // Docker endpoint error constants
 
     public static final String DOCKER_BAD_CERTIFICATE = "bad_certificate";
-    public static final String CURRENT_PWD_MISMATCH = "Wrong current password";
+    public static final String CURRENT_CREDS_PD_MISMATCH = "Wrong current password";
     public static final String DOCKER_HOST_NAME_NULL = "Host name may not be null";
     public static final String DOCKER_INVALID_ENDPOINT = "Invalid DockerEndpoint";
 
@@ -176,5 +176,10 @@ public class ErrorConstants {
     public static final String CLUSTER_ALREADY_IN_STATE = "The cluster already in the requested state";
     public static final String CLUSTER_TYPE_CONFIG_LESSER_QUORUM =
             "Quorum could not be updated, cluster deployment mode cannot have quorum lesser than 2";
+    public static final String CLUSTER_QUORUM_UPDATE_STANDADLONE_FAILURE = "Quorum modification for standalone deployment mode is not supported";
+
+
+    //User Errors
+    public static final String CREDS_CHANGE_FOR_NON_LOCAL_USER = "Password update for the non-local users are not supported";
 
 }

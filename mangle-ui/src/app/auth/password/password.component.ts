@@ -6,7 +6,8 @@ import { ClrLoadingState } from '@clr/angular';
 
 @Component({
     selector: 'app-password',
-    templateUrl: './password.component.html'
+    templateUrl: './password.component.html',
+    styleUrls: ['./password.component.css']
 })
 export class PasswordComponent implements OnInit {
 
@@ -15,6 +16,9 @@ export class PasswordComponent implements OnInit {
     public errorFlag = false;
     public successFlag = false;
     public alertMessage: string;
+    public showNewPassword = false;
+    public showRetypePassword = false;
+    public showCurrentPassword = false;
 
     public submitBtnState: ClrLoadingState = ClrLoadingState.DEFAULT;
 
@@ -59,6 +63,14 @@ export class PasswordComponent implements OnInit {
 
     public loginAgain() {
         this.router.navigateByUrl('login');
+    }
+
+    public negateShowRetypePassword() {
+      this.showRetypePassword = !this.showRetypePassword;
+    }
+
+    public negateShowNewPassword() {
+      this.showNewPassword = !this.showNewPassword;
     }
 
 }

@@ -5,7 +5,8 @@ import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-core',
-  templateUrl: './core.component.html'
+  templateUrl: './core.component.html',
+  styleUrls: [ './core.component.css' ]
 })
 export class CoreComponent implements OnInit {
 
@@ -14,9 +15,12 @@ export class CoreComponent implements OnInit {
   public user: string;
   public domain: string;
   public isAdminUser: boolean;
+  public showAboutModal: boolean;
+  public mangleVersion: number;
 
   ngOnInit() {
     this.getMyDetails();
+    this.getMangleDetails();
   }
 
   public getMyDetails() {
@@ -33,6 +37,12 @@ export class CoreComponent implements OnInit {
           }
         }
         this.getMyRolesAndPrivileges(roleString);
+      });
+  }
+
+  getMangleDetails() {
+      this.coreService.getMangleApplicationInfo().subscribe(res => {
+            this.mangleVersion = res.app.version;
       });
   }
 

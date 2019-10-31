@@ -15,8 +15,8 @@ export class PluginsComponent implements OnInit {
 
     public pluginFileToUpload: any;
 
-    public errorAlertMessage: string;
-    public successAlertMessage: string;
+    public alertMessage: string;
+    public isErrorMessage: boolean;
 
     public isLoading: boolean = true;
 
@@ -37,7 +37,8 @@ export class PluginsComponent implements OnInit {
                 this.isLoading = false;
             }, err => {
                 this.pluginList = [];
-                this.errorAlertMessage = err.error.description;
+                this.isErrorMessage = true;
+                this.alertMessage = err.error.description;
                 this.isLoading = false;
             });
     }
@@ -61,7 +62,8 @@ export class PluginsComponent implements OnInit {
                 }
                 this.isLoading = false;
             }, err => {
-                this.errorAlertMessage = err.error.description;
+                this.isErrorMessage = true;
+                this.alertMessage = err.error.description;
                 this.isLoading = false;
             });
     }
@@ -75,11 +77,13 @@ export class PluginsComponent implements OnInit {
         this.settingService.uploadPlugin(this.pluginFileToUpload).subscribe(
             res => {
                 this.performPluginAction("LOAD", this.pluginFileToUpload.name);
-                this.successAlertMessage = MessageConstants.PLUGIN_UPLOADED;
+                this.isErrorMessage = false;
+                this.alertMessage = MessageConstants.PLUGIN_UPLOADED;
                 this.getPluginDetails();
                 this.isLoading = false;
             }, err => {
-                this.errorAlertMessage = err.error.description;
+                this.isErrorMessage = true;
+                this.alertMessage = err.error.description;
                 this.getPluginDetails();
                 this.isLoading = false;
             }
@@ -91,11 +95,13 @@ export class PluginsComponent implements OnInit {
             this.isLoading = true;
             this.settingService.deletePlugin(pluginDetailData.pluginId).subscribe(
                 res => {
-                    this.successAlertMessage = pluginDetailData.pluginId + MessageConstants.PLUGIN_DELETE;
+                    this.isErrorMessage = false;
+                    this.alertMessage = pluginDetailData.pluginId + MessageConstants.PLUGIN_DELETE;
                     this.getPluginDetails();
                     this.isLoading = false;
                 }, err => {
-                    this.errorAlertMessage = err.error.description;
+                    this.isErrorMessage = true;
+                    this.alertMessage = err.error.description;
                     this.getPluginDetails();
                     this.isLoading = false;
                 });
@@ -109,11 +115,13 @@ export class PluginsComponent implements OnInit {
             this.isLoading = true;
             this.settingService.detelePluginFile(pluginDetailData.pluginName).subscribe(
                 res => {
-                    this.successAlertMessage = pluginDetailData.pluginName + MessageConstants.PLUGIN_DELETE;
+                    this.isErrorMessage = false;
+                    this.alertMessage = pluginDetailData.pluginName + MessageConstants.PLUGIN_DELETE;
                     this.getPluginDetails();
                     this.isLoading = false;
                 }, err => {
-                    this.errorAlertMessage = err.error.description;
+                    this.isErrorMessage = true;
+                    this.alertMessage = err.error.description;
                     this.getPluginDetails();
                     this.isLoading = false;
                 });
@@ -128,11 +136,13 @@ export class PluginsComponent implements OnInit {
         this.pluginInfo.pluginName = pluginName;
         this.settingService.performPluginAction(this.pluginInfo).subscribe(
             res => {
-                this.successAlertMessage = pluginAction + MessageConstants.PLUGIN_ACTION_MESSAGE + pluginName + MessageConstants.PLUGIN_ACTION_COMPLETED;
+                this.isErrorMessage = false;
+                this.alertMessage = pluginAction + MessageConstants.PLUGIN_ACTION_MESSAGE + pluginName + MessageConstants.PLUGIN_ACTION_COMPLETED;
                 this.getPluginDetails();
                 this.isLoading = false;
             }, err => {
-                this.errorAlertMessage = err.error.description;
+                this.isErrorMessage = true;
+                this.alertMessage = err.error.description;
                 this.getPluginDetails();
                 this.isLoading = false;
             }

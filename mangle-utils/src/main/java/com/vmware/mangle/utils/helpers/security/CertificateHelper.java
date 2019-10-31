@@ -46,17 +46,17 @@ public class CertificateHelper {
 
             @Override
             public X509Certificate[] getAcceptedIssuers() {
-                return null;
+                return new X509Certificate[]{};
             }
 
             @Override
             public void checkServerTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
-
+                    //No code changes required in this method
             }
 
             @Override
             public void checkClientTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
-
+                    //No code changes required in this method
             }
         } };
 

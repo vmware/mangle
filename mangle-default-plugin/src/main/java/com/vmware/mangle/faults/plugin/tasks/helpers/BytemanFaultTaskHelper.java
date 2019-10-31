@@ -14,7 +14,6 @@ package com.vmware.mangle.faults.plugin.tasks.helpers;
 import static com.vmware.mangle.services.dto.AgentRuleConstants.CLASS_NAME;
 import static com.vmware.mangle.services.dto.AgentRuleConstants.METHOD_NAME;
 import static com.vmware.mangle.services.dto.AgentRuleConstants.RULE_EVENT;
-import static com.vmware.mangle.utils.constants.FaultConstants.AGENT_NAME;
 import static com.vmware.mangle.utils.constants.FaultConstants.FAULT_NAME_ARG;
 import static com.vmware.mangle.utils.constants.FaultConstants.FAULT_TYPE;
 import static com.vmware.mangle.utils.constants.FaultConstants.JAVA_HOME_PATH;
@@ -150,7 +149,8 @@ public class BytemanFaultTaskHelper<T extends CommandExecutionFaultSpec>
         if (!CollectionUtils.isEmpty(listOfFaultInjectionScripts) && task.getTaskType() != TaskType.REMEDIATION
                 && endpoint.getEndPointType().equals(EndpointType.DOCKER)) {
             for (SupportScriptInfo faultInjectionScriptInfo : listOfFaultInjectionScripts) {
-                String filePath = ConstantsUtils.getMangleSupportScriptDirectory() + File.separator + AGENT_NAME;
+                String filePath = ConstantsUtils.getMangleSupportScriptDirectory() + File.separator
+                        + faultInjectionScriptInfo.getScriptFileName();
                 pluginUtils.copyScriptFileToMangleDirectory(faultInjectionScriptInfo);
                 CommandUtils.runCommand("chmod u+x " + filePath);
                 CustomDockerClient customDockerClient = (CustomDockerClient) (endpointClientFactory

@@ -138,6 +138,26 @@ public class PopulateFaultEventDataTest extends PowerMockTestCase {
         Assert.assertNotNull(eventData.getFaultEndTime());
     }
 
+    @Test(description = "Validate populating of Fault Event data when Task status is Failed and fautt time out is null")
+    public void faultSpecDataWhenTaskFailedAndTimeOutIsNull() {
+        log.info("Validating the fault event data when all valid data are populated");
+        populateBaseData();
+        when(task.getTaskType()).thenReturn(TaskType.INJECTION);
+        when(commandExecutionFaultSpec.getEndpoint()).thenReturn(endpoint);
+        when(commandExecutionFaultSpec.getTimeoutInMilliseconds()).thenReturn(null);
+        when(trigger.getTaskStatus()).thenReturn(TaskStatus.FAILED);
+        getFaultData();
+
+        PopulateFaultEventData populateTaskData = new PopulateFaultEventData(task);
+        FaultEventSpec eventData = populateTaskData.getFaultEventSpec();
+
+        Assert.assertEquals(faultName + "-" + TaskType.INJECTION, eventData.getFaultName());
+        Assert.assertEquals(faultStartTime, eventData.getFaultStartTime());
+        Assert.assertEquals(taskID, eventData.getTaskId());
+        Assert.assertEquals(TaskStatus.FAILED.name(), eventData.getFaultStatus());
+        Assert.assertNotNull(eventData.getFaultEndTime());
+    }
+
     private void getFaultData() {
         populateTags();
 

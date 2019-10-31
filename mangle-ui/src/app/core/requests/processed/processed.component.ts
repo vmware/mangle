@@ -16,8 +16,8 @@ export class ProcessedComponent implements OnInit {
 
   }
 
-  public errorAlertMessage: string;
-  public successAlertMessage: string;
+  public alertMessage: string;
+  public isErrorMessage: boolean;
 
   public extraData: string;
 
@@ -61,7 +61,8 @@ export class ProcessedComponent implements OnInit {
       }, err => {
         this.processedRequests = [];
         this.isLoading = false;
-        this.errorAlertMessage = err.error.description;
+        this.isErrorMessage= true;
+        this.alertMessage = err.error.description;
         this.isLoading = false;
       });
   }
@@ -72,14 +73,16 @@ export class ProcessedComponent implements OnInit {
       this.requestsService.deleteTask(processedRequest.id).subscribe(
         res => {
           this.getAllProcessedTasks();
-          this.successAlertMessage = processedRequest.taskName + MessageConstants.TASK_DELETE;
+          this.isErrorMessage= false;
+          this.alertMessage = processedRequest.taskName + MessageConstants.TASK_DELETE;
           this.isLoading = false;
         }, err => {
           this.getAllProcessedTasks();
-          this.errorAlertMessage = err.error.description;
+          this.isErrorMessage= true;
+          this.alertMessage = err.error.description;
           this.isLoading = false;
-          if (this.errorAlertMessage === undefined) {
-            this.errorAlertMessage = err.error.error;
+          if (this.alertMessage === undefined) {
+            this.alertMessage = err.error.error;
           }
         });
     } else {
@@ -93,14 +96,16 @@ export class ProcessedComponent implements OnInit {
       this.requestsService.remediateFault(processedRequest.id).subscribe(
         res => {
           this.getAllProcessedTasks();
-          this.successAlertMessage = processedRequest.taskName + MessageConstants.REMEDIATION_TASK_TRIGGERED;
+          this.isErrorMessage= false;
+          this.alertMessage = processedRequest.taskName + MessageConstants.REMEDIATION_TASK_TRIGGERED;
           this.isLoading = false;
         }, err => {
           this.getAllProcessedTasks();
-          this.errorAlertMessage = err.error.description;
+          this.isErrorMessage= true;
+          this.alertMessage = err.error.description;
           this.isLoading = false;
-          if (this.errorAlertMessage === undefined) {
-            this.errorAlertMessage = err.error.error;
+          if (this.alertMessage === undefined) {
+            this.alertMessage = err.error.error;
           }
         });
     } else {
@@ -114,17 +119,20 @@ export class ProcessedComponent implements OnInit {
       res => {
         this.getAllProcessedTasks();
         if (processedRequest.taskType == "REMEDIATION") {
-          this.successAlertMessage = MessageConstants.REMEDIATION_RE_TRIGGERED;
+          this.isErrorMessage= false;
+          this.alertMessage = MessageConstants.REMEDIATION_RE_TRIGGERED;
         } else {
-          this.successAlertMessage = MessageConstants.FAULT_TRIGGERED;
+          this.isErrorMessage= false;
+          this.alertMessage = MessageConstants.FAULT_TRIGGERED;
         }
         this.isLoading = false;
       }, err => {
         this.getAllProcessedTasks();
-        this.errorAlertMessage = err.error.description;
+        this.isErrorMessage= true;
+        this.alertMessage = err.error.description;
         this.isLoading = false;
-        if (this.errorAlertMessage === undefined) {
-          this.errorAlertMessage = err.error.error;
+        if (this.alertMessage === undefined) {
+          this.alertMessage = err.error.error;
         }
       });
   }
@@ -300,15 +308,18 @@ export class ProcessedComponent implements OnInit {
       req => {
         if (req.length > 0) {
           if (req[0].pluginVersion != this.dataService.sharedData.pluginMetaInfo.pluginVersion) {
-            this.errorAlertMessage = MessageConstants.PLUGIN_UPGRADED_ERR;
+            this.isErrorMessage= true;
+            this.alertMessage = MessageConstants.PLUGIN_UPGRADED_ERR;
           } else {
             this.router.navigateByUrl(CommonConstants.CUSTOM_FAULT_URL);
           }
         } else {
-          this.errorAlertMessage = MessageConstants.PLUGIN_UNAVAILABLE;
+          this.isErrorMessage= true;
+          this.alertMessage = MessageConstants.PLUGIN_UNAVAILABLE;
         }
       }, err => {
-        this.errorAlertMessage = err.error.error;
+        this.isErrorMessage= true;
+        this.alertMessage = err.error.error;
       }
     );
   }

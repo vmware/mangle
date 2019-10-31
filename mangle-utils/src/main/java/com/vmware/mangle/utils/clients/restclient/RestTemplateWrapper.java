@@ -17,11 +17,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.List;
-
-import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
@@ -83,7 +80,7 @@ public class RestTemplateWrapper {
 
         @Override
         public X509Certificate[] getAcceptedIssuers() {
-            return null;
+            return new X509Certificate[]{};
         }
 
         @Override
@@ -148,26 +145,21 @@ public class RestTemplateWrapper {
             sc = SSLContext.getInstance("TLSv1.2");
             sc.init(null, UNQUESTIONING_TRUST_MANAGER, null);
             HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-            HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier() {
-                @Override
-                public boolean verify(String arg0, SSLSession arg1) {
-                    return true;
-                }
-            });
+            HttpsURLConnection.setDefaultHostnameVerifier((arg0, arg1) -> true);
 
         } catch (NoSuchAlgorithmException | KeyManagementException e) {
             log.error(e);
         }
     }
 
-    public ResponseEntity<?> get(String urlSuffix, Class<?> clz) {
+    public ResponseEntity get(String urlSuffix, Class<?> clz) {
         log.trace(GET_STARTS_MESSAGE);
         setHttpRequestMethod(HttpMethod.GET);
         setRequestUrl(this.baseUrl + urlSuffix);
         return execute(clz);
     }
 
-    public ResponseEntity<?> get(String urlSuffix, ParameterizedTypeReference<?> responseType) {
+    public ResponseEntity get(String urlSuffix, ParameterizedTypeReference<?> responseType) {
         log.trace(GET_STARTS_MESSAGE);
         setHttpRequestMethod(HttpMethod.GET);
         setRequestUrl(this.baseUrl + urlSuffix);
@@ -175,7 +167,7 @@ public class RestTemplateWrapper {
         return execute(responseType);
     }
 
-    public ResponseEntity<?> put(String urlSuffix, String jsonRequest, Class<?> clz) {
+    public ResponseEntity put(String urlSuffix, String jsonRequest, Class<?> clz) {
         log.trace(PUT_STARTS_MESSAGE);
         setHttpRequestMethod(HttpMethod.PUT);
         setRequestUrl(this.baseUrl + urlSuffix);
@@ -183,7 +175,7 @@ public class RestTemplateWrapper {
         return execute(clz);
     }
 
-    public ResponseEntity<?> put(String urlSuffix, String jsonRequest, ParameterizedTypeReference<?> responseType) {
+    public ResponseEntity put(String urlSuffix, String jsonRequest, ParameterizedTypeReference<?> responseType) {
         log.trace(PUT_STARTS_MESSAGE);
         setHttpRequestMethod(HttpMethod.PUT);
         setRequestUrl(this.baseUrl + urlSuffix);
@@ -191,7 +183,7 @@ public class RestTemplateWrapper {
         return execute(responseType);
     }
 
-    public ResponseEntity<?> post(String urlSuffix, String jsonRequest, Class<?> clz) {
+    public ResponseEntity post(String urlSuffix, String jsonRequest, Class<?> clz) {
         log.trace(POST_STARTS_MESSAGE);
         setHttpRequestMethod(HttpMethod.POST);
         setRequestUrl(this.baseUrl + urlSuffix);
@@ -199,16 +191,16 @@ public class RestTemplateWrapper {
         return execute(clz);
     }
 
-    public ResponseEntity<?> post(String urlSuffix, String jsonRequest, Class<?> clz, MediaType mediaType) {
+    public ResponseEntity post(String urlSuffix, String jsonRequest, Class<?> clz, MediaType mediaType) {
         this.headers.setContentType(mediaType);
         return post(urlSuffix, jsonRequest, clz);
     }
 
-    public ResponseEntity<?> postForEntity(String urlSuffix, MultiValueMap<String, Object> formData, Class<?> clz) {
+    public ResponseEntity postForEntity(String urlSuffix, MultiValueMap<String, Object> formData, Class<?> clz) {
         return postForEntity(urlSuffix, formData, clz, MediaType.MULTIPART_FORM_DATA);
     }
 
-    public ResponseEntity<?> postForEntity(String urlSuffix, MultiValueMap<String, Object> formData, Class<?> clz,
+    public ResponseEntity postForEntity(String urlSuffix, MultiValueMap<String, Object> formData, Class<?> clz,
             MediaType mediaType) {
         log.trace(POST_STARTS_MESSAGE);
         setHttpRequestMethod(HttpMethod.POST);
@@ -219,12 +211,12 @@ public class RestTemplateWrapper {
         return execute(clz);
     }
 
-    public ResponseEntity<?> postForEntity(String urlSuffix, MultiValueMap<String, Object> formData,
+    public ResponseEntity postForEntity(String urlSuffix, MultiValueMap<String, Object> formData,
             ParameterizedTypeReference<?> responseType) {
         return postForEntity(urlSuffix, formData, responseType, MediaType.MULTIPART_FORM_DATA);
     }
 
-    public ResponseEntity<?> postForEntity(String urlSuffix, MultiValueMap<String, Object> formData,
+    public ResponseEntity postForEntity(String urlSuffix, MultiValueMap<String, Object> formData,
             ParameterizedTypeReference<?> responseType, MediaType mediaType) {
         log.trace(POST_STARTS_MESSAGE);
         setHttpRequestMethod(HttpMethod.POST);
@@ -234,11 +226,11 @@ public class RestTemplateWrapper {
         return execute(responseType);
     }
 
-    public ResponseEntity<?> delete(String urlSuffix, Class<?> clz) {
+    public ResponseEntity delete(String urlSuffix, Class<?> clz) {
         return delete(urlSuffix, null, clz);
     }
 
-    public ResponseEntity<?> delete(String urlSuffix, String jsonRequest, Class<?> clz) {
+    public ResponseEntity delete(String urlSuffix, String jsonRequest, Class<?> clz) {
         log.trace(DELETE_STARTS_MESSAGE);
         setHttpRequestMethod(HttpMethod.DELETE);
         setRequestUrl(this.baseUrl + urlSuffix);
@@ -246,11 +238,11 @@ public class RestTemplateWrapper {
         return execute(clz);
     }
 
-    public ResponseEntity<?> delete(String urlSuffix, ParameterizedTypeReference<?> responseType) {
+    public ResponseEntity delete(String urlSuffix, ParameterizedTypeReference<?> responseType) {
         return delete(urlSuffix, null, responseType);
     }
 
-    public ResponseEntity<?> delete(String urlSuffix, String jsonRequest, ParameterizedTypeReference<?> responseType) {
+    public ResponseEntity delete(String urlSuffix, String jsonRequest, ParameterizedTypeReference<?> responseType) {
         log.trace(DELETE_STARTS_MESSAGE);
         setHttpRequestMethod(HttpMethod.DELETE);
         setRequestUrl(this.baseUrl + urlSuffix);
@@ -280,7 +272,7 @@ public class RestTemplateWrapper {
         try {
             intializeHttpEntity();
             response =
-                    restTemplate.exchange(getRequestUrl(), getHttpRequestMethod(), entity, responseType, new Object[0]);
+                    restTemplate.exchange(getRequestUrl(), getHttpRequestMethod(), entity, responseType);
             log.trace("Response body -" + objectToXml(response.getBody()));
             return response;
 
@@ -360,14 +352,6 @@ public class RestTemplateWrapper {
         } catch (IOException e) {
             throw new MangleRuntimeException(e,ErrorCode.MALFORMED_PLUGIN_DESCRIPTOR);
         }
-    }
-
-    public HttpMethod getMethod() {
-        return method;
-    }
-
-    public void setMethod(HttpMethod method) {
-        this.method = method;
     }
 
     public String getBaseUrl() {

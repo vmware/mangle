@@ -12,8 +12,8 @@ import { CommonUtils } from 'src/app/shared/commonUtils';
 })
 export class MemoryComponent implements OnInit {
 
-  public errorAlertMessage: string;
-  public successAlertMessage: string;
+  public alertMessage: string;
+  public isErrorMessage: boolean;
 
   public cronModal: boolean = false;
 
@@ -78,7 +78,8 @@ export class MemoryComponent implements OnInit {
         }
       }, err => {
         this.endpoints = [];
-        this.errorAlertMessage = err.error.description;
+        this.isErrorMessage= true;
+        this.alertMessage = err.error.description;
       });
     if (this.dataService.sharedData != null) {
       this.populateFaultData();
@@ -143,7 +144,8 @@ export class MemoryComponent implements OnInit {
           }
         }, err => {
           this.dockerContainers = [];
-          this.errorAlertMessage = err.error.description;
+          this.isErrorMessage= true;
+          this.alertMessage = err.error.description;
         }
       );
     }
@@ -227,9 +229,10 @@ export class MemoryComponent implements OnInit {
           this.router.navigateByUrl('core/requests/scheduled');
         }
       }, err => {
-        this.errorAlertMessage = err.error.description;
-        if (this.errorAlertMessage === undefined) {
-          this.errorAlertMessage = err.error.error;
+        this.isErrorMessage= true;
+        this.alertMessage = err.error.description;
+        if (this.alertMessage === undefined) {
+          this.alertMessage = err.error.error;
         }
         this.runBtnState = ClrLoadingState.DEFAULT;
       });

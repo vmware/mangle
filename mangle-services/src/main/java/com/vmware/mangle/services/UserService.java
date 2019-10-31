@@ -15,11 +15,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.ListIterator;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
@@ -34,7 +33,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -95,10 +93,10 @@ public class UserService implements HazelcastClusterSyncAware {
         if (user != null) {
             user.setRoles(new HashSet<>(roleService.getRolesByNames(user.getRoleNames())));
             roles = user.getRoles();
-            log.info(String.format("Found %d roles for user %s", roles.size(), username));
+            log.debug(String.format("Found %d roles for user %s", roles.size(), username));
             log.debug(String.format("Roles for user %s are: %s", username, roles.toString()));
         } else {
-            log.info(String.format("User %s does not have any rules defined", username));
+            log.debug(String.format("User %s does not have any roles defined", username));
         }
         return roles;
     }
@@ -112,19 +110,30 @@ public class UserService implements HazelcastClusterSyncAware {
         return user;
     }
 
+    /**
+     * to update the user details
+     *
+     * @param user
+     * @return
+     * @throws MangleException
+     */
     public User updateUser(User user) throws MangleException {
         User dbUser = getUserByName(user.getName());
+        UsernameDomain usernameDomain = extractUserAndDomain(user.getName());
 
+        // Check if there exists user in the application, if the user with a given doesn't exist
+        // throw an exception
         if (dbUser == null) {
             log.error(String.format("Failed to find the user %s, execution of the updateUser failed", user.getName()));
             throw new MangleException(ErrorConstants.USER_NOT_FOUND, ErrorCode.USER_NOT_FOUND, user.getName());
         }
-        if (StringUtils.hasText(user.getPassword()) && !bCryptPattern.matcher(user.getPassword()).matches()) {
-            dbUser.setPassword(passwordEncoder.encode(user.getPassword()));
-        }
+
+        verifyDomainInfo(usernameDomain);
+        initializeDefaultRoles(user);
         dbUser.setRoleNames(user.getRoleNames());
+        dbUser.setRoles(getPersitentRoles(user.getRoleNames()));
         dbUser.setAccountLocked(user.getAccountLocked());
-        return createUser(dbUser);
+        return userRepository.save(dbUser);
     }
 
     public void updatePassword(String username, String currentPassword, String newPassword) throws MangleException {
@@ -134,27 +143,28 @@ public class UserService implements HazelcastClusterSyncAware {
             throw new MangleException(ErrorConstants.USER_NOT_FOUND, ErrorCode.USER_NOT_FOUND, username);
         }
 
+        UsernameDomain usernameDomain = extractUserAndDomain(username);
+
+        if (usernameDomain.getDomain() != null && !usernameDomain.getDomain().equals(Constants.LOCAL_DOMAIN_NAME)) {
+            throw new MangleException(ErrorConstants.CREDS_CHANGE_FOR_NON_LOCAL_USER,
+                    ErrorCode.PASSWORD_CHANGE_FOR_NON_LOCAL_USER);
+        }
+
         if (!passwordEncoder.matches(currentPassword, dbUser.getPassword())) {
             log.error("Failed to update the password for the user {}, incorrect current password ", username);
-            throw new MangleException(ErrorConstants.CURRENT_PWD_MISMATCH, ErrorCode.CURRENT_PASSWORD_MISMATCH);
+            throw new MangleException(ErrorConstants.CURRENT_CREDS_PD_MISMATCH, ErrorCode.CURRENT_PASSWORD_MISMATCH);
         }
+
         dbUser.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(dbUser);
     }
 
     public User createUser(User user) throws MangleException {
-        log.info("Creating user " + user.getName());
+        log.debug("Creating user " + user.getName());
         UsernameDomain usernameDomain = extractUserAndDomain(user.getName());
-        if (usernameDomain.getDomain() == null || (!usernameDomain.getDomain().equals(Constants.LOCAL_DOMAIN_NAME)
-                && !authProviderService.getAllDomains().contains(usernameDomain.getDomain()))) {
-            throw new MangleException(ErrorConstants.INVALID_DOMAIN_NAME, ErrorCode.INVALID_DOMAIN_NAME);
-        }
 
-        if (CollectionUtils.isEmpty(user.getRoleNames())) {
-            user.setRoleNames(new HashSet<>());
-        }
-
-        user.getRoleNames().add(DefaultRoles.ROLE_READONLY.name());
+        verifyDomainInfo(usernameDomain);
+        initializeDefaultRoles(user);
 
         user.setRoles(getPersitentRoles(user.getRoleNames()));
         if (usernameDomain.getDomain().equals(getDefaultDomainName())
@@ -162,6 +172,21 @@ public class UserService implements HazelcastClusterSyncAware {
             user.setPassword(passwordEncoder.encode(user.getPassword()));
         }
         return userRepository.save(user);
+    }
+
+    private void verifyDomainInfo(UsernameDomain usernameDomain) throws MangleException {
+        if (usernameDomain.getDomain() == null || (!usernameDomain.getDomain().equals(Constants.LOCAL_DOMAIN_NAME)
+                && !authProviderService.getAllDomains().contains(usernameDomain.getDomain()))) {
+            throw new MangleException(ErrorConstants.INVALID_DOMAIN_NAME, ErrorCode.INVALID_DOMAIN_NAME);
+        }
+    }
+
+    private void initializeDefaultRoles(User user) {
+        if (CollectionUtils.isEmpty(user.getRoleNames())) {
+            user.setRoleNames(new HashSet<>());
+        }
+
+        user.getRoleNames().add(DefaultRoles.ROLE_READONLY.name());
     }
 
     public List<User> getAllUsers() {
@@ -313,9 +338,9 @@ public class UserService implements HazelcastClusterSyncAware {
                     (org.springframework.security.core.userdetails.User) principalObj;
             return user.getUsername();
         } else if (principalObj instanceof org.springframework.security.ldap.userdetails.LdapUserDetailsImpl) {
-            org.springframework.security.ldap.userdetails.LdapUserDetailsImpl ldap_user =
+            org.springframework.security.ldap.userdetails.LdapUserDetailsImpl ldapUser =
                     (org.springframework.security.ldap.userdetails.LdapUserDetailsImpl) principalObj;
-            return ldap_user.getUsername();
+            return ldapUser.getUsername();
         }
         return null;
     }
@@ -335,13 +360,12 @@ public class UserService implements HazelcastClusterSyncAware {
     }
 
     /**
-     * Funciton to create HashMap where Users as key and List of Sessions Used by that user as
-     * values
+     * Funciton to create HashMap where Users as key and List of Sessions Used by that user as values
      *
      * @return hashMap
      *
      */
-    public HashMap<String, List<SessionInformation>> allUserToSessionsMapping() {
+    public Map<String, List<SessionInformation>> allUserToSessionsMapping() {
         HashMap<String, List<SessionInformation>> usersToSessionsMapping = new HashMap<>();
         List<String> users = getUsersFromSessionRegistry();
         List<SessionInformation> sessions = getAllActiveSessions();
@@ -349,11 +373,9 @@ public class UserService implements HazelcastClusterSyncAware {
             for (SessionInformation session : sessions) {
                 String user = getUserFromSession(session);
                 if (user != null) {
-                    List<SessionInformation> sessionList;
-                    if (!(usersToSessionsMapping.containsKey(user))) {
-                        sessionList = new ArrayList<>();
-                    } else {
-                        sessionList = usersToSessionsMapping.get(user);
+                    List<SessionInformation> sessionList = new ArrayList<>();
+                    if (usersToSessionsMapping.containsKey(user)) {
+                        sessionList.addAll(usersToSessionsMapping.get(user));
                     }
                     sessionList.add(session);
                     usersToSessionsMapping.put(user, sessionList);
@@ -371,11 +393,9 @@ public class UserService implements HazelcastClusterSyncAware {
      *
      */
     public void terminateUserSession(String user) {
-        HashMap<String, List<SessionInformation>> usersToSessionsMapping = allUserToSessionsMapping();
+        Map<String, List<SessionInformation>> usersToSessionsMapping = allUserToSessionsMapping();
         if (usersToSessionsMapping.containsKey(user)) {
-            ListIterator iterator = usersToSessionsMapping.get(user).listIterator();
-            while (iterator.hasNext()) {
-                SessionInformation session = (SessionInformation) iterator.next();
+            for (SessionInformation session : usersToSessionsMapping.get(user)) {
                 if (!(session.isExpired())) {
                     log.info("Calling Session Expire method for the User " + user);
                     session.expireNow();

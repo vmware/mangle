@@ -23,7 +23,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import javax.naming.AuthenticationException;
 import javax.naming.Context;
 import javax.naming.NamingException;
@@ -59,6 +58,7 @@ import com.vmware.mangle.cassandra.model.security.Privilege;
 import com.vmware.mangle.cassandra.model.security.Role;
 import com.vmware.mangle.cassandra.model.security.User;
 import com.vmware.mangle.services.PrivilegeService;
+import com.vmware.mangle.services.UserLoginAttemptsService;
 import com.vmware.mangle.services.UserService;
 import com.vmware.mangle.utils.exceptions.MangleException;
 
@@ -103,6 +103,7 @@ import com.vmware.mangle.utils.exceptions.MangleException;
  */
 @Order
 @Log4j2
+@SuppressWarnings("squid:S1149")
 public class CustomActiveDirectoryLdapAuthenticationProvider extends AbstractLdapAuthenticationProvider {
     private static final Pattern SUB_ERROR_CODE = Pattern.compile(".*data\\s([0-9a-f]{3,4}).*");
 
@@ -115,21 +116,18 @@ public class CustomActiveDirectoryLdapAuthenticationProvider extends AbstractLda
     private static final int ACCOUNT_EXPIRED = 0x701;
     private static final int PASSWORD_NEEDS_RESET = 0x773;
     private static final int ACCOUNT_LOCKED = 0x775;
-
+    private static final String TEST_USER = "test_user";
     private final String domain;
     private final String rootDn;
     private final String url;
+    // Only used to allow tests to substitute a mock LdapContext
+    ContextFactory contextFactory = new ContextFactory();
     private boolean convertSubErrorCodesToExceptions;
     private String searchFilter = "(&(objectClass=user)(userPrincipalName={0}))";
     private Map<String, Object> contextEnvironmentProperties = new HashMap<>();
-
-    // Only used to allow tests to substitute a mock LdapContext
-    ContextFactory contextFactory = new ContextFactory();
-
-    private static final String TEST_USER = "test_user";
-
     private UserService userService;
     private PrivilegeService privilegeService;
+    private UserLoginAttemptsService userLoginAttemptsService;
 
     /**
      * @param domain
@@ -139,10 +137,12 @@ public class CustomActiveDirectoryLdapAuthenticationProvider extends AbstractLda
      * @param privilegeService
      *            the root DN (may be null or empty)
      */
-    public CustomActiveDirectoryLdapAuthenticationProvider(UserService userService, PrivilegeService privilegeService,
-            String domain, String url) {
+    public CustomActiveDirectoryLdapAuthenticationProvider(UserService userService,
+            UserLoginAttemptsService userLoginAttemptsService, PrivilegeService privilegeService, String domain,
+            String url) {
         Assert.isTrue(StringUtils.hasText(url), "Url cannot be empty");
         this.userService = userService;
+        this.userLoginAttemptsService = userLoginAttemptsService;
         this.privilegeService = privilegeService;
         this.domain = StringUtils.hasText(domain) ? domain.toLowerCase() : null;
         this.url = url;
@@ -156,7 +156,9 @@ public class CustomActiveDirectoryLdapAuthenticationProvider extends AbstractLda
 
         DirContext ctx = bindAsUser(username, password);
         try {
-            return searchForUser(ctx, username);
+            DirContextOperations userDetails = searchForUser(ctx, username);
+            userLoginAttemptsService.resetFailAttempts(username);
+            return userDetails;
         } catch (NamingException e) {
             log.error("Failed to locate directory entry for authenticated user: " + username, e);
             throw badCredentials(e);
@@ -166,8 +168,8 @@ public class CustomActiveDirectoryLdapAuthenticationProvider extends AbstractLda
     }
 
     /**
-     * Creates the user authority list from the values of the {@code memberOf} attribute obtained
-     * from the user's Active Directory entry.
+     * Creates the user authority list from the values of the {@code memberOf} attribute obtained from
+     * the user's Active Directory entry.
      */
     @Override
     protected Collection<? extends GrantedAuthority> loadUserAuthorities(DirContextOperations userData, String username,
@@ -233,13 +235,11 @@ public class CustomActiveDirectoryLdapAuthenticationProvider extends AbstractLda
 
         try {
             return contextFactory.createContext(env);
+        } catch (AuthenticationException | OperationNotSupportedException e) {
+            handleBindException(bindPrincipal, e);
+            throw badCredentials(e);
         } catch (NamingException e) {
-            if ((e instanceof AuthenticationException) || (e instanceof OperationNotSupportedException)) {
-                handleBindException(bindPrincipal, e);
-                throw badCredentials(e);
-            } else {
-                throw LdapUtils.convertLdapException(e);
-            }
+            throw LdapUtils.convertLdapException(e);
         }
     }
 
@@ -253,11 +253,11 @@ public class CustomActiveDirectoryLdapAuthenticationProvider extends AbstractLda
         int subErrorCode = parseSubErrorCode(exception.getMessage());
 
         if (subErrorCode <= 0) {
-            logger.debug("Failed to locate AD-specific sub-error code in message");
+            log.debug("Failed to locate AD-specific sub-error code in message");
             return;
         }
 
-        log.info("Active Directory authentication failed: " + subCodeToLogMessage(subErrorCode));
+        log.debug("Active Directory authentication failed");
 
         if (convertSubErrorCodesToExceptions) {
             raiseExceptionForErrorCode(subErrorCode, exception);
@@ -396,8 +396,8 @@ public class CustomActiveDirectoryLdapAuthenticationProvider extends AbstractLda
      * By default, a failed authentication (LDAP error 49) will result in a
      * {@code BadCredentialsException}.
      * <p>
-     * If this property is set to {@code true}, the exception message from a failed bind attempt
-     * will be parsed for the AD-specific error code and a {@link CredentialsExpiredException},
+     * If this property is set to {@code true}, the exception message from a failed bind attempt will be
+     * parsed for the AD-specific error code and a {@link CredentialsExpiredException},
      * {@link DisabledException}, {@link AccountExpiredException} or {@link LockedException} will be
      * thrown for the corresponding codes. All other codes will result in the default
      * {@code BadCredentialsException}.
@@ -438,12 +438,6 @@ public class CustomActiveDirectoryLdapAuthenticationProvider extends AbstractLda
         this.contextEnvironmentProperties = new Hashtable<>(environment);
     }
 
-    static class ContextFactory {
-        DirContext createContext(Hashtable<?, ?> env) throws NamingException {
-            return new InitialLdapContext(env, null);
-        }
-    }
-
     public boolean testConnection() {
         UsernamePasswordAuthenticationToken authToken =
                 new UsernamePasswordAuthenticationToken(TEST_USER, UUID.randomUUID().toString());
@@ -456,5 +450,11 @@ public class CustomActiveDirectoryLdapAuthenticationProvider extends AbstractLda
             return true;
         }
         return false;
+    }
+
+    static class ContextFactory {
+        DirContext createContext(Hashtable<?, ?> env) throws NamingException {
+            return new InitialLdapContext(env, null);
+        }
     }
 }

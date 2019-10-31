@@ -11,8 +11,8 @@ export class RolesComponent implements OnInit {
 
     constructor(private settingService: SettingService) { }
 
-    public errorAlertMessage: string;
-    public successAlertMessage: string;
+    public alertMessage: string;
+    public isErrorMessage: boolean;
 
     public roleModal: boolean = false;
 
@@ -65,7 +65,8 @@ export class RolesComponent implements OnInit {
             }, err => {
                 this.roleList = [];
                 this.isLoading = false;
-                this.errorAlertMessage = err.error.description;
+                this.isErrorMessage= true;
+                this.alertMessage = err.error.description;
             });
     }
 
@@ -99,13 +100,15 @@ export class RolesComponent implements OnInit {
         this.settingService.addRole(roleFormValue).subscribe(
             res => {
                 this.getRoleList();
-                this.successAlertMessage = roleFormValue.name + MessageConstants.ROLE_ADD;
+                this.isErrorMessage= false;
+                this.alertMessage = roleFormValue.name + MessageConstants.ROLE_ADD;
                 this.isLoading = false;
                 this.submitBtnState = ClrLoadingState.DEFAULT;
                 this.roleModal = false;
             }, err => {
                 this.getRoleList();
-                this.errorAlertMessage = err.error.description;
+                this.isErrorMessage= true;
+                this.alertMessage = err.error.description;
                 this.isLoading = false;
                 this.submitBtnState = ClrLoadingState.DEFAULT;
                 this.roleModal = false;
@@ -117,13 +120,15 @@ export class RolesComponent implements OnInit {
         this.settingService.updateRole(roleFormValue).subscribe(
             res => {
                 this.getRoleList();
-                this.successAlertMessage = roleFormValue.name + MessageConstants.ROLE_UPDATE;
+                this.isErrorMessage= false;
+                this.alertMessage = roleFormValue.name + MessageConstants.ROLE_UPDATE;
                 this.isLoading = false;
                 this.submitBtnState = ClrLoadingState.DEFAULT;
                 this.roleModal = false;
             }, err => {
                 this.getRoleList();
-                this.errorAlertMessage = err.error.description;
+                this.isErrorMessage= true;
+                this.alertMessage = err.error.description;
                 this.isLoading = false;
                 this.submitBtnState = ClrLoadingState.DEFAULT;
                 this.roleModal = false;
@@ -135,11 +140,13 @@ export class RolesComponent implements OnInit {
             this.settingService.deleteRole(role.name).subscribe(
                 res => {
                     this.getRoleList();
-                    this.successAlertMessage = role.name + MessageConstants.ROLE_DELETE;
+                    this.isErrorMessage= false;
+                    this.alertMessage = role.name + MessageConstants.ROLE_DELETE;
                     this.isLoading = false;
                 }, err => {
                     this.getRoleList();
-                    this.errorAlertMessage = err.error.description;
+                    this.isErrorMessage= true;
+                    this.alertMessage = err.error.description;
                     this.isLoading = false;
                 });
         } else {

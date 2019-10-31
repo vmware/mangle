@@ -1,0 +1,13 @@
+.show-password {
+  float: right;
+  margin-top: 10px;
+  cursor: pointer;
+}
+
+.login-element {
+  width: 95%;
+}
+
+.clr-select-wrapper::after, .select::after {
+  right: 0.98rem;
+}

@@ -35,7 +35,7 @@ public class MangleApplication {
         log.info("Application initialization inprogress...");
         context = SpringApplication.run(MangleApplication.class, args);
         log.info("Application initialization completed...");
-        if (Constants.SCHEMA_MIGRATED) {
+        if (Constants.isSchemaMigrated()) {
             log.info("Restarting the application after shcema upgrade");
             restart();
         }

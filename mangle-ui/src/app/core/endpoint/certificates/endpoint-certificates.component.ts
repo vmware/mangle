@@ -17,8 +17,8 @@ export class EndpointCertificatesComponent implements OnInit {
     public dockerServerCertToUpload: any;
     public dockerPrivateKeyToUpload: any;
 
-    public errorAlertMessage: string;
-    public successAlertMessage: string;
+    public alertMessage: string;
+    public isErrorMessage: boolean;
 
     public addEdit: string;
 
@@ -47,7 +47,8 @@ export class EndpointCertificatesComponent implements OnInit {
                 }
             }, err => {
                 this.certificates = [];
-                this.errorAlertMessage = err.error.description;
+                this.isErrorMessage = true;
+                this.alertMessage = err.error.description;
                 this.isLoading = false;
             });
     }
@@ -78,12 +79,14 @@ export class EndpointCertificatesComponent implements OnInit {
         this.endpointService.addDockerCertificates(certificates, this.dockerCaCertToUpload, this.dockerServerCertToUpload, this.dockerPrivateKeyToUpload).subscribe(
             res => {
                 this.getCertificates();
-                this.successAlertMessage = certificates.name + MessageConstants.CERTIFICATES_ADD;
+                this.isErrorMessage = false;
+                this.alertMessage = certificates.name + MessageConstants.CERTIFICATES_ADD;
             }, err => {
                 this.getCertificates();
-                this.errorAlertMessage = err.error.description;
-                if (this.errorAlertMessage === undefined) {
-                    this.errorAlertMessage = err.error.error;
+                this.isErrorMessage = true;
+                this.alertMessage = err.error.description;
+                if (this.alertMessage === undefined) {
+                    this.alertMessage = err.error.error;
                 }
             });
     }
@@ -93,12 +96,14 @@ export class EndpointCertificatesComponent implements OnInit {
         this.endpointService.updateDockerCertificates(certificates, this.dockerCaCertToUpload, this.dockerServerCertToUpload, this.dockerPrivateKeyToUpload).subscribe(
             res => {
                 this.getCertificates();
-                this.successAlertMessage = certificates.name + MessageConstants.CERTIFICATES_UPDATE;
+                this.isErrorMessage = false;
+                this.alertMessage = certificates.name + MessageConstants.CERTIFICATES_UPDATE;
             }, err => {
                 this.getCertificates();
-                this.errorAlertMessage = err.error.description;
-                if (this.errorAlertMessage === undefined) {
-                    this.errorAlertMessage = err.error.error;
+                this.isErrorMessage = true;
+                this.alertMessage = err.error.description;
+                if (this.alertMessage === undefined) {
+                    this.alertMessage = err.error.error;
                 }
             });
     }
@@ -110,12 +115,14 @@ export class EndpointCertificatesComponent implements OnInit {
             this.endpointService.deleteCertificates(certificates.name).subscribe(
                 res => {
                     this.getCertificates();
-                    this.successAlertMessage = certificates.name + MessageConstants.CERTIFICATES_DELETE;
+                    this.isErrorMessage = false;
+                    this.alertMessage = certificates.name + MessageConstants.CERTIFICATES_DELETE;
                 }, err => {
                     this.getCertificates();
-                    this.errorAlertMessage = err.error.description;
-                    if (this.errorAlertMessage === undefined) {
-                        this.errorAlertMessage = err.error.error;
+                    this.isErrorMessage = true;
+                    this.alertMessage = err.error.description;
+                    if (this.alertMessage === undefined) {
+                        this.alertMessage = err.error.error;
                     }
                 });
         } else {

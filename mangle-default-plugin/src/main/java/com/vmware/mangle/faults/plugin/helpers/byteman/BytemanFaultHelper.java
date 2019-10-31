@@ -24,6 +24,7 @@ import java.util.List;
 
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.FileUtils;
+import org.springframework.util.CollectionUtils;
 
 import com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec;
 import com.vmware.mangle.cassandra.model.tasks.SupportScriptInfo;
@@ -37,7 +38,7 @@ import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
 
 /**
- * @author bkaranam
+ * @author bkaranam, dbhat
  *
  */
 @Log4j2
@@ -172,16 +173,20 @@ public abstract class BytemanFaultHelper {
         return ruleString;
     }
 
-    protected static ArrayList<SupportScriptInfo> getAgentFaultScripts(String targetDirectoryPath,
-            String scriptFileName) {
-        ArrayList<SupportScriptInfo> agentFaultInjectionScripts = new ArrayList<>();
+    protected static ArrayList<SupportScriptInfo> getAgentFaultScripts(CommandExecutionFaultSpec jvmAgentFaultSpec,
+            String targetDirectoryPath, String scriptFileName) {
         SupportScriptInfo faultInjectionScriptInfo = new SupportScriptInfo();
         faultInjectionScriptInfo.setScriptFileName(scriptFileName);
         faultInjectionScriptInfo.setTargetDirectoryPath(targetDirectoryPath);
         faultInjectionScriptInfo.setClassPathResource(true);
         faultInjectionScriptInfo.setExecutable(false);
-        agentFaultInjectionScripts.add(faultInjectionScriptInfo);
-        return agentFaultInjectionScripts;
+        if (CollectionUtils.isEmpty(jvmAgentFaultSpec.getSupportScriptInfo())) {
+            ArrayList<SupportScriptInfo> agentFaultInjectionScripts = new ArrayList<>();
+            agentFaultInjectionScripts.add(faultInjectionScriptInfo);
+            return agentFaultInjectionScripts;
+        }
+        jvmAgentFaultSpec.getSupportScriptInfo().add(faultInjectionScriptInfo);
+        return (ArrayList<SupportScriptInfo>) jvmAgentFaultSpec.getSupportScriptInfo();
     }
 }
 

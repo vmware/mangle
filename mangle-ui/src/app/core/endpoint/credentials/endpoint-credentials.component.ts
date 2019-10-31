@@ -17,8 +17,8 @@ export class EndpointCredentialsComponent implements OnInit {
     public k8sFileToUpload: any;
     public keyFileToUpload: any;
 
-    public errorAlertMessage: string;
-    public successAlertMessage: string;
+    public alertMessage: string;
+    public isErrorMessage: boolean;
 
     public addEdit: string;
 
@@ -67,7 +67,8 @@ export class EndpointCredentialsComponent implements OnInit {
                 }
             }, err => {
                 this.credentials = [];
-                this.errorAlertMessage = err.error.description;
+                this.isErrorMessage = true;
+                this.alertMessage = err.error.description;
                 this.isLoading = false;
             });
     }
@@ -93,15 +94,17 @@ export class EndpointCredentialsComponent implements OnInit {
             this.endpointService.addRemoteMachineCredential(credential, this.keyFileToUpload).subscribe(
                 res => {
                     this.getCredentials();
-                    this.successAlertMessage = credential.name + MessageConstants.CREDENTIAL_ADD;
+                    this.isErrorMessage = false;
+                    this.alertMessage = credential.name + MessageConstants.CREDENTIAL_ADD;
                     this.submitBtnState = ClrLoadingState.DEFAULT;
                     credentialForm.reset();
                     this.machineCredential = false;
                 }, err => {
                     this.getCredentials();
-                    this.errorAlertMessage = err.error.description;
-                    if (this.errorAlertMessage === undefined) {
-                        this.errorAlertMessage = err.error.error;
+                    this.isErrorMessage= true;
+                    this.alertMessage = err.error.description;
+                    if (this.alertMessage === undefined) {
+                        this.alertMessage = err.error.error;
                     }
                     this.submitBtnState = ClrLoadingState.DEFAULT;
                     credentialForm.reset();
@@ -123,15 +126,17 @@ export class EndpointCredentialsComponent implements OnInit {
             this.endpointService.updateRemoteMachineCredential(credential, this.keyFileToUpload).subscribe(
                 res => {
                     this.getCredentials();
-                    this.successAlertMessage = credential.name + MessageConstants.CREDENTIAL_UPDATE;
+                    this.isErrorMessage = false;
+                    this.alertMessage = credential.name + MessageConstants.CREDENTIAL_UPDATE;
                     this.submitBtnState = ClrLoadingState.DEFAULT;
                     this.machineCredential = false;
                     credentialForm.reset();
                 }, err => {
                     this.getCredentials();
-                    this.errorAlertMessage = err.error.description;
-                    if (this.errorAlertMessage === undefined) {
-                        this.errorAlertMessage = err.error.error;
+                    this.isErrorMessage = true;
+                    this.alertMessage = err.error.description;
+                    if (this.alertMessage === undefined) {
+                        this.alertMessage = err.error.error;
                     }
                     this.submitBtnState = ClrLoadingState.DEFAULT;
                     this.machineCredential = false;
@@ -163,12 +168,14 @@ export class EndpointCredentialsComponent implements OnInit {
         this.endpointService.addk8sCredential(credential, this.k8sFileToUpload).subscribe(
             res => {
                 this.getCredentials();
-                this.successAlertMessage = credential.name + MessageConstants.CREDENTIAL_ADD;
+                this.isErrorMessage = false;
+                this.alertMessage = credential.name + MessageConstants.CREDENTIAL_ADD;
             }, err => {
                 this.getCredentials();
-                this.errorAlertMessage = err.error.description;
-                if (this.errorAlertMessage === undefined) {
-                    this.errorAlertMessage = err.error.error;
+                this.isErrorMessage = true;
+                this.alertMessage = err.error.description;
+                if (this.alertMessage === undefined) {
+                    this.alertMessage = err.error.error;
                 }
             });
     }
@@ -178,12 +185,14 @@ export class EndpointCredentialsComponent implements OnInit {
         this.endpointService.updatek8sCredential(credential, this.k8sFileToUpload).subscribe(
             res => {
                 this.getCredentials();
-                this.successAlertMessage = credential.name + MessageConstants.CREDENTIAL_UPDATE;
+                this.isErrorMessage = false;
+                this.alertMessage = credential.name + MessageConstants.CREDENTIAL_UPDATE;
             }, err => {
                 this.getCredentials();
-                this.errorAlertMessage = err.error.description;
-                if (this.errorAlertMessage === undefined) {
-                    this.errorAlertMessage = err.error.error;
+                this.isErrorMessage = true;
+                this.alertMessage = err.error.description;
+                if (this.alertMessage === undefined) {
+                    this.alertMessage = err.error.error;
                 }
             });
     }
@@ -202,12 +211,14 @@ export class EndpointCredentialsComponent implements OnInit {
         this.endpointService.addVcenterCredential(credential).subscribe(
             res => {
                 this.getCredentials();
-                this.successAlertMessage = credential.name + MessageConstants.CREDENTIAL_ADD;
+                this.isErrorMessage = false;
+                this.alertMessage = credential.name + MessageConstants.CREDENTIAL_ADD;
             }, err => {
                 this.getCredentials();
-                this.errorAlertMessage = err.error.description;
-                if (this.errorAlertMessage === undefined) {
-                    this.errorAlertMessage = err.error.error;
+                this.isErrorMessage = true;
+                this.alertMessage = err.error.description;
+                if (this.alertMessage === undefined) {
+                    this.alertMessage = err.error.error;
                 }
             });
     }
@@ -218,12 +229,14 @@ export class EndpointCredentialsComponent implements OnInit {
         this.endpointService.updateVcenterCredential(credential).subscribe(
             res => {
                 this.getCredentials();
-                this.successAlertMessage = credential.name + MessageConstants.CREDENTIAL_UPDATE;
+                this.isErrorMessage = false;
+                this.alertMessage = credential.name + MessageConstants.CREDENTIAL_UPDATE;
             }, err => {
                 this.getCredentials();
-                this.errorAlertMessage = err.error.description;
-                if (this.errorAlertMessage === undefined) {
-                    this.errorAlertMessage = err.error.error;
+                this.isErrorMessage = true;
+                this.alertMessage = err.error.description;
+                if (this.alertMessage === undefined) {
+                    this.alertMessage = err.error.error;
                 }
             });
     }
@@ -242,12 +255,14 @@ export class EndpointCredentialsComponent implements OnInit {
         this.endpointService.addAwsCredential(credential).subscribe(
             res => {
                 this.getCredentials();
-                this.successAlertMessage = credential.name + MessageConstants.CREDENTIAL_ADD;
+                this.isErrorMessage = false;
+                this.alertMessage = credential.name + MessageConstants.CREDENTIAL_ADD;
             }, err => {
                 this.getCredentials();
-                this.errorAlertMessage = err.error.description;
-                if (this.errorAlertMessage === undefined) {
-                    this.errorAlertMessage = err.error.error;
+                this.isErrorMessage = true;
+                this.alertMessage = err.error.description;
+                if (this.alertMessage === undefined) {
+                    this.alertMessage = err.error.error;
                 }
             });
     }
@@ -258,12 +273,14 @@ export class EndpointCredentialsComponent implements OnInit {
         this.endpointService.updateAwsCredential(credential).subscribe(
             res => {
                 this.getCredentials();
-                this.successAlertMessage = credential.name + MessageConstants.CREDENTIAL_UPDATE;
+                this.isErrorMessage = false;
+                this.alertMessage = credential.name + MessageConstants.CREDENTIAL_UPDATE;
             }, err => {
                 this.getCredentials();
-                this.errorAlertMessage = err.error.description;
-                if (this.errorAlertMessage === undefined) {
-                    this.errorAlertMessage = err.error.error;
+                this.isErrorMessage = true;
+                this.alertMessage = err.error.description;
+                if (this.alertMessage === undefined) {
+                    this.alertMessage = err.error.error;
                 }
             });
     }
@@ -274,14 +291,16 @@ export class EndpointCredentialsComponent implements OnInit {
             this.endpointService.deleteCredential(credential.name).subscribe(
                 res => {
                     this.getCredentials();
-                    this.successAlertMessage = credential.name + MessageConstants.CREDENTIAL_DELETE;
+                    this.isErrorMessage = false;
+                    this.alertMessage = credential.name + MessageConstants.CREDENTIAL_DELETE;
                     this.isLoading = false;
                 }, err => {
                     this.getCredentials();
-                    this.errorAlertMessage = err.error.description;
+                    this.isErrorMessage = true;
+                    this.alertMessage = err.error.description;
                     this.isLoading = false;
-                    if (this.errorAlertMessage === undefined) {
-                        this.errorAlertMessage = err.error.error;
+                    if (this.alertMessage === undefined) {
+                        this.alertMessage = err.error.error;
                     }
                 });
         } else {

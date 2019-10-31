@@ -1,4 +1,4 @@
-<app-alert [(errorAlertMessage)]="errorAlertMessage" [(successAlertMessage)]="successAlertMessage" (errorAlertMessageChange)="errorAlertMessage = $event" (successAlertMessageChange)="successAlertMessage = $event"></app-alert>
+<app-alert [(alertMessage)]="alertMessage" [(isErrorMessage)]="isErrorMessage" (alertMessageChange)="alertMessage = $event"></app-alert>
 <clr-dropdown>
     <button type="button" class="btn btn-sm btn-secondary" clrDropdownTrigger>
         <clr-icon shape="plus"></clr-icon> Certificates <clr-icon shape="caret down"></clr-icon>

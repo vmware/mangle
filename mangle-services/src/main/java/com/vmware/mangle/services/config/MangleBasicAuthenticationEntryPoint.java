@@ -12,6 +12,8 @@
 package com.vmware.mangle.services.config;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Date;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -61,9 +63,23 @@ public class MangleBasicAuthenticationEntryPoint extends BasicAuthenticationEntr
         } else {
             errorDescription = ErrorConstants.AUTHENTICATION_FAILED_ERROR_MSG;
         }
-        log.error("Authentication failed with the exception: ", authEx);
+        log.error("Authentication for the user {} failed with the error: {}", extractUserName(httpServletRequest), authEx.getMessage());
         return new ErrorDetails(new Date(), ErrorCode.LOGIN_EXCEPTION.getCode(), errorDescription,
                 httpServletRequest.getRequestURI());
     }
 
+    private String extractUserName(HttpServletRequest request) {
+        final String authorization = request.getHeader("Authorization");
+        String username = null;
+        if (authorization != null && authorization.toLowerCase().startsWith("basic")) {
+            // Authorization: Basic base64credentials
+            String base64Credentials = authorization.substring("Basic".length()).trim();
+            byte[] credDecoded = Base64.getDecoder().decode(base64Credentials);
+            String credentials = new String(credDecoded, StandardCharsets.UTF_8);
+            // credentials = username:password
+            final String[] values = credentials.split(":", 2);
+            username = values[0];
+        }
+        return username;
+    }
 }

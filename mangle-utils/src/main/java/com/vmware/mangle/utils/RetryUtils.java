@@ -19,8 +19,7 @@ import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
 /**
- * @author bkaranam
- * Utility class to provide a logic to retry a block of code
+ * @author bkaranam Utility class to provide a logic to retry a block of code
  */
 @Log4j2
 public class RetryUtils {
@@ -97,16 +96,22 @@ public class RetryUtils {
         while (counter < retryCount) {
             try {
                 return callable.call();
+            } catch (MangleException mangleException) {
+                if (mangleException.getMessage().startsWith("FAILED")) {
+                    throw mangleException;
+                }
+                log.error(String.format("retry %s / %s, %s", ++counter, retryCount, mangleException.getMessage()));
             } catch (Exception e) {
-                if (e.getMessage().startsWith("FAILED:")) {
+                if (e.getMessage().startsWith("FAILED")) {
                     throw new MangleException(ErrorCode.RETRY_LOGICS_FAILED, e.getMessage());
                 }
-                counter++;
-                log.error(String.format("retry %s / %s, %s", counter, retryCount, e.getMessage()));
-                CommonUtils.delayInSecondsWithDebugLog(retryDelay);
+                log.error(String.format("retry %s / %s, %s", ++counter, retryCount, e.getMessage()));
             }
+            CommonUtils.delayInSecondsWithDebugLog(retryDelay);
         }
-
+        if (throwable instanceof MangleException) {
+            throw (MangleException) throwable;
+        }
         throw new MangleException(ErrorCode.RETRY_LOGICS_FAILED, throwable.getMessage());
     }
 }

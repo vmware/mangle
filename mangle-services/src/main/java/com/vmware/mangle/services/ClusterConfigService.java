@@ -115,8 +115,7 @@ public class ClusterConfigService implements HazelcastInstanceAware, HazelcastCl
     }
 
     /**
-     * Updates the quorum value of the cluster, and triggers re-sync across all other nodes if
-     * modified
+     * Updates the quorum value of the cluster, and triggers re-sync across all other nodes if modified
      *
      * @param quorum
      * @return
@@ -128,6 +127,9 @@ public class ClusterConfigService implements HazelcastInstanceAware, HazelcastCl
      *             2. If the quorum value is lesser than 2, and deployment mode is CLUSTER
      *
      *             3. If the user tries to gives the same value which is already configured
+     *
+     *             4. If the deployment mode is standalone and user tries to update the quorum value,
+     *             operation fails
      */
     public HazelcastClusterConfig updateMangleQuorum(int quorum) throws MangleException {
         int possibleQuorumValue = hazelcastInstance.getCluster().getMembers().size() / 2 + 1;
@@ -142,6 +144,11 @@ public class ClusterConfigService implements HazelcastInstanceAware, HazelcastCl
         if (persistentConfig.getDeploymentMode() == MangleDeploymentMode.CLUSTER && quorum < 2) {
             throw new MangleException(ErrorConstants.CLUSTER_TYPE_CONFIG_LESSER_QUORUM,
                     ErrorCode.CLUSTER_TYPE_CONFIG_LESSER_QUORUM);
+        }
+
+        if (persistentConfig.getDeploymentMode() == MangleDeploymentMode.STANDALONE && quorum != 1) {
+            throw new MangleException(ErrorConstants.CLUSTER_QUORUM_UPDATE_STANDADLONE_FAILURE,
+                    ErrorCode.CLUSTER_QUORUM_UPDATE_STANDADLONE_FAILURE);
         }
 
         if (persistentConfig.getQuorum() == quorum) {
@@ -174,7 +181,7 @@ public class ClusterConfigService implements HazelcastInstanceAware, HazelcastCl
      */
     public void handleQuorumForNewNodeAddition() {
         if (hazelcastInstance != null && isClusterDeploymentModeCluster() && isCurrentNodeOldestMember()
-                && HazelcastConstants.mangleQourumStatus == MangleQuorumStatus.PRESENT) {
+                && HazelcastConstants.getMangleQourumStatus() == MangleQuorumStatus.PRESENT) {
             int possibleQuorumValue = hazelcastInstance.getCluster().getMembers().size() / 2 + 1;
             HazelcastClusterConfig config = getClusterConfiguration();
 
@@ -183,7 +190,7 @@ public class ClusterConfigService implements HazelcastInstanceAware, HazelcastCl
             Set<String> activeMembers = clusterActiveMembers.stream().map(member -> member.getAddress().getHost())
                     .collect(Collectors.toSet());
             config.setMembers(activeMembers);
-            if (null == config.getQuorum() || HazelcastConstants.mangleQourum < possibleQuorumValue) {
+            if (null == config.getQuorum() || HazelcastConstants.getMangleQourum() < possibleQuorumValue) {
                 log.info("updating quorum value to {}", possibleQuorumValue);
                 config.setQuorum(possibleQuorumValue);
                 HazelcastUtils.updateHazelcastMangleQuorumValue(possibleQuorumValue);
@@ -203,8 +210,8 @@ public class ClusterConfigService implements HazelcastInstanceAware, HazelcastCl
      *
      * 1. Updates the quorum value in the current node context
      *
-     * 2. Shuts down the hazelcast instance on the current node, if the deployment mode is changed
-     * to standalone mode from cluster
+     * 2. Shuts down the hazelcast instance on the current node, if the deployment mode is changed to
+     * standalone mode from cluster
      *
      * @param config
      *            Persisted cluster config object

@@ -1,4 +1,4 @@
-<app-alert [(errorAlertMessage)]="errorAlertMessage" [(successAlertMessage)]="successAlertMessage" (errorAlertMessageChange)="errorAlertMessage = $event" (successAlertMessageChange)="successAlertMessage = $event"></app-alert>
+<app-alert [(alertMessage)]="alertMessage" [(isErrorMessage)]="isErrorMessage" (alertMessageChange)="alertMessage = $event"></app-alert>
 <div>
     <h3 class="modal-title">Execute K8S Delete Resource Fault</h3>
     <form #deleteK8SResourceForm="ngForm" (ngSubmit)="executeK8SDeleteResourceFault(deleteK8SResourceForm.value);" ngNativeValidate>
@@ -39,7 +39,7 @@
                 </div>
             </div>
             <div class="form-group" [hidden]="resourceNameHidden">
-                <input type="text" name="resourceName" [(ngModel)]="faultFormData.resourceName" [required]="!resourceNameHidden">
+                <input type="text" name="resourceName" pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?" title="Resourcename must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character (e.g. 'my-name',  or '123-abc')" [(ngModel)]="faultFormData.resourceName" [required]="!resourceNameHidden">
             </div>
             <div class="form-group" [hidden]="resourceLabelsHidden">
                 <label></label>

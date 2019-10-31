@@ -11,8 +11,8 @@ import { EndpointService } from '../../endpoint/endpoint.service';
 })
 export class CustomFaultComponent implements OnInit {
 
-  public errorAlertMessage: string;
-  public successAlertMessage: string;
+  public alertMessage: string;
+  public isErrorMessage: boolean;
 
   public runBtnState: ClrLoadingState = ClrLoadingState.DEFAULT;
 
@@ -69,7 +69,8 @@ export class CustomFaultComponent implements OnInit {
       res => {
         this.pluginList = res;
       }, err => {
-        this.errorAlertMessage = err.error.description;
+        this.isErrorMessage= true;
+        this.alertMessage = err.error.description;
         this.pluginList = [];
       });
     if (this.dataService.sharedData != null) {
@@ -147,7 +148,8 @@ export class CustomFaultComponent implements OnInit {
           }
         }, err => {
           this.dockerContainers = [];
-          this.errorAlertMessage = err.error.description;
+          this.isErrorMessage= true;
+          this.alertMessage = err.error.description;
         }
       );
     }
@@ -170,7 +172,8 @@ export class CustomFaultComponent implements OnInit {
         this.faultParamHidden = false;
       }, err => {
         this.faultParams = {};
-        this.errorAlertMessage = err.error.description;
+        this.isErrorMessage= true;
+        this.alertMessage = err.error.description;
       });
   }
 
@@ -186,7 +189,8 @@ export class CustomFaultComponent implements OnInit {
           }
         }
       }, err => {
-        this.errorAlertMessage = err.error.description;
+        this.isErrorMessage= true;
+        this.alertMessage = err.error.description;
         this.endpoints = [];
       });
   }
@@ -204,9 +208,10 @@ export class CustomFaultComponent implements OnInit {
           this.router.navigateByUrl('core/requests/scheduled');
         }
       }, err => {
-        this.errorAlertMessage = err.error.description;
-        if (this.errorAlertMessage === undefined) {
-          this.errorAlertMessage = err.error.error;
+        this.isErrorMessage= true;
+        this.alertMessage = err.error.description;
+        if (this.alertMessage === undefined) {
+          this.alertMessage = err.error.error;
         }
         this.runBtnState = ClrLoadingState.DEFAULT;
       });

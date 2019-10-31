@@ -31,6 +31,8 @@ import org.springframework.data.cassandra.core.mapping.Indexed;
 import org.springframework.data.cassandra.core.mapping.PrimaryKeyColumn;
 import org.springframework.data.cassandra.core.mapping.Table;
 
+import com.vmware.mangle.model.constants.Constants;
+
 /**
  *
  *
@@ -52,7 +54,7 @@ public class User {
     private Set<Role> roles;
 
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @Pattern(regexp = "(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%!&+=])(?=\\S+$).{8,}", message = "should consists at least 8 chars, one digit, one lower alpha char, one upper alpha char, and one char within a set of special chars (@#$%!&+=)")
+    @Pattern(regexp = Constants.AUTH_PD_PATTERN, message = Constants.AUTH_PATTERN_MESSAGE)
     private String password;
 
     private Boolean accountLocked;

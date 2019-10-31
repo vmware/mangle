@@ -38,7 +38,7 @@ import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
 /**
- * @author bkaranam
+ * @author bkaranam, dbhat
  *
  */
 
@@ -74,8 +74,7 @@ public class DockerBytemanFaultHelper extends BytemanFaultHelper {
             throws MangleException {
         if (jvmAgentFaultSpec instanceof JVMCodeLevelFaultSpec) {
             List<CommandInfo> commandInfoList = new ArrayList<>();
-            commandInfoList.add(BytemanCommandInfoHelper.getDockerCreateBytemanRuleCommandInfo(jvmAgentFaultSpec,
-                    generateRule(jvmAgentFaultSpec)));
+            BytemanCommandInfoHelper.createDockerRuleFile(jvmAgentFaultSpec, generateRule(jvmAgentFaultSpec));
             commandInfoList.add(BytemanCommandInfoHelper.getDockerJavaAgentInstallationCommandInfo(jvmAgentFaultSpec));
             commandInfoList
                     .add(BytemanCommandInfoHelper.getDockerJavaAgentRuleInstallationCommandInfo(jvmAgentFaultSpec));
@@ -113,7 +112,7 @@ public class DockerBytemanFaultHelper extends BytemanFaultHelper {
 
     @Override
     public List<SupportScriptInfo> getAgentFaultInjectionScripts(CommandExecutionFaultSpec jvmAgentFaultSpec) {
-        return getAgentFaultScripts(jvmAgentFaultSpec.getInjectionHomeDir(), AGENT_NAME);
+        return getAgentFaultScripts(jvmAgentFaultSpec, jvmAgentFaultSpec.getInjectionHomeDir(), AGENT_NAME);
     }
 
     @Override

@@ -13,8 +13,8 @@ export class IntegrationComponent implements OnInit {
 
     public isLoading: boolean = true;
 
-    public errorAlertMessage: string;
-    public successAlertMessage: string;
+    public alertMessage: string;
+    public isErrorMessage: boolean;
 
     public testAlertMessage: String;
     public testSuccessFlag: boolean;
@@ -99,7 +99,8 @@ export class IntegrationComponent implements OnInit {
             }, err => {
                 this.metricProviderList = [];
                 this.isLoading = false;
-                this.errorAlertMessage = err.error.description;
+                this.isErrorMessage= true;
+                this.alertMessage = err.error.description;
             }
         );
     }
@@ -148,11 +149,13 @@ export class IntegrationComponent implements OnInit {
         this.metricProviderService.addMetricProvider(metricProvider).subscribe(
             res => {
                 this.getMetricProviders();
-                this.successAlertMessage = metricProvider.name + MessageConstants.METRIC_PROVIDER_ADD;
+                this.isErrorMessage= false;
+                this.alertMessage = metricProvider.name + MessageConstants.METRIC_PROVIDER_ADD;
                 this.isLoading = false;
             }, err => {
                 this.getMetricProviders();
-                this.errorAlertMessage = err.error.description;
+                this.isErrorMessage= true;
+                this.alertMessage = err.error.description;
                 this.isLoading = false;
             });
     }
@@ -162,11 +165,13 @@ export class IntegrationComponent implements OnInit {
         this.metricProviderService.updateMetricProvider(metricProvider).subscribe(
             res => {
                 this.getMetricProviders();
-                this.successAlertMessage = metricProvider.name + MessageConstants.METRIC_PROVIDER_UPDATE;
+                this.isErrorMessage= false;
+                this.alertMessage = metricProvider.name + MessageConstants.METRIC_PROVIDER_UPDATE;
                 this.isLoading = false;
             }, err => {
                 this.getMetricProviders();
-                this.errorAlertMessage = err.error.description;
+                this.isErrorMessage= true;
+                this.alertMessage = err.error.description;
                 this.isLoading = false;
             });
     }
@@ -177,11 +182,13 @@ export class IntegrationComponent implements OnInit {
             this.metricProviderService.deleteMetricProvider(metricProvider.name).subscribe(
                 res => {
                     this.getMetricProviders();
-                    this.successAlertMessage = metricProvider.name + MessageConstants.METRIC_PROVIDER_DELETE;
+                    this.isErrorMessage= false;
+                    this.alertMessage = metricProvider.name + MessageConstants.METRIC_PROVIDER_DELETE;
                     this.isLoading = false;
                 }, err => {
                     this.getMetricProviders();
-                    this.errorAlertMessage = err.error.description;
+                    this.isErrorMessage= true;
+                    this.alertMessage = err.error.description;
                     this.isLoading = false;
                 });
         } else {
@@ -215,11 +222,13 @@ export class IntegrationComponent implements OnInit {
         this.metricProviderService.updateMetricProviderStatus(metricProvider.name).subscribe(
             res => {
                 this.getMetricProviders();
-                this.successAlertMessage = metricProvider.name + MessageConstants.METRIC_PROVIDER_STATUS_UPDATE;
+                this.isErrorMessage= false;
+                this.alertMessage = metricProvider.name + MessageConstants.METRIC_PROVIDER_STATUS_UPDATE;
                 this.isLoading = false;
             }, err => {
                 this.getMetricProviders();
-                this.errorAlertMessage = err.error.description;
+                this.isErrorMessage= true;
+                this.alertMessage = err.error.description;
                 this.isLoading = false;
             });
     }
@@ -228,11 +237,13 @@ export class IntegrationComponent implements OnInit {
         this.collectionBtnState = ClrLoadingState.LOADING;
         this.metricProviderService.updateMetricCollectionStatus(!this.metricCollectionStatus).subscribe(
             res => {
-                this.successAlertMessage = MessageConstants.METRIC_PROVIDER_COLLECTION_UPDATE;
+                this.isErrorMessage= false;
+                this.alertMessage = MessageConstants.METRIC_PROVIDER_COLLECTION_UPDATE;
                 this.getMetricCollectionStatus();
                 this.collectionBtnState = ClrLoadingState.DEFAULT;
             }, err => {
-                this.errorAlertMessage = err.error.description;
+                this.isErrorMessage= true;
+                this.alertMessage = err.error.description;
                 this.getMetricCollectionStatus();
                 this.collectionBtnState = ClrLoadingState.DEFAULT;
             });

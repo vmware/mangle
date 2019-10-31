@@ -14,6 +14,8 @@ package com.vmware.mangle.services.helpers.faults;
 import static com.vmware.mangle.services.constants.CommonConstants.KILL_PROCESS_REMEDIATION_COMMAND_ARG;
 import static com.vmware.mangle.services.constants.CommonConstants.OS_TYPE_ARG;
 import static com.vmware.mangle.services.constants.CommonConstants.PROCESS_IDENTIFIER_ARG;
+import static com.vmware.mangle.services.constants.CommonConstants.PROCESS_ID_ARG;
+import static com.vmware.mangle.services.constants.CommonConstants.PROCESS_KILLALL_ARG;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -42,7 +44,17 @@ public class KillProcessFault extends AbstractFault {
         KillProcessFaultSpec localFaultSpec = (KillProcessFaultSpec) faultSpec;
         Map<String, String> specificArgs = new HashMap<>();
         specificArgs.put(KILL_PROCESS_REMEDIATION_COMMAND_ARG, localFaultSpec.getRemediationCommand());
-        specificArgs.put(PROCESS_IDENTIFIER_ARG, localFaultSpec.getProcessIdentifier());
+        if (localFaultSpec.getProcessIdentifier() == null) {
+            specificArgs.put(PROCESS_IDENTIFIER_ARG, "");
+        } else {
+            specificArgs.put(PROCESS_IDENTIFIER_ARG, localFaultSpec.getProcessIdentifier());
+        }
+        specificArgs.put(PROCESS_KILLALL_ARG, localFaultSpec.getKillAll().toString());
+        if (localFaultSpec.getProcessId() == null) {
+            specificArgs.put(PROCESS_ID_ARG, "");
+        } else {
+            specificArgs.put(PROCESS_ID_ARG, localFaultSpec.getProcessId());
+        }
         if (EndpointType.MACHINE == faultSpec.getEndpoint().getEndPointType()) {
             specificArgs.put(OS_TYPE_ARG,
                     faultSpec.getEndpoint().getRemoteMachineConnectionProperties().getOsType().osType());

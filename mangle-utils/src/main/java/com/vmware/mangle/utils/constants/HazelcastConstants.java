@@ -24,15 +24,29 @@ public class HazelcastConstants {
 
     }
 
-    public static MangleQuorumStatus mangleQourumStatus = MangleQuorumStatus.NOT_PRESENT;
-    public static int mangleQourum = 1;
+    private static MangleQuorumStatus mangleQourumStatus = MangleQuorumStatus.NOT_PRESENT;
+    private static int mangleQourum = 1;
 
     public static final String HAZELCAST_NODE_TASKS_MAP = "nodeTasks";
     public static final String HAZELCAST_TASKS_MAP = "tasks";
     public static final String MANGLE_APPLICATION_STATUS_MAP = "mangleApplicationStatusMap";
     public static final String HAZELCAST_MANGLE_NODE_CURRENT_STATUS_ATTRIBUTE = "mangleNodeCurrentStatus";
-    public static final String HAZELCAST_MANGLE_AUTH_PROVIDER_MODIFIED_ATTRIBUTE = "authProviderUpdate";
-    public static final String HAZELCAST_MANGLE_USER_MODIFIED_ATTRIBUTE = "userConfigUpdate";
     public static final String HAZELCAST_MANGLE_SYNC_TOPIC_NAME = "syncOperationListener";
     public static final String HAZELCAST_PROPERTY_DEPLOYMENT_MODE = "deploymentType";
+
+    public static MangleQuorumStatus getMangleQourumStatus() {
+        return mangleQourumStatus;
+    }
+
+    public static void setMangleQourumStatus(MangleQuorumStatus mangleQourumStatus) {
+        HazelcastConstants.mangleQourumStatus = mangleQourumStatus;
+    }
+
+    public static int getMangleQourum() {
+        return mangleQourum;
+    }
+
+    public static void setMangleQourum(int mangleQourum) {
+        HazelcastConstants.mangleQourum = mangleQourum;
+    }
 }

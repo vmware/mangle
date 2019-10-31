@@ -11,6 +11,7 @@
 
 package com.vmware.mangle.services.controller;
 
+import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -39,8 +40,10 @@ public class AdministrationController {
         this.administrationService = administrationService;
     }
 
+    @ApiOperation(value = "API to update mangle node status", nickname = "updateMangleNodeStatus")
     @PostMapping("node-status")
-    public ResponseEntity<Task<MangleNodeStatusDto>> updateMangleNodeStatus(@RequestBody MangleNodeStatusDto nodeStatusUpdateDto) throws MangleException {
+    public ResponseEntity<Task<MangleNodeStatusDto>> updateMangleNodeStatus(
+            @RequestBody MangleNodeStatusDto nodeStatusUpdateDto) throws MangleException {
         return new ResponseEntity<>(administrationService.updateMangleNodeStatus(nodeStatusUpdateDto), HttpStatus.OK);
     }
 }

@@ -1,4 +1,5 @@
-<app-alert [(errorAlertMessage)]="errorAlertMessage" [(successAlertMessage)]="successAlertMessage" (errorAlertMessageChange)="errorAlertMessage = $event" (successAlertMessageChange)="successAlertMessage = $event"></app-alert>
+<app-alert [(alertMessage)]="alertMessage" [(isErrorMessage)]="isErrorMessage"
+    (alertMessageChange)="alertMessage = $event"></app-alert>
 <div>
     <h3 class="modal-title">Execute/Schedule Thread leak Fault</h3>
     <form #threadLeakForm="ngForm" (ngSubmit)="executeThreadLeakFault(threadLeakForm.value);" ngNativeValidate>
@@ -6,7 +7,9 @@
             <div class="form-group">
                 <label for="endpointName">Endpoint</label>
                 <clr-dropdown>
-                    <input autocomplete="off" clrDropdownTrigger type="text" name="endpointName" (input)="searchEndpoint($event.target.value);displayEndpointFields($event.target.value);" (focus)="searchEndpoint('');" [(ngModel)]="faultFormData.endpointName" />
+                    <input autocomplete="off" clrDropdownTrigger type="text" name="endpointName"
+                        (input)="searchEndpoint($event.target.value);displayEndpointFields($event.target.value);"
+                        (focus)="searchEndpoint('');" [(ngModel)]="faultFormData.endpointName" />
                     <clr-icon shape="caret down" clrDropdownTrigger size="24" (click)="searchEndpoint('');"></clr-icon>
                     <clr-dropdown-menu *clrIfOpen class="menu-height" clrPosition="bottom-left">
                         <ng-container *ngFor="let searchedEndpoint of searchedEndpoints">
@@ -139,6 +142,16 @@
                     <input type="text" name="cronExpression" [(ngModel)]="faultFormData.schedule.cronExpression"
                         [required]="!cronExpressionHidden" (input)="setSubmitButton();">
                     <clr-icon shape="calendar" style="width:21px;height:39px;" (click)="cronModal=true;"></clr-icon>
+                    &nbsp;
+                    <clr-signpost>
+                        <clr-icon shape="info" style="width:24px;height:41px;" clrSignpostTrigger></clr-icon>
+                        <clr-signpost-content [clrPosition]="'top-right'" *clrIfOpen>
+                            Please provide the Spring supported cron expressions only. Refer to
+                            <a href="https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/scheduling/support/CronSequenceGenerator.html"
+                                target="_blank">https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/scheduling/support/CronSequenceGenerator.html
+                            </a>
+                        </clr-signpost-content>
+                    </clr-signpost>
                 </div>
                 <div class="form-group" [hidden]="descriptionHidden">
                     <input type="text" name="description"

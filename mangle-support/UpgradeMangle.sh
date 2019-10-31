@@ -55,8 +55,8 @@ init()
     fi
 
     if [ -z $MANGLE_DOCKER_ARTIFACTORY ]; then
-        echo "--MANGLE_DOCKER_ARTIFACTORY option not provided, so defaulting mangle to mangle-vmware-docker-containers.bintray.io/mangle"
-        MANGLE_DOCKER_ARTIFACTORY="mangle-vmware-docker-containers.bintray.io/mangle"
+        echo "--MANGLE_DOCKER_ARTIFACTORY option not provided, so defaulting mangle to mangleuser/mangle:2.0"
+        MANGLE_DOCKER_ARTIFACTORY="mangleuser/mangle:2.0"
     fi
 
     # Initializing docker related variables
@@ -402,6 +402,21 @@ upgrade_mangle_web_container()
     echo "Successfully Upgraded mangle node $1"
 }
 
+udateSubsequentbootscript()
+{
+	echo "Updating the subsequentboot script..."
+	file=subsequentboot
+	if [[ -x "$file" ]]
+	then
+    	echo "File '$file' exists and has executable permissions."
+    	rm -rf /opt/vmware/etc/isv/subsequentboot
+		cp subsequentboot /opt/vmware/etc/isv/
+		chmod 755 /opt/vmware/etc/isv/subsequentboot
+	else
+    	echo "File '$file' is not executable or found, please put the file with executable permission."
+	fi
+}
+
 upgrade_mangle()
 {
     echo "Put mangle in maintenance mode"
@@ -420,6 +435,7 @@ upgrade_mangle()
             fi
         done
     fi
+    udateSubsequentbootscript
 }
 
 main(){

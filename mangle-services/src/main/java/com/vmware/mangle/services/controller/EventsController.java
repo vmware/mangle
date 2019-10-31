@@ -13,6 +13,7 @@ package com.vmware.mangle.services.controller;
 
 import java.util.List;
 
+import io.swagger.annotations.ApiOperation;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -38,13 +39,14 @@ public class EventsController {
     @Autowired
     EventService service;
 
-
+    @ApiOperation(value = "API to get all events", nickname = "retrieveAllEvents")
     @GetMapping
     public ResponseEntity<MangleResponseResource<List<Event>>> retrieveAllEvents() {
         log.debug("Retrieving all events");
         return new ResponseEntity<>(new MangleResponseResource<List<Event>>(service.findAll()), HttpStatus.OK);
     }
 
+    @ApiOperation(value = "API to get event by its id", nickname = "retrieveEvent")
     @GetMapping("/{id}")
     public ResponseEntity<MangleResponseResource<Event>> retrieveEvent(@PathVariable String id) {
         log.debug("Finding event with ID: " + id);

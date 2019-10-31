@@ -147,6 +147,7 @@ public class RoleController {
      *
      * @return list of the privileges in the application
      */
+    @ApiOperation(value = "API to get all privileges", nickname = "getPrivileges")
     @GetMapping(value = "privileges")
     public ResponseEntity<Resources<Privilege>> getPrivileges() {
         log.info("Starting execution of getPrivileges method");
@@ -168,6 +169,7 @@ public class RoleController {
      * @throws MangleException:
      *             if user tries to delete default role
      */
+    @ApiOperation(value = "API to delete roles by names", nickname = "deleteRoles")
     @DeleteMapping(value = "roles")
     public ResponseEntity<ErrorDetails> deleteRoles(@RequestParam List<String> roles) throws MangleException {
         log.info(String.format("Starting execution of the roles: %s", roles.toString()));

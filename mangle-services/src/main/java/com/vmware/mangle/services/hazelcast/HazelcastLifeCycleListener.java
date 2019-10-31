@@ -40,7 +40,7 @@ public class HazelcastLifeCycleListener implements LifecycleListener {
         log.info("Hazelcast state changed to {}", event.getState().name());
         HazelcastClusterSyncAware beanObject;
         if (event.getState() == LifecycleEvent.LifecycleState.MERGING) {
-            for (Class<HazelcastClusterSyncAware> resyncOnClass : CommonConstants.mergeResyncClass) {
+            for (Class<HazelcastClusterSyncAware> resyncOnClass : CommonConstants.getMergeResyncClass()) {
                 log.info("Triggering resync on the class {} as node {} is merging to the cluster",
                         resyncOnClass.getSimpleName(), System.getProperty(MetricProviderConstants.NODE_ADDRESS));
                 beanObject = (HazelcastClusterSyncAware) ServiceCommonUtils.getBean(resyncOnClass);

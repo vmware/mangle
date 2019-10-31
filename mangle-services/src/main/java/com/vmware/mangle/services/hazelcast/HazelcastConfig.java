@@ -324,8 +324,8 @@ public class HazelcastConfig {
             }
         }
         log.trace("Nodes status maintained are: {}", nodeStatus.keySet().toString());
-        return numOfActiveMembers >= HazelcastConstants.mangleQourum
-                && members.size() >= HazelcastConstants.mangleQourum;
+        return numOfActiveMembers >= HazelcastConstants.getMangleQourum()
+                && members.size() >= HazelcastConstants.getMangleQourum();
     }
 
     private void validateHazelcastInitialization(HazelcastClusterConfig clusterConfig, String validationToken)

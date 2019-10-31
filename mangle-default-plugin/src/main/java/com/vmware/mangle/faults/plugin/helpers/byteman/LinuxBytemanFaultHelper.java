@@ -31,7 +31,7 @@ import com.vmware.mangle.utils.clients.ssh.SSHUtils;
 import com.vmware.mangle.utils.exceptions.MangleException;
 
 /**
- * @author hkilari
+ * @author hkilari, dbhat
  *
  */
 @Log4j2
@@ -59,7 +59,6 @@ public class LinuxBytemanFaultHelper extends BytemanFaultHelper {
     @Override
     public List<CommandInfo> getInjectionCommandInfoList(CommandExecutionFaultSpec jvmAgentFaultSpec)
             throws MangleException {
-
         // Condition to check for Byteman rule based fault
         if (jvmAgentFaultSpec instanceof JVMCodeLevelFaultSpec) {
             List<CommandInfo> commandInfoList = new ArrayList<>();
@@ -116,7 +115,7 @@ public class LinuxBytemanFaultHelper extends BytemanFaultHelper {
      */
     @Override
     public List<SupportScriptInfo> getAgentFaultInjectionScripts(CommandExecutionFaultSpec jvmAgentFaultSpec) {
-        return getAgentFaultScripts(jvmAgentFaultSpec.getInjectionHomeDir(), AGENT_NAME + AGENT_JAR_EXTENSION);
+        return getAgentFaultScripts(jvmAgentFaultSpec, jvmAgentFaultSpec.getInjectionHomeDir(), AGENT_NAME + AGENT_JAR_EXTENSION);
     }
 
     @Override

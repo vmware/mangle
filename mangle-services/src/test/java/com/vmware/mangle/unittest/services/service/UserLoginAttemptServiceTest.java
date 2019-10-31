@@ -172,8 +172,6 @@ public class UserLoginAttemptServiceTest {
 
         verify(repository, times(1)).findByUsername(user.getName());
         verify(repository, times(1)).save(any());
-        verify(userService, times(1)).getUserByName(user.getName());
-        verify(userService, times(1)).updateUser(any());
     }
 
     @Test
@@ -191,7 +189,6 @@ public class UserLoginAttemptServiceTest {
         verify(repository, times(1)).findByUsername(user.getName());
         verify(repository, times(1)).save(any());
         verify(userService, times(1)).getUserByName(user.getName());
-        verify(userService, times(1)).updateUser(any());
     }
 
     @Test
@@ -209,7 +206,6 @@ public class UserLoginAttemptServiceTest {
         verify(repository, times(1)).findByUsername(user.getName());
         verify(repository, times(1)).save(any());
         verify(userService, times(1)).getUserByName(user.getName());
-        verify(userService, times(1)).updateUser(any());
     }
 
 }

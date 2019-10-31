@@ -58,7 +58,7 @@ readAndParseArgs(){
 
     if [ $operation = "inject" ]
     then
-        if [ -z $processIdentifier ]
+        if [ -z $processIdentifier ] && [ -z $processId ]
         then
             help
         fi
@@ -78,7 +78,7 @@ help(){
     echo " or "
     echo "$0 --operation=remediate --remediationCommand=<remediationCommand>"
     echo " or "
-    echo "$0 --operation=inject --processIdentifier=<processIdentifier>"
+    echo "$0 --operation=inject --processIdentifier=<processDescriptor> --killAll=<killAll> --processId=<processId>"
     exit $errorexitcode
 }
 
@@ -158,11 +158,11 @@ remediate(){
 }
 
 cleanup(){
-    rm -rf $basedir/killprocess.sh > /dev/null 2>&1
+    rm -rf $basedir/killprocess.sh $basedir/killprocess.log > /dev/null 2>&1
 }
 
 running_in_docker() {
-  awk -F/ '$2 == "docker"' /proc/self/cgroup | read
+  awk -F/ '$2 == "docker"' /proc/self/cgroup | read continue
   isDockerRetVal=$?
   if [ $isDockerRetVal -eq 0 ]; then
      IS_CONTAINER=true
@@ -170,49 +170,95 @@ running_in_docker() {
 }
 
 injectFault(){
-    currentProcessId=$(pgrep -f "killprocess")
-    allProcessIds=$(pgrep -f $processIdentifier)
-    actualProcessIdsToKill=$(echo "$allProcessIds"|grep -v $currentProcessId)
-    processCount=$(echo $actualProcessIdsToKill|wc -w)
-    if [ $processCount -eq 0 ]
+    if [ ! -z $processId ]
     then
-        echo "no process found with identifier $processIdentifier, can't kill service"
-        cleanup
-        exit $errorexitcode
-    fi
-
-    if [ $processCount -gt 1 ]
-    then
-        echo "Found more than one process ("$(echo $actualProcessIdsToKill|xargs)") with same process identifier: $processIdentifier"
-        cleanup
-        exit $errorexitcode
-    fi
-
-   if [ ! -z "$IS_CONTAINER" ]; then
-    cat << EOF > $basedir/killprocessscript.sh
-    #!/bin/sh
-    #sleeping the process so that if pid is the entry point process container may exit and task will fail
-    echo "killing processID: $actualProcessIdsToKill"
-    sleep 5s
-    kill -9 $actualProcessIdsToKill
-    rm -rf $basedir/killprocessscript.sh $basedir/killProcessFault.log > /dev/null 2>&1
-EOF
-    chmod 777 $basedir/killprocessscript.sh
-    $basedir/killprocessscript.sh > $basedir/killProcessFault.log 2>&1 &
-    echo "Triggered: Kill Process injection"
-   else
-    sleep 5s
-    output=$(kill -9 $actualProcessIdsToKill)
-    killProcessExitVal=$?
-    if [ $killProcessExitVal -eq 0 ]
-    then
-       echo "killing processID: $actualProcessIdsToKill"
-       echo "Triggered: Kill Process injection"
+        actualProcessIdsToKill=$processId
     else
-       echo $output
-       exit $errorexitcode
+        currentProcessId=$(pgrep -f "killprocess")
+        if [ $EUID -eq 0 ]
+            then
+                allProcessIds=$(pgrep -f $processIdentifier)
+            else
+                allProcessIds=$(pgrep -u `whoami` -f $processIdentifier)
+        fi
+        actualProcessIdsToKill=$(echo "$allProcessIds"|grep -v $currentProcessId)
+        processCount=$(echo $actualProcessIdsToKill|wc -w)
+        if [ $processCount -eq 0 ]
+        then
+            echo "no process found with identifier $processIdentifier, can't kill service"
+            cleanup
+            exit $errorexitcode
+        fi
+        if [ $processCount -gt 1 ]
+        then
+            if [ $killAll = "false" ]
+            then
+                echo "Found more than one process with same process identifier: $processIdentifier ("$(echo $actualProcessIdsToKill|xargs)"). Please set killAll=true inorder to kill all of them"
+                cleanup
+                exit $errorexitcode
+            else
+                echo "Found more than one process ("$(echo $actualProcessIdsToKill|xargs)") killing all of them" >> $basedir/killprocess.log
+            fi
+        fi
     fi
-   fi
+
+    if [ ! -z "$IS_CONTAINER" ]; then
+    echo '#!/bin/sh
+    #sleeping the process so that if pid is the entry point process container may exit and task will fail
+    echo "Process ID to kill: ($1)" >> $basedir/killprocess.log
+    sleep 5s
+    for process in $1; do
+        killOutput=$(kill -9 $process >&1 2>&1)
+        retCode=$?
+        if [ $retCode -eq 0 ]
+        then
+            echo "Killed processID: $process" >> $basedir/killprocess.log
+        fi
+        if [ $retCode -eq 1 ]
+        then
+            if [ ! -z $(echo $killOutput | grep "No such process") && [ -z $2 ] ]
+            then
+                echo "Process already killed." >> $basedir/killprocess.log
+            else
+                echo $killOutput
+                exit $errorexitcode
+            fi
+        fi
+        if [ $retCode -gt 1 ]
+        then
+            echo $killOutput
+            exit $errorexitcode
+        fi
+    done
+    rm -rf $basedir/killprocessscript.sh $basedir/killProcessFault.log > /dev/null 2>&1' > $basedir/killprocessscript.sh
+    chmod 777 $basedir/killprocessscript.sh
+    $basedir/killprocessscript.sh "$actualProcessIdsToKill" "$processId" > $basedir/killProcessFault.log 2>&1 &
+    else
+    sleep 5s
+    for process in $actualProcessIdsToKill; do
+        killOutput=$(kill -9 $process >&1 2>&1)
+        retCode=$?
+        if [ $retCode -eq 0 ]
+        then
+            echo "Killed processID: $process" >> $basedir/killprocess.log
+        fi
+        if [ $retCode -eq 1 ]
+        then
+            if [ ! -z $(echo $killOutput | grep "No such process") && [ -z $processId ] ]
+            then
+                echo "Process already killed." >> $basedir/killprocess.log
+            else
+                echo $killOutput
+                exit $errorexitcode
+            fi
+        fi
+        if [ $retCode -gt 1 ]
+        then
+            echo $killOutput
+            exit $errorexitcode
+        fi
+    done
+    fi
 }
 
 #calling main function

@@ -18,8 +18,9 @@
 				<div class="form-group">
 					<label for="password">New Password</label>
 					<input type="password" name="password" [(ngModel)]="userFormData.password" minlength="8"
-						maxlength="30" pattern="^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%!&+=]).{8,}$"
-						title="should consists at least 8 chars, one digit, one lower alpha char, one upper alpha char, and one char within a set of special chars (@#$%!&+=)"
+						maxlength="30" pattern="^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%!&+=]).{8,30}$"
+						title="Should consist of 8-30 characters and minimum of one digit, one lower alpha char, one upper alpha char, and one special character within a set of (@#$%!&+=)"
+						onCopy="return false" onDrag="return false" onDrop="return false" onPaste="return false"
 						required>
 					<ng2-password-strength-bar *ngIf="userFormData.password" [passwordToCheck]="userFormData.password"
 						[barLabel]="barLabel" [barColors]="barColors" [baseColor]="baseColor"

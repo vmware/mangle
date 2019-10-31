@@ -296,6 +296,7 @@ public class K8sFaultHelper implements ICommandExecutionFaultHelper {
     public List<String> getResouceList(ICommandExecutor executor, K8SFaultSpec k8sFaultSpec) throws MangleException {
         List<String> resources = new ArrayList<>();
         if (StringUtils.isNotEmpty(k8sFaultSpec.getResourceName())) {
+            validateResourceName(executor, k8sFaultSpec.getResourceName(), k8sFaultSpec.getResourceType());
             resources.add(k8sFaultSpec.getResourceName());
             return resources;
         }
@@ -313,11 +314,14 @@ public class K8sFaultHelper implements ICommandExecutionFaultHelper {
             if (result.getExitCode() == 0 && !StringUtils.isBlank(result.getCommandOutput())
                     && !result.getCommandOutput().contains("error")) {
                 return result.getCommandOutput();
+            } else if (result.getExitCode() == 0 && StringUtils.isBlank(result.getCommandOutput())) {
+                throw new MangleException("FAILED:" + errorMessage, ErrorCode.INVALID_RESOURCE_LABELS,
+                        k8sFaultSpec.getResourceType().getValue(), k8sFaultSpec.getResourceLabels());
             } else {
                 throw new MangleException(result.getCommandOutput(), ErrorCode.NO_PODS_IDENTIFIED);
             }
-        }, new MangleException(errorMessage, ErrorCode.INVALID_RESOURCE_LABELS, k8sFaultSpec.getResourceLabels()), 6,
-                10);
+        }, new MangleException(errorMessage, ErrorCode.INVALID_RESOURCE_LABELS,
+                k8sFaultSpec.getResourceType().getValue(), k8sFaultSpec.getResourceLabels()), 6, 10);
         resources = Arrays.asList(commandOutput.trim().split("\\s+"));
         if (k8sFaultSpec.isRandomInjection() && !k8sFaultSpec.getResourceLabels().isEmpty()) {
             String randomResource = resources.get((new Random().nextInt(resources.size())));
@@ -325,5 +329,26 @@ public class K8sFaultHelper implements ICommandExecutionFaultHelper {
             resources.add(randomResource);
         }
         return resources;
+    }
+
+    public void validateResourceName(ICommandExecutor executor, String resourceName, K8SResource resourceType)
+            throws MangleException {
+        String errorMessage = "No " + resourceType.getValue() + " with name " + resourceName;
+        String command = KubernetesTemplates.GET + resourceType.getValue() + " " + resourceName;
+        RetryUtils.retry(() -> {
+            CommandExecutionResult result = executor.executeCommand(command);
+            if (result.getExitCode() == 0 && !StringUtils.isBlank(result.getCommandOutput())
+                    && !result.getCommandOutput().contains("error")) {
+                log.info(resourceName + " found");
+            } else if (result.getExitCode() == 1 && result.getCommandOutput().contains("NotFound")) {
+                throw new MangleException("FAILED:" + errorMessage, ErrorCode.INVALID_K8S_RESOURCE_NAME,
+                        resourceType.getValue(), resourceName);
+            } else {
+                throw new MangleException(result.getCommandOutput(), ErrorCode.INVALID_K8S_RESOURCE_NAME,
+                        resourceType.getValue(), resourceName);
+            }
+        }, new MangleException(errorMessage, ErrorCode.INVALID_K8S_RESOURCE_NAME, resourceType.getValue(),
+                resourceName), 6, 10);
+
     }
 }

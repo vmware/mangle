@@ -13,8 +13,8 @@ import { CommonUtils } from 'src/app/shared/commonUtils';
 })
 export class DiskSpaceComponent implements OnInit {
 
-  public errorAlertMessage: string;
-  public successAlertMessage: string;
+  public alertMessage: string;
+  public isErrorMessage: boolean;
 
   public cronModal: boolean = false;
 
@@ -74,7 +74,8 @@ export class DiskSpaceComponent implements OnInit {
         }
       }, err => {
         this.endpoints = [];
-        this.errorAlertMessage = err.error.description;
+        this.isErrorMessage= true;
+        this.alertMessage = err.error.description;
       });
     if (this.dataService.sharedData != null) {
       this.populateFaultData();
@@ -139,7 +140,8 @@ export class DiskSpaceComponent implements OnInit {
           }
         }, err => {
           this.dockerContainers = [];
-          this.errorAlertMessage = err.error.description;
+          this.isErrorMessage= true;
+          this.alertMessage = err.error.description;
         }
       );
     }
@@ -222,9 +224,10 @@ export class DiskSpaceComponent implements OnInit {
           this.router.navigateByUrl(CommonConstants.REQUESTS_SCHEDULED_URL);
         }
       }, err => {
-        this.errorAlertMessage = err.error.description;
-        if (this.errorAlertMessage === undefined) {
-          this.errorAlertMessage = err.error.error;
+        this.isErrorMessage= true;
+        this.alertMessage = err.error.description;
+        if (this.alertMessage === undefined) {
+          this.alertMessage = err.error.error;
         }
         this.runBtnState = ClrLoadingState.DEFAULT;
       });

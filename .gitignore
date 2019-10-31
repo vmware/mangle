@@ -25,5 +25,6 @@ mangle-root.iml
 mangle-test-plugin/mangle-test-plugin.iml
 mangle-ui/mangle-ui.iml
 mangle-vcenter-adapter/mangle-vcenter-adapter.iml
-mangle-vcenter-adapter/bin/
-mangle-ui/package-lock.json
+resilience-calculator/resilience-calculator.iml
+resiliency-score-calculator/resiliency-score-calculator.iml
+mangle-services/.checkstyle

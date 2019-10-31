@@ -70,13 +70,13 @@ describe('IdentityComponent', () => {
     //add identity
     spyOn(settingService, 'addIdentitySource').and.returnValue(of({ "_embedded": { "aDAuthProviderDtoList": [ad_data_id] } }));
     component.addOrUpdateIdentitySource(ad_data);
-    expect(component.successAlertMessage).toBeTruthy();
+    expect(component.alertMessage).toBeTruthy();
     expect(settingService.addIdentitySource).toHaveBeenCalled();
     expect(settingService.getIdentities).toHaveBeenCalled();
     //update identity
     spyOn(settingService, 'updateIdentitySource').and.returnValue(of({ "_embedded": { "aDAuthProviderDtoList": [ad_data_id] } }));
     component.addOrUpdateIdentitySource(ad_data_id);
-    expect(component.successAlertMessage).toBeTruthy();
+    expect(component.alertMessage).toBeTruthy();
     expect(settingService.updateIdentitySource).toHaveBeenCalled();
     expect(settingService.getIdentities).toHaveBeenCalled();
   });
@@ -85,7 +85,7 @@ describe('IdentityComponent', () => {
     spyOn(settingService, 'deleteIdentity').and.returnValue(of({}));
     spyOn(window, 'confirm').and.callFake(function () { return true; });
     component.deleteIdentity(ad_data_id);
-    expect(component.successAlertMessage).toBeTruthy();
+    expect(component.alertMessage).toBeTruthy();
     expect(settingService.deleteIdentity).toHaveBeenCalled();
     expect(settingService.getIdentities).toHaveBeenCalled();
   });

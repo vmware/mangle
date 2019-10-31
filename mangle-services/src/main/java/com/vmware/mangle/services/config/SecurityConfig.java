@@ -95,6 +95,7 @@ public class SecurityConfig implements WebMvcConfigurer {
         private static final String REST = "/rest";
         private static final String V1_API = "/api/v1/";
         private static final String REST_V1_API = REST + V1_API;
+        private static final String APPLICATION = "/application/";
         private final String adminReadWrite = DefaultPrivileges.ADMIN_READ_WRITE.name();
         private final String adminRead = DefaultPrivileges.ADMIN_READ.name();
         private final String userReadWrite = DefaultPrivileges.USER_READ_WRITE.name();
@@ -109,7 +110,7 @@ public class SecurityConfig implements WebMvcConfigurer {
                     .antMatchers("/", "/*.html", "/*.js", "/*.map", "/assets/**", "/*.ico").permitAll()
                     .antMatchers("/webjars/**", "/swagger-resources/**", "/swagger", "/swagger-ui.html",
                             "/swagger-resources", "/csrf")
-                    .permitAll().antMatchers("/application/health").permitAll()
+                    .permitAll().antMatchers(APPLICATION + "health").permitAll()
                     .antMatchers(REST_V1_API + "auth-provider-management/domains").permitAll()
                     .antMatchers(HttpMethod.GET, REST_V1_API + "user-management/users/admin").permitAll()
 
@@ -174,7 +175,12 @@ public class SecurityConfig implements WebMvcConfigurer {
                     .antMatchers(REST_V1_API + "administration/**")
                     .hasAnyAuthority(adminRead, adminReadWrite, userReadWrite)
 
-                    .antMatchers("/application/logfile").hasAuthority(adminReadWrite)
+                    .antMatchers(APPLICATION + "zip").hasAuthority(adminReadWrite)
+                    .antMatchers(APPLICATION + "logfile").hasAuthority(adminReadWrite)
+                    .antMatchers(APPLICATION + "restart").hasAuthority(adminReadWrite)
+                    .antMatchers(APPLICATION + "shutdown").hasAuthority(adminReadWrite)
+                    .antMatchers(APPLICATION + "refresh").hasAuthority(adminReadWrite)
+                    .antMatchers(APPLICATION + "loggers/**").hasAuthority(adminReadWrite)
 
                     .anyRequest().authenticated().and().logout().deleteCookies("JSESSIONID");
 

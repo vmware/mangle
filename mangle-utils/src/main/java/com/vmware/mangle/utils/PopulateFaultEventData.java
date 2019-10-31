@@ -22,6 +22,7 @@ import com.vmware.mangle.cassandra.model.faults.specs.CpuFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.DiskIOFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.DiskSpaceSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.DockerFaultSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.JVMAgentFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.K8SFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.K8SFaultTriggerSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.KillProcessFaultSpec;
@@ -71,6 +72,7 @@ public class PopulateFaultEventData<T extends Task<TaskSpec>> {
         updateFaultStartTime();
         updateFaultEndTime();
         updateFaultEventType();
+
         updateFaultEventClassification();
         updateFaultEventDescription();
         updateFaultEventTags();
@@ -117,6 +119,12 @@ public class PopulateFaultEventData<T extends Task<TaskSpec>> {
 
     private void updateFaultEndTime() {
         Integer faultTimeOut = commandExecutionFaultSpec.getTimeoutInMilliseconds();
+        if (!(commandExecutionFaultSpec instanceof JVMAgentFaultSpec) && faultTimeOut == null) {
+            log.debug("The fault : " + commandExecutionFaultSpec.getFaultName()
+                    + " does not have timeout property , hence setting the event end time to current time");
+            updateFaultEventEndTimeAsNow();
+            return;
+        }
         if (faultTimeOut != null && task.getTaskType() == TaskType.INJECTION) {
             if (task.getTaskStatus() == TaskStatus.COMPLETED) {
                 long faultTimeOutInMilis = CommonUtils.getDateObjectFor(trigger.getEndTime()).getTime() + faultTimeOut;
@@ -130,6 +138,10 @@ public class PopulateFaultEventData<T extends Task<TaskSpec>> {
             return;
         } else if (task.getTaskType() == TaskType.REMEDIATION) {
             log.debug("Can't update the event end time as Fault Time Out is not specified in the fault spec");
+            updateFaultEventEndTimeAsNow();
+            return;
+        } else if (task.getTaskStatus() == TaskStatus.FAILED) {
+            log.debug("The task has failed and hence, end time to current time");
             updateFaultEventEndTimeAsNow();
             return;
         }
@@ -261,9 +273,11 @@ public class PopulateFaultEventData<T extends Task<TaskSpec>> {
         StringBuilder taskData = new StringBuilder("");
         K8SFaultSpec spec = (K8SFaultSpec) task.getTaskData();
         taskData.append("Target resource type: " + spec.getResourceType() + SEPERATOR);
-        taskData.append("Target K8S label: " + spec.getResourceLabels().toString() + SEPERATOR);
-        if (StringUtils.isEmpty(spec.getResourceName())) {
+        if (!StringUtils.isEmpty(spec.getResourceName())) {
             taskData.append("Target Resource Name: " + spec.getResourceName() + SEPERATOR);
+        }
+        if (!StringUtils.isEmpty(spec.getResourceLabels())) {
+            taskData.append("Target K8S label: " + spec.getResourceLabels().toString() + SEPERATOR);
         }
         return taskData.toString();
     }

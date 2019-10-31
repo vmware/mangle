@@ -103,7 +103,7 @@ public class HazelcastClusterMembershipListenerTest {
         doNothing().when(taskService).setHazelcastInstance(any());
         listener.setHazelcastInstance(hazelcastInstance);
         clusterConfig.setMembers(new HashSet<>());
-        HazelcastConstants.mangleQourumStatus = MangleQuorumStatus.PRESENT;
+        HazelcastConstants.setMangleQourumStatus(MangleQuorumStatus.PRESENT);
     }
 
     @Test

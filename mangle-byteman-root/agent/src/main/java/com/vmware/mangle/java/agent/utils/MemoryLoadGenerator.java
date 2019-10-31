@@ -33,11 +33,13 @@ public class MemoryLoadGenerator implements Runnable {
     }
 
     public void run() {
-        LOG.info("Fiaasco Injecting MemoryLoad Fault for duration: " + duration + "at Load: " + load);
-        LOG.info("MaxHeapSize Available: " + RuntimeUtils.getMaxHeapSpace() / 100 + " kb");
+        LOG.info("Fiaasco Injecting MemoryLoad Fault for duration: " + duration + " at Load: " + load);
+        LOG.info("MaxHeapSize Available: " + RuntimeUtils.getMaxHeapSpace());
         LOG.info("Current HeapUsage: " + RuntimeUtils.getUsedHeapSpace());
+        LOG.info("Current HeapUsage Percentage: " + RuntimeUtils.getCurrentHeapUsageInPercentage());
+
         long size = ThreadUtils.getSizeinBytes(load);
-        LOG.info("Requested Consumption: " + size / 100);
+        LOG.info("Requested Consumption: " + size );
         LinkedList<String> loadList = new LinkedList<>();
         long startTime = System.currentTimeMillis();
 
@@ -50,6 +52,7 @@ public class MemoryLoadGenerator implements Runnable {
                 loadList.addFirst(new String(chars));
             }
             LOG.info("HeapUsage post injection: " + RuntimeUtils.getUsedHeapSpace());
+            LOG.info("Current HeapUsage Percentage: " + RuntimeUtils.getCurrentHeapUsageInPercentage());
             try {
                 Thread.sleep(10000);
             } catch (InterruptedException e) {

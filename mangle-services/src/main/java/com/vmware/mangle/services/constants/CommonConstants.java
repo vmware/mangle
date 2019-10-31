@@ -13,6 +13,7 @@ package com.vmware.mangle.services.constants;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import com.vmware.mangle.services.ClusterConfigService;
 import com.vmware.mangle.services.MetricProviderService;
@@ -31,8 +32,8 @@ public class CommonConstants {
     }
 
     @SuppressWarnings("rawtypes")
-    public static final ArrayList<Class> mergeResyncClass =
-            new ArrayList<>(Arrays.asList(ClusterConfigService.class, ADAuthProvider.class, MetricProviderService.class, PluginDetailsService.class));
+    private static final ArrayList<Class> mergeResyncClass = new ArrayList<>(Arrays.asList(ClusterConfigService.class,
+            ADAuthProvider.class, MetricProviderService.class, PluginDetailsService.class));
 
     public static final String NO_RECORD_FOUND_FOR_ID = "Fault not found for given id ";
     public static final String NO_RECORD_FOUND_FOR_NAME = "Fault not found for given name ";
@@ -59,6 +60,8 @@ public class CommonConstants {
     public static final String DEFAULT_BLOCK_SIZE = "8192000";
     public static final String ARGUEMENT_PREFIX = "__";
     public static final String PROCESS_IDENTIFIER_ARG = ARGUEMENT_PREFIX + "processIdentifier";
+    public static final String PROCESS_ID_ARG = ARGUEMENT_PREFIX + "processId";
+    public static final String PROCESS_KILLALL_ARG = ARGUEMENT_PREFIX + "killAll";
     public static final String KILL_PROCESS_REMEDIATION_COMMAND_ARG = ARGUEMENT_PREFIX + "remediationCommand";
     public static final String OS_TYPE_ARG = ARGUEMENT_PREFIX + "osType";
     public static final String LOAD_ARG = ARGUEMENT_PREFIX + "load";
@@ -88,4 +91,8 @@ public class CommonConstants {
     public static final String PLUGIN_DESCRIPTOR_FILE_NAME = "plugin-descriptor.json";
     public static final String PLUGIN_PROPERTIES_FILE_NAME = "plugin.properties";
     public static final String DISK_FILL_SIZE_RANGE_ERROR = "DiskFillSize value must be between 1 to 100";
+
+    public static List<Class> getMergeResyncClass() {
+        return mergeResyncClass;
+    }
 }
