@@ -23,6 +23,7 @@ import org.springframework.hateoas.Link;
 import org.springframework.hateoas.Resource;
 import org.springframework.hateoas.Resources;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -35,7 +36,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.vmware.mangle.cassandra.model.security.User;
+import com.vmware.mangle.model.UserCreationDTO;
 import com.vmware.mangle.model.UserPasswordUpdateDTO;
+import com.vmware.mangle.model.UserRolesUpdateDTO;
 import com.vmware.mangle.model.enums.HateoasOperations;
 import com.vmware.mangle.services.PasswordResetService;
 import com.vmware.mangle.services.UserService;
@@ -61,14 +64,21 @@ public class UserManagementController {
     /**
      * API to add new user to mangle
      *
-     * @param user
+     * @param userCreationDTO
      * @return ResponseEntity with Hateoas resource, response code 201
      * @throws MangleException
      *             when role is not found in mangle
      */
-    @PostMapping(value = "users")
-    public ResponseEntity<Resource<User>> createUser(@Validated @RequestBody User user) throws MangleException {
-        log.info(String.format("Starting execution of createUser for user %s", user.getName()));
+    @ApiOperation(value = "API to create User", nickname = "createUser")
+    @PostMapping(value = "users", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Resource<User>> createUser(@Validated @RequestBody UserCreationDTO userCreationDTO)
+            throws MangleException {
+        User user = new User();
+        user.setName(userCreationDTO.getName());
+        user.setPassword(userCreationDTO.getPassword());
+        user.setRoleNames(userCreationDTO.getRoleNames());
+
+        log.trace(String.format("Starting execution of createUser for user %s", user.getName()));
 
         if (userService.getUserByName(user.getName()) != null) {
             throw new MangleException(String.format(ErrorConstants.USER_ALREADY_EXISTS, user.getName()),
@@ -78,7 +88,7 @@ public class UserManagementController {
 
         Resource<User> userResource = new Resource<>(persisted);
         Link link = linkTo(methodOn(UserManagementController.class).createUser(null)).withSelfRel();
-        userResource.add(linkTo(methodOn(UserManagementController.class).updateUser(user))
+        userResource.add(linkTo(methodOn(UserManagementController.class).updateUser(null))
                 .withRel(HateoasOperations.UPDATE.toString()));
         userResource.add(link);
 
@@ -88,16 +98,24 @@ public class UserManagementController {
     /**
      * API to update the existing mangle user
      *
-     * @param user
+     * @param userRolesUpdateDTO
      *            new user configuration to be added for the existing user
      * @return
      * @throws MangleException
      */
-    @PutMapping(value = "users")
-    public ResponseEntity<Resource<User>> updateUser(@Validated @RequestBody User user) throws MangleException {
-        log.info(String.format("Starting execution of updateUser for the user %s", user.getName()));
+    @ApiOperation(value = "API to update User", nickname = "updateUser")
+    @PutMapping(value = "users", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Resource<User>> updateUser(@Validated @RequestBody UserRolesUpdateDTO userRolesUpdateDTO) throws MangleException {
+        log.trace(String.format("Starting execution of updateUser for the user %s", userRolesUpdateDTO.getName()));
 
-        user.setAccountLocked(false);
+        User persistedUser = userService.getUserByName(userRolesUpdateDTO.getName());
+        User user = new User();
+        user.setName(userRolesUpdateDTO.getName());
+        user.setRoleNames(userRolesUpdateDTO.getRoleNames());
+        if (persistedUser != null && !persistedUser.getAccountLocked()) {
+            user.setAccountLocked(false);
+        }
+
         User persisted = userService.updateUser(user);
 
         Resource<User> userResource = new Resource<>(persisted);
@@ -121,7 +139,7 @@ public class UserManagementController {
     public ResponseEntity<Resource<User>> updateUserPassword(
             @Validated @RequestBody UserPasswordUpdateDTO userPasswordUpdateDTO) throws MangleException {
         String currentUser = userService.getCurrentUserName();
-        log.info(String.format("Starting execution of updateUserPassword for the user %s", currentUser));
+        log.trace(String.format("Starting execution of updateUserPassword for the user %s", currentUser));
 
         userService.updatePassword(currentUser, userPasswordUpdateDTO.getCurrentPassword(),
                 userPasswordUpdateDTO.getNewPassword());
@@ -137,9 +155,10 @@ public class UserManagementController {
      *
      * @return List of all the user
      */
-    @GetMapping(value = "users")
+    @ApiOperation(value = "API to get all Users", nickname = "getAllUsers")
+    @GetMapping(value = "users", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Resources<User>> getAllUsers() {
-        log.info("Starting execution of getAllUsers method");
+        log.trace("Starting execution of getAllUsers method");
         List<User> users = userService.getAllUsers();
         Resources<User> userResource = new Resources<>(users);
         Link link = linkTo(methodOn(UserManagementController.class).getAllUsers()).withSelfRel();
@@ -154,32 +173,33 @@ public class UserManagementController {
      *
      * @return current user details
      */
-    @GetMapping(value = "user")
+    @ApiOperation(value = "API to get current User", nickname = "getCurrentUser")
+    @GetMapping(value = "user", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Resource<User>> getCurrentUser() throws MangleException {
         log.info("Starting execution of getAllUsers method");
         User user = userService.getCurrentUser();
         Resource<User> userResource = new Resource<>(user);
         Link link = linkTo(methodOn(UserManagementController.class).getCurrentUser()).withSelfRel();
-        userResource.add(linkTo(methodOn(UserManagementController.class).updateUser(user))
+        userResource.add(linkTo(methodOn(UserManagementController.class).updateUser(null))
                 .withRel(HateoasOperations.UPDATE.toString()));
         userResource.add(link);
 
         return new ResponseEntity<>(userResource, HttpStatus.OK);
     }
 
-
+    @ApiOperation(value = "API to delete Users by its names", nickname = "deleteUsersByNames")
     @DeleteMapping(value = "users")
     public ResponseEntity<Void> deleteUsersByNames(@RequestParam List<String> usernames) throws MangleException {
-        log.info("Received request to delete users by name for users: {}", usernames);
+        log.trace("Received request to delete users by name for users: {}", usernames);
         userService.deleteUsersByNames(usernames);
         userService.triggerMultiNodeResync(usernames.toArray(new String[0]));
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
-    @GetMapping(value = "users/admin")
+    @GetMapping(value = "users/admin", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Read admin password reset status", nickname = "read-admin-password-status", hidden = true)
     public ResponseEntity<Resource<Boolean>> getAdminPasswordResetStatus() {
-        log.info("Received request to read password reset status for the default user");
+        log.trace("Received request to read password reset status for the default user");
         boolean isReset = passwordResetService.readResetStatus();
         Resource<Boolean> statusResource = new Resource<>(isReset);
         Link link = linkTo(methodOn(UserManagementController.class).getAdminPasswordResetStatus()).withSelfRel();
@@ -196,11 +216,11 @@ public class UserManagementController {
      * @return
      * @throws MangleException
      */
-    @PutMapping(value = "users/admin")
+    @PutMapping(value = "users/admin", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Update admin user creds for the first login", nickname = "update-admin-creds", hidden = true)
     public ResponseEntity<Resource<User>> resetAdminCredsForFirstLogin(@Validated @RequestBody User user)
             throws MangleException {
-        log.info(String.format("Starting execution of updateUser for the user %s", user.getName()));
+        log.trace(String.format("Starting execution of updateUser for the user %s", user.getName()));
 
         User persisted = userService.updateUser(user);
         passwordResetService.updateResetStatus();

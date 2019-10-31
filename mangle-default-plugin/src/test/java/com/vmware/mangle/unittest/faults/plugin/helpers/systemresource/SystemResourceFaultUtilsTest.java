@@ -25,6 +25,7 @@ import static com.vmware.mangle.utils.constants.FaultConstants.LATENCY_ARG;
 import static com.vmware.mangle.utils.constants.FaultConstants.LOAD_ARG;
 import static com.vmware.mangle.utils.constants.FaultConstants.NIC_NAME_ARG;
 import static com.vmware.mangle.utils.constants.FaultConstants.PROCESS_IDENTIFIER_UNDERSCORE;
+import static com.vmware.mangle.utils.constants.FaultConstants.PROCESS_ID_UNDERSCORE;
 import static com.vmware.mangle.utils.constants.FaultConstants.TARGET_DIRECTORY_ARG;
 import static com.vmware.mangle.utils.constants.FaultConstants.TIMEOUT_IN_MILLI_SEC_ARG;
 
@@ -133,11 +134,10 @@ public class SystemResourceFaultUtilsTest {
         args.put(NIC_NAME_ARG, "eth0");
         args.put(TIMEOUT_IN_MILLI_SEC_ARG, timeoutInMilliSec);
         String command = systemResourceFaultUtils.buildInjectionCommand(args, scriptBasePath);
-        Assert.assertEquals(command,
-                String.format(
-                        "%s/networkFault.sh --operation=inject --faultOperation=%s --latency=%s --percentage=null --nicName=%s --timeout=%s",
-                        DEFAULT_TEMP_DIR, NetworkFaultType.NETWORK_DELAY_MILLISECONDS.networkFaultType(), 1000, "eth0",
-                        timeoutInMilliSec));
+        Assert.assertEquals(command, String.format(
+                "%s/networkFault.sh --operation=inject --faultOperation=%s --latency=%s --percentage=null --nicName=%s --timeout=%s",
+                DEFAULT_TEMP_DIR, NetworkFaultType.NETWORK_DELAY_MILLISECONDS.networkFaultType(), 1000, "eth0",
+                timeoutInMilliSec));
     }
 
     @Test
@@ -215,8 +215,10 @@ public class SystemResourceFaultUtilsTest {
         Map<String, String> args = new HashMap<>();
         args.put(FAULT_NAME_ARG, FaultName.KILLPROCESSFAULT.getValue());
         args.put(PROCESS_IDENTIFIER_UNDERSCORE, "test");
+        args.put(PROCESS_ID_UNDERSCORE, "12345");
         String command = systemResourceFaultUtils.buildInjectionCommand(args, scriptBasePath);
-        Assert.assertEquals(command, "/tmp/killprocess.sh --operation=inject --processIdentifier=\"test\"");
+        Assert.assertEquals(command,
+                "/tmp/killprocess.sh --operation=inject --processIdentifier=\"test\" --killAll=null --processId=\"12345\"");
     }
 
     @Test

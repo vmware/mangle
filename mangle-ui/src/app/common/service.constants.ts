@@ -5,6 +5,7 @@ export class ServiceConstants {
     public static readonly LOGFILE = "/mangle-services/application/logfile";
     public static readonly FILE_SEPARATOR = "/";
     public static readonly LOGGERS = "/mangle-services/application/loggers";
+    public static readonly APPLICATION_INFO = "/mangle-services/application/info";
 
     public static readonly ENDPOINTS = ServiceConstants.URL_PREFIX + "endpoints";
     public static readonly ENDPOINTS_TYPE = ServiceConstants.URL_PREFIX + "endpoints/type";
@@ -65,6 +66,8 @@ export class ServiceConstants {
     public static readonly METRIC_PROVIDERS_TEST_CONNECTION = ServiceConstants.URL_PREFIX + "metric-providers/test-connection";
 
     public static readonly CLUSTER_CONFIG = ServiceConstants.URL_PREFIX + "cluster-config";
+    public static readonly CLUSTER_QUORUM_UPDATE = ServiceConstants.URL_PREFIX + "cluster-config/quorum";
+    public static readonly CLUSTER_DEPLOYMENT_MODE_UPDATE = ServiceConstants.CLUSTER_CONFIG;
     public static readonly EVENTS = ServiceConstants.URL_PREFIX + "events";
 
     public static readonly PLUGINS = ServiceConstants.URL_PREFIX + "plugins";

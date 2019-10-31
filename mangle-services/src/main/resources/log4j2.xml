@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="ERROR">
 	<Properties>
-		<Property name="baseDir">/var/opt/mangle-tomcat/logs</Property>
+		<Property name="baseDir">/home/mangle/var/opt/mangle-tomcat/logs</Property>
 		<Property name="fileName">${baseDir}/mangle-server.log</Property>
 		<Property name="fileNamePattern">${baseDir}/mangle-server-%d{dd-MM-yyyy}-%i.log.gz</Property>
 		<Property name="logPattern">%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{20}.%M \(%line\) - %msg%n</Property>

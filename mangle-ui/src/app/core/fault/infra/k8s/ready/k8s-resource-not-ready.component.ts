@@ -14,8 +14,8 @@ import { CommonUtils } from 'src/app/shared/commonUtils';
 })
 export class K8SResourceNotReadyComponent implements OnInit {
 
-  public errorAlertMessage: string;
-  public successAlertMessage: string;
+  public alertMessage: string;
+  public isErrorMessage: boolean;
 
   public resourceNameHidden: boolean = true;
   public resourceLabelsHidden: boolean = true;
@@ -53,7 +53,8 @@ export class K8SResourceNotReadyComponent implements OnInit {
         }
       }, err => {
         this.endpoints = [];
-        this.errorAlertMessage = err.error.description;
+        this.isErrorMessage= true;
+        this.alertMessage = err.error.description;
       });
     if (this.dataService.sharedData != null) {
       this.populateFaultData();
@@ -135,7 +136,8 @@ export class K8SResourceNotReadyComponent implements OnInit {
     } else {
       faultData.resourceLabels = this.resourceLabelsData;
       if (JSON.stringify(faultData.resourceLabels) === JSON.stringify({})) {
-        this.errorAlertMessage = MessageConstants.RESOURCE_LABEL_REQUIRED;
+        this.isErrorMessage= true;
+        this.alertMessage = MessageConstants.RESOURCE_LABEL_REQUIRED;
         return false;
       }
       delete faultData["resourceName"];
@@ -149,9 +151,10 @@ export class K8SResourceNotReadyComponent implements OnInit {
         this.tagsData = {};
         this.router.navigateByUrl('core/requests');
       }, err => {
-        this.errorAlertMessage = err.error.description;
-        if (this.errorAlertMessage === undefined) {
-          this.errorAlertMessage = err.error.error;
+        this.isErrorMessage= true;
+        this.alertMessage = err.error.description;
+        if (this.alertMessage === undefined) {
+          this.alertMessage = err.error.error;
         }
         this.runBtnState = ClrLoadingState.DEFAULT;
       });

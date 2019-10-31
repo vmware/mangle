@@ -12,8 +12,8 @@ import { CommonConstants } from 'src/app/common/common.constants';
 })
 export class PacketCorruptionComponent extends CommonNetwork implements OnInit {
 
-  public errorAlertMessage: string;
-  public successAlertMessage: string;
+  public alertMessage: string;
+  public isErrorMessage: boolean;
 
   public latencyHidden: boolean = false;
   public percentageHidden: boolean = false;
@@ -34,7 +34,8 @@ export class PacketCorruptionComponent extends CommonNetwork implements OnInit {
         }
       }, err => {
         this.endpoints = [];
-        this.errorAlertMessage = err.error.description;
+        this.isErrorMessage= true;
+        this.alertMessage = err.error.description;
       });
     if (this.dataService.sharedData != null) {
       this.populateFaultData(this.dataService);

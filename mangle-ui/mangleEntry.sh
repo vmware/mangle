@@ -1,5 +1,5 @@
 #!/bin/sh
-cd /var/opt/mangle-ui
+cd /home/mangle/var/opt/mangle-ui
 if [ -z "${MANGLE_CORE_IP}" ]
 then
     export MANGLE_CORE_IP=localhost
@@ -15,8 +15,8 @@ else
 fi
 
 echo "mangle-ui is now pointing to mangle-core URL=https://${MANGLE_CORE_IP}:${MANGLE_CORE_PORT}/mangle-services/"
-sed -i "s/localhost/${MANGLE_CORE_IP}/g" /var/opt/mangle-ui/proxy.config.json
-sed -i "s/8443/${MANGLE_CORE_PORT}/g" /var/opt/mangle-ui/proxy.config.json
+sed -i "s/localhost/${MANGLE_CORE_IP}/g" /home/mangle/var/opt/mangle-ui/proxy.config.json
+sed -i "s/8443/${MANGLE_CORE_PORT}/g" /home/mangle/var/opt/mangle-ui/proxy.config.json
 
 echo "Installing angular npm packages dependencies..."
 npm install

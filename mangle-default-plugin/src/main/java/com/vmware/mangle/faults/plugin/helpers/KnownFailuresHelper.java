@@ -35,6 +35,8 @@ import static com.vmware.mangle.utils.constants.KnownFailureConstants.AGENT_INST
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.AGENT_INSTALL_JAVA_HOME_NOT_AVAILABLE_FAILURE_OUTPUT;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.AGENT_INSTALL_NO_SUCH_PID_FAILURE_MESSAGE;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.AGENT_INSTALL_NO_SUCH_PID_FAILURE_OUTPUT;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.AGENT_INSTALL_SOCKET_CONNECTION_RESET_FAILURE_MESSAGE;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.AGENT_INSTALL_SOCKET_CONNECTION_RESET_FAILURE_OUTPUT;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.AGENT_INSTALL_SOCKET_CONNECTION_TIMEOUT_FAILURE_MESSAGE;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.AGENT_INSTALL_SOCKET_CONNECTION_TIMEOUT_FAILURE_OUTPUT;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.AGENT_INSTALL_SUDO_NOT_AVAILABLE_FAILURE_MESSAGE;
@@ -51,6 +53,8 @@ import static com.vmware.mangle.utils.constants.KnownFailureConstants.AGENT_SUBM
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.AGENT_SUBMIT_INVALID_JAVAHOME_FAILURE_MESSAGE;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.AGENT_SUBMIT_INVALID_JAVAHOME_FAILURE_OUTPUT;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.AGENT_SUBMIT_JAVA_NET_CONNECT_EXCEPTION_OUTPUT;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.AGENT_SUBMIT_JAVA_NET_SOCKET_EXCEPTION_MESSAGE;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.AGENT_SUBMIT_JAVA_NET_SOCKET_EXCEPTION_OUTPUT;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.DISKIO_FAULT_IOSIZE_GREATER_THAN_DISK_SIZE_OUTPUT;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.DISKIO_FAULT_TARGET_DIRECTORY_DOESNT_HAVE_PERMISSION_OUTPUT;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.DISKIO_FAULT_TARGET_DIRECTORY_NOT_FOUND_OUTPUT;
@@ -127,6 +131,8 @@ public class KnownFailuresHelper {
                 AGENT_INSTALL_JAVA_HOME_NOT_AVAILABLE_FAILURE_MESSAGE);
         knownFailuresforAgentInstallation.put(AGENT_INSTALL_AGENT_INITIALIZATION_FAILURE_OUTPUT,
                 AGENT_INSTALL_AGENT_INITIALIZATION_FAILURE_MESSAGE);
+        knownFailuresforAgentInstallation.put(AGENT_INSTALL_SOCKET_CONNECTION_RESET_FAILURE_OUTPUT,
+                AGENT_INSTALL_SOCKET_CONNECTION_RESET_FAILURE_MESSAGE);
         knownFailuresforAgentInstallation.put(AGENT_INSTALL_INVALID_PID_FAILURE_OUTPUT,
                 AGENT_INSTALL_INVALID_PID_FAILURE_MESSAGE);
         knownFailuresforAgentInstallation.put(AGENT_INSTALL_NO_SUCH_PID_FAILURE_OUTPUT,
@@ -173,6 +179,8 @@ public class KnownFailuresHelper {
         knownFailuresforAgentFaultRemediation.put(FAULT_ALREADY_REMEDIATED, FAULT_ALREADY_REMEDIATED);
         knownFailuresforAgentFaultRemediation.put(AGENT_SUBMIT_INVALID_JAVAHOME_FAILURE_OUTPUT,
                 AGENT_SUBMIT_INVALID_JAVAHOME_FAILURE_MESSAGE);
+        knownFailuresforAgentFaultRemediation.put(AGENT_SUBMIT_JAVA_NET_SOCKET_EXCEPTION_OUTPUT,
+                AGENT_SUBMIT_JAVA_NET_SOCKET_EXCEPTION_MESSAGE);
 
         return knownFailuresforAgentFaultRemediation;
     }

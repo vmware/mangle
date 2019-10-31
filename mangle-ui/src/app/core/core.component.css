@@ -1,0 +1,9 @@
+.modal-title > h3, h4, p, button {
+  display: inline;
+}
+
+.modal-title > p {
+  border-left:1px solid #949995;
+  height : 500px;
+  margin: 10px;
+}

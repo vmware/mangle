@@ -75,11 +75,13 @@ public class UserLoginAttemptsService {
         userLoginAttempts.setLastAttempt(new Date());
         userLoginAttempts.setAttempts(0);
         User user = userService.getUserByName(username);
-        user.setAccountLocked(false);
-        try {
-            userService.updateUser(user);
-        } catch (MangleException e) {
-            log.error("Failed to update user, exception {}", e.getMessage());
+        if (user != null && (user.getAccountLocked() == null || user.getAccountLocked())) {
+            user.setAccountLocked(false);
+            try {
+                userService.updateUser(user);
+            } catch (MangleException e) {
+                log.error("Failed to update user, exception {}", e.getMessage());
+            }
         }
         repository.save(userLoginAttempts);
     }

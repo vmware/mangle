@@ -26,6 +26,7 @@ import static com.vmware.mangle.utils.constants.FaultConstants.FILEHANDLER_INJEC
 import static com.vmware.mangle.utils.constants.FaultConstants.FORWARD_SLASH;
 import static com.vmware.mangle.utils.constants.FaultConstants.IO_SIZE;
 import static com.vmware.mangle.utils.constants.FaultConstants.KERNELPANIC_INJECTION_COMMAND_WITH_ARGS;
+import static com.vmware.mangle.utils.constants.FaultConstants.KILL_ALL;
 import static com.vmware.mangle.utils.constants.FaultConstants.KILL_PROCESS_REMEDIATION_COMMAND;
 import static com.vmware.mangle.utils.constants.FaultConstants.KILL_SERVICE_INJECTION_COMMAND_WITH_ARGS;
 import static com.vmware.mangle.utils.constants.FaultConstants.LATENCY;
@@ -39,6 +40,7 @@ import static com.vmware.mangle.utils.constants.FaultConstants.NIC_NAME_SCRIPT_A
 import static com.vmware.mangle.utils.constants.FaultConstants.OPERATION_REMEDIATE;
 import static com.vmware.mangle.utils.constants.FaultConstants.PERCENTAGE;
 import static com.vmware.mangle.utils.constants.FaultConstants.PERCENTAGE_SCRIPT_ARG;
+import static com.vmware.mangle.utils.constants.FaultConstants.PROCESS_ID;
 import static com.vmware.mangle.utils.constants.FaultConstants.PROCESS_IDENTIFIER;
 import static com.vmware.mangle.utils.constants.FaultConstants.TARGET_DIRECTORY;
 import static com.vmware.mangle.utils.constants.FaultConstants.TARGET_DIRECTORY_SCRIPT_ARG;
@@ -138,18 +140,15 @@ public class SystemResourceFaultUtils {
     }
 
     private String getKillServiceInjectionCommand(Map<String, String> faultArgs, String scriptBasePath) {
-        return new StringBuilder(scriptBasePath)
-                .append(String.format(KILL_SERVICE_INJECTION_COMMAND_WITH_ARGS, faultArgs.get(PROCESS_IDENTIFIER)))
-                .toString();
+        return new StringBuilder(scriptBasePath).append(String.format(KILL_SERVICE_INJECTION_COMMAND_WITH_ARGS,
+                faultArgs.get(PROCESS_IDENTIFIER), faultArgs.get(KILL_ALL), faultArgs.get(PROCESS_ID))).toString();
     }
 
     private String getNetworkFaultInjectionCommand(Map<String, String> faultArgs, String scriptBasePath) {
-        return new StringBuilder(scriptBasePath)
-                .append(String.format(NETWORK_FAULT_INJECTION_COMMAND_WITH_ARGS, FAULT_OPERATION_SCRIPT_ARG,
-                        faultArgs.get(FAULT_OPERATION), LATENCY_SCRIPT_ARG, faultArgs.get(LATENCY),
-                        PERCENTAGE_SCRIPT_ARG, faultArgs.get(PERCENTAGE), NIC_NAME_SCRIPT_ARG, faultArgs.get(NIC_NAME),
-                        TIMEOUT_SCRIPT_ARG, faultArgs.get(TIMEOUT_IN_MILLI_SEC)))
-                .toString();
+        return new StringBuilder(scriptBasePath).append(String.format(NETWORK_FAULT_INJECTION_COMMAND_WITH_ARGS,
+                FAULT_OPERATION_SCRIPT_ARG, faultArgs.get(FAULT_OPERATION), LATENCY_SCRIPT_ARG, faultArgs.get(LATENCY),
+                PERCENTAGE_SCRIPT_ARG, faultArgs.get(PERCENTAGE), NIC_NAME_SCRIPT_ARG, faultArgs.get(NIC_NAME),
+                TIMEOUT_SCRIPT_ARG, faultArgs.get(TIMEOUT_IN_MILLI_SEC))).toString();
     }
 
 
@@ -163,7 +162,8 @@ public class SystemResourceFaultUtils {
                 + String.format(DISK_SPACE_INJECTION_COMMAND_WITH_ARGS, faultArgs.get(DIRECTORY_PATH),
                         faultArgs.get(TIMEOUT_IN_MILLI_SEC))
                 + (StringUtils.hasLength(faultArgs.get(DISK_FILL_SIZE))
-                        ? " " + DISK_FILL_SIZE_SCRIPT_ARG + "=" + faultArgs.get(DISK_FILL_SIZE) : "");
+                        ? " " + DISK_FILL_SIZE_SCRIPT_ARG + "=" + faultArgs.get(DISK_FILL_SIZE)
+                        : "");
     }
 
     /**

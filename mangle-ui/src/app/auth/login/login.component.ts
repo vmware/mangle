@@ -6,7 +6,8 @@ import { MessageConstants } from 'src/app/common/message.constants';
 
 @Component({
   selector: 'app-login',
-  templateUrl: './login.component.html'
+  templateUrl: './login.component.html',
+  styleUrls: ['./login.component.css']
 })
 export class LoginComponent implements OnInit {
 
@@ -17,6 +18,8 @@ export class LoginComponent implements OnInit {
 
   public authSources: any;
   public submitBtnState: ClrLoadingState = ClrLoadingState.DEFAULT;
+
+  public showPassword = false;
 
   public authData = {
     "authSource": null,
@@ -53,6 +56,10 @@ export class LoginComponent implements OnInit {
       res => {
         this.authSources = res._embedded.stringList;
       });
+  }
+
+  public negateShowPassword() {
+    this.showPassword = !this.showPassword;
   }
 
 }

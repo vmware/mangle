@@ -116,7 +116,7 @@ public class HazelcastClusterMigrationListener implements MigrationListener, Haz
     @Override
     public void migrationCompleted(MigrationEvent migrationEvent) {
         if (isMigratedToTheCurrentNode(migrationEvent)
-                && HazelcastConstants.mangleQourumStatus == MangleQuorumStatus.PRESENT) {
+                && HazelcastConstants.getMangleQourumStatus() == MangleQuorumStatus.PRESENT) {
             IMap<Object, Object> map = hz.getMap(HAZELCAST_TASKS_MAP);
 
             Set<Object> keys = map.localKeySet();

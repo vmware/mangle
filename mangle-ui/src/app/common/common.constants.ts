@@ -31,6 +31,8 @@ export class CommonConstants {
     public static readonly fileName = "fileName";
     public static readonly certificatesNames = CommonConstants.certificatesName + "s";
     public static readonly active = "ACTIVE";
+    public static readonly quorumValue = "quorumValue";
+    public static readonly deploymentType = "deploymentType";
 
     public static readonly K8S_FAULT_SPEC = "com.vmware.mangle.cassandra.model.faults.specs.K8SFaultTriggerSpec";
     public static readonly CPU_FAULT_SPEC = "com.vmware.mangle.cassandra.model.faults.specs.CpuFaultSpec";

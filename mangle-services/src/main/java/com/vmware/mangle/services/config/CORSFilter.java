@@ -12,8 +12,9 @@
 package com.vmware.mangle.services.config;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
-
+import java.util.TimeZone;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -56,6 +57,9 @@ public class CORSFilter implements Filter {
         response.setHeader("Access-Control-Allow-Methods", "POST, GET, PUT, OPTIONS, DELETE");
         response.setHeader("Access-Control-Max-Age", "3600");
         response.setHeader("Access-Control-Allow-Headers", "x-requested-with, Content-Type");
+        response.setHeader("Cache-control", "no-store");
+        response.setHeader("Pragma", "no-cache");
+        response.setHeader("Expires", getHttpDateTime());
 
         if (verifyQuorumPreCheckFailure(request)) {
             ErrorDetails errorDetails = new ErrorDetails(new Date(), ErrorCode.CLUSTER_QUORUM_NOT_MET.getCode(),
@@ -99,11 +103,16 @@ public class CORSFilter implements Filter {
     }
 
     public boolean verifyQuorumPreCheckFailure(HttpServletRequest request) {
-        return (HazelcastConstants.mangleQourumStatus == MangleQuorumStatus.NOT_PRESENT
+        return (HazelcastConstants.getMangleQourumStatus() == MangleQuorumStatus.NOT_PRESENT
                 && !request.getMethod().equals(RequestMethod.GET.name())
                 && !(request.getRequestURI().contains(URLConstants.CLUSTER_CONFIG_URL)
                         || request.getRequestURI().contains(URLConstants.DEFAULT_USER_UPDATE_FLAG_URL)
                         || request.getRequestURI().contains(URLConstants.UPDATE_CURRENT_USER_PASSWORD)));
     }
 
+    private String getHttpDateTime() {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("E, dd MMM yyyy HH:mm:ss z");
+        simpleDateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+        return simpleDateFormat.format(new Date());
+    }
 }

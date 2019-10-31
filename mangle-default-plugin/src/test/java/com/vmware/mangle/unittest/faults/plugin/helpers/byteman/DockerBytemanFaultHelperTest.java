@@ -209,12 +209,11 @@ public class DockerBytemanFaultHelperTest extends PowerMockTestCase {
                     dockerBytemanFaultHelper.getInjectionCommandInfoList(springServiceExceptionFaultSpec);
             log.info(RestTemplateWrapper.objectToJson(injectionCommands));
             Assert.assertTrue(injectionCommands.size() > 0);
-            Assert.assertTrue(injectionCommands.get(0).getCommand().toString().contains(".btm"));
-            Assert.assertTrue(injectionCommands.get(1).getCommand().contains(String
+            Assert.assertTrue(injectionCommands.get(0).getCommand().contains(String
                     .format(PID_ATTACH_MXBEANS_COMMAND_WITH_PORT, DEFAULT_TEMP_DIR + FORWARD_SLASH, PORT_9091, null)));
 
             Assert.assertTrue(
-                    injectionCommands.get(2).getCommand().toString().contains(String.format(SUBMIT_COMMAND_WITH_PORT,
+                    injectionCommands.get(1).getCommand().toString().contains(String.format(SUBMIT_COMMAND_WITH_PORT,
                             DEFAULT_TEMP_DIR + FORWARD_SLASH, PORT_9091, DEFAULT_TEMP_DIR + "/123456;.btm")));
         } catch (MangleException e) {
             log.error("testGetJVMCodeLevelInjectionCommandInfoListForSpringServiceFault failed with Exception: ", e);
@@ -336,8 +335,8 @@ public class DockerBytemanFaultHelperTest extends PowerMockTestCase {
     void testGetAgentFaultInjectionScripts() {
         CommandExecutionFaultSpec cpuFaultSpec = faultsMockData.getDockerCpuJvmAgentFaultSpec();
         List<SupportScriptInfo> supportScripts = dockerBytemanFaultHelper.getAgentFaultInjectionScripts(cpuFaultSpec);
-        Assert.assertEquals(AGENT_NAME, supportScripts.get(0).getScriptFileName());
-        Assert.assertEquals(DEFAULT_TEMP_DIR + FORWARD_SLASH, supportScripts.get(0).getTargetDirectoryPath());
+        Assert.assertEquals(AGENT_NAME, supportScripts.get(1).getScriptFileName());
+        Assert.assertEquals(DEFAULT_TEMP_DIR + FORWARD_SLASH, supportScripts.get(1).getTargetDirectoryPath());
     }
 
     @Test

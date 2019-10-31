@@ -13,8 +13,8 @@ import { CommonUtils } from 'src/app/shared/commonUtils';
 })
 export class SimulateJavaExceptionComponent implements OnInit {
 
-  public errorAlertMessage: string;
-  public successAlertMessage: string;
+  public alertMessage: string;
+  public isErrorMessage: boolean;
 
   public cronModal: boolean = false;
 
@@ -77,7 +77,8 @@ export class SimulateJavaExceptionComponent implements OnInit {
         }
       }, err => {
         this.endpoints = [];
-        this.errorAlertMessage = err.error.description;
+        this.isErrorMessage= true;
+        this.alertMessage = err.error.description;
       });
     if (this.dataService.sharedData != null) {
       this.populateFaultData();
@@ -146,7 +147,8 @@ export class SimulateJavaExceptionComponent implements OnInit {
           }
         }, err => {
           this.dockerContainers = [];
-          this.errorAlertMessage = err.error.description;
+          this.isErrorMessage= true;
+          this.alertMessage = err.error.description;
         }
       );
     }
@@ -191,9 +193,10 @@ export class SimulateJavaExceptionComponent implements OnInit {
         this.tagsData = {};
           this.router.navigateByUrl(CommonConstants.REQUESTS_PROCESSED_URL);
       }, err => {
-        this.errorAlertMessage = err.error.description;
-        if (this.errorAlertMessage === undefined) {
-          this.errorAlertMessage = err.error.error;
+        this.isErrorMessage= true;
+        this.alertMessage = err.error.description;
+        if (this.alertMessage === undefined) {
+          this.alertMessage = err.error.error;
         }
         this.runBtnState = ClrLoadingState.DEFAULT;
       });

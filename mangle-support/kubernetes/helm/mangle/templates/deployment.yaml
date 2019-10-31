@@ -49,7 +49,7 @@ spec:
           value: "-DclusterValidationToken=mangle -DpublicAddress=$(POD_IP) -DclusterMembers={{ .Values.serviceName }}.{{ .Release.Namespace }}.svc.cluster.local"
         volumeMounts:
         - name: mangle-logs
-          mountPath: /var/opt/mangle-tomcat/logs
+          mountPath: /home/mangle/var/opt/mangle-tomcat/logs
         imagePullPolicy: Always
         {{ include "set-resource-limits" . | indent 8 }}
       restartPolicy: Always

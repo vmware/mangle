@@ -14,8 +14,8 @@ export class LogLevelComponent implements OnInit {
     public levels: any = [];
     public loggerFormData: any = { "name": null, "configProp": { "configuredLevel": null, "effectiveLevel": null } };
 
-    public errorAlertMessage: string;
-    public successAlertMessage: string;
+    public alertMessage: string;
+    public isErrorMessage: boolean;
 
     public addEdit: string;
 
@@ -38,7 +38,8 @@ export class LogLevelComponent implements OnInit {
                 this.levels = res.levels;
                 this.isLoading = false;
             }, err => {
-                this.errorAlertMessage = err.error.description;
+                this.isErrorMessage= true;
+                this.alertMessage = err.error.description;
                 this.isLoading = false;
             });
     }
@@ -48,11 +49,13 @@ export class LogLevelComponent implements OnInit {
         this.settingService.updateLogger(loggerFormVal).subscribe(
             res => {
                 this.getLoggers();
-                this.successAlertMessage = MessageConstants.LOGGER_UPDATE;
+                this.isErrorMessage= false;
+                this.alertMessage = MessageConstants.LOGGER_UPDATE;
                 this.isLoading = false;
             }, err => {
                 this.getLoggers();
-                this.errorAlertMessage = err.error.description;
+                this.isErrorMessage= true;
+                this.alertMessage = err.error.description;
                 this.isLoading = false;
             });
     }

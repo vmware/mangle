@@ -319,6 +319,8 @@ public class FaultsMockData {
         KillProcessFaultSpec faultSpec = new KillProcessFaultSpec();
         faultSpec.setEndpointName(endpointSpec.getName());
         faultSpec.setProcessIdentifier("kill-test.jar");
+        faultSpec.setProcessId("");
+        faultSpec.setKillAll(false);
         faultSpec.setRemediationCommand("java -jar /tmp/kill-test/kill-test.jar");
         return faultSpec;
     }

@@ -1,8 +1,8 @@
-<app-alert [(errorAlertMessage)]="errorAlertMessage" [(successAlertMessage)]="successAlertMessage" (errorAlertMessageChange)="errorAlertMessage = $event" (successAlertMessageChange)="successAlertMessage = $event"></app-alert>
+<app-alert [(alertMessage)]="alertMessage" [(isErrorMessage)]="isErrorMessage" (alertMessageChange)="alertMessage = $event"> </app-alert>
 <div [hidden]="epDatagrid">
 	<clr-dg-action-bar>
 		<div class="btn-group">
-			<button type="button" class="btn btn-sm btn-secondary" (click)="populateEndpointForm({'id':null,'name':null,'endPointType':'MACHINE','credentialsName':null,'remoteMachineConnectionProperties':{'host':null,'osType':null,'sshPort':22,'timeout':1000},'tags':null});epDatagrid=true;epForm=false;addEdit='Add';"><clr-icon shape="plus"></clr-icon> Remote Machine</button>
+			<button type="button" class="btn btn-sm btn-secondary" (click)="populateEndpointForm({'id':null,'name':null,'endPointType':'MACHINE','credentialsName':null,'remoteMachineConnectionProperties':{'host':null,'osType':'LINUX','sshPort':22,'timeout':1000},'tags':null});epDatagrid=true;epForm=false;addEdit='Add';"><clr-icon shape="plus"></clr-icon> Remote Machine</button>
 		</div>
 	</clr-dg-action-bar>
 	<clr-datagrid [clrDgLoading]="isLoading">
@@ -75,11 +75,7 @@
                 </div>
                 <div class="form-group">
                     <label for="osType">OS Type</label>
-                    <div class="select">
-                        <select name="osType" [(ngModel)]="epFormData.remoteMachineConnectionProperties.osType" required>
-                            <option>LINUX</option>
-                        </select>
-                    </div>
+                    <input type="text" size="3" name="osType" [(ngModel)]="epFormData.remoteMachineConnectionProperties.osType" style="background-color:rgb(233, 224, 224);text-align: center" readonly>
                 </div>
             </fieldset>
             <div class="form-group">

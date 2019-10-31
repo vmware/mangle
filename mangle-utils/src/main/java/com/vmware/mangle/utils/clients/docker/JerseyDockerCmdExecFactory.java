@@ -21,10 +21,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
-import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.ClientRequestFilter;
@@ -160,13 +157,11 @@ import org.slf4j.LoggerFactory;
 import com.vmware.mangle.utils.exceptions.MangleRuntimeException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
-//import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
-// see https://github.com/docker-java/docker-java/issues/196
-
 /**
  * @author bkaranam
  *
- *
+ * import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
+ * see https://github.com/docker-java/docker-java/issues/196
  */
 @Log4j2
 public class JerseyDockerCmdExecFactory implements DockerCmdExecFactory {
@@ -349,12 +344,7 @@ public class JerseyDockerCmdExecFactory implements DockerCmdExecFactory {
         RegistryBuilder<ConnectionSocketFactory> registryBuilder = RegistryBuilder.create();
         registryBuilder.register("http", PlainConnectionSocketFactory.getSocketFactory());
         if (sslContext != null) {
-            registryBuilder.register("https", new SSLConnectionSocketFactory(sslContext, new HostnameVerifier() {
-                @Override
-                public boolean verify(String arg0, SSLSession arg1) {
-                    return true;
-                }
-            }));
+            registryBuilder.register("https", new SSLConnectionSocketFactory(sslContext, (arg0, arg1) -> true));
         }
         registryBuilder.register("unix", new UnixConnectionSocketFactory(originalUri));
         return registryBuilder.build();

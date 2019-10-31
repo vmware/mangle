@@ -75,13 +75,13 @@ describe('RolesComponent', () => {
     //add role
     spyOn(settingService, 'addRole').and.returnValue(of(role_data_id));
     component.addOrUpdateRole(role_data);
-    expect(component.successAlertMessage).toBeTruthy();
+    expect(component.alertMessage).toBeTruthy();
     expect(settingService.addRole).toHaveBeenCalled();
     expect(settingService.getRoleList).toHaveBeenCalled();
     //update role
     spyOn(settingService, 'updateRole').and.returnValue(of(role_data_id));
     component.addOrUpdateRole(role_data_id);
-    expect(component.successAlertMessage).toBeTruthy();
+    expect(component.alertMessage).toBeTruthy();
     expect(settingService.updateRole).toHaveBeenCalled();
     expect(settingService.getRoleList).toHaveBeenCalled();
   });
@@ -90,7 +90,7 @@ describe('RolesComponent', () => {
     spyOn(settingService, 'deleteRole').and.returnValue(of({}));
     spyOn(window, 'confirm').and.callFake(function () { return true; });
     component.deleteRole(role_data);
-    expect(component.successAlertMessage).toBeTruthy();
+    expect(component.alertMessage).toBeTruthy();
     expect(settingService.deleteRole).toHaveBeenCalled();
     expect(settingService.getRoleList).toHaveBeenCalled();
   });

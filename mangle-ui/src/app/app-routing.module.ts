@@ -60,6 +60,7 @@ import { AwsEC2NetworkComponent } from './core/fault/infra/aws/ec2/network/aws-e
 import { DiskSpaceComponent } from './core/fault/infra/diskspace/diskspace.component';
 import { KernelPanicComponent } from './core/fault/infra/kernelpanic/kernelpanic.component';
 import { K8SServiceUnavailableComponent } from './core/fault/infra/k8s/service-unavailable/k8s-service-unavailable.component';
+import { PrivilegeGuardService } from './privilege-guard.service';
 
 const routes: Routes = [
 	{ path: '', redirectTo: 'core/home', pathMatch: 'full' },
@@ -100,7 +101,7 @@ const routes: Routes = [
 					{ path: 'docker-state-change', component: DockerStateChangeComponent },
 					{ path: 'delete-k8s-resource', component: DeleteK8SResourceComponent },
 					{ path: 'k8s-resource-not-ready', component: K8SResourceNotReadyComponent },
-					{ path: 'k8s-service-unavailable', component: K8SServiceUnavailableComponent},
+					{ path: 'k8s-service-unavailable', component: K8SServiceUnavailableComponent },
 					{ path: 'vcenter-disk', component: VcenterDiskComponent },
 					{ path: 'vcenter-nic', component: VcenterNicComponent },
 					{ path: 'vcenter-state', component: VcenterStateComponent },
@@ -136,6 +137,7 @@ const routes: Routes = [
 			{
 				path: 'setting',
 				component: SettingComponent,
+				canActivate: [PrivilegeGuardService],
 				children: [
 					{ path: '', redirectTo: 'identity', pathMatch: 'full' },
 					{ path: 'identity', component: IdentityComponent },

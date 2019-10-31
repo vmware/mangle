@@ -57,14 +57,14 @@ public class HazelcastUtils {
     }
 
     public static void updateHazelcastMangleQuorumValue(int quorumValue) {
-        log.debug("Updating the value of hazelcast quorum from {} to {}", HazelcastConstants.mangleQourum, quorumValue);
-        HazelcastConstants.mangleQourum = quorumValue;
+        log.debug("Updating the value of hazelcast quorum from {} to {}", HazelcastConstants.getMangleQourum(), quorumValue);
+        HazelcastConstants.setMangleQourum(quorumValue);
     }
 
     public static void updateHazelcastQuorumStatus(MangleQuorumStatus quorumStatus) {
-        log.debug("Updating the value of hazelcast quorum status from {} to {}", HazelcastConstants.mangleQourumStatus,
+        log.debug("Updating the value of hazelcast quorum status from {} to {}", HazelcastConstants.getMangleQourumStatus(),
                 quorumStatus);
-        HazelcastConstants.mangleQourumStatus = quorumStatus;
+        HazelcastConstants.setMangleQourumStatus(quorumStatus);
     }
 
 

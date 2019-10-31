@@ -319,13 +319,14 @@ public class MetricProviderService implements HazelcastClusterSyncAware {
             MangleAdminConfigurationSpec adminConfigSpec = null;
             if (metricProviderOptional.isPresent()) {
                 MetricProviderSpec activeMetricProvider = this.getActiveMetricProvider();
+                //Enable operation of already active metric provider will disable it.
                 if (null != activeMetricProvider && activeMetricProvider.getName().equals(metricProviderName)) {
-                    throw new MangleRuntimeException(ErrorCode.ALREADY_ACTIVE_METRIC_PROVIDER,
-                            ErrorConstants.ALREADY_ACTIVE_METRIC_PROVIDER, metricProviderName);
+                    return disableMetricProvider();
+                } else {
+                    adminConfigSpec = changeActiveMetricProvider(metricProviderName);
+                    changeMetricMeterRegistry(metricProviderOptional.get());
+                    return adminConfigSpec;
                 }
-                adminConfigSpec = changeActiveMetricProvider(metricProviderName);
-                changeMetricMeterRegistry(metricProviderOptional.get());
-                return adminConfigSpec;
             } else {
                 throw new MangleRuntimeException(ErrorCode.NO_RECORD_FOUND, ErrorConstants.METRICPROVIDER_NAME,
                         metricProviderName);
@@ -371,6 +372,26 @@ public class MetricProviderService implements HazelcastClusterSyncAware {
             adminConfigSpec.setPropertyName(MetricProviderConstants.ACTIVE_METRIC_PROVIDER);
             adminConfigSpec.setPropertyValue(name);
             adminConfigSpec = this.adminConfigurationRepository.save(adminConfigSpec);
+        }
+        return adminConfigSpec;
+    }
+
+    private MangleAdminConfigurationSpec disableMetricProvider() {
+        Optional<MangleAdminConfigurationSpec> adminConfigOptional =
+                this.adminConfigurationRepository.findByPropertyName(MetricProviderConstants.ACTIVE_METRIC_PROVIDER);
+        MangleAdminConfigurationSpec adminConfigSpec = null;
+        if (adminConfigOptional.isPresent() && !adminConfigOptional.get().getPropertyValue().isEmpty()) {
+            MetricProviderSpec metricProviderSpec = this.getActiveMetricProvider();
+            if (metricProviderSpec.getMetricProviderType().equals(MetricProviderType.DATADOG)) {
+                this.datadogMeterRegistry.stop();
+            } else if (metricProviderSpec.getMetricProviderType().equals(MetricProviderType.WAVEFRONT)) {
+                this.wavefrontMeterRegistry.stop();
+            }
+            adminConfigSpec = adminConfigOptional.get();
+            adminConfigSpec.setPropertyValue("");
+            changeMetricSendingStatus(false);
+            adminConfigSpec = this.adminConfigurationRepository.save(adminConfigSpec);
+
         }
         return adminConfigSpec;
     }

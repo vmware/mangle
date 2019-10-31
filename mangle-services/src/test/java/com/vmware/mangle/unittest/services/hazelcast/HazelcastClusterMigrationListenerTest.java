@@ -76,13 +76,13 @@ public class HazelcastClusterMigrationListenerTest {
         when(hazelcastInstance.getPartitionService()).thenReturn(partitionService);
         listener.setHazelcastInstance(hazelcastInstance);
         doNothing().when(taskService).setHazelcastInstance(any());
-        HazelcastConstants.mangleQourumStatus = MangleQuorumStatus.PRESENT;
+        HazelcastConstants.setMangleQourumStatus(MangleQuorumStatus.PRESENT);
 
     }
 
     @AfterClass
     public void tearDown() {
-        HazelcastConstants.mangleQourumStatus = MangleQuorumStatus.NOT_PRESENT;
+        HazelcastConstants.setMangleQourumStatus(MangleQuorumStatus.NOT_PRESENT);
     }
 
     @Test

@@ -12,8 +12,8 @@ import { CommonUtils } from 'src/app/shared/commonUtils';
 })
 export class DockerStateChangeComponent implements OnInit {
 
-  public errorAlertMessage: string;
-  public successAlertMessage: string;
+  public alertMessage: string;
+  public isErrorMessage: boolean;
 
   public tagsData: any = {};
   public originalTagsData: any = {};
@@ -50,7 +50,8 @@ export class DockerStateChangeComponent implements OnInit {
         }
       }, err => {
         this.endpoints = [];
-        this.errorAlertMessage = err.error.description;
+        this.isErrorMessage= true;
+        this.alertMessage = err.error.description;
       });
     if (this.dataService.sharedData != null) {
       this.populateFaultData();
@@ -105,7 +106,8 @@ export class DockerStateChangeComponent implements OnInit {
           }
         }, err => {
           this.dockerContainers = [];
-          this.errorAlertMessage = err.error.description;
+          this.isErrorMessage= true;
+          this.alertMessage = err.error.description;
         }
       );
     }
@@ -137,9 +139,10 @@ export class DockerStateChangeComponent implements OnInit {
         this.tagsData = {};
         this.router.navigateByUrl('core/requests');
       }, err => {
-        this.errorAlertMessage = err.error.description;
-        if (this.errorAlertMessage === undefined) {
-          this.errorAlertMessage = err.error.error;
+        this.isErrorMessage= true;
+        this.alertMessage = err.error.description;
+        if (this.alertMessage === undefined) {
+          this.alertMessage = err.error.error;
         }
         this.runBtnState = ClrLoadingState.DEFAULT;
       });

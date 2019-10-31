@@ -4,17 +4,19 @@ import { MessageConstants } from 'src/app/common/message.constants';
 
 @Component({
     selector: 'app-users',
-    templateUrl: './users.component.html'
+    templateUrl: './users.component.html',
+    styleUrls: ['./users.component.css']
 })
 export class UsersComponent implements OnInit {
 
-    constructor(private settingService: SettingService) { }
-
-    public errorAlertMessage: string;
-    public successAlertMessage: string;
+    constructor(private settingService: SettingService) {
+    }
 
     public userFormData;
     public currentSelectedRoles: any = [];
+
+    public alertMessage: string;
+    public isErrorMessage: boolean;
 
     public authSources: any = [];
     public userList: any;
@@ -42,8 +44,8 @@ export class UsersComponent implements OnInit {
     public populateEditUserForm(editUserData) {
         this.getRoleList();
         this.userFormData = editUserData;
-        var userAndDomain = editUserData.name.split("@");
-        if (userAndDomain[1] === "mangle.local") {
+        var userAndDomain = editUserData.name.split('@');
+        if (userAndDomain[1] === 'mangle.local') {
             this.userFormData.password = null;
         }
         this.currentSelectedRoles = [];
@@ -64,6 +66,7 @@ export class UsersComponent implements OnInit {
         }
     }
 
+
     public getUserList() {
         this.isLoading = true;
         this.settingService.getUserList().subscribe(
@@ -73,10 +76,10 @@ export class UsersComponent implements OnInit {
             }, err => {
                 this.userList = [];
                 this.isLoading = false;
-                this.errorAlertMessage = err.error.description;
+                this.isErrorMessage = true;
+                this.alertMessage = err.error.description;
             });
     }
-
     public getRoleList() {
         this.settingService.getRoleList().subscribe(
             res => {
@@ -92,11 +95,13 @@ export class UsersComponent implements OnInit {
         this.settingService.addUser(addUserFormValue).subscribe(
             res => {
                 this.getUserList();
-                this.successAlertMessage = addUserFormValue.name + MessageConstants.USER_ADD;
+                this.isErrorMessage = false;
+                this.alertMessage = addUserFormValue.name + MessageConstants.USER_ADD;
                 this.isLoading = false;
             }, err => {
                 this.getUserList();
-                this.errorAlertMessage = err.error.description;
+                this.isErrorMessage = true;
+                this.alertMessage = err.error.description;
                 this.isLoading = false;
             });
     }
@@ -107,31 +112,35 @@ export class UsersComponent implements OnInit {
         this.settingService.updateUser(updateUserFormValue).subscribe(
             res => {
                 this.ngOnInit();
-                this.successAlertMessage = updateUserFormValue.name + MessageConstants.USER_UPDATE;
+                this.isErrorMessage = false;
+                this.alertMessage = updateUserFormValue.name + MessageConstants.USER_UPDATE;
                 this.isLoading = false;
             }, err => {
                 this.ngOnInit();
-                this.errorAlertMessage = err.error.description;
+                this.isErrorMessage = true;
+                this.alertMessage = err.error.description;
                 this.isLoading = false;
             });
     }
-
     public deleteUser(user) {
         if (confirm(MessageConstants.DELETE_CONFIRM + user.name + MessageConstants.QUESTION_MARK)) {
             this.settingService.deleteUser(user.name).subscribe(
                 res => {
                     this.getUserList();
-                    this.successAlertMessage = user.name + MessageConstants.USER_DELETE;
+                    this.isErrorMessage = false;
+                    this.alertMessage = user.name + MessageConstants.USER_DELETE;
                     this.isLoading = false;
                 }, err => {
                     this.getUserList();
-                    this.errorAlertMessage = err.error.description;
+                    this.isErrorMessage = true;
+                    this.alertMessage = err.error.description;
                     this.isLoading = false;
                 });
         } else {
             // Do nothing!
         }
     }
+
 
     public getDomains() {
         this.isLoading = true;
@@ -147,17 +156,23 @@ export class UsersComponent implements OnInit {
             });
     }
 
+
     public updateUserAccountLockStatus(user) {
-            this.settingService.updateUser(user).subscribe(
-              res => {
+        this.settingService.updateUser(user).subscribe(
+            res => {
                 this.getUserList();
-                this.successAlertMessage = MessageConstants.USER_UPDATE;
+                this.isErrorMessage = false;
+                this.alertMessage = MessageConstants.USER_UPDATE;
                 this.isLoading = false;
-              }, err => {
+            }, err => {
                 this.getUserList();
-                this.errorAlertMessage = err.error.description;
+                this.isErrorMessage = true;
+                this.alertMessage = err.error.description;
                 this.isLoading = false;
-              });
+            });
+    }
+    public isLocalUser(username: string) {
+        return username.includes('mangle.local');
     }
 
 }

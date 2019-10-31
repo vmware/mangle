@@ -21,12 +21,14 @@ import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.jar.JarFile;
+import java.util.stream.Collectors;
 
 import com.sun.tools.attach.AgentInitializationException;
 import com.sun.tools.attach.AgentLoadException;
 import com.sun.tools.attach.AttachNotSupportedException;
 import com.sun.tools.attach.VirtualMachine;
 import com.sun.tools.attach.VirtualMachineDescriptor;
+
 import org.jboss.byteman.agent.submit.Submit;
 
 /**
@@ -528,6 +530,7 @@ public class Install {
      * attach to the Java process identified by the process id supplied on the command line
      */
     private void attach() throws AttachNotSupportedException, IOException, IllegalArgumentException {
+        String foundProcesses = null;
         if (id.matches("[0-9]+")) {
             // integer process id
             int pid = Integer.valueOf(id);
@@ -541,16 +544,17 @@ public class Install {
             List<VirtualMachineDescriptor> vmds = VirtualMachine.list();
 
             List<VirtualMachineDescriptor> targetList = getTargetVirtualMachineDescriptors(vmds);
-
+            foundProcesses = vmds.stream().map(VirtualMachineDescriptor::displayName).collect(Collectors.joining(","));
             if (targetList.size() > 1) {
-                throw new IllegalArgumentException("Install : Failed. Found Duplicate JVM descriptors " + id);
+                throw new IllegalArgumentException("Install : Failed. Found Duplicate JVM descriptors for id: " + id
+                        + ". Found Processes: " + foundProcesses);
             }
             if (!targetList.isEmpty()) {
                 vm = VirtualMachine.attach(targetList.get(0));
                 return;
             }
         }
-        throw new IllegalArgumentException("Install : invalid pid " + id);
+        throw new IllegalArgumentException("Install : invalid pid " + id + ". Found Processes: " + foundProcesses);
     }
 
     private List<VirtualMachineDescriptor> getTargetVirtualMachineDescriptors(List<VirtualMachineDescriptor> vmds) {
@@ -561,7 +565,7 @@ public class Install {
             if (spacePos > 0) {
                 displayName = displayName.substring(0, spacePos);
             }
-            if (displayName.equals(id)) {
+            if (displayName.equals(id) || displayName.contains(id)) {
                 targetList.add(vmd);
             } else {
                 if (displayName.indexOf('.') >= 0 && displayName.endsWith(id)) {

@@ -63,7 +63,7 @@ public class AppListenerTest {
     public void testFailed() {
         appListener.starting();
         ConfigurableEnvironment environment = mock(ConfigurableEnvironment.class);
-        when(environment.getProperty(anyString())).thenReturn("/var/opt/mangle-tomcat/logs");
+        when(environment.getProperty(anyString())).thenReturn("/home/mangle/var/opt/mangle-tomcat/logs");
         appListener.environmentPrepared(environment);
         MangleUncaughtExceptionHandler.getExceptionHandler().setExitRequired(false);
         try {

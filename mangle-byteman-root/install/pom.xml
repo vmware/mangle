@@ -25,9 +25,21 @@
 		<version>2.0.0</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
+	<dependencies>
+		<dependency>
+			<groupId>com.vmware.mangle</groupId>
+			<artifactId>mangle-byteman</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.testng</groupId>
+			<artifactId>testng</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
 	<profiles>
-		<!-- the install code uses the VM_Attach API which is available in the 
-			JDK tools jar in JDK6/7/8. In JDK9 it is always available via the system 
+		<!-- the install code uses the VM_Attach API which is available in the
+			JDK tools jar in JDK6/7/8. In JDK9 it is always available via the system
 			loader. -->
 		<profile>
 			<id>use-toolsjar-profile</id>

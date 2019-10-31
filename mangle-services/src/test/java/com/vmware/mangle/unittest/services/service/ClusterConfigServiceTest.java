@@ -76,7 +76,7 @@ public class ClusterConfigServiceTest {
         MockitoAnnotations.initMocks(this);
         clusterConfigService = new ClusterConfigService(configRepository);
         clusterConfigService.setHazelcastInstance(hazelcastInstance);
-        HazelcastConstants.mangleQourumStatus = MangleQuorumStatus.PRESENT;
+        HazelcastConstants.setMangleQourumStatus(MangleQuorumStatus.PRESENT);
         ServiceCommonUtils.setApplicationContext(applicationContext);
     }
 
@@ -150,7 +150,7 @@ public class ClusterConfigServiceTest {
 
         clusterConfigService.resync("");
 
-        Assert.assertEquals(HazelcastConstants.mangleQourumStatus, MangleQuorumStatus.NOT_PRESENT);
+        Assert.assertEquals(HazelcastConstants.getMangleQourumStatus(), MangleQuorumStatus.NOT_PRESENT);
 
         verify(hazelcastInstance, times(2)).getCluster();
         verify(hazelcastInstance, times(1)).shutdown();
@@ -177,7 +177,7 @@ public class ClusterConfigServiceTest {
 
         clusterConfigService.resync("");
 
-        Assert.assertEquals(HazelcastConstants.mangleQourumStatus, MangleQuorumStatus.PRESENT);
+        Assert.assertEquals(HazelcastConstants.getMangleQourumStatus(), MangleQuorumStatus.PRESENT);
 
         verify(hazelcastInstance, times(1)).getCluster();
         verify(hazelcastInstance, times(0)).shutdown();
@@ -188,6 +188,7 @@ public class ClusterConfigServiceTest {
     @Test
     public void testUpdateMangleQuorum() throws MangleException {
         HazelcastClusterConfig config = mockdata.getClusterConfigObject();
+        config.setDeploymentMode(MangleDeploymentMode.CLUSTER);
         HazelcastSyncTopicManager topicManager = mock(HazelcastSyncTopicManager.class);
         Member member = mock(Member.class);
         Member member2 = mock(Member.class);
@@ -265,7 +266,7 @@ public class ClusterConfigServiceTest {
                 clusterConfigService.updateMangleDeploymentType(MangleDeploymentMode.CLUSTER);
 
         Assert.assertEquals(persistentConfig.getQuorum(), Integer.valueOf(2));
-        Assert.assertEquals(HazelcastConstants.mangleQourum, 2);
+        Assert.assertEquals(HazelcastConstants.getMangleQourum(), 2);
         Assert.assertEquals(hazelcastConfig.getProperty(HazelcastConstants.HAZELCAST_PROPERTY_DEPLOYMENT_MODE),
                 MangleDeploymentMode.CLUSTER.name());
 
@@ -299,7 +300,7 @@ public class ClusterConfigServiceTest {
                 clusterConfigService.updateMangleDeploymentType(MangleDeploymentMode.STANDALONE);
 
         Assert.assertEquals(persistentConfig.getQuorum(), Integer.valueOf(1));
-        Assert.assertEquals(HazelcastConstants.mangleQourum, 1);
+        Assert.assertEquals(HazelcastConstants.getMangleQourum(), 1);
         Assert.assertEquals(hazelcastConfig.getProperty(HazelcastConstants.HAZELCAST_PROPERTY_DEPLOYMENT_MODE),
                 MangleDeploymentMode.STANDALONE.name());
 
@@ -334,7 +335,7 @@ public class ClusterConfigServiceTest {
 
 
         Assert.assertEquals(config.getQuorum(), Integer.valueOf(1));
-        Assert.assertEquals(HazelcastConstants.mangleQourum, 1);
+        Assert.assertEquals(HazelcastConstants.getMangleQourum(), 1);
         Assert.assertEquals(hazelcastConfig.getProperty(HazelcastConstants.HAZELCAST_PROPERTY_DEPLOYMENT_MODE),
                 MangleDeploymentMode.CLUSTER.name());
         verify(hazelcastInstance, times(2)).getCluster();

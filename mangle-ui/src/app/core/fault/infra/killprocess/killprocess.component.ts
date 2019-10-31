@@ -5,6 +5,7 @@ import { EndpointService } from 'src/app/core/endpoint/endpoint.service';
 import { ClrLoadingState } from '@clr/angular';
 import { DataService } from 'src/app/shared/data.service';
 import { CommonUtils } from 'src/app/shared/commonUtils';
+import { CommonConstants } from 'src/app/common/common.constants';
 
 @Component({
   selector: 'app-killprocess',
@@ -12,8 +13,8 @@ import { CommonUtils } from 'src/app/shared/commonUtils';
 })
 export class KillprocessComponent implements OnInit {
 
-  public errorAlertMessage: string;
-  public successAlertMessage: string;
+  public alertMessage: string;
+  public isErrorMessage: boolean;
 
   public cronModal: boolean = false;
 
@@ -35,9 +36,14 @@ export class KillprocessComponent implements OnInit {
   public runBtnState: ClrLoadingState = ClrLoadingState.DEFAULT;
   public dockerContainers: any = [];
 
+  public processIdentifierHidden: boolean = true;
+  public processIdHidden: boolean = true;
+
   public faultFormData: any = {
     "endpointName": null,
     "processIdentifier": null,
+    "processId": null,
+    "killAll": false,
     "remediationCommand": null,
     "injectionHomeDir": null,
     "dockerArguments": {
@@ -72,7 +78,8 @@ export class KillprocessComponent implements OnInit {
         }
       }, err => {
         this.endpoints = [];
-        this.errorAlertMessage = err.error.description;
+        this.isErrorMessage= true;
+        this.alertMessage = err.error.description;
       });
     if (this.dataService.sharedData != null) {
       this.populateFaultData();
@@ -81,9 +88,16 @@ export class KillprocessComponent implements OnInit {
 
   public populateFaultData() {
     this.faultFormData.processIdentifier = this.dataService.sharedData.processIdentifier;
+    this.faultFormData.killAll = this.dataService.sharedData.killAll;
+    this.faultFormData.processId = this.dataService.sharedData.processId;
     this.faultFormData.remediationCommand = this.dataService.sharedData.remediationCommand;
     this.faultFormData.injectionHomeDir = this.dataService.sharedData.injectionHomeDir;
     this.faultFormData.endpointName = this.dataService.sharedData.endpointName;
+    if (this.dataService.sharedData.processIdentifier != null) {
+      document.getElementById("processIdentifier").click();
+    } else {
+      document.getElementById("processId").click();
+    }
     if (this.dataService.sharedData.dockerArguments != null) {
       this.faultFormData.dockerArguments = this.dataService.sharedData.dockerArguments;
       this.dockerHidden = false;
@@ -105,6 +119,17 @@ export class KillprocessComponent implements OnInit {
       if (this.endpoints[i].name.indexOf(searchKeyWord) > -1) {
         this.searchedEndpoints.push(this.endpoints[i]);
       }
+    }
+  }
+
+  public setKillUsingVal(selectedKillUsing) {
+    this.processIdentifierHidden = true;
+    this.processIdHidden = true;
+    if (selectedKillUsing == "processIdentifier") {
+      this.processIdentifierHidden = false;
+    }
+    if (selectedKillUsing == "processId") {
+      this.processIdHidden = false;
     }
   }
 
@@ -136,7 +161,8 @@ export class KillprocessComponent implements OnInit {
           }
         }, err => {
           this.dockerContainers = [];
-          this.errorAlertMessage = err.error.description;
+          this.isErrorMessage= true;
+          this.alertMessage = err.error.description;
         }
       );
     }
@@ -172,14 +198,13 @@ export class KillprocessComponent implements OnInit {
     }
   }
 
-  public displayEndpointFields(endpointNameVal){
+  public displayEndpointFields(endpointNameVal) {
     this.dockerHidden = true;
     this.k8sHidden = true;
     this.tagsData = {};
     for (var i = 0; i < this.endpoints.length; i++) {
-      if (endpointNameVal == this.endpoints[i].name) 
-      { 
-        this.tagsData = this.commonUtils.getTagsData(this.originalTagsData,this.endpoints[i].tags);
+      if (endpointNameVal == this.endpoints[i].name) {
+        this.tagsData = this.commonUtils.getTagsData(this.originalTagsData, this.endpoints[i].tags);
         if (this.endpoints[i].endPointType == 'DOCKER') {
           this.dockerHidden = false;
         }
@@ -211,18 +236,25 @@ export class KillprocessComponent implements OnInit {
     if (this.tagsData != {}) {
       faultData.tags = this.tagsData;
     }
+    if (this.processIdentifierHidden == true) {
+      faultData.killAll = true;
+      delete faultData["processIdentifier"];
+    } else {
+      delete faultData["processId"];
+    }
     this.faultService.executeKillProcessFault(faultData).subscribe(
       res => {
         this.tagsData = {};
         if (res.taskData.schedule == null) {
-          this.router.navigateByUrl('core/requests/processed');
+          this.router.navigateByUrl(CommonConstants.REQUESTS_PROCESSED_URL);
         } else {
-          this.router.navigateByUrl('core/requests/scheduled');
+          this.router.navigateByUrl(CommonConstants.REQUESTS_SCHEDULED_URL);
         }
       }, err => {
-        this.errorAlertMessage = err.error.description;
-        if (this.errorAlertMessage === undefined) {
-          this.errorAlertMessage = err.error.error;
+        this.isErrorMessage= true;
+        this.alertMessage = err.error.description;
+        if (this.alertMessage === undefined) {
+          this.alertMessage = err.error.error;
         }
         this.runBtnState = ClrLoadingState.DEFAULT;
       });

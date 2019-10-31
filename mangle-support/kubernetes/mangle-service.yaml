@@ -16,4 +16,8 @@ spec:
     port: 443
     protocol: TCP
     targetPort: 8443
+  - name: mangle-cluster-port
+    port: 5701
+    protocol: TCP
+    targetPort: 5701
 

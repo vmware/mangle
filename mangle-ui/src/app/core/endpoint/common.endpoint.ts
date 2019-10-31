@@ -28,8 +28,8 @@ export class CommonEndpoint implements OnInit {
 
     public addEdit: string;
 
-    public errorAlertMessage: string;
-    public successAlertMessage: string;
+    public alertMessage: string;
+    public isErrorMessage: boolean;
 
     public authErrorFlag = false;
     public authAlertMessage: string;
@@ -81,7 +81,8 @@ export class CommonEndpoint implements OnInit {
                 }
             }, err => {
                 this.certificates = [];
-                this.errorAlertMessage = err.error.description;
+                this.isErrorMessage = true;
+                this.alertMessage = err.error.description;
             });
     }
 
@@ -100,7 +101,8 @@ export class CommonEndpoint implements OnInit {
                 this.endpoints = [];
                 this.isLoading = false;
                 if (err.error.code === 'FI506') {
-                    this.errorAlertMessage = err.error.description;
+                    this.isErrorMessage = true;
+                    this.alertMessage = err.error.description;
                 }
             }
         );
@@ -125,14 +127,16 @@ export class CommonEndpoint implements OnInit {
         this.endpointService.addEndpoint(endpoint).subscribe(
             res => {
                 this.getEndpoints();
-                this.successAlertMessage = endpoint.name + MessageConstants.ENDPOINT_ADD;
+                this.isErrorMessage = false;
+                this.alertMessage = endpoint.name + MessageConstants.ENDPOINT_ADD;
                 this.isLoading = false;
             }, err => {
                 this.getEndpoints();
-                this.errorAlertMessage = err.error.description;
+                this.isErrorMessage = true;
+                this.alertMessage = err.error.description;
                 this.isLoading = false;
-                if (this.errorAlertMessage === undefined) {
-                    this.errorAlertMessage = err.error.error;
+                if (this.alertMessage === undefined) {
+                    this.alertMessage = err.error.error;
                 }
             });
     }
@@ -142,14 +146,16 @@ export class CommonEndpoint implements OnInit {
         this.endpointService.updateEndpoint(endpoint).subscribe(
             res => {
                 this.getEndpoints();
-                this.successAlertMessage = endpoint.name + MessageConstants.ENDPOINT_UPDATE;
+                this.isErrorMessage = false;
+                this.alertMessage = endpoint.name + MessageConstants.ENDPOINT_UPDATE;
                 this.isLoading = false;
             }, err => {
                 this.getEndpoints();
-                this.errorAlertMessage = err.error.description;
+                this.isErrorMessage = true;
+                this.alertMessage = err.error.description;
                 this.isLoading = false;
-                if (this.errorAlertMessage === undefined) {
-                    this.errorAlertMessage = err.error.error;
+                if (this.alertMessage === undefined) {
+                    this.alertMessage = err.error.error;
                 }
             });
     }
@@ -160,14 +166,16 @@ export class CommonEndpoint implements OnInit {
             this.endpointService.deleteEndpoint(endpoint.name).subscribe(
                 res => {
                     this.getEndpoints();
-                    this.successAlertMessage = endpoint.name + MessageConstants.ENDPOINT_DELETE;
+                    this.isErrorMessage = false;
+                    this.alertMessage = endpoint.name + MessageConstants.ENDPOINT_DELETE;
                     this.isLoading = false;
                 }, err => {
                     this.getEndpoints();
-                    this.errorAlertMessage = err.error.description;
+                    this.isErrorMessage = true;
+                    this.alertMessage = err.error.description;
                     this.isLoading = false;
-                    if (this.errorAlertMessage === undefined) {
-                        this.errorAlertMessage = err.error.error;
+                    if (this.alertMessage === undefined) {
+                        this.alertMessage = err.error.error;
                     }
                 });
         } else {
@@ -193,7 +201,8 @@ export class CommonEndpoint implements OnInit {
                 }
             }, err => {
                 this.credentials = [];
-                this.errorAlertMessage = err.error.description;
+                this.isErrorMessage = true;
+                this.alertMessage = err.error.description;
             });
     }
 
@@ -223,19 +232,21 @@ export class CommonEndpoint implements OnInit {
             this.endpointService.addRemoteMachineCredential(credential, this.keyFileToUpload).subscribe(
                 res => {
                     this.getCredentials();
-                    this.successAlertMessage = credential.name + MessageConstants.CREDENTIAL_ADD;
+                    this.isErrorMessage = false;
+                    this.alertMessage = credential.name + MessageConstants.CREDENTIAL_ADD;
                     this.submitBtnState = ClrLoadingState.DEFAULT;
                     this.machineCredential = false;
                     this.epFormData.credentialsName = credential.name;
                     credentialForm.reset();
                 }, err => {
                     this.getCredentials();
-                    this.errorAlertMessage = err.error.description;
+                    this.isErrorMessage = true;
+                    this.alertMessage = err.error.description;
                     this.submitBtnState = ClrLoadingState.DEFAULT;
                     this.machineCredential = false;
                     credentialForm.reset();
-                    if (this.errorAlertMessage === undefined) {
-                        this.errorAlertMessage = err.error.error;
+                    if (this.alertMessage === undefined) {
+                        this.alertMessage = err.error.error;
                     }
                 });
         } else {
@@ -255,13 +266,15 @@ export class CommonEndpoint implements OnInit {
         this.endpointService.addk8sCredential(credential, this.k8sFileToUpload).subscribe(
             res => {
                 this.getCredentials();
-                this.successAlertMessage = credential.name + MessageConstants.CREDENTIAL_ADD;
+                this.isErrorMessage = false;
+                this.alertMessage = credential.name + MessageConstants.CREDENTIAL_ADD;
                 this.epFormData.credentialsName = credential.name;
             }, err => {
                 this.getCredentials();
-                this.errorAlertMessage = err.error.description;
-                if (this.errorAlertMessage === undefined) {
-                    this.errorAlertMessage = err.error.error;
+                this.isErrorMessage = true;
+                this.alertMessage = err.error.description;
+                if (this.alertMessage === undefined) {
+                    this.alertMessage = err.error.error;
                 }
             });
     }
@@ -271,13 +284,15 @@ export class CommonEndpoint implements OnInit {
         this.endpointService.addVcenterCredential(credential).subscribe(
             res => {
                 this.getCredentials();
-                this.successAlertMessage = credential.name + MessageConstants.CREDENTIAL_ADD;
+                this.isErrorMessage = false;
+                this.alertMessage = credential.name + MessageConstants.CREDENTIAL_ADD;
                 this.epFormData.credentialsName = credential.name;
             }, err => {
                 this.getCredentials();
-                this.errorAlertMessage = err.error.description;
-                if (this.errorAlertMessage === undefined) {
-                    this.errorAlertMessage = err.error.error;
+                this.isErrorMessage = true;
+                this.alertMessage = err.error.description;
+                if (this.alertMessage === undefined) {
+                    this.alertMessage = err.error.error;
                 }
             });
     }
@@ -287,13 +302,15 @@ export class CommonEndpoint implements OnInit {
         this.endpointService.addAwsCredential(credential).subscribe(
             res => {
                 this.getCredentials();
-                this.successAlertMessage = credential.name + MessageConstants.CREDENTIAL_ADD;
+                this.isErrorMessage = false;
+                this.alertMessage = credential.name + MessageConstants.CREDENTIAL_ADD;
                 this.epFormData.credentialsName = credential.name;
             }, err => {
                 this.getCredentials();
-                this.errorAlertMessage = err.error.description;
-                if (this.errorAlertMessage === undefined) {
-                    this.errorAlertMessage = err.error.error;
+                this.isErrorMessage = true;
+                this.alertMessage = err.error.description;
+                if (this.alertMessage === undefined) {
+                    this.alertMessage = err.error.error;
                 }
             });
     }
@@ -315,36 +332,40 @@ export class CommonEndpoint implements OnInit {
         this.endpointService.addDockerCertificates(certificates, this.dockerCaCertToUpload, this.dockerServerCertToUpload, this.dockerPrivateKeyToUpload).subscribe(
             res => {
                 this.getCertificates();
-                this.successAlertMessage = certificates.name + MessageConstants.CERTIFICATES_ADD;
+                this.isErrorMessage = false;
+                this.alertMessage = certificates.name + MessageConstants.CERTIFICATES_ADD;
             }, err => {
                 this.getCertificates();
-                this.errorAlertMessage = err.error.description;
-                if (this.errorAlertMessage === undefined) {
-                    this.errorAlertMessage = err.error.error;
+                this.isErrorMessage = true;
+                this.alertMessage = err.error.description;
+                if (this.alertMessage === undefined) {
+                    this.alertMessage = err.error.error;
                 }
             });
     }
 
     public testEndpointConnection(isFormValid, endpoint) {
-        this.errorAlertMessage = null;
-        this.successAlertMessage = null;
+        this.alertMessage = null;
         if (isFormValid) {
             this.testEndpointBtnState = ClrLoadingState.LOADING;
             this.endpointService.testEndpointConnection(endpoint).subscribe(
                 res => {
                     if (res.code) {
                         this.testEndpointBtnState = ClrLoadingState.ERROR;
-                        this.errorAlertMessage = res.description;
+                        this.isErrorMessage = true;
+                        this.alertMessage = res.description;
                     } else {
                         this.testEndpointBtnState = ClrLoadingState.SUCCESS;
                         this.disableSubmit = false;
-                        this.successAlertMessage = MessageConstants.TEST_CONNECTION;
+                        this.isErrorMessage = false;
+                        this.alertMessage = MessageConstants.TEST_CONNECTION;
                     }
                 }, err => {
                     this.testEndpointBtnState = ClrLoadingState.ERROR;
-                    this.errorAlertMessage = err.error.description;
-                    if (this.errorAlertMessage === undefined) {
-                        this.errorAlertMessage = err.error.error;
+                    this.isErrorMessage = true;
+                    this.alertMessage = err.error.description;
+                    if (this.alertMessage === undefined) {
+                        this.alertMessage = err.error.error;
                     }
                 });
         }

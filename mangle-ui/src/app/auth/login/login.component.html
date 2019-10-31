@@ -1,26 +1,32 @@
 <div class="login-wrapper">
-    <form class="login" #loginForm="ngForm" (ngSubmit)="login(loginForm.value);" *ngIf="authData" ngNativeValidate>
-        <label class="title">
-            <h3 class="welcome">Welcome to Mangle</h3>
-            <h5 class="hint">
-                Use your login ID to sign in
-            </h5>
-        </label>
-        <div class="login-group">
-            <div class="auth-source select">
-                <select name="authSource" [(ngModel)]="authData.authSource" required>
-                    <option *ngIf="!loginForm.value.authSource" [value]="null" selected disabled></option>
-                    <option [value]="sourceAuth" *ngFor="let sourceAuth of authSources">{{sourceAuth}}</option>
-                </select>
-            </div>
-            <input class="username" type="text" id="username" name="username" placeholder="User Id" [(ngModel)]="authData.username" required>
-            <input class="password" type="password" id="password" name="password" placeholder="Password" [(ngModel)]="authData.password" required>
-            <div>
-                <clr-alert *ngIf="errorFlag" [clrAlertType]="'danger'">
-                    <div class="alert-item">{{alertMessage}}</div>
-                </clr-alert>
-            </div>
-            <button [clrLoading]="submitBtnState" type="submit" class="btn btn-primary">LOGIN</button>
-        </div>
-    </form>
+  <form class="login" #loginForm="ngForm" (ngSubmit)="login(loginForm.value);" *ngIf="authData" ngNativeValidate>
+    <label class="title">
+      <h3 class="welcome">Welcome to Mangle</h3>
+      <h5 class="hint">
+        Use your login ID to sign in
+      </h5>
+    </label>
+    <div class="login-group">
+      <div class="auth-source select">
+        <select name="authSource" [(ngModel)]="authData.authSource" class="login-element" required>
+          <option *ngIf="!loginForm.value.authSource" [value]="null" selected disabled></option>
+          <option [value]="sourceAuth" *ngFor="let sourceAuth of authSources">{{sourceAuth}}</option>
+        </select>
+      </div>
+      <input class="username login-element" type="text" id="username" name="username" placeholder="User Id"
+             [(ngModel)]="authData.username" required>
+      <div>
+        <input class="password login-element" [type]="showPassword?'text': 'password'" id="password" name="password" placeholder="Password"
+                  [(ngModel)]="authData.password" required>
+        <clr-icon shape="eye" class="is-solid show-password" (click)="negateShowPassword()" *ngIf="showPassword"></clr-icon>
+        <clr-icon shape="eye-hide" class="is-solid show-password" (click)="negateShowPassword()" *ngIf="!showPassword"></clr-icon>
+      </div>
+      <div>
+        <clr-alert *ngIf="errorFlag" [clrAlertType]="'danger'">
+          <div class="alert-item">{{alertMessage}}</div>
+        </clr-alert>
+      </div>
+      <button [clrLoading]="submitBtnState" type="submit" class="btn btn-primary">LOGIN</button>
+    </div>
+  </form>
 </div>

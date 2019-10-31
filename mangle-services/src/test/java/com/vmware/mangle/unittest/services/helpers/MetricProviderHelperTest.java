@@ -156,6 +156,7 @@ public class MetricProviderHelperTest extends PowerMockTestCase {
         metricProviderHelper.sendFaultEvent(task);
         verify(wavefrontNotifier, times(0)).sendEvent(any(FaultEventSpec.class));
         verify(wavefrontNotifier, times(0)).closeEvent(any(String.class));
+        verify(populateFaultEventData, times(0)).getFaultEventSpec();
     }
 
     @Test(description = " Validate Send event for remediation task")

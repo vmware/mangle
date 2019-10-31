@@ -204,8 +204,8 @@ public class LinuxBytemanFaultHelperTest {
     void testGetAgentFaultInjectionScripts() {
         CommandExecutionFaultSpec cpuFaultSpec = faultsMockData.getLinuxCpuJvmAgentFaultSpec();
         List<SupportScriptInfo> supportScripts = linuxBytemanFaultHelper.getAgentFaultInjectionScripts(cpuFaultSpec);
-        Assert.assertEquals(supportScripts.get(0).getScriptFileName(), AGENT_NAME + AGENT_JAR_EXTENSION);
-        Assert.assertEquals(supportScripts.get(0).getTargetDirectoryPath(), DEFAULT_TEMP_DIR + FORWARD_SLASH);
+        Assert.assertEquals(supportScripts.get(1).getScriptFileName(), AGENT_NAME + AGENT_JAR_EXTENSION);
+        Assert.assertEquals(supportScripts.get(1).getTargetDirectoryPath(), DEFAULT_TEMP_DIR + FORWARD_SLASH);
     }
 
 }

@@ -72,14 +72,14 @@ describe('KubernetesComponent', () => {
     //add endpoint
     spyOn(endpointService, 'addEndpoint').and.returnValue(of(ep_data_id));
     component.addOrUpdateEndpoint(ep_data);
-    expect(component.successAlertMessage).toBeTruthy();
+    expect(component.alertMessage).toBeTruthy();
     expect(component.endpoints[0].name).toBe("k8s_ep");
     expect(endpointService.addEndpoint).toHaveBeenCalled();
     expect(endpointService.getEndpoints).toHaveBeenCalled();
     //update endpoint
     spyOn(endpointService, 'updateEndpoint').and.returnValue(of(ep_data_id));
     component.addOrUpdateEndpoint(ep_data_id);
-    expect(component.successAlertMessage).toBeTruthy();
+    expect(component.alertMessage).toBeTruthy();
     expect(component.endpoints[0].name).toBe("k8s_ep");
     expect(endpointService.updateEndpoint).toHaveBeenCalled();
     expect(endpointService.getEndpoints).toHaveBeenCalled();
@@ -89,7 +89,7 @@ describe('KubernetesComponent', () => {
     spyOn(endpointService, 'deleteEndpoint').and.returnValue(of({}));
     spyOn(window, 'confirm').and.callFake(function () { return true; });
     component.deleteEndpoint(ep_data.name);
-    expect(component.successAlertMessage).toBeTruthy();
+    expect(component.alertMessage).toBeTruthy();
     expect(endpointService.deleteEndpoint).toHaveBeenCalled();
   });
 
@@ -97,7 +97,7 @@ describe('KubernetesComponent', () => {
     spyOn(endpointService, 'addk8sCredential').and.returnValue(of(cred_data));
     component.populateEndpointForm(ep_data);
     component.addKubernetesCredential(cred_data);
-    expect(component.successAlertMessage).toBeTruthy();
+    expect(component.alertMessage).toBeTruthy();
     expect(endpointService.addk8sCredential).toHaveBeenCalled();
     expect(component.credentials[0].name).toBe("k8s_cred");
     expect(endpointService.getCredentials).toHaveBeenCalled();
@@ -106,7 +106,7 @@ describe('KubernetesComponent', () => {
   it('should test endpoint connection', () => {
     spyOn(endpointService, 'testEndpointConnection').and.returnValue(of(ep_data));
     component.testEndpointConnection(true, ep_data);
-    expect(component.successAlertMessage).toBeTruthy();
+    expect(component.alertMessage).toBeTruthy();
     expect(component.disableSubmit).toBe(false);
     expect(endpointService.testEndpointConnection).toHaveBeenCalled();
   });

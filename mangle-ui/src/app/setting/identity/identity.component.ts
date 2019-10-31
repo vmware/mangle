@@ -13,8 +13,8 @@ export class IdentityComponent implements OnInit {
     public identities: any;
     public identityFormData: any;
 
-    public errorAlertMessage: string;
-    public successAlertMessage: string;
+    public alertMessage: string;
+    public isErrorMessage: boolean;
 
     public isLoading: boolean = true;
 
@@ -40,7 +40,8 @@ export class IdentityComponent implements OnInit {
             }, err => {
                 this.identities = [];
                 this.isLoading = false;
-                this.errorAlertMessage = err.error.description;
+                this.isErrorMessage= true;
+                this.alertMessage = err.error.description;
             });
     }
 
@@ -58,10 +59,12 @@ export class IdentityComponent implements OnInit {
         this.settingService.addIdentitySource(identitySourceFormData).subscribe(
             res => {
                 this.getIdentities();
-                this.successAlertMessage = identitySourceFormData.adDomain + MessageConstants.IDENTITY_ADD;
+                this.isErrorMessage= false;
+                this.alertMessage = identitySourceFormData.adDomain + MessageConstants.IDENTITY_ADD;
                 this.isLoading = false;
             }, err => {
-                this.errorAlertMessage = err.error.description;
+                this.isErrorMessage= true;
+                this.alertMessage = err.error.description;
                 this.getIdentities();
                 this.isLoading = false;
             });
@@ -72,11 +75,13 @@ export class IdentityComponent implements OnInit {
         this.settingService.updateIdentitySource(identitySourceFormData).subscribe(
             res => {
                 this.getIdentities();
-                this.successAlertMessage = identitySourceFormData.adDomain + MessageConstants.IDENTITY_UPDATE;
+                this.isErrorMessage= false;
+                this.alertMessage = identitySourceFormData.adDomain + MessageConstants.IDENTITY_UPDATE;
                 this.isLoading = false;
             }, err => {
                 this.getIdentities();
-                this.errorAlertMessage = err.error.description;
+                this.isErrorMessage= true;
+                this.alertMessage = err.error.description;
                 this.isLoading = false;
             });
     }
@@ -86,11 +91,13 @@ export class IdentityComponent implements OnInit {
             this.settingService.deleteIdentity(identity.adDomain).subscribe(
                 res => {
                     this.getIdentities();
-                    this.successAlertMessage = identity.adDomain + MessageConstants.IDENTITY_DELETE;
+                    this.isErrorMessage= false;
+                    this.alertMessage = identity.adDomain + MessageConstants.IDENTITY_DELETE;
                     this.isLoading = false;
                 }, err => {
                     this.getIdentities();
-                    this.errorAlertMessage = err.error.description;
+                    this.isErrorMessage= true;
+                    this.alertMessage = err.error.description;
                     this.isLoading = false;
                 });
         } else {

@@ -10,6 +10,7 @@
                             <select name="startat" ngModel required>
                                 <option *ngFor="let clockRange of clockRanges">{{clockRange}}</option>
                                 <option>59</option>
+                                <option>*</option>
                             </select>&nbsp;minute(s). On every&nbsp;
                             <select name="minute" ngModel required>
                                 <option *ngFor="let clockRange of clockRanges">{{clockRange+1}}</option>
@@ -32,6 +33,7 @@
                             <select name="startat" ngModel required>
                                 <option *ngFor="let hourRange of hourRanges">{{hourRange}}</option>
                                 <option>23</option>
+                                <option>*</option>
                             </select>&nbsp;hour(s). On every&nbsp;
                             <select name="hour" ngModel required>
                                 <option *ngFor="let hourRange of hourRanges">{{hourRange+1}}</option>

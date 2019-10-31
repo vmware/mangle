@@ -73,6 +73,13 @@ public class MetricProviderHelper {
 
     public void sendFaultEvent(Task task) {
         log.debug("TaskCreatedEvent", "Created Task: " + task.getClass().getName() + " With Id: " + task.getId());
+        Notifier activeNotifier = getActiveNotificationProvider();
+        if (activeNotifier == null) {
+            log.warn(
+                    "Cannot find an active metric provider. Please check if the metric providers are created and marked as Active");
+            log.warn("Cannot send events to Metric Provider");
+            return;
+        }
 
         if (!hasChildTasks(task)) {
             log.debug(" Task is of type: Parent and contains Child tasks. We will not send event for Parent task");
@@ -87,13 +94,7 @@ public class MetricProviderHelper {
                 return;
             }
             log.debug("TaskCompleted Event is generated and here are the details: " + faultEventInfo.toString());
-            Notifier activeNotifier = getActiveNotificationProvider();
-            if (activeNotifier == null) {
-                log.warn(
-                        "Cannot find an active metric provider. Please check if the metric providers are created and marked as Active");
-                log.warn("Cannot send events to Metric Provider");
-                return;
-            }
+
             activeNotifier.sendEvent(faultEventInfo);
             if (task.getTaskType() == TaskType.REMEDIATION) {
                 String faultEventName = getFaultEventName(faultEventInfo.getFaultName(), TaskType.INJECTION,

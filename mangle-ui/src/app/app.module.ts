@@ -18,6 +18,7 @@ import { LocationStrategy, HashLocationStrategy } from '@angular/common';
 import { PagesModule } from './pages/pages.module';
 import { AuthGuardService } from './auth-guard.service';
 import { SharedModule } from './shared/shared.module';
+import { PrivilegeGuardService } from './privilege-guard.service';
 
 @NgModule({
   declarations: [
@@ -42,6 +43,7 @@ import { SharedModule } from './shared/shared.module';
   providers: [
     ConfigGuardService,
     AuthGuardService,
+    PrivilegeGuardService,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: InterceptorService,

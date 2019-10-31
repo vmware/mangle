@@ -30,6 +30,7 @@ import com.vmware.mangle.cassandra.model.security.ADAuthProviderDto;
 import com.vmware.mangle.cassandra.model.security.UsernameDomain;
 import com.vmware.mangle.services.ADAuthProviderService;
 import com.vmware.mangle.services.PrivilegeService;
+import com.vmware.mangle.services.UserLoginAttemptsService;
 import com.vmware.mangle.services.UserService;
 import com.vmware.mangle.services.hazelcast.HazelcastClusterSyncAware;
 
@@ -47,13 +48,15 @@ public class ADAuthProvider implements AuthenticationProvider, HazelcastClusterS
     private UserService userService;
     private ADAuthProviderService adAuthProviderService;
     private PrivilegeService privilegeService;
+    private UserLoginAttemptsService userLoginAttemptsService;
 
     @Autowired
     public ADAuthProvider(ADAuthProviderService adAuthProviderService, UserService userService,
-            PrivilegeService privilegeService) {
+            PrivilegeService privilegeService, UserLoginAttemptsService userLoginAttemptsService) {
         this.userService = userService;
         this.adAuthProviderService = adAuthProviderService;
         this.privilegeService = privilegeService;
+        this.userLoginAttemptsService = userLoginAttemptsService;
     }
 
     @PostConstruct
@@ -151,7 +154,7 @@ public class ADAuthProvider implements AuthenticationProvider, HazelcastClusterS
     public AuthenticationProvider activeDirectoryLdapAuthenticationProvider(String adUrl, String adDomain) {
         log.debug(String.format("Instantiating new AD provider with AD url %s and AD domain %s", adUrl, adDomain));
         CustomActiveDirectoryLdapAuthenticationProvider provider =
-                new CustomActiveDirectoryLdapAuthenticationProvider(userService, privilegeService, adDomain, adUrl);
+                new CustomActiveDirectoryLdapAuthenticationProvider(userService, userLoginAttemptsService, privilegeService, adDomain, adUrl);
         provider.setConvertSubErrorCodesToExceptions(true);
         provider.setUseAuthenticationRequestCredentials(true);
 

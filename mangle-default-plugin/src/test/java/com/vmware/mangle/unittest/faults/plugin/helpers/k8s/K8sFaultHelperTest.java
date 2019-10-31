@@ -90,7 +90,7 @@ public class K8sFaultHelperTest {
         k8sFaultHelper = new K8sFaultHelper(endpointClientFactory);
     }
 
-    @Test
+    @Test(priority = 1)
     public void testGetExecutor() {
         ICommandExecutor executor = null;
         try {
@@ -106,14 +106,13 @@ public class K8sFaultHelperTest {
         Assert.assertEquals(executor, kubernetesCommandLineClient);
     }
 
-    @Test
-    public void testGetResouceList() {
+    @Test(priority = 2)
+    public void testGetResouceList() throws MangleException {
+        K8SFaultSpec k8sFaultSpec = faultsMockData.getDeleteK8SResourceFaultSpec();
+        Mockito.when(endpointClientFactory.getEndPointClient(Mockito.any(), Mockito.any()))
+                .thenReturn(kubernetesCommandLineClient);
+        ICommandExecutor executor = k8sFaultHelper.getExecutor(k8sFaultSpec);
         try {
-            K8SFaultSpec k8sFaultSpec = faultsMockData.getDeleteK8SResourceFaultSpec();
-            Mockito.when(endpointClientFactory.getEndPointClient(Mockito.any(), Mockito.any()))
-                    .thenReturn(kubernetesCommandLineClient);
-            ICommandExecutor executor = k8sFaultHelper.getExecutor(k8sFaultSpec);
-
             Mockito.when(kubernetesCommandLineClient.executeCommand(Mockito.any()))
                     .thenReturn(CommandResultUtils.getCommandResult(getPodsListString()));
             List<String> resources = k8sFaultHelper.getResouceList(executor, k8sFaultSpec);
@@ -122,9 +121,39 @@ public class K8sFaultHelperTest {
             log.error("getK8sDeleteResourceFault failed with Exception: ", e);
             Assert.assertTrue(false);
         }
+        try {
+            CommandExecutionResult commandOutput = new CommandExecutionResult();
+            commandOutput.setCommandOutput("");
+            Mockito.when(kubernetesCommandLineClient.executeCommand(Mockito.any())).thenReturn(commandOutput);
+            List<String> resources = k8sFaultHelper.getResouceList(executor, k8sFaultSpec);
+            Assert.assertFalse(true);
+        } catch (MangleException e) {
+            Assert.assertEquals(e.getErrorCode(), ErrorCode.INVALID_RESOURCE_LABELS);
+        }
+        try {
+            CommandExecutionResult commandOutput = new CommandExecutionResult();
+            commandOutput.setCommandOutput("");
+            k8sFaultSpec.setResourceLabels(Collections.emptyMap());
+            Mockito.when(kubernetesCommandLineClient.executeCommand(Mockito.any())).thenReturn(commandOutput);
+            k8sFaultHelper.getResouceList(executor, k8sFaultSpec);
+            Assert.assertFalse(true);
+        } catch (MangleException e) {
+            Assert.assertEquals(e.getErrorCode(), ErrorCode.INVALID_RESOURCE_LABELS);
+        }
+
+        try {
+            CommandExecutionResult commandOutput = new CommandExecutionResult();
+            commandOutput.setCommandOutput("");
+            k8sFaultSpec.setResourceName("DummyResource");
+            Mockito.when(kubernetesCommandLineClient.executeCommand(Mockito.any())).thenReturn(commandOutput);
+            k8sFaultHelper.getResouceList(executor, k8sFaultSpec);
+            Assert.assertFalse(true);
+        } catch (MangleException e) {
+            Assert.assertEquals(e.getErrorCode(), ErrorCode.INVALID_K8S_RESOURCE_NAME);
+        }
     }
 
-    @Test
+    @Test(priority = 3)
     public void testGetResouceListWithRandomInjectionTrue() {
         try {
             K8SFaultSpec k8sFaultSpec = faultsMockData.getDeleteK8SResourceFaultSpec();
@@ -145,7 +174,7 @@ public class K8sFaultHelperTest {
         }
     }
 
-    @Test
+    @Test(priority = 4)
     public void testGetResouceListWithInValidResourceLabels() {
         try {
             K8SFaultSpec k8sFaultSpec = faultsMockData.getDeleteK8SResourceFaultSpec();
@@ -164,7 +193,7 @@ public class K8sFaultHelperTest {
         }
     }
 
-    @Test(enabled = false)
+    @Test(enabled = false, priority = 5)
     public void testGetResouceListWithEmptyResponseFromCommandExecutor() {
         Mockito.reset(kubernetesCommandLineClient);
         try {
@@ -184,7 +213,7 @@ public class K8sFaultHelperTest {
         }
     }
 
-    @Test(enabled = false)
+    @Test(enabled = false, priority = 6)
     public void testGetResouceListWithErrorResponseFromCommandExecutor() {
         Mockito.reset(kubernetesCommandLineClient);
         try {
@@ -204,7 +233,7 @@ public class K8sFaultHelperTest {
         }
     }
 
-    @Test(enabled = false)
+    @Test(enabled = false, priority = 7)
     public void testGetResouceListWithNonZeroExitCodeResponseFromCommandExecutor() {
         Mockito.reset(kubernetesCommandLineClient);
         try {
@@ -225,7 +254,7 @@ public class K8sFaultHelperTest {
         }
     }
 
-    @Test
+    @Test(priority = 8)
     public void testGetInjectionCommandInfoListForDeleteResourceFault() {
         try {
             K8SFaultSpec k8sFaultSpec = faultsMockData.getDeleteK8SResourceFaultSpec();
@@ -251,7 +280,7 @@ public class K8sFaultHelperTest {
         }
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "No enum constant com.vmware.mangle.services.enums.K8SFaultName.testFaultName")
+    @Test(priority = 9, expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "No enum constant com.vmware.mangle.services.enums.K8SFaultName.testFaultName")
     public void testGetInjectionCommandInfoListForUnSupportedFault() {
         try {
             K8SFaultSpec k8sFaultSpec = faultsMockData.getDeleteK8SResourceFaultSpec();
@@ -280,7 +309,7 @@ public class K8sFaultHelperTest {
         }
     }
 
-    @Test
+    @Test(priority = 10)
     public void testGetInjectionCommandInfoListForDeleteResourceFaultWithRandomInjection() {
         try {
             K8SFaultSpec k8sFaultSpec = faultsMockData.getDeleteK8SResourceFaultSpec();
@@ -310,7 +339,7 @@ public class K8sFaultHelperTest {
         }
     }
 
-    @Test
+    @Test(priority = 11)
     public void testgetInjectResourceNotReadyFault() {
         try {
             K8SFaultSpec k8sFaultSpec = faultsMockData.getK8SResourceNotReadyFaultSpec();
@@ -337,7 +366,7 @@ public class K8sFaultHelperTest {
         }
     }
 
-    @Test
+    @Test(priority = 12)
     public void testgetInjectServiceUnavailableFault() {
         try {
             K8SFaultSpec k8sFaultSpec = faultsMockData.getK8SServiceUnavailableFaultSpec();
@@ -372,7 +401,7 @@ public class K8sFaultHelperTest {
         }
     }
 
-    @Test
+    @Test(priority = 13)
     public void testgetRemediateServiceUnavailableFault() {
         try {
             K8SFaultSpec k8sFaultSpec = faultsMockData.getK8SServiceUnavailableFaultSpec();
@@ -401,6 +430,34 @@ public class K8sFaultHelperTest {
         } catch (MangleException e) {
             log.error("testgetRemediateServiceUnavailableFault failed with Exception: ", e);
             Assert.assertTrue(false);
+        }
+    }
+
+    @Test(priority = 14)
+    public void testValidateResourceName() throws MangleException {
+        K8SFaultSpec k8sFaultSpec = faultsMockData.getK8SServiceUnavailableFaultSpec();
+        Mockito.when(endpointClientFactory.getEndPointClient(k8sFaultSpec.getCredentials(), k8sFaultSpec.getEndpoint()))
+                .thenReturn(kubernetesCommandLineClient);
+        ICommandExecutor executor = k8sFaultHelper.getExecutor(k8sFaultSpec);
+        k8sFaultSpec.setResourcesList(getServicesAsList());
+        CommandExecutionResult commandOutput = new CommandExecutionResult();
+        try {
+            commandOutput.setCommandOutput("success");
+            Mockito.when(kubernetesCommandLineClient.executeCommand(Mockito.any())).thenReturn(commandOutput);
+            k8sFaultHelper.validateResourceName(executor, k8sFaultSpec.getResourceName(),
+                    k8sFaultSpec.getResourceType());
+        } catch (MangleException e) {
+            log.error("testgetRemediateServiceUnavailableFault failed with Exception: ", e);
+            Assert.assertTrue(false);
+        }
+        try {
+            commandOutput.setExitCode(1);
+            commandOutput.setCommandOutput("NotFound");
+            Mockito.when(kubernetesCommandLineClient.executeCommand(Mockito.any())).thenReturn(commandOutput);
+            k8sFaultHelper.validateResourceName(executor, k8sFaultSpec.getResourceName(),
+                    k8sFaultSpec.getResourceType());
+        } catch (MangleException e) {
+            Assert.assertTrue(true);
         }
     }
 

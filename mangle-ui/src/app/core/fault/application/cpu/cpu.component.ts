@@ -12,8 +12,8 @@ import { CommonUtils } from 'src/app/shared/commonUtils';
 })
 export class CpuComponent implements OnInit {
 
-  public errorAlertMessage: string;
-  public successAlertMessage: string;
+  public alertMessage: string;
+  public isErrorMessage: boolean;
 
   public cronModal: boolean = false;
 
@@ -78,7 +78,8 @@ export class CpuComponent implements OnInit {
         }
       }, err => {
         this.endpoints = [];
-        this.errorAlertMessage = err.error.description;
+        this.isErrorMessage = true;
+        this.alertMessage = err.error.description;
       });
     if (this.dataService.sharedData != null) {
       this.populateFaultData();
@@ -143,7 +144,8 @@ export class CpuComponent implements OnInit {
           }
         }, err => {
           this.dockerContainers = [];
-          this.errorAlertMessage = err.error.description;
+          this.isErrorMessage = true;
+          this.alertMessage = err.error.description;
         }
       );
     }
@@ -185,14 +187,13 @@ export class CpuComponent implements OnInit {
     }
   }
 
-  public displayEndpointFields(endpointNameVal){
+  public displayEndpointFields(endpointNameVal) {
     this.dockerHidden = true;
     this.k8sHidden = true;
     this.tagsData = {};
     for (var i = 0; i < this.endpoints.length; i++) {
-      if (endpointNameVal == this.endpoints[i].name) 
-      { 
-        this.tagsData = this.commonUtils.getTagsData(this.originalTagsData,this.endpoints[i].tags);
+      if (endpointNameVal == this.endpoints[i].name) {
+        this.tagsData = this.commonUtils.getTagsData(this.originalTagsData, this.endpoints[i].tags);
         if (this.endpoints[i].endPointType == 'DOCKER') {
           this.dockerHidden = false;
         }
@@ -202,7 +203,7 @@ export class CpuComponent implements OnInit {
       }
     }
   }
-  
+
   public setSubmitButton() {
     if ((this.faultFormData.schedule.cronExpression != "" && this.faultFormData.schedule.cronExpression != null) || (this.faultFormData.schedule.timeInMilliseconds != null && this.faultFormData.schedule.timeInMilliseconds != 0)) {
       this.disableSchedule = false;
@@ -227,9 +228,10 @@ export class CpuComponent implements OnInit {
           this.router.navigateByUrl('core/requests/scheduled');
         }
       }, err => {
-        this.errorAlertMessage = err.error.description;
-        if (this.errorAlertMessage === undefined) {
-          this.errorAlertMessage = err.error.error;
+        this.isErrorMessage = true;
+        this.alertMessage = err.error.description;
+        if (this.alertMessage === undefined) {
+          this.alertMessage = err.error.error;
         }
         this.runBtnState = ClrLoadingState.DEFAULT;
       });

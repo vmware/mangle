@@ -30,7 +30,9 @@ import com.vmware.mangle.cassandra.model.security.Privilege;
 import com.vmware.mangle.cassandra.model.security.Role;
 import com.vmware.mangle.cassandra.model.security.User;
 import com.vmware.mangle.cassandra.model.security.UserLoginAttempts;
+import com.vmware.mangle.model.UserCreationDTO;
 import com.vmware.mangle.model.UserPasswordUpdateDTO;
+import com.vmware.mangle.model.UserRolesUpdateDTO;
 import com.vmware.mangle.utils.constants.Constants;
 
 /**
@@ -53,8 +55,23 @@ public class UserMockData {
     }
 
     public User getMockUser() {
-        User user = new User(USER1, pwd, getDummyRole());
-        return user;
+        return new User(USER1, pwd, getDummyRole());
+    }
+
+    public UserCreationDTO getUserCreationMockDTO() {
+        UserCreationDTO userCreationDTO = new UserCreationDTO();
+        userCreationDTO.setName(USER1);
+        userCreationDTO.setPassword(pwd);
+        userCreationDTO.setRoleNames(new HashSet<>(Arrays.asList(ROLE_ADMIN, ROLE_USER)));
+        return userCreationDTO;
+    }
+
+    public UserRolesUpdateDTO getUserUpdateDTO() {
+        UserRolesUpdateDTO userUpdateDTO = new UserRolesUpdateDTO();
+        userUpdateDTO.setName(USER1);
+        userUpdateDTO.setAccountLocked(false);
+        userUpdateDTO.setRoleNames(new HashSet<>(Arrays.asList(ROLE_ADMIN, ROLE_USER)));
+        return userUpdateDTO;
     }
 
     public Role getDummyRole() {

@@ -40,7 +40,9 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.vmware.mangle.cassandra.model.security.User;
+import com.vmware.mangle.model.UserCreationDTO;
 import com.vmware.mangle.model.UserPasswordUpdateDTO;
+import com.vmware.mangle.model.UserRolesUpdateDTO;
 import com.vmware.mangle.services.PasswordResetService;
 import com.vmware.mangle.services.UserService;
 import com.vmware.mangle.services.controller.UserManagementController;
@@ -97,18 +99,19 @@ public class UserManagementControllerTest extends PowerMockTestCase {
     }
 
     /**
-     * Test method for {@link UserManagementController#createUser(User)}
+     * Test method for {@link UserManagementController#createUser(com.vmware.mangle.model.UserCreationDTO)}
      */
     @Test
     public void createUserTestSuccessful() throws MangleException {
         log.info("Executing test: createUserTestSuccessful on UserManagementController#createUser(User)");
         User user = dataProvider.getMockUser();
+        UserCreationDTO userCreationDTO = dataProvider.getUserCreationMockDTO();
 
         when(userService.createUser(any())).thenReturn(user);
         when(userService.getDefaultDomainName()).thenReturn("mangle.local");
         when(userService.getUserByName(anyString())).thenReturn(null);
 
-        ResponseEntity<Resource<User>> response = userManagementController.createUser(user);
+        ResponseEntity<Resource<User>> response = userManagementController.createUser(userCreationDTO);
         Assert.assertEquals(response.getStatusCode(), HttpStatus.CREATED);
 
         Resource<User> resource = response.getBody();
@@ -117,18 +120,19 @@ public class UserManagementControllerTest extends PowerMockTestCase {
     }
 
     /**
-     * Test method for {@link UserManagementController#createUser(User)}
+     * Test method for {@link UserManagementController#createUser(com.vmware.mangle.model.UserCreationDTO)}
      */
     @Test(expectedExceptions = MangleException.class)
     public void createUserTestFailure() throws MangleException {
         log.info("Executing test: createUserTestFailure on UserManagementController#createUser(User)");
         User user = dataProvider.getMockUser();
+        UserCreationDTO userCreationDTO = dataProvider.getUserCreationMockDTO();
 
         doThrow(new MangleException(ErrorCode.USER_NOT_FOUND)).when(userService).createUser(any());
         when(userService.getUserByName(anyString())).thenReturn(null);
         when(userService.getDefaultDomainName()).thenReturn("mangle.local");
         try {
-            userManagementController.createUser(user);
+            userManagementController.createUser(userCreationDTO);
         } catch (MangleException e) {
             Assert.assertEquals(e.getErrorCode(), ErrorCode.USER_NOT_FOUND);
             verify(userService, times(1)).createUser(any());
@@ -137,17 +141,18 @@ public class UserManagementControllerTest extends PowerMockTestCase {
     }
 
     /**
-     * Test method for {@link UserManagementController#createUser(User)}
+     * Test method for {@link UserManagementController#createUser(com.vmware.mangle.model.UserCreationDTO)}
      */
     @Test(expectedExceptions = MangleException.class)
     public void createUserTestFailureUserNotFound() throws MangleException {
         log.info("Executing test: createUserTestFailureUserNotFound on UserManagementController#createUser(User)");
         User user = dataProvider.getMockUser();
+        UserCreationDTO userCreationDTO = dataProvider.getUserCreationMockDTO();
 
         doThrow(new MangleException(ErrorCode.USER_NOT_FOUND)).when(userService).createUser(any());
         when(userService.getUserByName(anyString())).thenReturn(user);
         try {
-            userManagementController.createUser(user);
+            userManagementController.createUser(userCreationDTO);
         } catch (MangleException e) {
             Assert.assertEquals(e.getErrorCode(), ErrorCode.USER_ALREADY_EXISTS);
             verify(userService, times(0)).createUser(any());
@@ -156,20 +161,22 @@ public class UserManagementControllerTest extends PowerMockTestCase {
     }
 
     /**
-     * Test method for {@link UserManagementController#createUser(User)}
+     * Test method for {@link UserManagementController#createUser(com.vmware.mangle.model.UserCreationDTO)}
      */
     @Test
     public void updateUserTestSuccessful() throws MangleException {
         log.info("Executing test: createUserTestSuccessful on UserManagementController#createUser(User)");
         User user = dataProvider.getMockUser();
+        UserRolesUpdateDTO userRolesUpdateDTO = dataProvider.getUserUpdateDTO();
         Cluster cluster = mock(Cluster.class);
         Member member = mock(Member.class);
 
         when(hazelcastInstance.getCluster()).thenReturn(cluster);
         when(cluster.getLocalMember()).thenReturn(member);
         when(userService.updateUser(any())).thenReturn(user);
+        when(userService.getUserByName(anyString())).thenReturn(user);
 
-        ResponseEntity<Resource<User>> response = userManagementController.updateUser(user);
+        ResponseEntity<Resource<User>> response = userManagementController.updateUser(userRolesUpdateDTO);
         Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
 
         Resource<User> resource = response.getBody();
@@ -178,16 +185,18 @@ public class UserManagementControllerTest extends PowerMockTestCase {
     }
 
     /**
-     * Test method for {@link UserManagementController#createUser(User)}
+     * Test method for {@link UserManagementController#createUser(com.vmware.mangle.model.UserCreationDTO)}
      */
     @Test(expectedExceptions = MangleException.class)
     public void updateUserTestFailure() throws MangleException {
         log.info("Executing test: createUserTestFailure on UserManagementController#createUser(User)");
         User user = dataProvider.getMockUser();
+        UserRolesUpdateDTO userRolesUpdateDTO = dataProvider.getUserUpdateDTO();
 
+        when(userService.getUserByName(anyString())).thenReturn(user);
         doThrow(new MangleException(ErrorCode.USER_NOT_FOUND)).when(userService).updateUser(any());
         try {
-            userManagementController.updateUser(user);
+            userManagementController.updateUser(userRolesUpdateDTO);
         } catch (MangleException e) {
             Assert.assertEquals(e.getErrorCode(), ErrorCode.USER_NOT_FOUND);
             verify(userService, times(1)).updateUser(any());

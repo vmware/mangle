@@ -52,6 +52,7 @@ public class ClusterConfigController {
         this.configService = configService;
     }
 
+    @ApiOperation(value = "API to get hazelcast configuration", nickname = "getHazelcastConfig")
     @GetMapping
     public ResponseEntity<Resource<HazelcastClusterConfig>> getHazelcastConfig() {
         log.info("Fetching cluster information");
@@ -63,7 +64,7 @@ public class ClusterConfigController {
     }
 
     @PutMapping
-    @ApiOperation(value = "Update hazelcast config", nickname = "update-hazelcast-config", hidden = true)
+    @ApiOperation(value = "API to update hazelcast configuration", nickname = "update-hazelcast-config", hidden = true)
     public ResponseEntity<Resource<HazelcastClusterConfig>> updateHazelcastConfig(
             @RequestBody HazelcastClusterConfig config) throws MangleException {
         log.info("Updating cluster information");
@@ -81,7 +82,7 @@ public class ClusterConfigController {
     }
 
     @PostMapping
-    @ApiOperation(value = "Update mangle deployment type", nickname = "update-deployment-type")
+    @ApiOperation(value = "API to update mangle deployment type", nickname = "update-deployment-type")
     public ResponseEntity<Resource<HazelcastClusterConfig>> updateDeploymentMode(
             @RequestParam MangleDeploymentMode deploymentType) throws MangleException {
         HazelcastClusterConfig config = configService.updateMangleDeploymentType(deploymentType);
@@ -92,7 +93,7 @@ public class ClusterConfigController {
     }
 
     @PostMapping("/quorum")
-    @ApiOperation(value = "Update mangle quorum", nickname = "update-quorum")
+    @ApiOperation(value = "API to update mangle quorum", nickname = "update-quorum")
     public ResponseEntity<Resource<HazelcastClusterConfig>> updateQuorum(@RequestParam int quorumValue)
             throws MangleException {
         HazelcastClusterConfig config = configService.updateMangleQuorum(quorumValue);

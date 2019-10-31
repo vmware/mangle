@@ -7,8 +7,8 @@ import { CommonUtils } from 'src/app/shared/commonUtils';
 
 export class CommonNetwork {
 
-  public errorAlertMessage: string;
-  public successAlertMessage: string;
+  public alertMessage: string;
+  public isErrorMessage: boolean;
 
   public runBtnState: ClrLoadingState = ClrLoadingState.DEFAULT;
   public tagsData: any = {};
@@ -58,9 +58,11 @@ export class CommonNetwork {
           this.router.navigateByUrl('core/requests/scheduled');
         }
       }, err => {
-        this.errorAlertMessage = err.error.description;
-        if (this.errorAlertMessage === undefined) {
-          this.errorAlertMessage = err.error.error;
+        this.isErrorMessage= true;
+        this.alertMessage = err.error.description;
+        if (this.alertMessage === undefined) {
+          this.isErrorMessage= true;
+          this.alertMessage = err.error.error;
         }
         this.runBtnState = ClrLoadingState.DEFAULT;
       });

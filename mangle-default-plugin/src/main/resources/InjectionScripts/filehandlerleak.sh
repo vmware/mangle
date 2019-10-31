@@ -76,6 +76,8 @@ help(){
 
 preRequisitescheck(){
     isPgrepPresent
+    isUlimitPresent
+    isOptimizedShell
     checkWritePermissionOfInjectionDir
     if [ ! -z "$precheckmessage" ]
     then
@@ -102,6 +104,22 @@ isPgrepPresent(){
     if [ $pgrepRetVal -ne 0 -a $pgrepRetVal -ne 1 -a $pgrepRetVal -ne 2 ]; then
         precheckmessage="pgrep required,"
     fi
+}
+
+isUlimitPresent(){
+   ulimit > /dev/null 2>&1
+   ulimitRetVal=$?
+   if [ $ulimitRetVal -ne 0 -a $ulimitRetVal -ne 1 -a $ulimitRetVal -ne 2 ]; then
+      precheckmessage="$precheckmessage ulimit is required,"
+   fi
+}
+
+isOptimizedShell(){
+   25>> $basedirectory/fdstest.txt 2>&1
+   optimizedShellRetVal=$?
+   if [ $optimizedShellRetVal -ne 0 ]; then
+      precheckmessage="$precheckmessage Optimized shell is not supported, Use /bin/bash as default shell."
+   fi
 }
 
 status(){
@@ -140,7 +158,7 @@ remediate(){
 cleanup(){
     rm -rf $basedirectory/createFD.sh  > /dev/null 2>&1
     rm -rf $basedirectory/triggerFileHandlerFault.sh  > /dev/null 2>&1
-    rm -rf $basedirectory/fdstest.txt > /dev/null 2>&1
+    rm -rf $basedirectory/fdstest*.txt > /dev/null 2>&1
     rm -rf $basedirectory/fileHandlerFault.log  > /dev/null 2>&1
     rm -rf $basedirectory/filehandlerleak.sh  > /dev/null 2>&1
 }
@@ -150,8 +168,14 @@ injectFault(){
   echo "Running filehandlerleak script"
   cat << EOF > $basedirectory/createFD.sh
   #!/bin/sh
+  x=25
+  availableLimit=\$(ulimit -n)
+  while [ \$x -lt \$availableLimit ]
+  do
+    eval 'exec '"\$x"'>> '"\$3"/fdstest"\$1".txt''
+    x=\$((\$x + 1 ))
+  done
   echo "script executed"
-  eval 'exec '"\$1"'>> fdstest.txt'
   sleep \$2
 EOF
 
@@ -170,8 +194,8 @@ EOF
   while [ \$startTime -gt \$check ]
   do
      echo \$x
-     /bin/sh $basedirectory/createFD.sh \$x \$timelimit &
-     x=\$(( \$x + 1 ))
+     /bin/sh $basedirectory/createFD.sh \$x \$timelimit $basedirectory &
+     x=\$((\$x + 1 ))
      currentTime=\$((\$(date +%s)))
      check=\`expr \$currentTime - \$timelimit\`
   done
@@ -179,7 +203,7 @@ EOF
   rm -rf $basedirectory/createFD.sh  > /dev/null 2>&1
   rm -rf $basedirectory/triggerFileHandlerFault.sh  > /dev/null 2>&1
   rm -rf $basedirectory/fileHandlerFault.log  > /dev/null 2>&1
-  rm -rf $basedirectory/fdstest.txt > /dev/null 2>&1
+  rm -rf $basedirectory/fdstest*.txt > /dev/null 2>&1
   rm -rf $basedirectory/filehandlerleak.sh  > /dev/null 2>&1
 EOF
   chmod 777 $basedirectory/triggerFileHandlerFault.sh
@@ -187,7 +211,6 @@ EOF
   echo "Triggered File handler leak fault"
   exit 0
 }
-
 
 #calling main function
 main $@

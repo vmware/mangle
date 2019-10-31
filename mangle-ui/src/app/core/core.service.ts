@@ -18,4 +18,8 @@ export class CoreService {
     return this.http.get(ServiceConstants.ROLE_MANAGEMENT_ROLES + '?' + roleQueryString);
   }
 
+  public getMangleApplicationInfo(): Observable<any> {
+    return this.http.get(ServiceConstants.APPLICATION_INFO);
+  }
+
 }

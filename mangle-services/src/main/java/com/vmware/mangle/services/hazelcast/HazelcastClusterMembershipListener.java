@@ -140,7 +140,7 @@ public class HazelcastClusterMembershipListener implements MembershipListener, H
 
         // Tasks on the current node because of the member removed event
         // will only be triggered if the current node and hence the cluster has a valid quorum
-        if (HazelcastConstants.mangleQourumStatus == MangleQuorumStatus.PRESENT && executingTasks != null
+        if (HazelcastConstants.getMangleQourumStatus() == MangleQuorumStatus.PRESENT && executingTasks != null
                 && !executingTasks.isEmpty()) {
             log.info("Tasks {} are to be re-triggered, as the node {} left the cluster", executingTasks.toString(),
                     membershipEvent.getMember().getAddress());
@@ -294,7 +294,7 @@ public class HazelcastClusterMembershipListener implements MembershipListener, H
     }
 
     private boolean isQuorumPresent(MembershipEvent event) {
-        return HazelcastConstants.mangleQourum <= event.getMembers().size();
+        return HazelcastConstants.getMangleQourum() <= event.getMembers().size();
     }
 
     private String getOldestMemberIPInCluster(MembershipEvent event) {

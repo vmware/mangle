@@ -1,6 +1,6 @@
 #!/bin/sh
 
-public='/var/opt/vmware/mangle/cert/server.jks'
+public='/home/mangle/var/opt/vmware/mangle/cert/server.jks'
 cn=localhost
 country='US'
 state='CA'

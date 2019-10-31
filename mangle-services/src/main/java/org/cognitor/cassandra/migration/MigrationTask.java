@@ -70,7 +70,7 @@ public class MigrationTask {
     }
 
     private static void setSchemaMigratedConstant() {
-        Constants.SCHEMA_MIGRATED = true;
+        Constants.setSchemaMigrated(true);
     }
 
     private boolean databaseIsUpToDate() {

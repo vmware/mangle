@@ -1,4 +1,4 @@
-<app-alert [(errorAlertMessage)]="errorAlertMessage" [(successAlertMessage)]="successAlertMessage" (errorAlertMessageChange)="errorAlertMessage = $event" (successAlertMessageChange)="successAlertMessage = $event"></app-alert>
+<app-alert [(alertMessage)]="alertMessage" [(isErrorMessage)]="isErrorMessage" (alertMessageChange)="alertMessage = $event"></app-alert>
 <div>
     <h3 class="modal-title">Execute Spring Service Latency Fault</h3>
     <form #springServiceLatencyForm="ngForm"

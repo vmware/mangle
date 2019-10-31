@@ -18,7 +18,7 @@ spec:
       terminationGracePeriodSeconds: 1800
       containers:
       - name: cassandra
-        image: mangle-vmware-docker-containers.bintray.io/mangle-cassandradb:1.0
+        image: mangleuser/mangle_cassandradb:1.0
         imagePullPolicy: Always
         ports:
         - containerPort: 7000

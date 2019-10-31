@@ -11,10 +11,10 @@
 
 package com.vmware.mangle.test.plugin.helpers.systemresource;
 
+import static com.vmware.mangle.test.plugin.constants.CommonConstants.KILL_SERVICE_INJECTION_COMMAND_WITH_ARGS;
 import static com.vmware.mangle.utils.constants.FaultConstants.FAULT_NAME;
 import static com.vmware.mangle.utils.constants.FaultConstants.FORWARD_SLASH;
 import static com.vmware.mangle.utils.constants.FaultConstants.KILL_PROCESS_REMEDIATION_COMMAND;
-import static com.vmware.mangle.utils.constants.FaultConstants.KILL_SERVICE_INJECTION_COMMAND_WITH_ARGS;
 import static com.vmware.mangle.utils.constants.FaultConstants.OPERATION_REMEDIATE;
 import static com.vmware.mangle.utils.constants.FaultConstants.PROCESS_IDENTIFIER;
 

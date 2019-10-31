@@ -42,17 +42,18 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import lombok.experimental.UtilityClass;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.util.CollectionUtils;
 
 import com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.JVMAgentFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.JVMCodeLevelFaultSpec;
+import com.vmware.mangle.cassandra.model.tasks.SupportScriptInfo;
 import com.vmware.mangle.cassandra.model.tasks.commands.CommandInfo;
 import com.vmware.mangle.cassandra.model.tasks.commands.CommandOutputProcessingInfo;
 import com.vmware.mangle.faults.plugin.helpers.FaultConstants;
@@ -65,7 +66,7 @@ import com.vmware.mangle.utils.ConstantsUtils;
 import com.vmware.mangle.utils.constants.Constants;
 
 /**
- * @author hkilari
+ * @author hkilari, dbhat
  *
  */
 @UtilityClass
@@ -413,12 +414,12 @@ public class BytemanCommandInfoHelper {
         return k8sCopyCommandInfo;
     }
 
-    static CommandInfo getDockerCreateBytemanRuleCommandInfo(CommandExecutionFaultSpec jvmAgentFaultSpec, String rule) {
-        CommandInfo createBytemanRuleCommandInfo = new CommandInfo();
-        createBytemanRuleCommandInfo.setExpectedCommandOutputList(Collections.emptyList());
-        createBytemanRuleCommandInfo.setCommand("echo \"" + rule + "\" > " + jvmAgentFaultSpec.getInjectionHomeDir()
-                + jvmAgentFaultSpec.getArgs().get(TASK_ID) + ".btm");
-        return createBytemanRuleCommandInfo;
+    static void createDockerRuleFile(CommandExecutionFaultSpec jvmAgentFaultSpec, String rule) {
+        String ruleFile = jvmAgentFaultSpec.getArgs().get(TASK_ID) + ".btm";
+
+        String ruleFileName = writeRuleToFile(rule, ruleFile);
+        updateSupportScriptInfo(jvmAgentFaultSpec,
+                getSupportScriptInfo(ruleFileName, jvmAgentFaultSpec.getInjectionHomeDir()));
     }
 
 
@@ -447,12 +448,49 @@ public class BytemanCommandInfoHelper {
 
     static CommandInfo getLinuxJavaAgentRuleCreationCommandInfo(CommandExecutionFaultSpec jvmAgentFaultSpec,
             String rule) {
-        CommandInfo createBytemanRuleCommandInfo = new CommandInfo();
-        // Creating Byteman Rule Command
-        createBytemanRuleCommandInfo.setExpectedCommandOutputList(Arrays.asList(""));
-        createBytemanRuleCommandInfo.setCommand("echo \"" + rule + "\" > " + jvmAgentFaultSpec.getInjectionHomeDir()
-                + jvmAgentFaultSpec.getArgs().get(TASK_ID) + ".btm");
-        return createBytemanRuleCommandInfo;
+        CommandInfo bytemanRuleCommandInfo = new CommandInfo();
+        bytemanRuleCommandInfo.setExpectedCommandOutputList(Arrays.asList(""));
+
+        String ruleFile = jvmAgentFaultSpec.getArgs().get(TASK_ID) + ".btm";
+        String ruleFileName = writeRuleToFile(rule, ruleFile);
+        updateSupportScriptInfo(jvmAgentFaultSpec,
+                getSupportScriptInfo(ruleFileName, jvmAgentFaultSpec.getInjectionHomeDir()));
+        bytemanRuleCommandInfo.setCommand("chmod 777 " + jvmAgentFaultSpec.getInjectionHomeDir() + ruleFile);
+
+        return bytemanRuleCommandInfo;
+    }
+
+    private static String writeRuleToFile(String rule, String ruleFileName) {
+        File ruleFile = new File(ConstantsUtils.getMangleSupportScriptDirectory() + ruleFileName);
+        String rulereplaced = rule.replace("\\", "");
+        log.debug("Byteman rule with escape characters removed.." + rulereplaced);
+        try {
+            FileUtils.write(ruleFile, rulereplaced, Charset.defaultCharset());
+        } catch (IOException e) {
+            log.error(e);
+        }
+        return ruleFile.getName();
+    }
+
+    private static SupportScriptInfo getSupportScriptInfo(String ruleFileName, String targetDirectory) {
+        SupportScriptInfo scriptInfo = new SupportScriptInfo();
+        scriptInfo.setClassPathResource(true);
+        scriptInfo.setExecutable(false);
+        scriptInfo.setScriptFileName(ruleFileName);
+        scriptInfo.setTargetDirectoryPath(targetDirectory);
+        return scriptInfo;
+    }
+
+    private static void updateSupportScriptInfo(CommandExecutionFaultSpec faultSpec, SupportScriptInfo scriptInfo) {
+        if (CollectionUtils.isEmpty(faultSpec.getSupportScriptInfo())) {
+            log.debug("Support Script list is empty. Creating and adding the byteman rule");
+            ArrayList<SupportScriptInfo> scripts = new ArrayList<SupportScriptInfo>();
+            scripts.add(scriptInfo);
+            faultSpec.setSupportScriptInfo(scripts);
+        } else {
+            log.debug("Updating the script info list with Byteman rule file");
+            faultSpec.getSupportScriptInfo().add(scriptInfo);
+        }
     }
 
 

@@ -9,8 +9,8 @@ export class LocalComponent implements OnInit {
 
     constructor(private settingService: SettingService) { }
 
-    public errorAlertMessage: string;
-    public successAlertMessage: string;
+    public alertMessage: string;
+    public isErrorMessage: boolean;
 
     public addEdit: string;
 
@@ -51,11 +51,13 @@ export class LocalComponent implements OnInit {
         this.settingService.addLocalUser(localUserFormValue).subscribe(
             res => {
                 this.getLocalUserList();
-                this.successAlertMessage = 'User added successfully!';
+                this.isErrorMessage= false;
+                this.alertMessage = 'User added successfully!';
                 this.isLoading = false;
             }, err => {
                 this.getLocalUserList();
-                this.errorAlertMessage = err.error.description;
+                this.isErrorMessage= true;
+                this.alertMessage = err.error.description;
                 this.isLoading = false;
             });
     }
@@ -65,11 +67,13 @@ export class LocalComponent implements OnInit {
         this.settingService.updateLocalUser(localUserFormValue).subscribe(
             res => {
                 this.getLocalUserList();
-                this.successAlertMessage = 'User updated successfully!';
+                this.isErrorMessage= false;
+                this.alertMessage = 'User updated successfully!';
                 this.isLoading = false;
             }, err => {
                 this.getLocalUserList();
-                this.errorAlertMessage = err.error.description;
+                this.isErrorMessage= true;
+                this.alertMessage = err.error.description;
                 this.isLoading = false;
             });
     }
@@ -79,11 +83,13 @@ export class LocalComponent implements OnInit {
             this.settingService.deleteLocalUser(localUser.username).subscribe(
                 res => {
                     this.getLocalUserList();
-                    this.successAlertMessage = localUser.username + ' user deleted successfully!';
+                    this.isErrorMessage= false;
+                    this.alertMessage = localUser.username + ' user deleted successfully!';
                     this.isLoading = false;
                 }, err => {
                     this.getLocalUserList();
-                    this.errorAlertMessage = err.error.description;
+                    this.isErrorMessage= true;
+                    this.alertMessage = err.error.description;
                     this.isLoading = false;
                 });
         } else {

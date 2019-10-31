@@ -238,7 +238,6 @@ public class UserServiceTest extends PowerMockTestCase {
 
         Assert.assertEquals(persisted, user);
         verify(userRepository, times(1)).save(any());
-        verify(roleService, times(2)).getRoleByName(any());
     }
 
     /**
@@ -263,16 +262,16 @@ public class UserServiceTest extends PowerMockTestCase {
     /**
      * Test method for {@link UserService#updateUser(User)}
      */
-    @Test(expectedExceptions = MangleException.class)
+    @Test
     public void updatePasswordTest() throws MangleException {
         log.info("Executing test: updateUserTestFailure on UserService#updateUser(User)");
 
         User user = dataProvider.getMockUser();
         when(userRepository.findByName(anyString())).thenReturn(dataProvider.getMockUser2());
+        when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
         when(userRepository.save(any())).thenReturn(user);
 
         userService.updatePassword(user.getName(), user.getPassword(), UUID.randomUUID().toString());
-
         verify(userRepository, times(1)).findByName(anyString());
         verify(userRepository, times(1)).save(any());
     }
@@ -339,6 +338,36 @@ public class UserServiceTest extends PowerMockTestCase {
 
         verify(userRepository, times(1)).deleteByNameIn(any());
         verify(userRepository, times(1)).findByNameIn(any());
+    }
+
+    /**
+     * Test method for {@link UserService#deleteUsersByNames(List)}
+     */
+    @Test(expectedExceptions = MangleException.class)
+    public void testDeleteUsersByNamesCurrentUser() throws MangleException {
+        log.info("Executing test: deleteUsersByNamesTest on UserService#deleteUsersByNames(List)");
+        User user = dataProvider.getMockUser();
+        User userNew = dataProvider.getUpdateMockUser();
+        List<String> list = new ArrayList<>();
+        list.add(user.getName());
+        list.add(userNew.getName());
+
+        List<User> users = new ArrayList<>();
+        users.add(user);
+        users.add(userNew);
+
+        when(userRepository.findByNameIn(list)).thenReturn(users);
+        doNothing().when(userRepository).delete(any());
+        when(userService.getCurrentUserName()).thenReturn(user.getName());
+        doNothing().when(userService).terminateUserSession(anyString());
+        try {
+            userService.deleteUsersByNames(list);
+        } catch (MangleException e) {
+            Assert.assertEquals(e.getErrorCode(), ErrorCode.CURRENT_USER_DELETION_FAILED);
+            verify(userRepository, times(0)).deleteByNameIn(any());
+            verify(userRepository, times(1)).findByNameIn(any());
+            throw e;
+        }
     }
 
     /**

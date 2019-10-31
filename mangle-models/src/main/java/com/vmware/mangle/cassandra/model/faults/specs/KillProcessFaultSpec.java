@@ -12,8 +12,6 @@
 package com.vmware.mangle.cassandra.model.faults.specs;
 
 
-import javax.validation.constraints.NotEmpty;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.annotations.ApiModelProperty;
@@ -35,9 +33,13 @@ public class KillProcessFaultSpec extends CommandExecutionFaultSpec {
     private static final long serialVersionUID = 1L;
     @ApiModelProperty(value = "Command to restart the process,if provided fault will be remediated", example = "if its a service: service restart command has to be provided")
     private String remediationCommand;
-    @NotEmpty
+
     @ApiModelProperty(value = "A unique identifier for filtering process id.", example = "/var/lib/vcac")
     private String processIdentifier;
+    @ApiModelProperty(value = "True if you want to kill all the process found using the identifier.")
+    private Boolean killAll;
+    @ApiModelProperty(value = "Process id to be killed.", example = "1111")
+    private String processId;
 
     public KillProcessFaultSpec() {
         setFaultName(AgentFaultName.INJECT_KILL_PROCESS_FAULT.getValue());

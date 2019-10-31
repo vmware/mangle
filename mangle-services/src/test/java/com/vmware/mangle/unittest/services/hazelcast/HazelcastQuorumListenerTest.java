@@ -66,7 +66,7 @@ public class HazelcastQuorumListenerTest {
 
         hazelcastQuorumListener.onChange(quorumEvent);
 
-        Assert.assertEquals(HazelcastConstants.mangleQourumStatus, MangleQuorumStatus.PRESENT);
+        Assert.assertEquals(HazelcastConstants.getMangleQourumStatus(), MangleQuorumStatus.PRESENT);
         verify(bootInitializer, times(1)).initializeApplicationTasks();
     }
 
@@ -79,7 +79,7 @@ public class HazelcastQuorumListenerTest {
 
         hazelcastQuorumListener.onChange(quorumEvent);
 
-        Assert.assertEquals(HazelcastConstants.mangleQourumStatus, MangleQuorumStatus.NOT_PRESENT);
+        Assert.assertEquals(HazelcastConstants.getMangleQourumStatus(), MangleQuorumStatus.NOT_PRESENT);
         verify(scheduler, times(1)).removeAllSchedulesFromCurrentNode();
     }
 

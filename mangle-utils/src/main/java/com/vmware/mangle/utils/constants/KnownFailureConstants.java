@@ -84,6 +84,8 @@ public class KnownFailureConstants {
             "bmsubmit.sh: " + EXPECTED_MESSAGE_FOR_FILE_NOT_FOUND;
     public static final String AGENT_SUBMIT_JAVA_NET_CONNECT_EXCEPTION_OUTPUT =
             "java.net.ConnectException: Connection refused";
+    public static final String AGENT_SUBMIT_JAVA_NET_SOCKET_EXCEPTION_OUTPUT =
+            "java.net.SocketException: Connection reset __ Args were:";
     public static final String AGENT_SUBMIT_INVALID_JAVAHOME_FAILURE_OUTPUT =
             AGENT_INSTALL_INVALID_JAVAHOME_FAILURE_OUTPUT;
     public static final String AGENT_SUBMIT_INVALID_JAVAHOME_FAILURE_2_OUTPUT =
@@ -93,6 +95,8 @@ public class KnownFailureConstants {
             AGENT_INSTALL_INVALID_JAVAHOME_FAILURE_MESSAGE;
     public static final String AGENT_SUBMIT_INVALID_JAVAHOME_2_FAILURE_MESSAGE =
             AGENT_INSTALL_INVALID_JAVAHOME_FAILURE_MESSAGE;
+    public static final String AGENT_SUBMIT_JAVA_NET_SOCKET_EXCEPTION_MESSAGE =
+            "Target process is not Responding due to Fault Injection, wait till completion of the auto remediation";
     public static final String AGENT_FILES_ARE_MISSING_MESSAGE = FAULT_ALREADY_REMEDIATED;
     public static final String AGENT_NOT_AVAILABLE_MESSAGE = FAULT_ALREADY_REMEDIATED + " or Agent is already exited";
 
@@ -140,7 +144,8 @@ public class KnownFailureConstants {
 
     //Command Outputs for System Resource Fault Injection
     public static final String KILL_PROCESS_NOT_FOUND_IDENTIFIER_FAILURE_OUTPUT = "no process found with identifier";
-    public static final String KILL_PROCESS_FOUND_MORE_THAN_ONE_PROCESS_FAILURE_OUTPUT = "Found more than one process";
+    public static final String KILL_PROCESS_FOUND_MORE_THAN_ONE_PROCESS_FAILURE_OUTPUT =
+            "Found more than one process with same process identifier";
 
     public static final String DISK_SPACE_NOT_FOUND_DIRECTORY_PATH_FAILURE_OUTPUT =
             "The Provided directory path not found";

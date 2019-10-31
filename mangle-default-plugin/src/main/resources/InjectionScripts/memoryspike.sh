@@ -110,9 +110,9 @@ status(){
 
 preRequisitescheck()
 {
-   isPerlPresent
    isAwkPresent
    isPgrepPresent
+   isExprPresent
    isFreePresent
    isEvalPresent
    running_in_docker
@@ -136,19 +136,11 @@ checkWritePermissionOfInjectionDir()
 }
 
 running_in_docker() {
-  awk -F/ '$2 == "docker"' /proc/self/cgroup | read
+  awk -F/ '$2 == "docker"' /proc/self/cgroup > /dev/null 2>&1
   isDockerRetVal=$?
   if [ $isDockerRetVal -eq 0 ]; then
      IS_CONTAINER=true
   fi
-}
-
-isPerlPresent(){
-   perl -v > /dev/null 2>&1
-   perlRetVal=$?
-   if [ $perlRetVal -ne 0 -a $perlRetVal -ne 1 -a $perlRetVal -ne 2 ]; then
-      precheckmessage="perl is required,"
-   fi
 }
 
 isAwkPresent(){
@@ -164,6 +156,14 @@ isPgrepPresent(){
    pgrepRetVal=$?
    if [ $pgrepRetVal -ne 0 -a $pgrepRetVal -ne 1 -a $pgrepRetVal -ne 2 ]; then
       precheckmessage="$precheckmessage pgrep is required,"
+   fi
+}
+
+isExprPresent(){
+   expr > /dev/null 2>&1
+   exprRetVal=$?
+   if [ $exprRetVal -ne 0 -a $exprRetVal -ne 1 -a $exprRetVal -ne 2 ]; then
+      precheckmessage="$precheckmessage,expr"
    fi
 }
 
@@ -205,64 +205,116 @@ remediate(){
 }
 
 cleanup(){
+    rm -rf $basedir/spikemem.sh
     rm -rf $basedir/trigger_memory_spike.sh  > /dev/null 2>&1
     rm -rf $basedir/memoryspike.sh  > /dev/null 2>&1
     rm -rf $basedir/memoryFault.log  > /dev/null 2>&1
 }
 
 calculateMemoryParameters(){
-   if [ ! -z "$IS_CONTAINER" ]; then
-      systemMemoryLimit=$(cat /proc/meminfo  | grep "MemTotal" |tr -s '' ' ' |cut -d ' ' -f2)
-      systemMemoryLimitInBytes=$(perl -E "say $systemMemoryLimit*1024")
-	   containerMemoryLimit=$(cat $CONTAINER_MEM_LIMIT_FILE |head -1)
-      memoryLimitInTarget=$containerMemoryLimit
-      if [ $containerMemoryLimit -gt $systemMemoryLimitInBytes ]; then
-         memoryLimitInTarget=$systemMemoryLimitInBytes
-      fi
-      initialMemoryUsedInTarget=$(cat $CONTAINER_MEM_USAGE_FILE |head -1)
-   else
-	   memoryLimitInTarget=$(free -b | awk 'FNR == 2 {print $2'})
-      initialMemoryUsedInTarget=$( free -b | awk 'FNR == 2 {print $3'})
-   fi
-   timeout=$(($timeout / 1000))
-   echo "memoryLimitInTarget:"$memoryLimitInTarget >> $basedir/memoryFault.log
-   echo "initialMemoryUsedInTarget:"$initialMemoryUsedInTarget >> $basedir/memoryFault.log
-   #requestedMemoryToFillInBytes=$(awk "BEGIN { pc=$load/100*$memoryLimitInTarget; i=int(pc); print (pc-i<0.5)?i:i+1 }")
-   requestedMemoryToFillInBytes=$(perl -E "say $load/100*$memoryLimitInTarget")
-   requestedMemoryToFillInBytes=$(awk "BEGIN { i=int($requestedMemoryToFillInBytes); print ($requestedMemoryToFillInBytes-i<0.5)?i:i+1 }")
-   #requestedMemoryToFillInBytes=$(( $requestedMemoryToFillInBytes - $initialMemoryUsedInTarget ))
-   requestedMemoryToFillInBytes=$(perl -E "say $requestedMemoryToFillInBytes-$initialMemoryUsedInTarget")
-   echo "requestedMemoryToFillInBytes:"$requestedMemoryToFillInBytes >> $basedir/memoryFault.log
-   if [ $requestedMemoryToFillInBytes -lt 0 ]; then
-      echo "Current memory usage in target is greater than the requested memory to fill"
-      cleanup
-      exit $errorExitCode
-   fi
-   echo "Begin allocating memory..."
+    if [ ! -z "$IS_CONTAINER" ]; then
+	    systemMemoryLimit=$(cat /proc/meminfo  | grep "MemTotal" |tr -s '' ' ' |cut -d ' ' -f2)
+        systemMemoryLimitInBytes=$(printf '%s' $(($systemMemoryLimit*1024)))
+        containerMemoryLimit=$(cat $CONTAINER_MEM_LIMIT_FILE |head -1)
+        memoryLimitInTarget=$containerMemoryLimit
+        if [ $containerMemoryLimit -gt $systemMemoryLimitInBytes ]; then
+            memoryLimitInTarget=$systemMemoryLimitInBytes
+        fi
+        initialMemoryUsedInTarget=$(cat $CONTAINER_MEM_USAGE_FILE |head -1)
+    else
+	    memoryLimitInTarget=$(free -b | awk 'FNR == 2 {print $2'})
+        initialMemoryUsedInTarget=$( free -b | awk 'FNR == 2 {print $3'})
+    fi
+    timeout=$(($timeout / 1000))
+    echo "memoryLimitInTarget:"$memoryLimitInTarget >> $basedir/memoryFault.log
+    echo "initialMemoryUsedInTarget:"$initialMemoryUsedInTarget >> $basedir/memoryFault.log
+    requestedMemoryToFillInBytes=$(printf '%s' $((($load*$memoryLimitInTarget)/100)))
+    requestedMemoryToFillInBytes=$(printf '%s' $(($requestedMemoryToFillInBytes-$initialMemoryUsedInTarget)))
+    echo "requestedMemoryToFillInBytes:"$requestedMemoryToFillInBytes >> $basedir/memoryFault.log
+    if [ $requestedMemoryToFillInBytes -lt 0 ]; then
+        echo "Current memory usage in target is greater than the requested memory to fill"
+        cleanup
+        exit $errorExitCode
+    fi
+    echo "Begin allocating memory..."
 }
+
 injectFault(){
-      validateInputs
-      calculateMemoryParameters
-      echo "Injecting "$load "percentage load for ":$timeout" sec" >> $basedir/memoryFault.log
-      echo "#!/bin/sh" > $basedir/trigger_memory_spike.sh
-      #memoryChunk=$(awk "BEGIN { pc=0.1/100*$requestedMemoryToFillInBytes; i=int(pc); print (pc-i<0.5)?i:i+1 }")
-      memoryChunk=$(perl -E "say 0.1/100*$requestedMemoryToFillInBytes/2")
-      memoryChunk=$(awk "BEGIN { i=int($memoryChunk); print ($memoryChunk-i<0.5)?i:i+1 }")
-      echo "memorychunk :"$memoryChunk >> $basedir/memoryFault.log
-      i=1
-      while [ $i -le 1000 ]; do
-         echo "perl -e '\$m = \"x\" x $memoryChunk; sleep $timeout' &" >> $basedir/trigger_memory_spike.sh
-         i=$(( $i + 1 ))
-      done
-      echo "sleep $timeout" >> $basedir/trigger_memory_spike.sh
-      echo "echo "autoremedation started"" >> $basedir/trigger_memory_spike.sh
-      echo "rm -rf $basedir/trigger_memory_spike.sh" >> $basedir/trigger_memory_spike.sh
-      echo "rm -rf $basedir/memoryspike.sh" >> $basedir/trigger_memory_spike.sh
-      echo "rm -rf $basedir/memoryFault.log" >> $basedir/trigger_memory_spike.sh
-      chmod 777 $basedir/trigger_memory_spike.sh
-      /bin/sh $basedir/trigger_memory_spike.sh >> $basedir/memoryFault.log 2>&1 &
-      echo "Triggered: memory injection"
-      exit 0
+   perl -v > /dev/null 2>&1
+   perlRetVal=$?
+   if [ $perlRetVal -ne 0 -a $perlRetVal -ne 1 -a $perlRetVal -ne 2 ]; then
+      injectFaultWithEval
+   else
+      injectFaultWithPerl
+   fi
+}
+
+injectFaultWithPerl(){
+    validateInputs
+    calculateMemoryParameters
+    echo "Injecting "$load "percentage load for ":$timeout" sec" >> $basedir/memoryFault.log
+    echo "#!/bin/sh" > $basedir/trigger_memory_spike.sh
+    memoryChunk=$(perl -E "say 0.1/100*$requestedMemoryToFillInBytes/2")
+    memoryChunk=$(awk "BEGIN { i=int($memoryChunk); print ($memoryChunk-i<0.5)?i:i+1 }")
+    echo "memorychunk :"$memoryChunk >> $basedir/memoryFault.log
+    i=1
+    while [ $i -le 1000 ]; do
+        echo "perl -e '\$m = \"x\" x $memoryChunk; sleep $timeout' &" >> $basedir/trigger_memory_spike.sh
+        i=$(( $i + 1 ))
+    done
+    echo "sleep $timeout" >> $basedir/trigger_memory_spike.sh
+    echo "echo "autoremediation started"" >> $basedir/trigger_memory_spike.sh
+    echo "rm -rf $basedir/trigger_memory_spike.sh" >> $basedir/trigger_memory_spike.sh
+    echo "rm -rf $basedir/memoryspike.sh" >> $basedir/trigger_memory_spike.sh
+    echo "rm -rf $basedir/memoryFault.log" >> $basedir/trigger_memory_spike.sh
+    chmod 777 $basedir/trigger_memory_spike.sh
+    /bin/sh $basedir/trigger_memory_spike.sh >> $basedir/memoryFault.log 2>&1 &
+    echo "Triggered: memory injection"
+    exit 0
+}
+
+injectFaultWithEval(){
+    validateInputs
+    calculateMemoryParameters
+    echo "Injecting "$load "percentage load for ":$timeout" sec" >> $basedir/memoryFault.log
+    echo $requestedMemoryToFillInBytes
+    cat << EOF > $basedir/trigger_memory_spike.sh
+    #!/bin/sh
+    startTime=\$((\$(date +%s)))
+    currentTime=\$((\$(date +%s)))
+    check=\`expr \$currentTime - \$timeout\`
+    requestedMemoryToFill=\$(printf '%s' \$(($requestedMemoryToFillInBytes*1024)))
+    echo "requestedMemoryToFill:"\$requestedMemoryToFill >> $basedir/memoryFault.log
+    echo "Begin allocating memory..." >> $basedir/memoryFault.log
+
+    scriptName=spikemem.sh
+    echo "#!/bin/sh" > $basedir/\$scriptName
+    echo "value=\"\\\$(seq -w -s '' 0 10)\"" >> $basedir/\$scriptName
+    echo "eval array0=\\\$value" >> $basedir/\$scriptName
+    echo "sleep \$timeout" >> $basedir/\$scriptName
+    chmod 777 $basedir/\$scriptName
+
+    while [ \$startTime -gt \$check ]
+    do
+        currentMemoryUsed=\$( free -m | awk 'FNR == 2 {print \$3'})
+        echo "currentMemoryUsed:"\$currentMemoryUsed >> $basedir/memoryFault.log
+        if [ \$currentMemoryUsed -lt \$requestedMemoryToFill ]
+        then
+            $basedir/\$scriptName &
+        fi
+        currentTime=\$((\$(date +%s)))
+        check=\`expr \$currentTime - \$timeout\`
+    done
+    rm -rf $basedir/spikemem.sh
+    rm -rf $basedir/trigger_memory_spike.sh
+    rm -rf $basedir/memoryspike.sh
+    rm -rf $basedir/memoryFault.log
+EOF
+
+    chmod 777 $basedir/trigger_memory_spike.sh
+    /bin/sh $basedir/trigger_memory_spike.sh $load $timeout >> $basedir/memoryFault.log 2>&1 &
+    echo "Triggered: memory injection"
+    exit 0
 }
 
 main $@

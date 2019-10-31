@@ -343,6 +343,7 @@ public class PluginService {
      */
     public String preValidatePlugin(String pluginName, Path pluginPath) {
         String pluginId;
+        String pluginClass;
         if ((pluginName.contains(CommonConstants.DEFAULT_PLUGIN_ID))) {
             return CommonConstants.DEFAULT_PLUGIN_ID;
         }
@@ -351,8 +352,11 @@ public class PluginService {
             pluginPath = FileUtils.expandIfZip(pluginPath);
             Properties properties = readPluginProperties(pluginPath);
             pluginId = properties.getProperty("plugin.id");
+            pluginClass = properties.getProperty("plugin.class");
+            validatePluginClass(pluginClass, pluginPath);
             if (!pluginId.equals(getPluginFileName(pluginPath.toString()))) {
-                throw new PluginIllegalArgumentException(ErrorCode.MALFORMED_PLUGIN_PROPERTIES);
+                throw new PluginIllegalArgumentException(ErrorCode.MALFORMED_PLUGIN_PROPERTIES, "pluginId", pluginId,
+                        "pluginPath", pluginPath.toString());
             }
             ManglePluginDescriptor pluginDescriptor = RestTemplateWrapper
                     .jsonToObject(readPluginDescriptorJson(pluginPath), ManglePluginDescriptor.class);
@@ -378,6 +382,17 @@ public class PluginService {
             throw new MangleRuntimeException(e, ErrorCode.MALFORMED_PLUGIN_DESCRIPTOR);
         }
         return pluginId;
+    }
+
+    private void validatePluginClass(String pluginClass, Path pluginPath) throws IOException {
+        PluginClassLoader pluginClassLoader = getPluginClassLoader(pluginPath);
+        try {
+            pluginClassLoader.loadClass(pluginClass);
+        } catch (ClassNotFoundException e) {
+            throw new PluginIllegalArgumentException(ErrorCode.INVALID_PLUGIN_CLASS, "pluginClass", pluginClass);
+        } finally {
+            pluginClassLoader.close();
+        }
     }
 
     /**

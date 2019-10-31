@@ -86,7 +86,7 @@ public class MangleBootInitializerTest {
         bootInitializer = new MangleBootInitializer(taskService, taskCache, schedulerService, configService);
         bootInitializer.setTaskScheduler(taskScheduler);
         bootInitializer.setHazelcastInstance(hazelcastInstance);
-        HazelcastConstants.mangleQourumStatus = MangleQuorumStatus.PRESENT;
+        HazelcastConstants.setMangleQourumStatus(MangleQuorumStatus.PRESENT);
     }
 
     @Test
@@ -116,7 +116,7 @@ public class MangleBootInitializerTest {
 
     @Test
     public void testUpdateClusterConfigObjectQuorumNotPresent() {
-        HazelcastConstants.mangleQourumStatus = MangleQuorumStatus.NOT_PRESENT;
+        HazelcastConstants.setMangleQourumStatus(MangleQuorumStatus.NOT_PRESENT);
 
         bootInitializer.updateClusterConfigObject();
 
