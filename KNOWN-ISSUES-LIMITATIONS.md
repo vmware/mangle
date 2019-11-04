@@ -42,3 +42,6 @@ This is a known issue. To workaround this use the timeout field to auto-remediat
 
 ### Remediation of K8S Resource Not Ready fault does not work when random injection flag is set as false
 
+### Injecting application fault of a different type on the same process when another one is in progress fails if a different port is specified
+
+If there is already an application fault running for a process, you will have to specify the same port to run another injection on the same process. This is a known limitation of the agent used for injection.
