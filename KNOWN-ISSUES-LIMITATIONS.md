@@ -42,11 +42,3 @@ This is a known issue. To workaround this use the timeout field to auto-remediat
 
 ### Remediation of K8S Resource Not Ready fault does not work when random injection flag is set as false
 
-### Cannot unselect the the schedule in Execute/Schedule page
-
-Selecting Schedule is of type Radio button in "Execute/Schedule Fault " page. Hence, once the option schedule is selected, no option to Deselect the schedule option. It requires the complete page refresh and re-entering of the data to de-select the schedule.
-
-
-
-
-
