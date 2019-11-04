@@ -24,17 +24,9 @@ FileHandler leak fault injection can sometimes fail if the endpoint that it runs
 
 The default root password will not be over written even though a new password is given at the time of Mangle ova deployment.
 
-### Custom plugin execution UI throws a 'getRequestJson.faultName: must not be blank' message even before the user attempts to execute the Fault
-
-This error can be ignored.
-
 ### Retrigger of certain application faults fail with a command not found error/exception
 
 This error is displayed if the same fault is already running against the same endpoint.
-
-### While injecting a fault, it fails with an "Agent JAR loaded but agent failed to initialize" error
-
-The above issue occurs when a user trying to inject a fault onto a java service without remediating the fault that is already running. To successfully inject, the user should be aware of byteman port used earlier.
 
 ### Manual remediation of faults doesn't work for K8s endpoint
 
