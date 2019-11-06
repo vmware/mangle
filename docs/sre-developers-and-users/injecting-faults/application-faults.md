@@ -59,7 +59,7 @@ Memory fault enables spiking memory usage values for a selected endpoint by a pe
 **Steps to follow:** 
 
 1. Login as a user with read and write privileges to Mangle.
-2. Navigate to Fault Execution tab ---&gt; Infrastructure Faults ---&gt; Memory.
+2. Navigate to Fault Execution tab ---&gt; Application Faults ---&gt; Memory.
 3. Select an Endpoint.
 
    **If the Endpoint is of type Kubernetes:**
@@ -94,7 +94,7 @@ File Handler Leak fault enables you to simulate conditions where a program reque
 **Steps to follow:** 
 
 1. Login as a user with read and write privileges to Mangle.
-2. Navigate to Fault Execution tab ---&gt; Infrastructure Faults ---&gt; Memory.
+2. Navigate to Fault Execution tab ---&gt; Application Faults ---&gt; Memory.
 3. Select an Endpoint.
 
    **If the Endpoint is of type Kubernetes:**
@@ -128,7 +128,7 @@ Thread Leak fault enables you to simulate conditions where an open thread is not
 **Steps to follow:** 
 
 1. Login as a user with read and write privileges to Mangle.
-2. Navigate to Fault Execution tab ---&gt; Infrastructure Faults ---&gt; Memory.
+2. Navigate to Fault Execution tab ---&gt; Application Faults ---&gt; Memory.
 3. Select an Endpoint.
 
    **If the Endpoint is of type Kubernetes:**
@@ -163,7 +163,7 @@ Java Method Latency Fault helps you simulate a condition where calls to a specif
 **Steps to follow:** 
 
 1. Login as a user with read and write privileges to Mangle.
-2. Navigate to Fault Execution tab ---&gt; Infrastructure Faults ---&gt; Memory.
+2. Navigate to Fault Execution tab ---&gt; Application Faults ---&gt; Memory.
 3. Select an Endpoint.
 
    **If the Endpoint is of type Kubernetes:**
@@ -198,7 +198,7 @@ File Handler Leak fault enables you to simulate conditions where a program reque
 **Steps to follow:** 
 
 1. Login as a user with read and write privileges to Mangle.
-2. Navigate to Fault Execution tab ---&gt; Infrastructure Faults ---&gt; Memory.
+2. Navigate to Fault Execution tab ---&gt; Application Faults ---&gt; Memory.
 3. Select an Endpoint.
 
    **If the Endpoint is of type Kubernetes:**
@@ -232,7 +232,7 @@ File Handler Leak fault enables you to simulate conditions where a program reque
 **Steps to follow:** 
 
 1. Login as a user with read and write privileges to Mangle.
-2. Navigate to Fault Execution tab ---&gt; Infrastructure Faults ---&gt; Memory.
+2. Navigate to Fault Execution tab ---&gt; Application Faults ---&gt; Memory.
 3. Select an Endpoint.
 
    **If the Endpoint is of type Kubernetes:**
@@ -266,7 +266,7 @@ File Handler Leak fault enables you to simulate conditions where a program reque
 **Steps to follow:** 
 
 1. Login as a user with read and write privileges to Mangle.
-2. Navigate to Fault Execution tab ---&gt; Infrastructure Faults ---&gt; Memory.
+2. Navigate to Fault Execution tab ---&gt; Application Faults ---&gt; Memory.
 3. Select an Endpoint.
 
    **If the Endpoint is of type Kubernetes:**
@@ -300,7 +300,7 @@ File Handler Leak fault enables you to simulate conditions where a program reque
 **Steps to follow:** 
 
 1. Login as a user with read and write privileges to Mangle.
-2. Navigate to Fault Execution tab ---&gt; Infrastructure Faults ---&gt; Memory.
+2. Navigate to Fault Execution tab ---&gt; Application Faults ---&gt; Memory.
 3. Select an Endpoint.
 
    **If the Endpoint is of type Kubernetes:**

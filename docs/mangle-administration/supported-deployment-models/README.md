@@ -20,7 +20,9 @@ After you have downloaded the OVA, log in to your vSphere environment and perfor
 
    Choose **Next**.
 
-2. Specify the name and location of virtual machine                      Enter a name for the virtual machine and select a location for the virtual machine.
+2. Specify the name and location of virtual machine                      
+
+   Enter a name for the virtual machine and select a location for the virtual machine.
 
    ![OVA file](../../.gitbook/assets/step2_select-name.png)
 
