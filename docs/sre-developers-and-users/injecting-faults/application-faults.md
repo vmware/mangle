@@ -128,7 +128,7 @@ Thread Leak fault enables you to simulate conditions where an open thread is not
 **Steps to follow:** 
 
 1. Login as a user with read and write privileges to Mangle.
-2. Navigate to Fault Execution tab ---&gt; Application Faults ---&gt; Memory.
+2. Navigate to Fault Execution tab ---&gt; Application Faults ---&gt; Thread Leak.
 3. Select an Endpoint.
 
    **If the Endpoint is of type Kubernetes:**
@@ -163,7 +163,7 @@ Java Method Latency Fault helps you simulate a condition where calls to a specif
 **Steps to follow:** 
 
 1. Login as a user with read and write privileges to Mangle.
-2. Navigate to Fault Execution tab ---&gt; Application Faults ---&gt; Memory.
+2. Navigate to Fault Execution tab ---&gt; Application Faults ---&gt; Java Method Latency.
 3. Select an Endpoint.
 
    **If the Endpoint is of type Kubernetes:**
@@ -217,7 +217,7 @@ Spring Service Latency Fault helps you simulate a condition where calls to a spe
 **Steps to follow:** 
 
 1. Login as a user with read and write privileges to Mangle.
-2. Navigate to Fault Execution tab ---&gt; Application Faults ---&gt; Memory.
+2. Navigate to Fault Execution tab ---&gt; Application Faults ---&gt; Spring Service Latency.
 3. Select an Endpoint.
 
    **If the Endpoint is of type Kubernetes:**
@@ -253,7 +253,7 @@ Spring Service Exception Fault helps you simulate a condition where calls to a s
 **Steps to follow:** 
 
 1. Login as a user with read and write privileges to Mangle.
-2. Navigate to Fault Execution tab ---&gt; Application Faults ---&gt; Memory.
+2. Navigate to Fault Execution tab ---&gt; Application Faults ---&gt; Spring Service Exception.
 3. Select an Endpoint.
 
    **If the Endpoint is of type Kubernetes:**
@@ -290,7 +290,7 @@ Java Method Exception Fault helps you simulate a condition where calls to a spec
 **Steps to follow:** 
 
 1. Login as a user with read and write privileges to Mangle.
-2. Navigate to Fault Execution tab ---&gt; Application Faults ---&gt; Memory.
+2. Navigate to Fault Execution tab ---&gt; Application Faults ---&gt; Simulate Java Exception.
 3. Select an Endpoint.
 
    **If the Endpoint is of type Kubernetes:**
@@ -346,7 +346,7 @@ Kill JVM Fault helps you simulate a condition where JVM crashes with specific ex
 **Steps to follow:** 
 
 1. Login as a user with read and write privileges to Mangle.
-2. Navigate to Fault Execution tab ---&gt; Application Faults ---&gt; Memory.
+2. Navigate to Fault Execution tab ---&gt; Application Faults ---&gt; Kill JVM.
 3. Select an Endpoint.
 
    **If the Endpoint is of type Kubernetes:**
