@@ -16,21 +16,15 @@
     <link href='assets/img/vmware_favicon.png' rel='shortcut icon'>
     <link href='favicon.ico' rel='icon' type='image/ico'>
     <link href="assets/css/all-7082dbf5.css" rel="stylesheet" type="text/css" />
-  </head>
+ </head>
   <body class='index'>
     <header>
       <div class='peelback'></div>
       <div class='container'>
         <div class='row'>
-          <div class='brand-container'>
-            <a class="brand" href="https://vmware.github.io/mangle"><h1>
-              Mangle
-            </h1>
-            </a>
-            <div class='by-vmware'>
-              by VMware, Inc.
-            </div>
-          </div>
+	
+          <div class='brand-container'><div class='by-vmware'></div> <p><font color="#FFFFFF">Open Source Program Office</font></p>
+       </div>
           <nav>
             <a class="menu-actuator" href="#"><i class='ion-navicon'></i>
             Menu
@@ -54,10 +48,12 @@
     </header>
     <section class='hero'>
       <div class='container'>
-        <h2 id="vmware-mangle">VMware Mangle</h2>
-
-        <p>Orchestrating Chaos Engineering</p>
-        <a class="button button-primary button-large" href="https://github.com/vmware/mangle"><i class='ion-social-github'></i>
+		<div class="hero-image">
+          <a href="https://github.com/vmware/mangle"></a>
+          <img src="assets/img/Mangle.png" />
+        </div>
+        <h4><font color="4B70A6">Orchestrating Chaos Engineering</font></h4>
+        <a class="btn btn-primary" href="https://github.com/vmware/mangle"><i class='ion-social-github'></i>
         Fork
         Mangle
         <i class='ion-ios-arrow-right'></i>
@@ -68,7 +64,7 @@
       <div class='container'>
         <div class='row'>
           <div class='content'>
-            <h2 id="what-is-mangle">What is Mangle?</h2>
+            <h4 id="what-is-mangle"><font color="4B70A6">What is Mangle?</font></h4>
 
             <p>Mangle enables you to run chaos engineering experiments seamlessly against applications and infrastructure components to assess resiliency and fault tolerance. It is designed to introduce faults with very little pre-configuration and can support any infrastructure that you might have including K8S, Docker, vCenter or any Remote Machine with ssh enabled. With its powerful plugin model, you can define a custom fault of your choice based on a template and run it without building your code from scratch.</p>
 
@@ -85,7 +81,7 @@
       <div class='container'>
         <div class='row'>
           <div class='content'>
-            <h2 id="getting-mangle">Getting Mangle</h2>
+            <h4 id="getting-mangle"><font color="4B70A6">Getting Mangle</font></h4>
 
             <p>If you want a quick and easy way to install Mangle just about anywhere, you can grab our <a href="https://hub.docker.com/u/mangleuser">container images</a>. Refer to the Getting Started section below for detailed instructions on deployment and configuration.</p>
 
@@ -102,7 +98,7 @@
     <section class='getting-started'>
       <div class='container'>
         <div class='row'>
-          <h2 id='getting-started'>Getting Started</h2>
+          <h4 id='getting-started'><font color="4B70A6">Getting Started</font></h4>
           <p>We've provided a few guides to help get you started:</p>
         </div>
         <div class="row">
@@ -131,7 +127,7 @@
       <div class='container'>
         <div class='row'>
           <div class='content'>
-            <h2 id="support">Support</h2>
+            <h4 id="support"><font color="4B70A6">Support</font></h4>
 
             <p>Mangle is released as open source software and comes with no commercial support.</p>
             <p>We currently provide community support through our GitHub project page. If you encounter an issue or have a question, feel free to reach out via <a href="https://github.com/vmware/mangle/issues" target="_blank">GitHub issues for Mangle</a></p>
@@ -145,7 +141,7 @@
       <div class='container'>
         <div class='row'>
           <div class='content'>
-            <h2 id='execsponsors'>Executive Sponsors</h2>
+            <h4 id='execsponsors'><font color="4B70A6">Executive Sponsors</font></h4>
             <p>
 			  <a title="Sandhya Sridharan"><figure><img alt="Sandhya Sridharan" src="assets/img/Sandhya.jfif" height="100" width="100" /><figcaption>Vice President Engineering: Cloud Management at VMware</figcaption></figure>
 			  &nbsp;&nbsp;&nbsp;&nbsp;
@@ -160,7 +156,7 @@
       <div class='container'>
         <div class='row'>
           <div class='content'>
-            <h2 id='contributors'>Contributors</h2>
+            <h4 id='contributors'><font color="4B70A6">Contributors</font></h4>
             <p>
 			  <a title="Anjali Reddy" href="https://github.com/anjalir-arkin"><img alt="Anjali Reddy" src="https://avatars3.githubusercontent.com/u/15645888?s=88&v=4" />
               <a title="Aswathy Ramabhadran" href="https://github.com/aswathy-ramabhadran"><img alt="Aswathy Ramabhadran" src="https://avatars2.githubusercontent.com/u/35480931?s=88&v=4" />
@@ -194,7 +190,7 @@
       <div class='container'>
         <div class='row'>
           <div class='content'>
-            <h2 id="contributing">Contributing</h2>
+            <h4 id="contributing"><font color="4B70A6">Contributing</font></h4>
             <p>The Mangle project team welcomes contributions from the community. We are always thrilled to receive <a href="https://help.github.com/articles/creating-a-pull-request">pull requests</a>, and do our best to process them as fast as we can.If you wish to contribute code and you have not signed our contributor license agreement (CLA), our bot will update the issue when you open a Pull Request. For any questions about the CLA process, please refer to our <a href="https://cla.vmware.com/faq">FAQ</a>.</p>
 
 			<p>Before you start to code, we recommend discussing your plans through a <a href="https://github.com/vmware/mangle/issues">Github issue</a> or discuss it first with the official project maintainers via <a href="https://teams.microsoft.com/l/team/19%3aa0fe7cfcd9bc451b8a5b1fc60302cc8e%40thread.skype/conversations?groupId=34804802-7ffb-4f9a-8e7a-95b9c7ce305a&tenantId=b39138ca-3cee-4b4a-a4d6-cd83d9dd62f0">team chat</a>, especially for more ambitious contributions. This gives other contributors a chance to point you in the right direction, give you feedback on your design, and help you find out if someone else is working on the same thing.</p>
@@ -206,7 +202,7 @@
       <div class='container'>
         <div class='row'>
           <div class='content'>
-            <h2 id="license">License</h2>
+            <h4 id="license"><font color="4B70A6">License</font></h4>
             <p>Mangle is comprised of many open source software components, each of which has its own license that is located in the source code of the respective component as well as documented in the <a href="https://github.com/vmware/mangle/blob/master/LICENSE">open source license file</a> accompanying the Mangle distribution. The Open Source Disclosure Package (ODP) can be downloaded from <a href="https://bintray.com/vmware/mangle/MangleODP">here</a>.</p>
           </div>
           <div class='image'></div>
