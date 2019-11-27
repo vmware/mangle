@@ -1,0 +1,428 @@
+<?xml version="1.0"?>
+<!--
+   Copyright (c) 2016-2019 VMware, Inc. All Rights Reserved.
+
+   This product is licensed to you under the Apache License, Version 2.0 (the "License").
+   You may not use this product except in compliance with the License.
+
+   This product may include a number of subcomponents with separate copyright notices
+   and license terms. Your use of these subcomponents is subject to the terms and
+   conditions of the subcomponent's license, as noted in the LICENSE file.
+-->
+<project
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+	xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com.vmware.mangle</groupId>
+	<artifactId>mangle-plugin-skeleton</artifactId>
+	<name>mangle-plugin-skeleton</name>
+	<description>Mangle Plugin Skeleton</description>
+	<version>2.0.0</version>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<plugin.id>${project.artifactId}</plugin.id>
+		<plugin.version>${project.version}</plugin.version>
+		<plugin.provider>VMware Inc.</plugin.provider>
+		<plugin.dependencies>,</plugin.dependencies>
+		<plugin.class>com.vmware.mangle.test.plugin.ManglePlugin</plugin.class>
+		<parent.project.basedir>${project.basedir}/..</parent.project.basedir>
+		<junit.version>4.12</junit.version>
+		<jacoco.version>0.8.2</jacoco.version>
+		<jacoco.ant.version>0.7.8</jacoco.ant.version>
+		<maven-compiler.version>3.7.0</maven-compiler.version>
+		<java.version>1.8</java.version>
+		<mvn.surefire.plugin.version>2.22.1</mvn.surefire.plugin.version>
+		<testng.version>6.11</testng.version>
+		<org.mockito.version>1.10.19</org.mockito.version>
+		<org.mockito-core.version>2.21.0</org.mockito-core.version>
+		<spring.version>5.1.5.Release</spring.version>
+		<validations.version>2.0.1.Final</validations.version>
+		<checkstyle.version>3.0.0</checkstyle.version>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>com.vmware.mangle</groupId>
+			<artifactId>mangle-task-framework</artifactId>
+			<version>2.0.0</version>
+			<exclusions>
+				<exclusion>
+					<groupId>javax.validation</groupId>
+					<artifactId>validation-api</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.springframework</groupId>
+					<artifactId>spring-core</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.springframework</groupId>
+					<artifactId>spring-context</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-context</artifactId>
+			<version>${spring.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>${junit.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>javax.validation</groupId>
+			<artifactId>validation-api</artifactId>
+			<version>${validations.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.testng</groupId>
+			<artifactId>testng</artifactId>
+			<version>${testng.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-all</artifactId>
+			<version>${org.mockito.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
+			<version>${org.mockito-core.version}</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<version>${maven-compiler.version}</version>
+					<configuration>
+						<source>${java.version}</source>
+						<target>${java.version}</target>
+						<compilerArgument>-Xlint:unchecked</compilerArgument>
+					</configuration>
+				</plugin>
+
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-surefire-plugin</artifactId>
+					<version>${mvn.surefire.plugin.version}</version>
+					<configuration>
+						<includes>
+							<include>**/com/vmware/mangle/unittest/**</include>
+						</includes>
+						<skip>${skipUTs}</skip>
+					</configuration>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-checkstyle-plugin</artifactId>
+					<version>${checkstyle.version}</version>
+					<executions>
+						<execution>
+							<id>checkstyle-check</id>
+							<goals>
+								<goal>check</goal>
+							</goals>
+						</execution>
+					</executions>
+					<configuration>
+						<includeTestResources>false</includeTestResources>
+						<includeResources>false</includeResources>
+						<includeTestSourceDirectory>true</includeTestSourceDirectory>
+						<headerLocation>checkstyle/header.regexp</headerLocation>
+						<configLocation>checkstyle/checkstyle.xml</configLocation>
+						<suppressionsLocation>checkstyle/checkstyle-suppression.xml</suppressionsLocation>
+					</configuration>
+				</plugin>
+				<plugin>
+					<groupId>org.jacoco</groupId>
+					<artifactId>jacoco-maven-plugin</artifactId>
+					<version>${jacoco.version}</version>
+					<configuration>
+						<excludes>
+							<exclude>*</exclude>
+						</excludes>
+					</configuration>
+					<executions>
+						<execution>
+							<id>jacoco-initialize</id>
+							<goals>
+								<goal>prepare-agent</goal>
+							</goals>
+						</execution>
+						<execution>
+							<id>jacoco-instrument</id>
+							<goals>
+								<goal>instrument</goal>
+							</goals>
+						</execution>
+						<execution>
+							<id>jacoco-restore-instrumented-classes</id>
+							<goals>
+								<goal>restore-instrumented-classes</goal>
+							</goals>
+						</execution>
+						<execution>
+							<id>jacoco-report</id>
+							<phase>package</phase>
+							<configuration>
+								<excludes>
+									<exclude>**/CassandraConfig.class</exclude>
+									<exclude>**/CassandraConfig.java</exclude>
+								</excludes>
+							</configuration>
+							<goals>
+								<goal>report</goal>
+							</goals>
+						</execution>
+						<!--Goal to merge all the jacoco exec files to generate consolidated 
+							jacoco-report -->
+						<!--includes all the report that are of the format "*it*.exec" -->
+						<!--Generates a file jacoco-it.exec inside target -->
+						<execution>
+							<id>merge-test-data</id>
+							<goals>
+								<goal>merge</goal>
+							</goals>
+							<configuration>
+								<destFile>target/jacoco-final.exec</destFile>
+								<skip>${skip.dump}</skip>
+								<includes>
+									<include />
+								</includes>
+								<fileSets>
+									<fileSet
+										implementation="org.apache.maven.shared.model.fileset.FileSet">
+										<directory>${mangle.services.build.directory}</directory>
+										<includes>
+											<include>*.exec</include>
+										</includes>
+									</fileSet>
+									<fileSet
+										implementation="org.apache.maven.shared.model.fileset.FileSet">
+										<directory>${mangle.metricreporter.build.directory}</directory>
+										<includes>
+											<include>*.exec</include>
+										</includes>
+									</fileSet>
+									<fileSet
+										implementation="org.apache.maven.shared.model.fileset.FileSet">
+										<directory>${mangle.models.build.directory}</directory>
+										<includes>
+											<include>*.exec</include>
+										</includes>
+									</fileSet>
+									<fileSet
+										implementation="org.apache.maven.shared.model.fileset.FileSet">
+										<directory>${mangle.utils.build.directory}</directory>
+										<includes>
+											<include>*.exec</include>
+										</includes>
+									</fileSet>
+									<fileSet
+										implementation="org.apache.maven.shared.model.fileset.FileSet">
+										<directory>${mangle.task-framework.build.directory}</directory>
+										<includes>
+											<include>*.exec</include>
+										</includes>
+									</fileSet>
+									<fileSet
+										implementation="org.apache.maven.shared.model.fileset.FileSet">
+										<directory>${mangle.default-plugin.build.directory}</directory>
+										<includes>
+											<include>*.exec</include>
+										</includes>
+									</fileSet>
+									<fileSet
+										implementation="org.apache.maven.shared.model.fileset.FileSet">
+										<directory>target</directory>
+										<includes>
+											<include>*.exec</include>
+										</includes>
+									</fileSet>
+								</fileSets>
+							</configuration>
+						</execution>
+					</executions>
+				</plugin>
+				<!--plugin to generate code coverage report from the exec files generated -->
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-antrun-plugin</artifactId>
+					<version>1.8</version>
+					<executions>
+						<execution>
+							<id>generate-report</id>
+							<phase>post-integration-test</phase>
+							<goals>
+								<goal>run</goal>
+							</goals>
+							<configuration>
+								<skip>${skip.int.tests.report}</skip>
+								<target>
+									<!-- Execute an ant task within maven -->
+									<echo message="Generating JaCoCo Reports" />
+									<taskdef name="report"
+										classname="org.jacoco.ant.ReportTask">
+										<classpath
+											path="${basedir}/target/jacoco-jars/org.jacoco.ant.jar" />
+									</taskdef>
+									<mkdir dir="${basedir}/target/coverage-report" />
+									<report>
+										<executiondata>
+											<fileset dir="${basedir}">
+												<include name="target/jacoco-final.exec" />
+											</fileset>
+										</executiondata>
+										<structure name="Mangle Code Coverage Report">
+											<group name="coverage">
+												<classfiles>
+													<fileset dir="${mangle.services.classes.directory}" />
+													<fileset dir="${mangle.utils.classes.directory}" />
+													<fileset
+														dir="${mangle.metricreporter.classes.directory}" />
+													<fileset
+														dir="${mangle.default-plugin.classes.directory}" />
+													<fileset
+														dir="${mangle.task-framework.classes.directory}" />
+												</classfiles>
+												<sourcefiles encoding="UTF-8">
+													<fileset dir="${mangle.services.source.directory}" />
+													<fileset
+														dir="${mangle.metricreporter.source.directory}" />
+													<fileset dir="${mangle.utils.source.directory}" />
+													<fileset
+														dir="${mangle.task-framework.source.directory}" />
+													<fileset
+														dir="${mangle.default-plugin.source.directory}" />
+												</sourcefiles>
+											</group>
+										</structure>
+										<html destdir="${basedir}/target/coverage-report/html" />
+										<xml
+											destfile="${basedir}/target/coverage-report/coverage-report.xml" />
+										<csv
+											destfile="${basedir}/target/coverage-report/coverage-report.csv" />
+									</report>
+								</target>
+							</configuration>
+						</execution>
+					</executions>
+					<dependencies>
+						<dependency>
+							<groupId>org.jacoco</groupId>
+							<artifactId>org.jacoco.ant</artifactId>
+							<version>${jacoco.ant.version}</version>
+						</dependency>
+					</dependencies>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>${java.version}</source>
+					<target>${java.version}</target>
+					<compilerArgument>-Xlint:unchecked</compilerArgument>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-checkstyle-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>unzip jar file</id>
+						<phase>package</phase>
+						<configuration>
+							<target>
+								<unzip
+									src="target/${project.artifactId}-${project.version}.${project.packaging}"
+									dest="target/plugin-classes" />
+							</target>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>generate-report</id>
+						<configuration>
+							<skip>true</skip>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<configuration>
+					<descriptors>
+						<descriptor>
+							src/main/resources/assembly.xml
+						</descriptor>
+					</descriptors>
+					<appendAssemblyId>false</appendAssemblyId>
+				</configuration>
+				<executions>
+					<execution>
+						<id>make-assembly</id>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<configuration>
+					<archive>
+						<manifestEntries>
+							<Plugin-Id>${plugin.id}</Plugin-Id>
+							<Plugin-Class>${plugin.class}</Plugin-Class>
+							<Plugin-Version>${plugin.version}</Plugin-Version>
+							<Plugin-Provider>${plugin.provider}</Plugin-Provider>
+							<Plugin-Dependencies>${plugin.dependencies}</Plugin-Dependencies>
+						</manifestEntries>
+					</archive>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>merge-test-data</id>
+						<configuration>
+							<skip>true</skip>
+						</configuration>
+					</execution>
+					<execution>
+						<id>check</id>
+						<configuration>
+							<skip>true</skip>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+</project>

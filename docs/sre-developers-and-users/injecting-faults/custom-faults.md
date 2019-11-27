@@ -175,7 +175,7 @@
 
 16. Mangle does not support the inclusion of Custom Endpoints through Plugin. The requirement of addition of endpoint can be gone through the Mange contributions flow as defined in Mangle repository. 
 
-17. Task-Extension Deep Dive: An example is available as `HelloManglePluginTaskHelper` at package com.vmware.mangle.plugin.tasks.impl of mangle-test-plugin. This task Helper is an implementation of `AbstractRemoteCommandExecutionTaskHelper`. The implementation of `AbstractRemoteCommandExecutionTaskHelper` is only expected to provide the implementation for below methods: 
+17. Task-Extension Deep Dive: An example is available as `HelloManglePluginTaskHelper` at package com.vmware.mangle.plugin.tasks.impl of mangle-plugin-skeleton. This task Helper is an implementation of `AbstractRemoteCommandExecutionTaskHelper`. The implementation of `AbstractRemoteCommandExecutionTaskHelper` is only expected to provide the implementation for below methods: 
 
 
 

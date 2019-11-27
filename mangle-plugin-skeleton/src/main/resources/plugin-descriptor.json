@@ -1,0 +1,21 @@
+{
+	"pluginId": "mangle-plugin-skeleton",
+	"faults": [
+		{
+			"faultParameters": {
+				"field1": "field1",
+				"field2": "field2"
+			},
+			"extensionDetails": {
+				"modelExtensionName": "com.vmware.mangle.plugin.model.faults.specs.HelloMangleFaultSpec",
+				"taskExtensionName": "com.vmware.mangle.plugin.tasks.impl.HelloManglePluginTaskHelper",
+				"faultExtensionName": "com.vmware.mangle.plugin.helpers.faults.HelloMangleFault"
+			},
+			"faultName": "mangle-plugin-skeleton-HelloMangleFault",
+			"supportedEndpoints": [
+				"MACHINE"
+			],
+			"pluginId": "mangle-plugin-skeleton"
+		}
+	]
+}

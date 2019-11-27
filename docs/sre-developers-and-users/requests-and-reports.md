@@ -1,6 +1,6 @@
 # Requests and Reports
 
-Request & Reports page provides insight to the tasks running during fault execution, fault remediation and triggering of scheduled jobs. Mangle creates tasks that transition to one the stages : NOT STARTED, IN\_PROGRESS, COMPLETED, FAILED.
+Request & Reports page provides insight to the tasks running during fault execution, fault remediation and triggering of scheduled jobs. Mangle creates tasks that transition to one of the stages : NOT STARTED, IN\_PROGRESS, COMPLETED, FAILED.
 
 ## Processed Requests
 
