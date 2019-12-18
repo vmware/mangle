@@ -23,7 +23,10 @@ A clear and concise description of what you expected to happen.
 **Screenshots**
 If applicable, add screenshots to help explain your problem.
 
-**Desktop (please complete the following information):**
+**Logs**
+If applicable, add application logs/troubleshooting bundle to help in root cause analysis.
+
+**Configuration information:**
  - Deployment Type: [e.g. OVA, Container]
  - Deployment Mode: [e.g. Cluster, Single Node]
  - Client OS: [e.g. iOS]
