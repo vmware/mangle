@@ -404,7 +404,7 @@ Kubernetes \(K8s\) Resource Not Ready faults enable you to abruptly put pods or 
 
 ## Kubernetes Service Not Available
 
-Kubernetes \(K8s\) Resource Not Ready faults enable you to abruptly put pods or nodes within a K8s cluster into a state that is not suitable for scheduling. 
+Kubernetes \(K8s\) Service Not Available faults enable you to abruptly make a service resource in K8s cluster not available, although the pod will be healthy and running. 
 
 **Steps to follow:** 
 
