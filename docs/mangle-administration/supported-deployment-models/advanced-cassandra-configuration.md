@@ -97,7 +97,7 @@ Attaching the required files which help to enable the authentication and ssl in 
 
 {% file src="../../.gitbook/assets/generatedbcert.sh" caption="Certificate Generation Script" %}
 
-To download the Cassandra client as DevCenter form [DevCenter](https://academy.datastax.com/downloads).
+To download the Cassandra client as DevCenter from [DevCenter](https://academy.datastax.com/downloads).
 
 **To Create Multi-Node Cassandra cluster**
 
