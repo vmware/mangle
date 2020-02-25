@@ -7,9 +7,9 @@ The Mangle Documentation provides information about how to install, configure, a
 To navigate to the appropriate documentation, start with the [Mangle GitHub IO Page](https://vmware.github.io/mangle/).
 
 **Product version: 2.0**
-### Demo
+## Demo of Version 1.0
 
- ![demo](https://www.youtube.com/watch?v=g1xKYuetrNU)
+ [![Demo Doccou alpha](https://j.gifs.com/3Qp1O9.gif)](https://www.youtube.com/watch?v=g1xKYuetrNU)
 
 ### Intended Audiences
 
