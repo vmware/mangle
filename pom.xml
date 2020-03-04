@@ -97,7 +97,7 @@
 		<log4j.version>1.2.17</log4j.version>
 		<tomcat.version>9.0.19</tomcat.version>
 		<aws-sdk.version>1.11.579</aws-sdk.version>
-		<jackson.databind.version>2.9.10</jackson.databind.version>
+		<jackson.databind.version>2.9.10.3</jackson.databind.version>
 		<mangle.services.build.directory>mangle-services/target</mangle.services.build.directory>
 		<mangle.models.build.directory>mangle-models/target</mangle.models.build.directory>
 		<mangle.utils.build.directory>mangle-utils/target</mangle.utils.build.directory>
