@@ -48,7 +48,7 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<java.version>1.8</java.version>
 		<maven-compiler.version>3.7.0</maven-compiler.version>
-		<spring.boot.version>2.1.2.RELEASE</spring.boot.version>
+		<spring.boot.version>2.2.2.RELEASE</spring.boot.version>
 		<spring.cloud.version>2.0.2.RELEASE</spring.cloud.version>
 		<swagger-version>2.9.2</swagger-version>
 		<spring.hateoas.version>0.24.0.RELEASE</spring.hateoas.version>
@@ -57,6 +57,8 @@
 		<testng.version>6.11</testng.version>
 		<com.fasterxml.jackson.datatype.version>2.5.1</com.fasterxml.jackson.datatype.version>
 		<checkstyle.version>3.0.0</checkstyle.version>
+		<spring.security.core.version>5.2.1.RELEASE</spring.security.core.version>
+		<spring.security.web.version>5.2.1.RELEASE</spring.security.web.version>
 		<mvn.surefire.plugin.version>2.22.1</mvn.surefire.plugin.version>
 		<jacoco.ant.version>0.7.8</jacoco.ant.version>
 		<com.thoughtworks.xstream.version>1.4.8</com.thoughtworks.xstream.version>
@@ -97,7 +99,7 @@
 		<log4j.version>1.2.17</log4j.version>
 		<tomcat.version>9.0.19</tomcat.version>
 		<aws-sdk.version>1.11.579</aws-sdk.version>
-		<jackson.databind.version>2.9.10</jackson.databind.version>
+		<jackson.databind.version>2.10.1</jackson.databind.version>
 		<mangle.services.build.directory>mangle-services/target</mangle.services.build.directory>
 		<mangle.models.build.directory>mangle-models/target</mangle.models.build.directory>
 		<mangle.utils.build.directory>mangle-utils/target</mangle.utils.build.directory>
@@ -168,6 +170,16 @@
 				<version>${aws-sdk.version}</version>
 			</dependency>
 			<dependency>
+				<groupId>org.springframework.security</groupId>
+				<artifactId>spring-security-core</artifactId>
+				<version>${spring.security.core.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework.security</groupId>
+				<artifactId>spring-security-web</artifactId>
+				<version>${spring.security.web.version}</version>
+			</dependency>
+			<dependency>
 				<groupId>com.amazonaws</groupId>
 				<artifactId>aws-java-sdk-ec2</artifactId>
 				<version>${aws-sdk.version}</version>
@@ -207,6 +219,56 @@
 				<groupId>org.springframework.security</groupId>
 				<artifactId>spring-security-ldap</artifactId>
 				<version>${spring.security.ldap.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.fasterxml.jackson.core</groupId>
+				<artifactId>jackson-core</artifactId>
+				<version>${jackson.databind.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.fasterxml.jackson.core</groupId>
+				<artifactId>jackson-annotations</artifactId>
+				<version>${jackson.databind.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.fasterxml.jackson.datatype</groupId>
+				<artifactId>jackson-datatype-jdk8</artifactId>
+				<version>${jackson.databind.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.fasterxml.jackson.dataformat</groupId>
+				<artifactId>jackson-dataformat-cbor</artifactId>
+				<version>${jackson.databind.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.fasterxml.jackson.datatype</groupId>
+				<artifactId>jackson-datatype-joda</artifactId>
+				<version>${jackson.databind.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.fasterxml.jackson.datatype</groupId>
+				<artifactId>jackson-datatype-jsr310</artifactId>
+				<version>${jackson.databind.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.fasterxml.jackson.jaxrs</groupId>
+				<artifactId>jackson-jaxrs-base</artifactId>
+				<version>${jackson.databind.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.fasterxml.jackson.jaxrs</groupId>
+				<artifactId>jackson-jaxrs-json-provider</artifactId>
+				<version>${jackson.databind.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.fasterxml.jackson.module</groupId>
+				<artifactId>jackson-module-jaxb-annotations</artifactId>
+				<version>${jackson.databind.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.fasterxml.jackson.module</groupId>
+				<artifactId>jackson-module-parameter-names</artifactId>
+				<version>${jackson.databind.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>com.thoughtworks.xstream</groupId>

@@ -386,7 +386,7 @@ public class VMOperations {
         }
 
         VMDisk vmDisk = mapper.convertValue(responeEntity.getBody().getVCenterVMObject(), VMDisk.class);
-        return vmDisk.getDiskInfo();
+        return vmDisk.retrieveDiskInfo();
     }
 
     private static boolean testAdapterClientConnection(VCenterAdapterClient vCenterAdapterClient)
