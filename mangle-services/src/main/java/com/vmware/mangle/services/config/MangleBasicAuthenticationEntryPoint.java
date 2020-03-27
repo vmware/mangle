@@ -15,12 +15,13 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Date;
-import javax.servlet.ServletException;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.www.BasicAuthenticationEntryPoint;
@@ -44,14 +45,14 @@ public class MangleBasicAuthenticationEntryPoint extends BasicAuthenticationEntr
 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authEx)
-            throws IOException, ServletException {
+            throws IOException {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType(MediaType.APPLICATION_JSON_UTF8_VALUE);
         response.getWriter().write(RestTemplateWrapper.objectToJson(getMangleErrorDetails(request, authEx)));
     }
 
     @Override
-    public void afterPropertiesSet() throws Exception {
+    public void afterPropertiesSet() {
         setRealmName("MANGLE REALM");
         super.afterPropertiesSet();
     }
@@ -60,10 +61,13 @@ public class MangleBasicAuthenticationEntryPoint extends BasicAuthenticationEntr
         String errorDescription;
         if (authEx instanceof LockedException) {
             errorDescription = authEx.getMessage();
+        } else if (authEx instanceof InsufficientAuthenticationException) {
+            errorDescription = authEx.getMessage();
         } else {
             errorDescription = ErrorConstants.AUTHENTICATION_FAILED_ERROR_MSG;
         }
-        log.error("Authentication for the user {} failed with the error: {}", extractUserName(httpServletRequest), authEx.getMessage());
+        log.error("Authentication for the user {} failed with the error: {}", extractUserName(httpServletRequest),
+                authEx.getMessage());
         return new ErrorDetails(new Date(), ErrorCode.LOGIN_EXCEPTION.getCode(), errorDescription,
                 httpServletRequest.getRequestURI());
     }

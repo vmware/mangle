@@ -11,6 +11,8 @@
 
 package com.vmware.mangle.model.vcenter;
 
+import java.io.Serializable;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -34,11 +36,11 @@ public class VMDisk extends MangleDto {
     }
 
     public VMDisk(String type, String backingType, String backingVmdkFile) {
-        Backing backing = new Backing();
-        backing.setVmdk_file(backingVmdkFile);
-        backing.setType(backingType);
+        Backing localBacking = new Backing();
+        localBacking.setVmdk_file(backingVmdkFile);
+        localBacking.setType(backingType);
         this.type = type;
-        this.backing = backing;
+        this.backing = localBacking;
     }
 
     public VMDisk(String type, Backing backing) {
@@ -51,12 +53,12 @@ public class VMDisk extends MangleDto {
      */
 
     @Data
-    public class Backing {
+    public class Backing implements Serializable {
         private String type;
         private String vmdk_file;
     }
 
-    public String getDiskInfo() {
+    public String retrieveDiskInfo() {
         return String.format("type: %s; backing_type: %s; vmdk_file: %s", this.type, this.backing.type,
                 this.backing.vmdk_file.replace(" ", "___"));
     }
