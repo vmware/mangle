@@ -61,7 +61,7 @@
 		<spring.security.web.version>5.2.1.RELEASE</spring.security.web.version>
 		<mvn.surefire.plugin.version>2.22.1</mvn.surefire.plugin.version>
 		<jacoco.ant.version>0.7.8</jacoco.ant.version>
-		<com.thoughtworks.xstream.version>1.4.8</com.thoughtworks.xstream.version>
+		<com.thoughtworks.xstream.version>1.4.10-java7</com.thoughtworks.xstream.version>
 		<junit.jupiter.version>5.3.1</junit.jupiter.version>
 		<docker-java.version>3.1.0</docker-java.version>
 		<com.jcraft.jsch.version>0.1.54</com.jcraft.jsch.version>
