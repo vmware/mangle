@@ -29,7 +29,7 @@
 		<plugin.dependencies>,</plugin.dependencies>
 		<plugin.class>com.vmware.mangle.test.plugin.ManglePlugin</plugin.class>
 		<parent.project.basedir>${project.basedir}/..</parent.project.basedir>
-		<junit.version>4.12</junit.version>
+		<junit.version>4.13.1</junit.version>
 		<jacoco.version>0.8.2</jacoco.version>
 		<jacoco.ant.version>0.7.8</jacoco.ant.version>
 		<maven-compiler.version>3.7.0</maven-compiler.version>
