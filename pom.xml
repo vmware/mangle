@@ -71,7 +71,7 @@
 		<wavefront-java-client-version>4.26</wavefront-java-client-version>
 		<jacoco.version>0.8.2</jacoco.version>
 		<java.ws.rs.version>2.1.1</java.ws.rs.version>
-		<guava.version>[24.1.1,)</guava.version>
+		<guava.version>25.0-jre</guava.version>
 		<net.sf.dozer.version>5.5.1</net.sf.dozer.version>
 		<jacoco.version>0.8.2</jacoco.version>
 		<guava.version>20.0</guava.version>
