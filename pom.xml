@@ -25,12 +25,12 @@
 		<version>2.1.3.RELEASE</version>
 	</parent>
 
-	<repositories>
+	<!-- <repositories>
 		<repository>
 			<id>build-artifactory.eng.vmware.com</id>
 			<url>https://build-artifactory.eng.vmware.com/artifactory/fiaasco-release</url>
 		</repository>
-	</repositories>
+	</repositories> -->
 
 	<licenses>
 		<license>
@@ -48,11 +48,11 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<java.version>1.8</java.version>
 		<maven-compiler.version>3.7.0</maven-compiler.version>
-		<spring.boot.version>2.1.2.RELEASE</spring.boot.version>
+		<spring.boot.version>2.1.3.RELEASE</spring.boot.version>
 		<spring.cloud.version>2.0.2.RELEASE</spring.cloud.version>
 		<swagger-version>2.9.2</swagger-version>
 		<spring.hateoas.version>0.24.0.RELEASE</spring.hateoas.version>
-		<spring.security.ldap.version>5.1.0.RELEASE</spring.security.ldap.version>
+		<spring.security.ldap.version>5.2.5.RELEASE</spring.security.ldap.version>
 		<lombok.version>1.18.2</lombok.version>
 		<testng.version>6.11</testng.version>
 		<com.fasterxml.jackson.datatype.version>2.5.1</com.fasterxml.jackson.datatype.version>
