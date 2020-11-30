@@ -74,7 +74,6 @@
 		<guava.version>25.0-jre</guava.version>
 		<net.sf.dozer.version>5.5.1</net.sf.dozer.version>
 		<jacoco.version>0.8.2</jacoco.version>
-		<guava.version>20.0</guava.version>
 		<com.jcraft.jsch.version>0.1.54</com.jcraft.jsch.version>
 		<net.sf.dozer.version>5.5.1</net.sf.dozer.version>
 		<org.apache.httpcomponents.version>4.4</org.apache.httpcomponents.version>
