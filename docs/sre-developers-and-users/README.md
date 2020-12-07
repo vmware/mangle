@@ -2,7 +2,7 @@
 
 _Mangle Users Guide_ provides information about how to add endpoints, run faults and view reports.
 
-**Product version: 2.0**
+**Product version: 2.0.1**
 
 #### Intended Audience
 

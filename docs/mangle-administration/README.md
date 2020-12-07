@@ -2,7 +2,7 @@
 
 _Mangle Deployment and Administration Guide_ provides information about how to install and configure Mangle as an administrative user.
 
-**Product version: 2.0**
+**Product version: 2.0.1**
 
 #### Intended Audience
 
