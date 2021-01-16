@@ -10,7 +10,7 @@ To navigate to the appropriate documentation, start with the [Mangle GitHub IO P
 
 ### **Demo of the Mangle Version 1.0**
 
-{% embed url="https://www.youtube.com/watch?v=g1xKYuetrNU" %}
+[![Demo](https://j.gifs.com/3Qp1O9.gif)](https://www.youtube.com/watch?v=g1xKYuetrNU)
 
 ### Intended Audiences
 
