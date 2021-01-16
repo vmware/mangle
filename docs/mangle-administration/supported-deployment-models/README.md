@@ -4,7 +4,7 @@
 
 ### Deploying the Mangle Virtual Appliance
 
-For a quick POC we recommend that you deploy a single node instance of Mangle using the OVA file that we have made available [here](https://bintray.com/vmware/mangle/MangleAppliance).
+For a quick POC we recommend that you deploy a single node instance of Mangle using the OVA file that we have made available [here](https://repo.vmware.com/mangle/v2.0.1/Mangle-2.0.1_OVF10.ova).
 
 Using the OVA is a fast and easy way to create a Mangle VM on VMware vSphere.
 
