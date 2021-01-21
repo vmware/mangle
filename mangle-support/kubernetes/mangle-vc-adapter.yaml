@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mangle-vc-adapter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mangle-vc-adapter
+  template:
+    metadata:
+      labels:
+        app: mangle-vc-adapter
+        environment: test
+    spec:
+      volumes:
+        - name: procdir
+          hostPath:
+            path: /proc
+        - name: cgroups
+          hostPath:
+            path: /sys/fs/cgroup
+        - name: mangle-vc-adapter-logs
+          emptyDir: {}
+      containers:
+        - name: mangle-vc-adapter
+          image: mangleuser/mangle_vcenter_adapter:1.0
+          livenessProbe:
+            httpGet:
+              path: "/mangle-vc-adapter/application/health"
+              port: 8443
+              scheme: HTTPS
+            initialDelaySeconds: 60
+            periodSeconds: 60
+          readinessProbe:
+            httpGet:
+              path: "/mangle-vc-adapter/application/health"
+              port: 8443
+              scheme: HTTPS
+            initialDelaySeconds: 60
+            periodSeconds: 60
+          ports:
+            - containerPort: 8443
+          volumeMounts:
+            - name: mangle-vc-adapter-logs
+              mountPath: /home/mangle/var/opt/mangle-vc-adapter-tomcat/logs
+          imagePullPolicy: Always
+          resources:
+            limits:
+              cpu: "1000m"
+              memory: "4000Mi"
+      restartPolicy: Always
+      imagePullSecrets:
+        - name: registrysecret

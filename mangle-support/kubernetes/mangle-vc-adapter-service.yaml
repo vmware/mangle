@@ -1,0 +1,18 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: mangle-vc-adapter-service
+  labels:
+    app: mangle-vc-adapter
+    environment: test
+spec:
+  type: LoadBalancer
+  sessionAffinity: None
+  selector:
+    app: mangle-vc-adapter
+    environment: test
+  ports:
+    - name: mangle-vc-adapter-https
+      port: 443
+      protocol: TCP
+      targetPort: 8443
