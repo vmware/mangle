@@ -1,0 +1,20 @@
+<clr-modal [(clrModalOpen)]="tagsModal" [clrModalClosable]="false">
+    <h3 class="modal-title">Add Tags</h3>
+    <div class="modal-body">
+        <form #tagsForm="ngForm" (ngSubmit)="updateTags(tagsForm.value);closeTagsModal();tagsForm.reset();"
+            ngNativeValidate>
+            <section class="form-block">
+                <div class="form-group">
+                    <label for="tagKey">Key</label>
+                    <input type="text" name="tagKey" ngModel required>
+                </div>
+                <div class="form-group">
+                    <label for="tagValue">Value</label>
+                    <input type="text" name="tagValue" ngModel required>
+                </div>
+            </section>
+            <button type="submit" class="btn btn-primary">ADD</button>
+            <button type="button" class="btn btn-outline" (click)="closeTagsModal();tagsForm.reset();">CANCEL</button>
+        </form>
+    </div>
+</clr-modal>

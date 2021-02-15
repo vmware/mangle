@@ -1,0 +1,30 @@
+/* You can add global styles to this file, and also import other style files */
+.content-area-aws {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 0;
+}
+.nav-aws{
+    display: flex;
+    height: 1.5rem;
+    list-style-type: none;
+    align-items: center;
+    box-shadow: 0 -1px 0 #ccc inset;
+    margin: 0;
+    width: 13%;
+    white-space: nowrap;
+}
+.nav-aws .nav-item {
+    display: inline-block;
+    margin-right: 1rem;
+}
+.nav-aws .nav-link.active, .nav-aws .nav-link:hover
+{
+    box-shadow: 0 -3px 0 #0079b8 inset;
+    transition: box-shadow .2s ease-in;
+}
+.nav-text-aws{
+    font-weight: bold;
+    color: #0079b8;
+}

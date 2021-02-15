@@ -36,6 +36,7 @@ import com.vmware.mangle.faults.plugin.mockdata.FaultsMockData;
 import com.vmware.mangle.model.aws.AwsEC2FaultRemediation;
 import com.vmware.mangle.model.aws.AwsEC2NetworkFaults;
 import com.vmware.mangle.model.aws.AwsEC2StateFaults;
+import com.vmware.mangle.model.aws.AwsService;
 import com.vmware.mangle.model.aws.faults.spec.AwsEC2FaultSpec;
 import com.vmware.mangle.task.framework.endpoint.EndpointClientFactory;
 import com.vmware.mangle.utils.ICommandExecutor;
@@ -71,7 +72,7 @@ public class AwsEC2FaultHelperTest extends PowerMockTestCase {
     }
 
     @Test
-    public void testVCenterFaultHelperInit() {
+    public void testAwsEC2FaultHelperInit() {
         AwsEC2FaultHelper helper = new AwsEC2FaultHelper(factory);
         Assert.assertNotNull(helper);
     }
@@ -155,7 +156,7 @@ public class AwsEC2FaultHelperTest extends PowerMockTestCase {
         AwsEC2FaultSpec spec = mockData.getAwsEC2InstanceStateFaultSpec();
         AwsEC2FaultHelper helper = new AwsEC2FaultHelper(factory);
         AWSCommandExecutor awsCommandExecutor = Mockito.mock(AWSCommandExecutor.class);
-        PowerMockito.whenNew(AWSCommandExecutor.class).withArguments(any(CustomAwsClient.class))
+        PowerMockito.whenNew(AWSCommandExecutor.class).withArguments(any(CustomAwsClient.class), any(AwsService.class))
                 .thenReturn(awsCommandExecutor);
         when(factory.getEndPointClient(any(), any())).thenReturn(awsClient);
 

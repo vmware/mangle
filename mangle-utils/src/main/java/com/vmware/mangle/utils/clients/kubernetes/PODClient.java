@@ -46,6 +46,7 @@ import com.vmware.mangle.utils.CommonUtils;
 public class PODClient {
     private String kubectl;
     private static final String POD_DELETED_SUCCESS_MESSAGE = "deleted";
+    private static final String NOT_FOUND = "not found";
 
     protected PODClient(String kubectl) {
         this.kubectl = kubectl;
@@ -71,7 +72,7 @@ public class PODClient {
 
     public List<String> getPodsWithLabels(String labels) {
         log.info("Getting all pod names labeled as:" + labels);
-        String output = new String();
+        String output = "";
         for (int i = 0; i < 6; i++) {
             output = CommandUtils.runCommand(kubectl + String.format(GET_ALLPOD_USING_LABELS, labels))
                     .getCommandOutput();
@@ -80,6 +81,7 @@ public class PODClient {
             }
             CommonUtils.delayInSeconds(10);
         }
+        log.debug("Pod names retreived:" + output);
         return StringUtils.isBlank(output) || output.contains("error") ? Arrays.asList()
                 : Arrays.asList(output.trim().split("\\s+"));
     }
@@ -144,8 +146,8 @@ public class PODClient {
         Map<String, String> podtoNodeMap = getPodandNodeMap();
         Set<String> uniqueNodes = new HashSet<>(podtoNodeMap.values());
         for (String podName : podNames) {
-            List<String> podList = podtoNodeMap.keySet().stream().filter(s -> s.startsWith(podName.toString()))
-                    .collect(Collectors.toList());
+            List<String> podList =
+                    podtoNodeMap.keySet().stream().filter(s -> s.startsWith(podName)).collect(Collectors.toList());
             if (!podList.isEmpty()) {
                 for (String pod : podList) {
                     uniqueNodes.remove(podtoNodeMap.get(pod));
@@ -199,7 +201,7 @@ public class PODClient {
     public boolean restartPod(String podName) {
         log.info("Restarting the pod : " + podName);
         String output = getPod(podName);
-        if (null == output || output.contains("not found")) {
+        if (null == output || output.contains(NOT_FOUND)) {
             return false;
         }
         output = CommandUtils.runCommand(kubectl + String.format(RESTART_POD_WITH_NAME, podName)).getCommandOutput();
@@ -208,7 +210,7 @@ public class PODClient {
         }
         for (int i = 0; i < 6; i++) {
             CommonUtils.delayInSeconds(20);
-            if (getPod(podName).contains("not found")) {
+            if (getPod(podName).contains(NOT_FOUND)) {
                 return true;
             }
         }
@@ -218,7 +220,7 @@ public class PODClient {
     public String getContainerMemoryUsed(String podName, String container) {
         log.info("Getting memory Used by container:" + container);
         String getPodCommandOutput = getPod(podName);
-        if (null == getPodCommandOutput || getPodCommandOutput.contains("not found")) {
+        if (null == getPodCommandOutput || getPodCommandOutput.contains(NOT_FOUND)) {
             return "";
         }
         CommandExecutionResult memoryUsedCommandOutput = CommandUtils.runCommand(
@@ -230,7 +232,7 @@ public class PODClient {
     public String getContainerMemoryLimit(String podName, String container) {
         log.info("Getting memory limit of container:" + container);
         String getPodCommandOutput = getPod(podName);
-        if (null == getPodCommandOutput || getPodCommandOutput.contains("not found")) {
+        if (null == getPodCommandOutput || getPodCommandOutput.contains(NOT_FOUND)) {
             return "";
         }
         CommandExecutionResult memoryLimitCommandOutput = CommandUtils.runCommand(kubectl + " get pod " + podName

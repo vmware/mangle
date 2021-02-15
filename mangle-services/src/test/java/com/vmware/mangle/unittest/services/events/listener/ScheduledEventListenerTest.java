@@ -27,11 +27,15 @@ import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import com.vmware.mangle.cassandra.model.tasks.TaskType;
 import com.vmware.mangle.model.enums.SchedulerStatus;
 import com.vmware.mangle.services.events.listener.ScheduleEventListener;
 import com.vmware.mangle.services.events.schedule.ScheduleCreatedEvent;
 import com.vmware.mangle.services.events.schedule.ScheduleUpdatedEvent;
 import com.vmware.mangle.services.hazelcast.HazelcastTaskCache;
+import com.vmware.mangle.services.hazelcast.resiliencyscore.HazelcastResiliencyScoreTaskCache;
+import com.vmware.mangle.services.helpers.TaskHelper;
+import com.vmware.mangle.utils.exceptions.MangleException;
 
 /**
  *
@@ -42,6 +46,10 @@ public class ScheduledEventListenerTest {
 
     @Mock
     private HazelcastTaskCache taskCache;
+    @Mock
+    private HazelcastResiliencyScoreTaskCache resiliencyScoreTaskCache;
+    @Mock
+    private TaskHelper taskHelper;
 
     @InjectMocks
     private ScheduleEventListener scheduleEventListener;
@@ -52,40 +60,89 @@ public class ScheduledEventListenerTest {
     }
 
     @Test
-    public void testHandleSchedulerUpdatedEventCancelledSchedule() {
+    public void testHandleSchedulerUpdatedEventCancelledSchedule() throws MangleException {
         String taskId = UUID.randomUUID().toString();
         ScheduleUpdatedEvent event = new ScheduleUpdatedEvent(taskId, SchedulerStatus.CANCELLED.name());
 
         when(taskCache.deleteFromTaskCache(taskId)).thenReturn(taskId);
+        when(taskHelper.getTaskType(any())).thenReturn(TaskType.INJECTION);
 
         scheduleEventListener.handleSchedulerUpdatedEvent(event);
 
         verify(taskCache, times(1)).deleteFromTaskCache(anyString());
         verify(taskCache, times(0)).updateTaskCache(anyString(), any());
+        verify(taskHelper, times(1)).getTaskType(any());
     }
 
     @Test
-    public void testHandleSchedulerUpdatedEventActiveSchedule() {
+    public void testHandleSchedulerUpdatedEventActiveSchedule() throws MangleException {
         String taskId = UUID.randomUUID().toString();
         ScheduleUpdatedEvent event = new ScheduleUpdatedEvent(taskId, SchedulerStatus.SCHEDULED.name());
 
         doNothing().when(taskCache).updateTaskCache(eq(taskId), any());
+        when(taskHelper.getTaskType(any())).thenReturn(TaskType.INJECTION);
 
         scheduleEventListener.handleSchedulerUpdatedEvent(event);
 
         verify(taskCache, times(0)).deleteFromTaskCache(anyString());
         verify(taskCache, times(1)).updateTaskCache(anyString(), any());
+        verify(taskHelper, times(1)).getTaskType(any());
     }
 
     @Test
-    public void testHandleSchedulerCreatedEventActiveSchedule() {
+    public void testHandleSchedulerCreatedEventActiveSchedule() throws MangleException {
         String taskId = UUID.randomUUID().toString();
         ScheduleCreatedEvent event = new ScheduleCreatedEvent(taskId, SchedulerStatus.SCHEDULED);
 
         when(taskCache.addTaskToCache(eq(taskId), any())).thenReturn(taskId);
+        when(taskHelper.getTaskType(any())).thenReturn(TaskType.INJECTION);
 
         scheduleEventListener.handleSchedulerCreatedEvent(event);
 
         verify(taskCache, times(1)).addTaskToCache(anyString(), any());
+        verify(taskHelper, times(1)).getTaskType(any());
     }
+
+
+    @Test
+    public void validateCancelledScheduleForResiliencyScoreTask() throws MangleException {
+        String taskId = UUID.randomUUID().toString();
+        ScheduleUpdatedEvent event = new ScheduleUpdatedEvent(taskId, SchedulerStatus.CANCELLED.name());
+        when(resiliencyScoreTaskCache.deleteFromTaskCache(taskId)).thenReturn(taskId);
+        when(taskHelper.getTaskType(any())).thenReturn(TaskType.RESILIENCY_SCORE);
+
+        scheduleEventListener.handleSchedulerUpdatedEvent(event);
+
+        verify(resiliencyScoreTaskCache, times(1)).deleteFromTaskCache(anyString());
+        verify(resiliencyScoreTaskCache, times(0)).updateHazelcastTaskCache(anyString(), any());
+        verify(taskHelper, times(1)).getTaskType(any());
+    }
+
+    @Test
+    public void testSchedulerUpdatedEventActiveScheduleForResiliencyScoreTask() throws MangleException {
+        String taskId = UUID.randomUUID().toString();
+        ScheduleUpdatedEvent event = new ScheduleUpdatedEvent(taskId, SchedulerStatus.SCHEDULED.name());
+        doNothing().when(resiliencyScoreTaskCache).updateHazelcastTaskCache(eq(taskId), any());
+        when(taskHelper.getTaskType(any())).thenReturn(TaskType.RESILIENCY_SCORE);
+
+        scheduleEventListener.handleSchedulerUpdatedEvent(event);
+
+        verify(resiliencyScoreTaskCache, times(0)).deleteFromTaskCache(anyString());
+        verify(resiliencyScoreTaskCache, times(1)).updateHazelcastTaskCache(anyString(), any());
+        verify(taskHelper, times(1)).getTaskType(any());
+    }
+
+    @Test
+    public void testSchedulerCreatedEventActiveScheduleForResiliencyScoreTask() throws MangleException {
+        String taskId = UUID.randomUUID().toString();
+        ScheduleCreatedEvent event = new ScheduleCreatedEvent(taskId, SchedulerStatus.SCHEDULED);
+        when(resiliencyScoreTaskCache.addTaskToCache(eq(taskId), any())).thenReturn(taskId);
+        when(taskHelper.getTaskType(any())).thenReturn(TaskType.RESILIENCY_SCORE);
+
+        scheduleEventListener.handleSchedulerCreatedEvent(event);
+
+        verify(resiliencyScoreTaskCache, times(1)).addTaskToCache(anyString(), any());
+        verify(taskHelper, times(1)).getTaskType(any());
+    }
+
 }

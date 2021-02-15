@@ -42,7 +42,7 @@ public class StreamGobbler extends Thread {
 
     @Override
     public void run() {
-        StringBuffer outputBuffer = new StringBuffer();
+        StringBuilder outputBuffer = new StringBuilder();
         try {
             InputStreamReader isr = new InputStreamReader(is);
             BufferedReader br = new BufferedReader(isr);

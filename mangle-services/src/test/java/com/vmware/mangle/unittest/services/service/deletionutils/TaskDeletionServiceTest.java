@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import lombok.extern.log4j.Log4j2;
@@ -35,9 +36,11 @@ import org.testng.annotations.Test;
 import com.vmware.mangle.cassandra.model.faults.specs.TaskSpec;
 import com.vmware.mangle.cassandra.model.scheduler.SchedulerSpec;
 import com.vmware.mangle.cassandra.model.tasks.Task;
+import com.vmware.mangle.cassandra.model.tasks.TaskStatus;
 import com.vmware.mangle.model.response.DeleteOperationResponse;
 import com.vmware.mangle.services.SchedulerService;
 import com.vmware.mangle.services.deletionutils.TaskDeletionService;
+import com.vmware.mangle.services.events.web.CustomEventPublisher;
 import com.vmware.mangle.services.mockdata.FaultsMockData;
 import com.vmware.mangle.services.mockdata.SchedulerControllerMockData;
 import com.vmware.mangle.services.mockdata.TasksMockData;
@@ -61,6 +64,8 @@ public class TaskDeletionServiceTest {
     private SchedulerService schedulerService;
     @Mock
     private TaskRepository taskRepository;
+    @Mock
+    private CustomEventPublisher eventPublisher;
 
     private TaskDeletionService taskDeletionService;
 
@@ -72,7 +77,7 @@ public class TaskDeletionServiceTest {
     @BeforeMethod
     public void initMocks() {
         MockitoAnnotations.initMocks(this);
-        taskDeletionService = new TaskDeletionService(taskRepository, schedulerService);
+        taskDeletionService = new TaskDeletionService(taskRepository, schedulerService, eventPublisher);
     }
 
     @Test
@@ -96,7 +101,7 @@ public class TaskDeletionServiceTest {
     public void testDeleteTaskByIdsNoActiveSchedule() throws MangleException {
         List<String> tasks = new ArrayList<>();
         List<SchedulerSpec> schedulerSpecs = new ArrayList<>();
-        Task<TaskSpec> task = tasksMockData.getDummyTask();
+        Task<TaskSpec> task = tasksMockData.getDummy1Task();
         tasks.add(task.getId());
 
         when(schedulerService.getActiveSchedulesForIds(tasks)).thenReturn(schedulerSpecs);
@@ -112,7 +117,7 @@ public class TaskDeletionServiceTest {
     }
 
     @Test(expectedExceptions = { MangleException.class })
-    public void deleteTaskByIdWithNull() throws MangleException {
+    public void testDeleteTaskByIdWithNull() throws MangleException {
         log.info("Executing test: deleteTaskByIdWithNull on TaskService#deleteTaskById");
         try {
             taskDeletionService.deleteTaskById(null);
@@ -120,6 +125,34 @@ public class TaskDeletionServiceTest {
             Assert.assertEquals(e.getErrorCode(), ErrorCode.FIELD_VALUE_EMPTY);
             throw e;
         }
+    }
+
+    @Test(expectedExceptions = { MangleException.class })
+    public void testDeleteTaskByIdWithTaskInProgress() throws MangleException {
+        log.info("Executing test: deleteTaskByIdWithTaskInProgress on TaskService#deleteTaskById");
+        Task<TaskSpec> task = tasksMockData.getDummy1Task();
+        Optional<Task<TaskSpec>> taskOp = Optional.of(task);
+        task.setTaskStatus(TaskStatus.IN_PROGRESS);
+        Mockito.when(taskRepository.save(Mockito.any())).thenReturn(task);
+        when(taskRepository.findById(task.getId())).thenReturn(taskOp);
+        try {
+            taskDeletionService.deleteTaskById(task.getId());
+        } catch (MangleException e) {
+            Assert.assertEquals(e.getErrorCode(), ErrorCode.INPROGRESS_TASK_DELETION_FAILURE);
+            throw e;
+        }
+    }
+
+    @Test
+    public void testDeleteTaskById() throws MangleException {
+        log.info("Executing test: deleteTaskByIdWithTaskCompleted on TaskService#deleteTaskById");
+        Task<TaskSpec> task = tasksMockData.getDummy1Task();
+        Optional<Task<TaskSpec>> taskOp = Optional.of(task);
+        task.setTaskStatus(TaskStatus.COMPLETED);
+        Mockito.when(taskRepository.save(Mockito.any())).thenReturn(task);
+        when(taskRepository.findById(task.getId())).thenReturn(taskOp);
+        boolean del = taskDeletionService.deleteTaskById(task.getId());
+        Assert.assertTrue(del, "Testcase for TaskDeletionService.deleteTaskById(String) failed when the TaskStatus has completed");
     }
 
     @Test(enabled = false)
@@ -149,6 +182,17 @@ public class TaskDeletionServiceTest {
             taskDeletionService.deleteTasksByIds(null);
         } catch (MangleException e) {
             Assert.assertEquals(e.getErrorCode(), ErrorCode.FIELD_VALUE_EMPTY);
+            throw e;
+        }
+    }
+
+    @Test(expectedExceptions = { MangleException.class })
+    public void deleteTasksByIdsWithNonExistValue() throws MangleException {
+        log.info("Executing test: deleteTasksByIdsWithNonExistValue on TaskService#deleteTasksByIds");
+        try {
+            taskDeletionService.deleteTasksByIds(Arrays.asList("417827481274821748247"));
+        } catch (MangleException e) {
+            Assert.assertEquals(e.getErrorCode(), ErrorCode.NO_RECORD_FOUND);
             throw e;
         }
     }

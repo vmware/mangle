@@ -31,6 +31,7 @@ import java.util.Set;
 
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.datastax.driver.core.exceptions.UnavailableException;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -311,8 +312,8 @@ public class CustomizedResponseEntityExceptionHandlerTest extends PowerMockTestC
         fieldErrors.add(fieldError);
         when(bindingResult.getFieldErrors()).thenReturn(fieldErrors);
         ResponseEntity<Object> actualRsult = customizedResponseEntityExceptionHandler
-                .handleMethodArgumentNotValid(exception, headers, HttpStatus.BAD_REQUEST, request);
-        Assert.assertEquals(actualRsult.getStatusCodeValue(), 400);
+                .handleMethodArgumentNotValid(exception, headers, HttpStatus.PRECONDITION_FAILED, request);
+        Assert.assertEquals(actualRsult.getStatusCodeValue(), 412);
         verify(customErrorMessage, times(1)).getErrorMessage(anyString());
         verify(bindingResult, times(1)).getFieldErrors();
     }
@@ -351,5 +352,22 @@ public class CustomizedResponseEntityExceptionHandlerTest extends PowerMockTestC
         Assert.assertEquals(actualRsult.getStatusCode(), HttpStatus.INTERNAL_SERVER_ERROR);
         verify(exception, times(1)).getMessage();
         verify(exception, times(2)).getCause();
+    }
+
+    /**
+     * Test method for
+     * {@link com.vmware.mangle.utils.exceptions.handler.CustomizedResponseEntityExceptionHandler#handleCassandraException(DataAccessException, WebRequest)}.
+     */
+    @Test
+    public void testHandleCassandraExceptionForUnavailableException() {
+        DataAccessException exception = mock(DataAccessException.class);
+        when(exception.getMessage()).thenReturn("testHandleCassandraExceptionForUnavailableException");
+        UnavailableException dbException = mock(UnavailableException.class);
+        when(exception.getCause()).thenReturn(dbException);
+        ResponseEntity<ErrorDetails> actualRsult =
+                customizedResponseEntityExceptionHandler.handleCassandraException(exception, request);
+        Assert.assertEquals(actualRsult.getStatusCode(), HttpStatus.INTERNAL_SERVER_ERROR);
+        verify(exception, times(1)).getMessage();
+        verify(exception, times(3)).getCause();
     }
 }

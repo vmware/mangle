@@ -1,54 +1,92 @@
-<app-alert [(alertMessage)]="alertMessage" [(isErrorMessage)]="isErrorMessage" (alertMessageChange)="alertMessage = $event"></app-alert>
-<h1>Processed Requests</h1><clr-icon shape="refresh" (click)="getAllProcessedTasks();"></clr-icon><br />
-<clr-datagrid [clrDgLoading]="isLoading">
+<app-alert [(alertMessage)]="alertMessage" [isErrorMessage]="isErrorMessage"
+    (alertMessageChange)="alertMessage = $event"></app-alert>
+<h1>Processed Requests</h1>
+<clr-datagrid [clrDgLoading]="isLoading" [(clrDgSelected)]="selectedTasks" (clrDgSelectedChange)="disableAutoRefresh();"
+    (clrDgRefresh)="getPageProcessedTasks($event)">
+    <clr-dg-action-bar>
+        <div class="btn-group">
+            <button type="button" class="btn btn-sm btn-secondary" data-tag="enableDisableAutoRefresh"
+                (click)="enableDisableAutoRefresh()" [disabled]="selectedTasks.length >= 1">
+                <clr-icon shape="refresh"></clr-icon> {{autoRefreshButton}}
+            </button>
+            <button type="button" class="btn btn-sm btn-secondary" data-tag="deleteTaskButton"
+                (click)="deleteTask(selectedTasks)" [disabled]="selectedTasks.length === 0">
+                <clr-icon shape="close"></clr-icon> Delete
+            </button>
+            <clr-dropdown>
+                <button type="button" class="btn btn-sm btn-secondary"
+                    [disabled]="selectedTasks.length === 0 || selectedTasks.length > 1 || disableActions(selectedTasks[0])" clrDropdownTrigger>
+                    Actions
+                    <clr-icon shape="caret down"></clr-icon>
+                </button>
+                <clr-dropdown-menu clrPosition="bottom-left" *clrIfOpen>
+                    <button type="button" (click)="remediateFault(selectedTasks[0]);"
+                        *ngIf=" enableRemediate(selectedTasks[0])" clrDropdownItem>Remediate
+                        Fault</button>
+                    <button type="button" (click)="reTrigger(selectedTasks[0]);"
+                        *ngIf="enableReTrigger(selectedTasks[0]) " clrDropdownItem>Re-Trigger</button>
+                    <button type="button" (click)="reRun(selectedTasks[0]);"
+                        *ngIf="enableEditRetrigger(selectedTasks[0])" clrDropdownItem>Edit &
+                        Re-Trigger</button>
+                </clr-dropdown-menu>
+            </clr-dropdown>
+        </div>
+    </clr-dg-action-bar>
+
     <clr-dg-column>Task Name</clr-dg-column>
     <clr-dg-column style="min-width:144px;" [clrDgField]="'triggerui.taskStatus'">Status</clr-dg-column>
-    <clr-dg-column [clrDgField]="'taskData.endpointName'">Endpoint Name</clr-dg-column>
-    <clr-dg-column [clrDgField]="'taskType'">Task Type</clr-dg-column>
+    <clr-dg-column style="min-width:144px;" [clrDgField]="'endpointName'">Endpoint Name</clr-dg-column>
+    <clr-dg-column style="min-width:130px;" [clrDgField]="'taskType'">Task Type</clr-dg-column>
     <clr-dg-column style="min-width:300px;" [clrDgField]="'taskDescription'">Task Description</clr-dg-column>
-    <clr-dg-column [clrDgField]="'triggerui.startTime'" [clrDgSortOrder]="startTimeDesc">Start Time</clr-dg-column>
-    <clr-dg-column [clrDgField]="'triggerui.endTime'">End Time</clr-dg-column>
-    <clr-dg-row *clrDgItems="let processedRequest of processedRequests" [clrDgItem]="processedRequest">
-        <clr-dg-action-overflow>
-            <button class="action-item" (click)="deleteTask(processedRequest);" *ngIf="processedRequest.triggerui.taskStatus != 'IN_PROGRESS' && processedRequest.triggerui.taskStatus != 'NOT STARTED'">Delete</button>
-            <button class="action-item" (click)="remediateFault(processedRequest);" *ngIf="processedRequest.remediated==false && processedRequest.scheduledTask==false && processedRequest.taskType=='INJECTION' && processedRequest.triggerui.taskStatus == 'COMPLETED'">Remediate Fault</button>
-            <button class="action-item" (click)="viewReport(processedRequest);viewReportFlage=true;">Report</button>
-            <button class="action-item" (click)="reTrigger(processedRequest);" *ngIf="processedRequest.scheduledTask==false && ((processedRequest.taskType=='INJECTION' && (processedRequest.triggerui.taskStatus == 'COMPLETED' || processedRequest.triggerui.taskStatus == 'FAILED')) || ( processedRequest.taskType=='REMEDIATION' && processedRequest.triggerui.taskStatus == 'FAILED'))">Re-Trigger</button>
-            <button class="action-item" (click)="reRun(processedRequest);" *ngIf="processedRequest.scheduledTask==false && processedRequest.taskType=='INJECTION' && (processedRequest.triggerui.taskStatus == 'COMPLETED' || processedRequest.triggerui.taskStatus == 'FAILED')">Edit & Re-Trigger</button>
-        </clr-dg-action-overflow>
-        <clr-dg-cell style="overflow:hidden;">{{processedRequest.taskName}}</clr-dg-cell>
+    <clr-dg-column>Start Time</clr-dg-column>
+    <clr-dg-column>End Time</clr-dg-column>
+    <clr-dg-row *ngFor="let processedRequest of processedRequests" [clrDgItem]="processedRequest"
+        [hidden]="processedRequest.scheduledTask && processedRequest.triggerui.taskStatus == 'NOT STARTED'">
+        <clr-dg-cell style="overflow:hidden;"><a href="javascript://"
+                (click)="viewReport(processedRequest);viewReportFlag=true;">{{processedRequest.taskName}}</a>
+        </clr-dg-cell>
         <clr-dg-cell style="min-width:144px;">
-            <span class="spinner spinner-sm" *ngIf="processedRequest.triggerui.taskStatus == 'IN_PROGRESS' || processedRequest.triggerui.taskStatus == 'INITIALIZING'"></span>
-            <clr-icon shape="check-circle" class="is-success" size="24" *ngIf="processedRequest.triggerui.taskStatus == 'COMPLETED'"></clr-icon>
-            <clr-icon shape="ban" class="is-warning" size="18" *ngIf="processedRequest.triggerui.taskStatus == 'CANCELLED'"></clr-icon>
-            <clr-icon shape="exclamation-circle" class="is-error" size="24" *ngIf="processedRequest.triggerui.taskStatus == 'FAILED'" (click)="showExtraData(processedRequest.triggerui.taskFailureReason);viewExtraData=true;"></clr-icon>
+            <span class="spinner spinner-sm"
+                *ngIf="processedRequest.triggerui.taskStatus == 'IN_PROGRESS' || processedRequest.triggerui.taskStatus == 'INITIALIZING'"></span>
+            <clr-icon shape="check-circle" class="is-success" size="24"
+                *ngIf="processedRequest.triggerui.taskStatus == 'COMPLETED'"></clr-icon>
+            <clr-icon shape="ban" class="is-warning" size="18"
+                *ngIf="processedRequest.triggerui.taskStatus == 'CANCELLED'"></clr-icon>
+            <clr-icon shape="ban" class="is-warning" size="18"
+                *ngIf="processedRequest.triggerui.taskStatus == 'INJECTED'"></clr-icon>
+            <clr-icon shape="exclamation-circle" class="is-error" size="24"
+                *ngIf="processedRequest.triggerui.taskStatus == 'FAILED'"
+                (click)="showExtraData(processedRequest.triggerui.taskFailureReason);viewExtraData=true;"></clr-icon>
             {{processedRequest.triggerui.taskStatus}}
         </clr-dg-cell>
-        <clr-dg-cell style="overflow:hidden;">{{processedRequest.taskData.endpointName}}</clr-dg-cell>
-        <clr-dg-cell style="overflow:hidden;">{{processedRequest.taskType}}</clr-dg-cell>
-        <clr-dg-cell style="min-width:300px;overflow:hidden;">{{processedRequest.taskDescription.substring(0, 100)}}<span *ngIf="processedRequest.taskDescription.length > 100"><br/><a href="javascript://" (click)="showExtraData(processedRequest.taskDescription);viewExtraData=true;">more</a></span></clr-dg-cell>
+        <clr-dg-cell style="min-width:144px;overflow:hidden;">{{processedRequest.taskData.endpointName}}</clr-dg-cell>
+        <clr-dg-cell style="min-width:130px;overflow:hidden;">{{processedRequest.taskType}}</clr-dg-cell>
+        <clr-dg-cell style="min-width:300px;overflow:hidden;">
+            {{processedRequest.taskDescription.substring(0, 100)}}<span
+                *ngIf="processedRequest.taskDescription.length > 100"><br /><a href="javascript://"
+                    (click)="showExtraData(processedRequest.taskDescription);viewExtraData=true;">more</a></span>
+        </clr-dg-cell>
         <clr-dg-cell style="overflow:hidden;">{{processedRequest.triggerui.startTime | date:'medium'}}</clr-dg-cell>
         <clr-dg-cell style="overflow:hidden;">{{processedRequest.triggerui.endTime | date:'medium'}}</clr-dg-cell>
     </clr-dg-row>
     <clr-dg-footer>
-        <clr-dg-pagination #pagination [clrDgPageSize]="10">
-            <clr-dg-page-size [clrPageSizeOptions]="[10,20,50,100]">Requests per page</clr-dg-page-size>
-            {{pagination.firstItem + 1}} - {{pagination.lastItem + 1}} of {{pagination.totalItems}} requests
-        </clr-dg-pagination>
+        {{pagination.firstItem + 1}} - {{pagination.lastItem + 1}} of {{pagination.totalItems}} requests
+        <clr-dg-pagination #pagination [clrDgPageSize]="pageSize" [clrDgTotalItems]="totalRequests"></clr-dg-pagination>
     </clr-dg-footer>
 </clr-datagrid>
-<clr-modal [(clrModalOpen)]="viewReportFlage" [clrModalSize]="'lg'">
+<clr-modal [(clrModalOpen)]="viewReportFlag" [clrModalSize]="'lg'">
     <h3 class="modal-title">Task Details</h3>
     <div class="modal-body">
         <code>
             <pre>{{processedRequestView |json}}</pre>
         </code>
-        <button type="button" class="btn btn-outline" (click)="viewReportFlage=false;">OK</button>
+        <button type="button" class="btn btn-outline" (click)="viewReportFlag=false;">OK</button>
     </div>
 </clr-modal>
 <clr-modal [(clrModalOpen)]="viewExtraData" [clrModalSize]="'lg'">
     <div class="modal-body">
-        {{extraData}}<br/>
-        <div style="text-align:center;"><button type="button" class="btn btn-outline" (click)="viewExtraData=false;">OK</button></div>
+        {{extraData}}<br />
+        <div style="text-align:center;"><button type="button" class="btn btn-outline"
+                (click)="viewExtraData=false;">OK</button></div>
     </div>
 </clr-modal>

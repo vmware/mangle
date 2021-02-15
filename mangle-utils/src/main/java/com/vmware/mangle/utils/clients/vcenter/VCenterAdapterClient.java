@@ -18,7 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
-import com.vmware.mangle.cassandra.model.endpoint.VCenterAdapterProperties;
+import com.vmware.mangle.cassandra.model.endpoint.VCenterAdapterDetails;
 import com.vmware.mangle.model.vcenter.VCenterAdapterHealthStatus;
 import com.vmware.mangle.utils.clients.restclient.RestTemplateWrapper;
 import com.vmware.mangle.utils.constants.ErrorConstants;
@@ -34,14 +34,14 @@ import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 @Log4j2
 public class VCenterAdapterClient extends RestTemplateWrapper {
 
-    private VCenterAdapterProperties vCenterAdapterProperties;
+    private VCenterAdapterDetails vCenterAdapterDetails;
 
     private static final String VC_AUTH_BASIC = "Basic ";
     private static final String AUTHORIZATION = "Authorization";
 
-    public VCenterAdapterClient(VCenterAdapterProperties vCenterAdapterProperties) {
-        this.vCenterAdapterProperties = vCenterAdapterProperties;
-        setBaseUrl(vCenterAdapterProperties.getVcAdapterUrl());
+    public VCenterAdapterClient(VCenterAdapterDetails vCenterAdapterDetails) {
+        this.vCenterAdapterDetails = vCenterAdapterDetails;
+        setBaseUrl(vCenterAdapterDetails.getAdapterUrl());
         setDefaultHeaders();
     }
 
@@ -52,7 +52,7 @@ public class VCenterAdapterClient extends RestTemplateWrapper {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set(AUTHORIZATION, VC_AUTH_BASIC + new String(Base64.encodeBase64(
-                (vCenterAdapterProperties.getUsername() + ":" + vCenterAdapterProperties.getPassword()).getBytes())));
+                (vCenterAdapterDetails.getUsername() + ":" + vCenterAdapterDetails.getPassword()).getBytes())));
         setHeaders(headers);
     }
 
@@ -66,7 +66,7 @@ public class VCenterAdapterClient extends RestTemplateWrapper {
             return true;
         } else {
             log.error(ErrorConstants.VCENTER_ADAPTER_CLIENT_UNREACHABLE);
-            throw new MangleException(String.format(ErrorConstants.VCENTER_ADAPTER_CLIENT_UNREACHABLE, getBaseUrl()) ,
+            throw new MangleException(String.format(ErrorConstants.VCENTER_ADAPTER_CLIENT_UNREACHABLE, getBaseUrl()),
                     ErrorCode.VCENTER_ADAPTER_CLIENT_UNREACHABLE);
         }
     }

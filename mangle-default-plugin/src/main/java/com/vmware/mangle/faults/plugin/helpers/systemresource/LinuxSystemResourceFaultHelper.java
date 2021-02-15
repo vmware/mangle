@@ -11,17 +11,9 @@
 
 package com.vmware.mangle.faults.plugin.helpers.systemresource;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.StringUtils;
 
 import com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec;
-import com.vmware.mangle.cassandra.model.tasks.SupportScriptInfo;
-import com.vmware.mangle.cassandra.model.tasks.commands.CommandInfo;
-import com.vmware.mangle.faults.plugin.helpers.KnownFailuresHelper;
 import com.vmware.mangle.task.framework.endpoint.EndpointClientFactory;
 import com.vmware.mangle.utils.ICommandExecutor;
 import com.vmware.mangle.utils.clients.ssh.SSHUtils;
@@ -36,63 +28,15 @@ public class LinuxSystemResourceFaultHelper extends SystemResourceFaultHelper {
 
     private EndpointClientFactory endpointClientFactory;
 
-    private SystemResourceFaultUtils systemResourceFaultUtils;
-
     @Autowired
     public LinuxSystemResourceFaultHelper(EndpointClientFactory endpointClientFactory,
             SystemResourceFaultUtils systemResourceFaultUtils) {
-        super();
+        super(systemResourceFaultUtils);
         this.endpointClientFactory = endpointClientFactory;
-        this.systemResourceFaultUtils = systemResourceFaultUtils;
     }
 
     @Override
     public ICommandExecutor getExecutor(CommandExecutionFaultSpec faultSpec) throws MangleException {
         return (SSHUtils) endpointClientFactory.getEndPointClient(faultSpec.getCredentials(), faultSpec.getEndpoint());
     }
-
-    @Override
-    public List<CommandInfo> getInjectionCommandInfoList(CommandExecutionFaultSpec faultSpec) throws MangleException {
-        List<CommandInfo> commandInfoList = new ArrayList<>();
-        CommandInfo injectFaultCommandInfo = new CommandInfo();
-        injectFaultCommandInfo.setCommand(
-                systemResourceFaultUtils.buildInjectionCommand(faultSpec.getArgs(), faultSpec.getInjectionHomeDir()));
-        injectFaultCommandInfo.setIgnoreExitValueCheck(false);
-        injectFaultCommandInfo
-                .setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfSystemResourceFaultInjectionRequest());
-        injectFaultCommandInfo.setExpectedCommandOutputList(Collections.emptyList());
-        commandInfoList.add(injectFaultCommandInfo);
-        return commandInfoList;
-    }
-
-    @Override
-    public List<CommandInfo> getRemediationcommandInfoList(CommandExecutionFaultSpec faultSpec) throws MangleException {
-        List<CommandInfo> commandInfoList = new ArrayList<>();
-        if (!systemResourceFaultUtils.isManualRemediationSupported(faultSpec.getFaultName())) {
-            return Collections.emptyList();
-        }
-        String remediationCommand =
-                systemResourceFaultUtils.buildRemediationCommand(faultSpec.getArgs(), faultSpec.getInjectionHomeDir());
-        if (!StringUtils.isEmpty(remediationCommand)) {
-            CommandInfo commandInfo = new CommandInfo();
-            commandInfo.setCommand(remediationCommand);
-            commandInfo.setIgnoreExitValueCheck(false);
-            commandInfo.setExpectedCommandOutputList(Collections.emptyList());
-            commandInfo
-                    .setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfSystemResourceFaultRemediationRequest());
-            commandInfoList.add(commandInfo);
-        }
-        return commandInfoList;
-    }
-
-    @Override
-    public List<SupportScriptInfo> getFaultInjectionScripts(CommandExecutionFaultSpec faultSpec) {
-        return systemResourceFaultUtils.getAgentFaultScripts(faultSpec);
-    }
-
-    @Override
-    public void checkTaskSpecificPrerequisites(CommandExecutionFaultSpec spec) {
-        //No Specific Requirements
-    }
-
 }

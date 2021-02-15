@@ -15,8 +15,16 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
-import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+
 import org.springframework.data.cassandra.core.mapping.UserDefinedType;
+
 
 /**
  * @author bkaranam
@@ -24,7 +32,13 @@ import org.springframework.data.cassandra.core.mapping.UserDefinedType;
  *
  */
 @UserDefinedType("CommandInfo")
-@Data
+@Getter
+@ToString
+@EqualsAndHashCode
+@AllArgsConstructor(onConstructor = @__({ @Deprecated }))
+@NoArgsConstructor(onConstructor = @__({ @Deprecated }))
+@Setter(onMethod = @__({ @Deprecated }))
+@Builder(toBuilder = true)
 @SuppressWarnings("squid:S1948")
 public class CommandInfo implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -37,4 +51,9 @@ public class CommandInfo implements Serializable {
     private int timeout;
     private List<CommandOutputProcessingInfo> commandOutputProcessingInfoList;
     private Map<String, String> knownFailureMap;
+
+    public static CommandInfoBuilder builder(String command) {
+        CommandInfoBuilder builder = new CommandInfoBuilder();
+        return builder.command(command);
+    }
 }

@@ -45,12 +45,12 @@ public abstract class AbstractRemoteCommandExecutionTaskHelper<T extends Command
 
     public List<CommandInfo> getPrerequisiteCommands() {
         List<CommandInfo> commandInfos = new ArrayList<>();
-        CommandInfo commandInfo = new CommandInfo();
-        commandInfo.setCommand(Constants.LINUX_FILE_EXIST_CHECK_COMMAND.replaceAll("FILE_LOCATION",
-                Constants.LINUX_TARGET_CONFIG_FILE_LOCATION));
-        commandInfo.setIgnoreExitValueCheck(false);
-        commandInfo.setExpectedCommandOutputList(
-                Arrays.asList(Constants.LINUX_TARGET_CONFIG_FILE_LOCATION + " does not exist"));
+        CommandInfo commandInfo = CommandInfo
+                .builder(Constants.LINUX_FILE_EXIST_CHECK_COMMAND.replaceAll("FILE_LOCATION",
+                        Constants.LINUX_TARGET_CONFIG_FILE_LOCATION))
+                .ignoreExitValueCheck(false).expectedCommandOutputList(
+                        Arrays.asList(Constants.LINUX_TARGET_CONFIG_FILE_LOCATION + " does not exist"))
+                .build();
         commandInfos.add(commandInfo);
         return commandInfos;
     }

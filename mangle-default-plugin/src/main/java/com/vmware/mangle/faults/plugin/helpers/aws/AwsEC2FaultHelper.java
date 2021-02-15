@@ -12,11 +12,12 @@
 package com.vmware.mangle.faults.plugin.helpers.aws;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
 import com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec;
 import com.vmware.mangle.cassandra.model.tasks.SupportScriptInfo;
@@ -24,9 +25,12 @@ import com.vmware.mangle.cassandra.model.tasks.commands.CommandInfo;
 import com.vmware.mangle.cassandra.model.tasks.commands.CommandOutputProcessingInfo;
 import com.vmware.mangle.model.aws.AwsEC2NetworkFaults;
 import com.vmware.mangle.model.aws.AwsEC2StateFaults;
+import com.vmware.mangle.model.aws.AwsEC2StorageFaults;
+import com.vmware.mangle.model.aws.AwsService;
 import com.vmware.mangle.model.aws.faults.spec.AwsEC2FaultSpec;
 import com.vmware.mangle.task.framework.endpoint.EndpointClientFactory;
 import com.vmware.mangle.task.framework.skeletons.ICommandExecutionFaultHelper;
+import com.vmware.mangle.utils.CommonUtils;
 import com.vmware.mangle.utils.ICommandExecutor;
 import com.vmware.mangle.utils.clients.aws.AWSCommandExecutor;
 import com.vmware.mangle.utils.clients.aws.AWSCommonUtils;
@@ -42,6 +46,8 @@ import com.vmware.mangle.utils.exceptions.MangleException;
 public class AwsEC2FaultHelper implements ICommandExecutionFaultHelper {
 
     private EndpointClientFactory endpointClientFactory;
+    private static final String EXTRACT_BLOCKED_INSTANCES_PROPERTY = "BlockedInstances";
+    private static final String EXTRACT_DETACHED_VOLUMES_PROPERTY = "InstancesWithDetachedVolumes";
 
     @Autowired
     public AwsEC2FaultHelper(EndpointClientFactory endpointClientFactory) {
@@ -55,9 +61,9 @@ public class AwsEC2FaultHelper implements ICommandExecutionFaultHelper {
     }
 
     @Override
-    public ICommandExecutor getExecutor(CommandExecutionFaultSpec awsEC2FaultSpec) {
+    public ICommandExecutor getExecutor(CommandExecutionFaultSpec awsEC2FaultSpec) throws MangleException {
         return new AWSCommandExecutor((CustomAwsClient) endpointClientFactory
-                .getEndPointClient(awsEC2FaultSpec.getCredentials(), awsEC2FaultSpec.getEndpoint()));
+                .getEndPointClient(awsEC2FaultSpec.getCredentials(), awsEC2FaultSpec.getEndpoint()), AwsService.EC2);
     }
 
     @Override
@@ -68,18 +74,18 @@ public class AwsEC2FaultHelper implements ICommandExecutionFaultHelper {
     @Override
     public List<CommandInfo> getInjectionCommandInfoList(ICommandExecutor executor,
             CommandExecutionFaultSpec awsEC2FaultSpec) {
-        List<CommandInfo> commandInfoList = new ArrayList<>();
-        CommandInfo commandInfo = new CommandInfo();
-        commandInfo.setCommand(buildInjectionCommand((AwsEC2FaultSpec) awsEC2FaultSpec));
-        commandInfo.setIgnoreExitValueCheck(false);
-        commandInfoList.add(commandInfo);
-
+        List<CommandOutputProcessingInfo> commandOutputProcessingInfoList = null;
         if (AwsEC2NetworkFaults.BLOCK_ALL_NETWORK_TRAFFIC.name().equalsIgnoreCase(awsEC2FaultSpec.getFaultName())) {
-            List<CommandOutputProcessingInfo> commandOutputProcessingInfoList =
-                    createBlockAllNetworkOutputProcessingInfo();
-            commandInfo.setCommandOutputProcessingInfoList(commandOutputProcessingInfoList);
+            commandOutputProcessingInfoList = createOutputProcessingInfo(EXTRACT_BLOCKED_INSTANCES_PROPERTY);
+        }
+        if (AwsEC2StorageFaults.DETACH_VOLUMES.name().equalsIgnoreCase(awsEC2FaultSpec.getFaultName())) {
+            commandOutputProcessingInfoList = createOutputProcessingInfo(EXTRACT_DETACHED_VOLUMES_PROPERTY);
         }
 
+        CommandInfo commandInfo = CommandInfo.builder(buildInjectionCommand((AwsEC2FaultSpec) awsEC2FaultSpec))
+                .ignoreExitValueCheck(false).commandOutputProcessingInfoList(commandOutputProcessingInfoList).build();
+        List<CommandInfo> commandInfoList = new ArrayList<>();
+        commandInfoList.add(commandInfo);
         return commandInfoList;
     }
 
@@ -89,9 +95,7 @@ public class AwsEC2FaultHelper implements ICommandExecutionFaultHelper {
         List<CommandInfo> commandInfoList = new ArrayList<>();
         String remediationCommand = buildRemediationCommand((AwsEC2FaultSpec) awsEC2FaultSpec);
         if (remediationCommand != null) {
-            CommandInfo commandInfo = new CommandInfo();
-            commandInfo.setCommand(remediationCommand);
-            commandInfo.setIgnoreExitValueCheck(false);
+            CommandInfo commandInfo = CommandInfo.builder(remediationCommand).ignoreExitValueCheck(false).build();
             commandInfoList.add(commandInfo);
         }
 
@@ -99,7 +103,11 @@ public class AwsEC2FaultHelper implements ICommandExecutionFaultHelper {
     }
 
     private String buildInjectionCommand(AwsEC2FaultSpec awsEC2FaultSpec) {
-        return awsEC2FaultSpec.getFaultName() + ": --instanceIds " + String.join(",", awsEC2FaultSpec.getInstanceIds());
+        String injectionCommand = awsEC2FaultSpec.getFaultName() + ": ";
+        if (!CollectionUtils.isEmpty(awsEC2FaultSpec.getArgs())) {
+            injectionCommand += CommonUtils.convertMaptoDelimitedString(awsEC2FaultSpec.getArgs(), " ");
+        }
+        return injectionCommand + " --instanceIds " + String.join(",", awsEC2FaultSpec.getInstanceIds());
     }
 
     public String buildRemediationCommand(AwsEC2FaultSpec awsEC2FaultSpec) {
@@ -110,27 +118,32 @@ public class AwsEC2FaultHelper implements ICommandExecutionFaultHelper {
 
         if (AwsEC2NetworkFaults.BLOCK_ALL_NETWORK_TRAFFIC.name().equalsIgnoreCase(awsEC2FaultSpec.getFaultName())) {
             return (AwsEC2NetworkFaults.BLOCK_ALL_NETWORK_TRAFFIC.getRemediation().name()
-                    + ": --instanceIdsWithSecurityGroups  $FI_ADD_INFO_BlockedInstances");
+                    + ": --instanceIdsWithSecurityGroups  $FI_ADD_INFO_" + EXTRACT_BLOCKED_INSTANCES_PROPERTY);
+        }
+
+        if (AwsEC2StorageFaults.DETACH_VOLUMES.name().equalsIgnoreCase(awsEC2FaultSpec.getFaultName())) {
+            return (AwsEC2StorageFaults.DETACH_VOLUMES.getRemediation().name()
+                    + ": --instanceIDsWithVolumeIds  $FI_ADD_INFO_" + EXTRACT_DETACHED_VOLUMES_PROPERTY);
         }
         return null;
     }
 
     /**
-     * creates the list of output processing expressions for Block All Network Fault
+     * creates the list of output processing expressions using property name
      *
      * @return List of output processing infos
      */
-    private List<CommandOutputProcessingInfo> createBlockAllNetworkOutputProcessingInfo() {
+    private List<CommandOutputProcessingInfo> createOutputProcessingInfo(String propertyName) {
         List<CommandOutputProcessingInfo> commandOutputProcessingInfoList = new ArrayList<>();
 
-        CommandOutputProcessingInfo blockAllNetworkCOInfo = new CommandOutputProcessingInfo();
-        blockAllNetworkCOInfo.setExtractedPropertyName("BlockedInstances");
-        blockAllNetworkCOInfo.setRegExpression("(?<=Instances->).*(?=$)");
-        commandOutputProcessingInfoList.add(blockAllNetworkCOInfo);
+        CommandOutputProcessingInfo outputProcessInfo = new CommandOutputProcessingInfo();
+        outputProcessInfo.setExtractedPropertyName(propertyName);
+        outputProcessInfo.setRegExpression("(?<=Instances->).*(?=$)");
+        commandOutputProcessingInfoList.add(outputProcessInfo);
         return commandOutputProcessingInfoList;
     }
 
-    public List<String> getInstanceIds(HashMap<String, String> tags, boolean random,
+    public List<String> getInstanceIds(Map<String, String> tags, boolean random,
             CommandExecutionFaultSpec awsEC2FaultSpec) throws MangleException {
         CustomAwsClient awsClient = (CustomAwsClient) endpointClientFactory
                 .getEndPointClient(awsEC2FaultSpec.getCredentials(), awsEC2FaultSpec.getEndpoint());

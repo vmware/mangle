@@ -11,11 +11,17 @@
 
 package com.vmware.mangle.faults.plugin.helpers.systemresource;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+
+import org.springframework.util.StringUtils;
 
 import com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec;
 import com.vmware.mangle.cassandra.model.tasks.SupportScriptInfo;
 import com.vmware.mangle.cassandra.model.tasks.commands.CommandInfo;
+import com.vmware.mangle.faults.plugin.helpers.FaultConstants;
+import com.vmware.mangle.faults.plugin.helpers.KnownFailuresHelper;
 import com.vmware.mangle.utils.ICommandExecutor;
 import com.vmware.mangle.utils.exceptions.MangleException;
 
@@ -26,16 +32,72 @@ import com.vmware.mangle.utils.exceptions.MangleException;
 
 public abstract class SystemResourceFaultHelper {
 
+    protected SystemResourceFaultUtils systemResourceFaultUtils;
+
+    public SystemResourceFaultHelper(SystemResourceFaultUtils systemResourceFaultUtils) {
+        this.systemResourceFaultUtils = systemResourceFaultUtils;
+    }
 
     public abstract ICommandExecutor getExecutor(CommandExecutionFaultSpec faultSpec) throws MangleException;
 
-    public abstract List<CommandInfo> getInjectionCommandInfoList(CommandExecutionFaultSpec spec)
-            throws MangleException;
+    public List<CommandInfo> getInjectionCommandInfoList(CommandExecutionFaultSpec faultSpec) throws MangleException {
+        String injectionCommand =
+                systemResourceFaultUtils.buildInjectionCommand(faultSpec.getArgs(), faultSpec.getInjectionHomeDir());
+        CommandInfo injectFaultCommandInfo = CommandInfo
+                .builder(String.format(FaultConstants.INFRA_AGENT_SUBMIT_COMMAND,
+                        faultSpec.getInjectionHomeDir() + FaultConstants.INFRA_AGENT_NAME_FOLDER, injectionCommand,
+                        faultSpec.getFaultName()))
+                .ignoreExitValueCheck(false)
+                .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfSystemResourceFaultInjectionRequest())
+                .expectedCommandOutputList(Collections.emptyList()).noOfRetries(3).retryInterval(2).build();
+        List<CommandInfo> commandInfoList = new ArrayList<>();
+        commandInfoList.add(systemResourceFaultUtils.getLinuxPythonAgentExtractCommandInfo(faultSpec));
+        commandInfoList.add(systemResourceFaultUtils.getPythonAgentInstallCommandInfo(faultSpec));
+        commandInfoList.add(injectFaultCommandInfo);
+        return commandInfoList;
+    }
 
-    public abstract List<CommandInfo> getRemediationcommandInfoList(CommandExecutionFaultSpec spec)
-            throws MangleException;
+    public List<CommandInfo> getRemediationcommandInfoList(CommandExecutionFaultSpec faultSpec) throws MangleException {
+        if (!systemResourceFaultUtils.isManualRemediationSupported(faultSpec.getFaultName())) {
+            return Collections.emptyList();
+        }
+        String remediationCommand =
+                systemResourceFaultUtils.buildRemediationCommand(faultSpec.getArgs(), faultSpec.getInjectionHomeDir());
+        List<CommandInfo> commandInfoList = new ArrayList<>();
+        if (!StringUtils.isEmpty(remediationCommand)) {
+            CommandInfo commandInfo = CommandInfo
+                    .builder(String.format(FaultConstants.INFRA_AGENT_SUBMIT_COMMAND,
+                            faultSpec.getInjectionHomeDir() + FaultConstants.INFRA_AGENT_NAME_FOLDER,
+                            remediationCommand, faultSpec.getFaultName()))
+                    .ignoreExitValueCheck(false).expectedCommandOutputList(Collections.emptyList())
+                    .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfSystemResourceFaultRemediationRequest())
+                    .build();
+            commandInfoList.add(commandInfo);
+        }
+        return commandInfoList;
+    }
 
-    public abstract List<SupportScriptInfo> getFaultInjectionScripts(CommandExecutionFaultSpec spec);
+    public List<CommandInfo> getStatusCommandInfoList(CommandExecutionFaultSpec faultSpec) throws MangleException {
+        List<CommandInfo> commandInfoList = new ArrayList<>();
+        String statusCommand = systemResourceFaultUtils.buildStatusCommand(faultSpec.getArgs());
+        if (!StringUtils.isEmpty(statusCommand)) {
+            CommandInfo commandInfo = CommandInfo
+                    .builder(String.format(FaultConstants.INFRA_AGENT_SUBMIT_COMMAND,
+                            faultSpec.getInjectionHomeDir() + FaultConstants.INFRA_AGENT_NAME_FOLDER, statusCommand,
+                            faultSpec.getFaultName()))
+                    .ignoreExitValueCheck(false).expectedCommandOutputList(Collections.emptyList())
+                    .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfSystemResourceFaultInjectionRequest())
+                    .build();
+            commandInfoList.add(commandInfo);
+        }
+        return commandInfoList;
+    }
 
-    public abstract void checkTaskSpecificPrerequisites(CommandExecutionFaultSpec spec) throws MangleException;
+    public List<SupportScriptInfo> getFaultInjectionScripts(CommandExecutionFaultSpec faultSpec) {
+        return systemResourceFaultUtils.getAgentFaultScriptsPython(faultSpec.getInjectionHomeDir());
+    }
+
+    public void checkTaskSpecificPrerequisites(CommandExecutionFaultSpec spec) throws MangleException {
+        //No Specific Requirements
+    }
 }

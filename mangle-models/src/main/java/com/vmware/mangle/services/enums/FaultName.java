@@ -26,13 +26,18 @@ public enum FaultName {
     DISKSPACEFAULT_WINDOWS("diskSpaceFault_windows", "diskspace_win.bat"),
     DISKSPACEFAULT("diskSpaceFault", "diskspace.sh"),
     KILLPROCESSFAULT("killProcessFault", "killprocess.sh"),
+    STOPSERVICEFAULT("stopServiceFault", "stopservice.sh"),
     KILLPROCESSFAULT_WINDOWS("killProcessFault_windows", "killprocess.bat"),
     DISKFUSEFAULT("diskFUSEFault", "diskFUSEfault.py"),
-    DBCONNECTIONLEAKFAULT("dbConnectionLeakFault", "pgdbconnectionleak.sh"),
-    DBTRANSACTIONLATENCYFAULT("dbTransactionLatencyFault", "pgTransactionLatency.sh"),
-    DBTRANSACTIONERRORFAULT("dbTransactionErrorFault", "pgTransactionError.sh"),
+    DBCONNECTIONLEAKFAULT_POSTGRES("dbConnectionLeakFault_postgres", "pgdbconnectionleak.sh"),
+    DBCONNECTIONLEAKFAULT_MONGODB("dbConnectionLeakFault_mongodb",  "mongodbconnectionleak.sh"),
+    DBTRANSACTIONLATENCYFAULT_POSTGRES("dbTransactionLatencyFault_postgres", "pgdbtransactionlatency.sh"),
+    DBTRANSACTIONERRORFAULT_POSTGRES("dbTransactionErrorFault_postgres", "pgdbtransactionerror.sh"),
+    DBCONNECTIONLEAKFAULT_CASSANDRA("dbConnectionLeakFault_cassandra",  "cassandradbconnectionleak.sh"),
     THREADLEAKFAULT("threadLeakFault"),
-    KERNELPANICFAULT("kernelPanicFault","kernelpanicfault.sh");
+    KERNELPANICFAULT("kernelPanicFault","kernelpanicfault.sh"),
+    CLOCKSKEWFAULT("clockSkewFault","clockskew.sh"),
+    NETWORKPARTITIONFAULT("networkPartitionFault","networkpartition.sh");
 
     private String value;
     private String[] scriptFileNames;

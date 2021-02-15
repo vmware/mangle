@@ -29,8 +29,10 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import com.vmware.mangle.cassandra.model.faults.specs.CpuFaultSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.DbFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.DockerFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.K8SFaultTriggerSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.KillProcessFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.TaskSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.VMStateFaultSpec;
 import com.vmware.mangle.cassandra.model.plugin.PluginMetaInfo;
@@ -94,7 +96,7 @@ public class FaultInjectionHelperTest {
     public void testTriggerRemediationFaultTask() throws MangleException {
         VMStateFaultSpec faultSpec = faultsMockData.getVMStateFaultSpec();
         tasksMockData = new TasksMockData<>(faultSpec);
-        Task<TaskSpec> taskObj = tasksMockData.getDummyTask();
+        Task<TaskSpec> taskObj = tasksMockData.getDummy1Task();
         Task<TaskSpec> remediationTask = tasksMockData.getRemediationTask();
         remediationTask.setScheduledTask(false);
         when(taskService.getTaskById(taskObj.getId())).thenReturn(taskObj);
@@ -104,7 +106,7 @@ public class FaultInjectionHelperTest {
 
         when(credentialService.getCredentialByName(anyString()))
                 .thenReturn(credentialsSpecMockData.getVCenterCredentialsData());
-        when(endpointService.getEndpointByName(anyString())).thenReturn(endpointMockData.getVCenterEndpointSpecMock());
+        when(endpointService.getEndpointByName(anyString())).thenReturn(endpointMockData.getDockerEndpointSpecMock());
 
         Task<TaskSpec> triggeredRemediatedTask = faultInjectionHelper.triggerRemediation(taskObj.getId());
         Assert.assertEquals(triggeredRemediatedTask.getTaskType(), TaskType.REMEDIATION);
@@ -114,7 +116,7 @@ public class FaultInjectionHelperTest {
     public void testTriggerRemediationFaultTriggeringTask() throws MangleException {
         K8SFaultTriggerSpec faultSpec = faultsMockData.getK8SCPUFaultTriggerSpec();
         tasksMockData = new TasksMockData<>(faultSpec);
-        Task<TaskSpec> taskObj = tasksMockData.getDummyTask();
+        Task<TaskSpec> taskObj = tasksMockData.getDummy1Task();
         Task<TaskSpec> remediationTask = tasksMockData.getRemediationTask();
         remediationTask.setScheduledTask(false);
         when(taskService.getTaskById(taskObj.getId())).thenReturn(taskObj);
@@ -124,7 +126,7 @@ public class FaultInjectionHelperTest {
 
         when(credentialService.getCredentialByName(anyString()))
                 .thenReturn(credentialsSpecMockData.getVCenterCredentialsData());
-        when(endpointService.getEndpointByName(anyString())).thenReturn(endpointMockData.getVCenterEndpointSpecMock());
+        when(endpointService.getEndpointByName(anyString())).thenReturn(endpointMockData.getDockerEndpointSpecMock());
 
         Task<TaskSpec> triggeredRemediatedTask = faultInjectionHelper.triggerRemediation(taskObj.getId());
         Assert.assertEquals(triggeredRemediatedTask.getTaskType(), TaskType.REMEDIATION);
@@ -135,7 +137,7 @@ public class FaultInjectionHelperTest {
     public void testGetTask() throws MangleException {
         CpuFaultSpec faultSpec = faultsMockData.getScheduleFaultSpec();
         tasksMockData = new TasksMockData<>(faultSpec);
-        Task taskObj = tasksMockData.getDummyTask();
+        Task taskObj = tasksMockData.getDummy1Task();
         taskObj.setTaskType(TaskType.INJECTION);
         when(taskService.getTaskById(taskObj.getId())).thenReturn(taskObj);
         when(faultTaskFactory.getTask(any())).thenReturn(taskObj);
@@ -154,7 +156,7 @@ public class FaultInjectionHelperTest {
     @Test
     public void testValidateSpec() throws MangleException {
         CpuFaultSpec faultSpec = faultsMockData.getScheduleFaultSpec();
-        when(endpointService.getEndpointByName(anyString())).thenReturn(endpointMockData.getVCenterEndpointSpecMock());
+        when(endpointService.getEndpointByName(anyString())).thenReturn(endpointMockData.getDockerEndpointSpecMock());
         try {
             faultInjectionHelper.validateSpec(faultSpec);
         } catch (MangleException ex) {
@@ -270,6 +272,7 @@ public class FaultInjectionHelperTest {
         faultSpec.setK8sArguments(null);
         faultSpec.setEndpoint(endpointMockData.k8sEndpointMockData());
         try {
+            faultInjectionHelper.validateEndpointTypeSpecificArguments(faultsMockData.getDeleteK8SResourceFaultSpec());
             faultInjectionHelper.validateEndpointTypeSpecificArguments(faultSpec);
         } catch (MangleException e) {
             Assert.assertEquals(e.getErrorCode(), ErrorCode.K8S_SPECIFIC_ARGUMENTS_REQUIRED);
@@ -281,7 +284,7 @@ public class FaultInjectionHelperTest {
     private void testRerunFaultWithInValidStatusOnTaskObj() throws MangleException {
         CpuFaultSpec faultSpec = faultsMockData.getK8SCPUFaultSpec();
         tasksMockData = new TasksMockData<>(faultSpec);
-        Task<TaskSpec> taskObj = tasksMockData.getDummyTask();
+        Task<TaskSpec> taskObj = tasksMockData.getDummy1Task();
         try {
             when(taskService.getTaskById(taskObj.getId())).thenReturn(taskObj);
             faultInjectionHelper.rerunFault(taskObj.getId());
@@ -296,7 +299,7 @@ public class FaultInjectionHelperTest {
     private void testRerunFaultWithInValidTaskIdentifier() throws MangleException {
         CpuFaultSpec faultSpec = faultsMockData.getK8SCPUFaultSpec();
         tasksMockData = new TasksMockData<>(faultSpec);
-        Task<TaskSpec> taskObj = tasksMockData.getDummyTask();
+        Task<TaskSpec> taskObj = tasksMockData.getDummy1Task();
         try {
             when(taskService.getTaskById(taskObj.getId())).thenReturn(null);
             faultInjectionHelper.rerunFault(taskObj.getId());
@@ -311,7 +314,7 @@ public class FaultInjectionHelperTest {
     private void testRerunFaultWithCompletedStatusOnTaskObj() throws MangleException {
         CpuFaultSpec faultSpec = faultsMockData.getK8SCPUFaultSpec();
         tasksMockData = new TasksMockData<>(faultSpec);
-        Task<TaskSpec> taskObj = tasksMockData.getDummyTask();
+        Task<TaskSpec> taskObj = tasksMockData.getDummy1Task();
         taskObj.setTaskStatus(TaskStatus.COMPLETED);
         Task<TaskSpec> receivedTaskObj = null;
         try {
@@ -330,7 +333,7 @@ public class FaultInjectionHelperTest {
     private void testRerunFaultWithPluginUnavailabilityException() throws MangleException {
         CpuFaultSpec faultSpec = faultsMockData.getK8SCPUFaultSpec();
         tasksMockData = new TasksMockData<>(faultSpec);
-        Task<TaskSpec> taskObj = tasksMockData.getDummyTask();
+        Task<TaskSpec> taskObj = tasksMockData.getDummy1Task();
         taskObj.setTaskStatus(TaskStatus.COMPLETED);
         PluginMetaInfo pluginMetaInfo = new PluginMetaInfo();
         pluginMetaInfo.setFaultName("cpuFault");
@@ -353,7 +356,7 @@ public class FaultInjectionHelperTest {
     private void testRerunFaultSuccessWithPluginMetaInfo() throws MangleException {
         CpuFaultSpec faultSpec = faultsMockData.getK8SCPUFaultSpec();
         tasksMockData = new TasksMockData<>(faultSpec);
-        Task<TaskSpec> taskObj = tasksMockData.getDummyTask();
+        Task<TaskSpec> taskObj = tasksMockData.getDummy1Task();
         taskObj.setTaskStatus(TaskStatus.COMPLETED);
         PluginMetaInfo pluginMetaInfo = new PluginMetaInfo();
         pluginMetaInfo.setFaultName("cpuFault");
@@ -377,7 +380,7 @@ public class FaultInjectionHelperTest {
     private void testRerunFaultWithFailedStatusOnTaskObj() throws MangleException {
         CpuFaultSpec faultSpec = faultsMockData.getK8SCPUFaultSpec();
         tasksMockData = new TasksMockData<>(faultSpec);
-        Task<TaskSpec> taskObj = tasksMockData.getDummyTask();
+        Task<TaskSpec> taskObj = tasksMockData.getDummy1Task();
         taskObj.setTaskStatus(TaskStatus.FAILED);
         Task<TaskSpec> receivedTaskObj = null;
         try {
@@ -389,5 +392,27 @@ public class FaultInjectionHelperTest {
         }
         verify(taskService, times(1)).getTaskById(taskObj.getId());
         Assert.assertEquals(receivedTaskObj.isTaskRetriggered(), true);
+    }
+
+    @Test
+    public void testUpdateDbFaultSpec() throws MangleException {
+        DbFaultSpec faultSpec = faultsMockData.getDbConnectionLeakFaultSpecOfRemoteMachine();
+        when(endpointService.getEndpointByName(anyString())).thenReturn(faultSpec.getChildEndpoint(),
+                faultSpec.getEndpoint());
+        when(credentialService.getCredentialByName(anyString())).thenReturn(faultSpec.getChildCredentials(),
+                faultSpec.getCredentials());
+        faultInjectionHelper.updateFaultSpec(faultSpec);
+        verify(endpointService, times(2)).getEndpointByName(anyString());
+        verify(credentialService, times(2)).getCredentialByName(anyString());
+    }
+
+    @Test
+    public void testValidateKillProcessFaultSpec() throws MangleException {
+        KillProcessFaultSpec faultSpec = faultsMockData.getKillProcessFaultOnRemoteMachine();
+        try {
+            faultInjectionHelper.validateKillProcessFaultSpec(faultSpec);
+        } catch (MangleException e) {
+            Assert.assertEquals(e.getErrorCode(), ErrorCode.BAD_REQUEST);
+        }
     }
 }

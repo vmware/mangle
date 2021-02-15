@@ -24,8 +24,10 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.vmware.mangle.cassandra.model.faults.specs.TaskSpec;
+import com.vmware.mangle.cassandra.model.tasks.Task;
+import com.vmware.mangle.services.TaskService;
 import com.vmware.mangle.utils.exceptions.MangleException;
-
 
 /**
  *
@@ -61,6 +63,9 @@ public class HazelcastTaskMapListener implements HazelcastInstanceAware, EntryAd
     HazelcastTaskService hazelcastTaskService;
     private HazelcastInstance hz;
 
+    @Autowired
+    private TaskService taskService;
+
     @Override
     public void onEvent(PartitionEvent event) {
         log.debug("Event triggered for the partition {}", event.getPartitionId());
@@ -82,8 +87,15 @@ public class HazelcastTaskMapListener implements HazelcastInstanceAware, EntryAd
      */
     @Override
     public void entryRemoved(EntryEvent<String, String> event) {
-        log.debug("Task with the id {} is removed from hazelcast cluster cache", event.getKey());
-        hazelcastTaskService.removeTaskFromClusterNodeCache(event.getKey());
+        Task<TaskSpec> task = null;
+        try {
+            task = taskService.getTaskById(event.getKey());
+            Thread.currentThread().setName(task.getTaskName());
+            log.debug("Task with the id {} is removed from hazelcast cluster cache", event.getKey());
+            hazelcastTaskService.removeTaskFromClusterNodeCache(event.getKey());
+        } catch (MangleException e) {
+            log.info("failed to remove task with id {} from hazelcast cluster cache", event.getKey());
+        }
     }
 
     @Override
@@ -93,8 +105,11 @@ public class HazelcastTaskMapListener implements HazelcastInstanceAware, EntryAd
 
     @Override
     public void entryUpdated(EntryEvent<String, String> event) {
+        Task<TaskSpec> task = null;
         try {
-            hazelcastTaskService.cleanUpTask(event.getKey(), event.getValue());
+            task = taskService.getTaskById(event.getKey());
+            Thread.currentThread().setName(task.getTaskName());
+            hazelcastTaskService.cleanUpTask(task, event.getValue());
         } catch (MangleException e) {
             log.error("Clean up of the task {} failed with the error {}", event.getKey(), e.getMessage());
         }
@@ -104,9 +119,11 @@ public class HazelcastTaskMapListener implements HazelcastInstanceAware, EntryAd
     @Override
     public void entryAdded(EntryEvent<String, String> event) {
         try {
-            log.info("Fault task with the id {} is assigned to member {}", event.getKey(),
+            Task<TaskSpec> task = taskService.getTaskById(event.getKey());
+            Thread.currentThread().setName(task.getTaskName());
+            log.info("Task with the id {} is assigned to member {}", event.getKey(),
                     hz.getCluster().getLocalMember().getAddress().getHost());
-            hazelcastTaskService.triggerTask(event.getKey());
+            hazelcastTaskService.triggerTask(task);
         } catch (MangleException e) {
             log.error("Failed to trigger the task {} on the node with the exception: {}", event.getKey(),
                     e.getMessage());

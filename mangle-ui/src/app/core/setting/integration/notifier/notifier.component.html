@@ -1,0 +1,159 @@
+<app-alert [(alertMessage)]="alertMessage" [isErrorMessage]="isErrorMessage"
+    (alertMessageChange)="alertMessage = $event"> </app-alert> <br />
+<div [hidden]="slackDatagrid">
+    <clr-datagrid [clrDgLoading]="isLoading" [(clrDgSelected)]="selectedSlacks"
+        (clrDgSelectedChange)="updateDisableButton()">
+        <clr-dg-action-bar>
+            <div class="btn-group">
+                <clr-dropdown>
+                    <button type="button" class="btn btn-sm btn-secondary" clrDropdownTrigger
+                        [disabled]="selectedSlacks.length >= 1">
+                        <clr-icon shape="plus"></clr-icon> Notifier <clr-icon shape="caret down"></clr-icon>
+                    </button>
+                    <clr-dropdown-menu *clrIfOpen>
+                        <button type="button"
+                            (click)="populateSlackForm({'name':null,'notifierType':null,'slackInfo':{'token':null,'channels':null,'senderName':'Mangle'},'enable':true});slackDatagrid=true;slackForm=true;addEdit='Add';"
+                            clrDropdownItem>Slack</button>
+                    </clr-dropdown-menu>
+                </clr-dropdown>
+            </div>
+            <div class="btn-group">
+                <button type="button" class="btn btn-sm btn-secondary" *ngIf="slackType"
+                    [disabled]="selectedSlacks.length === 0 || selectedSlacks.length > 1"
+                    (click)="populateSlackForm(selectedSlacks[0]);slackDatagrid=true;slackForm=true;addEdit='Edit';">
+                    <clr-icon shape="pencil"></clr-icon> Edit
+                </button>
+            </div>
+            <div class="btn-group">
+                <button type="button" class="btn btn-sm btn-secondary" [disabled]="selectedSlacks.length === 0"
+                    (click)="deleteSlack(selectedSlacks);">
+                    <clr-icon shape="close"></clr-icon> Delete
+                </button>
+            </div>
+            <div class="btn-group">
+                <button *ngIf="enableSlack && selectedSlacks.length > 0 && !hideEnableDisableButtons" type="button"
+                    class="btn btn-sm btn-secondary" (click)="enableSlacks(selectedSlacks,!enableSlack);">
+                    Disable
+                </button>
+                <button *ngIf="!enableSlack && selectedSlacks.length > 0 && !hideEnableDisableButtons" type="button"
+                    class="btn btn-sm btn-secondary" (click)="enableSlacks(selectedSlacks,!enableSlack);">
+                    Enable
+                </button>
+            </div>
+        </clr-dg-action-bar>
+
+        <clr-dg-column [clrDgField]="'name'">Name</clr-dg-column>
+        <clr-dg-column [clrDgField]="'notifierType'">Type</clr-dg-column>
+        <clr-dg-column [clrDgField]="'enable'">Status</clr-dg-column>
+        <clr-dg-column>Channels</clr-dg-column>
+        <clr-dg-row *clrDgItems="let notification of notifications" [clrDgItem]="notification">
+            <clr-dg-cell>{{notification.name}}</clr-dg-cell>
+            <clr-dg-cell>{{notification.notifierType}}</clr-dg-cell>
+            <clr-dg-cell>
+                <span class="label label-success"
+                    [hidden]="!notification.enable && notification.enable != null">enabled</span>
+                <span class="label label-danger"
+                    [hidden]="notification.enable == null || notification.enable">disabled</span>
+            </clr-dg-cell>
+            <clr-dg-cell><span class="label label-info"
+                    *ngFor="let chname of notification.slackInfo.channels">{{chname}}</span>
+            </clr-dg-cell>
+        </clr-dg-row>
+        <clr-dg-footer>
+            <clr-dg-pagination #pagination [clrDgPageSize]="10">
+                <clr-dg-page-size [clrPageSizeOptions]="[10,20,50,100]">Notifier per page</clr-dg-page-size>
+                {{pagination.firstItem + 1}} - {{pagination.lastItem + 1}} of {{pagination.totalItems}} notifiers
+            </clr-dg-pagination>
+        </clr-dg-footer>
+    </clr-datagrid>
+</div>
+<clr-modal [(clrModalOpen)]="slackForm" [clrModalClosable]="false">
+    <h3 class="modal-title">{{addEdit}} Slack</h3>
+    <div class="modal-body" *ngIf="notificationData">
+        <clr-alert *ngIf="testErrorFlag" [clrAlertType]="'danger'">
+            <div class="alert-item">{{testAlertMessage}}</div>
+        </clr-alert>
+        <clr-alert *ngIf="testSuccessFlag" [clrAlertType]="'success'">
+            <div class="alert-item">{{testAlertMessage}}</div>
+        </clr-alert>
+        <form #slackinfoForm="ngForm" #nativeSlackForm
+            (ngSubmit)="addOrUpdateNotification(slackinfoForm.value,addEdit);slackDatagrid=false;slackForm=false;slackinfoForm.reset();"
+            ngNativeValidate>
+            <section class="form-block">
+                <div class="form-group">
+                    <label for="name">Name</label>
+                    <input type="text" name="name" [(ngModel)]="notificationData.name" [required]="addEdit == 'Add'"
+                        [readonly]="addEdit == 'Edit'">
+                </div>
+                <div class="form-group">
+                    <label for="notifierType">Type</label>
+                    <div class="select">
+                        <select name="notifierType" [(ngModel)]="notificationData.notifierType" required>
+                            <ng-container *ngFor="let notifierType of notifierTypes">
+                                <option [value]="notifierType">{{notifierType}}</option>
+                            </ng-container>
+                        </select>
+                    </div>
+                </div>
+                <fieldset ngModelGroup="slackInfo">
+                    <div class="form-group">
+                        <label for="name">Token
+                            <a href="javascript://" role="tooltip" aria-haspopup="true"
+                                class="tooltip tooltip-md tooltip-bottom-right">
+                                <clr-icon shape="info-circle" size="24"></clr-icon>
+                                <span class="tooltip-content">Provide Slack OAuth token.</span>
+                            </a>
+                        </label>
+                        <input type="password" name="token" [(ngModel)]="notificationData.slackInfo.token" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="name">Sender Name
+                            <a href="javascript://" role="tooltip" aria-haspopup="true"
+                                class="tooltip tooltip-md tooltip-bottom-right">
+                                <clr-icon shape="info-circle" size="24"></clr-icon>
+                                <span class="tooltip-content">Provide Slack Sender name as user name or app name.</span>
+                            </a>
+                        </label>
+                        <input type="text" name="senderName" [(ngModel)]="notificationData.slackInfo.senderName"
+                            required>
+                    </div>
+                    <div class="form-group">
+                        <label for="tags">Channels</label>
+                        <span class="label label-info" *ngFor="let chaname of channelsData">{{chaname}}&nbsp;<clr-icon
+                                shape="times" size="12" (click)="removeChannel(chaname);"></clr-icon></span>
+                        <clr-icon shape="plus-circle" (click)="channelModal=true;" style="width:21px;height:30px;">
+                        </clr-icon>
+                    </div>
+                </fieldset>
+                <div class="form-group">
+                    <input type="text" name="enable" [(ngModel)]="notificationData.enable" [hidden]="true">
+                </div>
+            </section>
+            <button type="submit" class="btn btn-primary"
+                [disabled]="disableSubmit || channelsData.length === 0">SUBMIT</button>
+            <button [clrLoading]="testSlackBtnState" type="button" class="btn btn-outline"
+                (click)="testNotificationConnection(nativeSlackForm.reportValidity(), slackinfoForm.value);"
+                [disabled]="channelsData.length === 0">TEST
+                CONNECTION</button>
+            <button type="button" class="btn btn-outline"
+                (click)="slackDatagrid=false;slackForm=false;slackinfoForm.reset();getNotificationInfo();">CANCEL</button>
+        </form>
+    </div>
+</clr-modal>
+<clr-modal [(clrModalOpen)]="channelModal" [clrModalClosable]="false">
+    <h3 class="modal-title">Add Channels</h3>
+    <div class="modal-body">
+        <form #channelForm="ngForm"
+            (ngSubmit)="updateChannel(channelForm.value);channelModal=false;channelForm.reset();">
+            <section class="form-block">
+                <div class="form-group">
+                    <label for="name">Name</label>
+                    <input type="text" name="name" ngModel required>
+                </div>
+            </section>
+            <button type="submit" class="btn btn-primary" [disabled]="channelForm.invalid">ADD</button>
+            <button type="button" class="btn btn-outline"
+                (click)="channelModal=false;channelForm.reset();">CANCEL</button>
+        </form>
+    </div>
+</clr-modal>

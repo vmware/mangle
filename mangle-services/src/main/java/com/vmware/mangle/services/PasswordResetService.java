@@ -16,6 +16,7 @@ import java.util.List;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import com.vmware.mangle.cassandra.model.security.PasswordReset;
 import com.vmware.mangle.services.repository.PasswordResetRepository;
@@ -39,8 +40,11 @@ public class PasswordResetService {
     public boolean readResetStatus() {
         log.info("Retrieving default user password status");
         List<PasswordReset> passwordResetList = repository.findAll();
-        PasswordReset passwordReset = passwordResetList.get(0);
-        return passwordReset.isReset();
+        if (!CollectionUtils.isEmpty(passwordResetList)) {
+            PasswordReset passwordReset = passwordResetList.get(0);
+            return passwordReset.isReset();
+        }
+        return false;
     }
 
     public boolean updateResetStatus() {

@@ -23,7 +23,7 @@ import com.vmware.mangle.configuration.ApplicationConfig;
 /**
  * @author Chethan C(chetanc)
  */
-public class ApplicationConfigTest {
+public class  ApplicationConfigTest {
 
     private ApplicationConfig applicationConfig = new ApplicationConfig();
 

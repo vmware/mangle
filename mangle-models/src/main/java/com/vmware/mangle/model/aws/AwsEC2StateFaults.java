@@ -26,8 +26,8 @@ public enum AwsEC2StateFaults {
         return this.name();
     }
 
-    AwsEC2StateFaults(AwsEC2FaultRemediation vCenterFaultRemediation) {
-        this.remediation = vCenterFaultRemediation;
+    AwsEC2StateFaults(AwsEC2FaultRemediation awsEC2FaultRemediation) {
+        this.remediation = awsEC2FaultRemediation;
     }
 
     public AwsEC2FaultRemediation getRemediation() {

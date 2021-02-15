@@ -102,7 +102,7 @@ public class DatadogClient extends RestTemplateWrapper implements MetricProvider
             throw new MangleException(ErrorCode.UNABLE_TO_CONNECT_TO_DATADOG_INSTANCE);
         }
         log.debug("Test connection completed and status: " + response.getStatusCode().value());
-        if (!(response.getStatusCode().value() == 200)) {
+        if (response.getStatusCode().value() != 200) {
             throw new MangleException(ErrorCode.AUTH_FAILURE_TO_DATADOG);
         }
         return response.getStatusCode().value() == 200;

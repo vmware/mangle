@@ -14,16 +14,15 @@ package com.vmware.mangle.utils.clients.restclient;
 import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.List;
+
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.io.xml.StaxDriver;
@@ -46,6 +45,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.vmware.mangle.utils.exceptions.MangleRuntimeException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
+import com.vmware.mangle.utils.helpers.security.CertificateHelper;
 
 /**
  * @author bkaranam (bhanukiran karanam)
@@ -53,7 +53,7 @@ import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
  *         Customized RestClient helper
  */
 @Log4j2
-@SuppressWarnings({"squid:S3510", "squid:S1186"})
+@SuppressWarnings({ "squid:S3510", "squid:S1186" })
 public class RestTemplateWrapper {
     private static final String POST_STARTS_MESSAGE =
             "*****************API POST STARTS*************************************";
@@ -76,23 +76,10 @@ public class RestTemplateWrapper {
     private MultiValueMap<String, Object> formData;
     private String commonQueryParameter;
 
-    private static final TrustManager[] UNQUESTIONING_TRUST_MANAGER = new TrustManager[] { new X509TrustManager() {
+    private static final String RESPONSE_BODY = "Response body";
 
-        @Override
-        public X509Certificate[] getAcceptedIssuers() {
-            return new X509Certificate[]{};
-        }
-
-        @Override
-        public void checkServerTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
-
-        }
-
-        @Override
-        public void checkClientTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
-
-        }
-    } };
+    private static final TrustManager[] UNQUESTIONING_TRUST_MANAGER =
+            new TrustManager[] { CertificateHelper.getX509TrustManager() };
 
     public RestTemplateWrapper() {
         headers = new HttpHeaders();
@@ -191,6 +178,15 @@ public class RestTemplateWrapper {
         return execute(clz);
     }
 
+    public ResponseEntity post(String urlSuffix, String jsonRequest,
+            ParameterizedTypeReference<?> responseType) {
+        log.trace(POST_STARTS_MESSAGE);
+        setHttpRequestMethod(HttpMethod.POST);
+        setRequestUrl(this.baseUrl + urlSuffix);
+        this.jsonRequest = jsonRequest;
+        return execute(responseType);
+    }
+
     public ResponseEntity post(String urlSuffix, String jsonRequest, Class<?> clz, MediaType mediaType) {
         this.headers.setContentType(mediaType);
         return post(urlSuffix, jsonRequest, clz);
@@ -250,14 +246,14 @@ public class RestTemplateWrapper {
         return execute(responseType);
     }
 
-    private ResponseEntity<?> execute(Class<?> clz) {
-        ResponseEntity<?> response = null;
+    private ResponseEntity execute(Class<?> clz) {
+        ResponseEntity response = null;
         try {
             intializeHttpEntity();
             setAnnoationClass(clz);
             response = restTemplate.exchange(getRequestUrl(), getHttpRequestMethod(), entity, clz);
             if (null != response.getBody()) {
-                log.trace("Response body -" + objectToXml(response.getBody()));
+                log.trace(RESPONSE_BODY + "-" + objectToXml(response.getBody()));
             }
             return response;
         } catch (RestClientException e) {
@@ -267,13 +263,13 @@ public class RestTemplateWrapper {
         }
     }
 
-    private ResponseEntity<?> execute(ParameterizedTypeReference<?> responseType) {
-        ResponseEntity<?> response = null;
+    private ResponseEntity execute(ParameterizedTypeReference<?> responseType) {
+        ResponseEntity response = null;
+
         try {
             intializeHttpEntity();
-            response =
-                    restTemplate.exchange(getRequestUrl(), getHttpRequestMethod(), entity, responseType);
-            log.trace("Response body -" + objectToXml(response.getBody()));
+            response = restTemplate.exchange(getRequestUrl(), getHttpRequestMethod(), entity, responseType);
+            log.trace(RESPONSE_BODY + "-" + objectToXml(response.getBody()));
             return response;
 
         } catch (RestClientException e) {
@@ -287,7 +283,7 @@ public class RestTemplateWrapper {
         log.trace("URL - " + getHttpRequestMethod().toString() + " - " + getRequestUrl());
         log.trace("Headers - " + headers.getContentType().toString());
         String mediaType = headers.getContentType().toString();
-        if (mediaType.contains(MediaType.APPLICATION_JSON_VALUE) && jsonRequest != "" && jsonRequest != null) {
+        if (mediaType.contains(MediaType.APPLICATION_JSON_VALUE) && jsonRequest != null && !"".equals(jsonRequest)) {
             entity = new HttpEntity<String>(jsonRequest, headers);
         } else if (mediaType.contains(MediaType.MULTIPART_FORM_DATA_VALUE)) {
             entity = new HttpEntity<MultiValueMap<String, Object>>(formData, headers);
@@ -297,8 +293,8 @@ public class RestTemplateWrapper {
     }
 
     @SuppressWarnings("rawtypes")
-    private ResponseEntity<?> handleHttpServerErrorException(RestClientException e) {
-        ResponseEntity<?> response = null;
+    private ResponseEntity handleHttpServerErrorException(RestClientException e) {
+        ResponseEntity response = null;
         if (e.toString().contains("HttpServerErrorException")) {
 
             String[] errorMsg = e.toString().split("HttpServerErrorException: ");
@@ -338,7 +334,19 @@ public class RestTemplateWrapper {
         try {
             json = new ObjectMapper().writeValueAsString(object);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(String.format("Failed to process Json : %s", object.toString()), e);
+            throw new MangleRuntimeException(String.format("Failed to process Json : %s", object.toString()), e,
+                    ErrorCode.GENERIC_ERROR);
+        }
+        return json;
+    }
+
+    public static String objectToGson(Object object) {
+        String json;
+        try {
+            json = new Gson().toJson(object);
+        } catch (Exception e) {
+            throw new MangleRuntimeException(String.format("Failed to process Json : %s", object.toString()), e,
+                    ErrorCode.GENERIC_ERROR);
         }
         return json;
     }
@@ -350,7 +358,7 @@ public class RestTemplateWrapper {
             log.error("Input String is not a valid json" + jse.getMessage());
             return null;
         } catch (IOException e) {
-            throw new MangleRuntimeException(e,ErrorCode.MALFORMED_PLUGIN_DESCRIPTOR);
+            throw new MangleRuntimeException(e, ErrorCode.MALFORMED_PLUGIN_DESCRIPTOR);
         }
     }
 

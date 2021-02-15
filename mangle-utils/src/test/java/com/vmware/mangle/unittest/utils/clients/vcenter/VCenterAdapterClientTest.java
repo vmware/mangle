@@ -24,7 +24,7 @@ import org.powermock.modules.testng.PowerMockTestCase;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import com.vmware.mangle.cassandra.model.endpoint.VCenterAdapterProperties;
+import com.vmware.mangle.cassandra.model.endpoint.VCenterAdapterDetails;
 import com.vmware.mangle.utils.CommonUtils;
 import com.vmware.mangle.utils.clients.docker.CustomDockerClient;
 import com.vmware.mangle.utils.clients.vcenter.VCenterAdapterClient;
@@ -47,7 +47,7 @@ public class VCenterAdapterClientTest extends PowerMockTestCase {
     @Mock
     CustomDockerClient customDockerClient;
 
-    private VCenterAdapterProperties vCenterAdapterProperties = new VCenterAdapterProperties();
+    private VCenterAdapterDetails vCenterAdapterDetails = new VCenterAdapterDetails();
 
     @BeforeMethod
     public void initMocks() {
@@ -58,14 +58,14 @@ public class VCenterAdapterClientTest extends PowerMockTestCase {
     public void testGetInstance() throws Exception {
         PowerMockito.whenNew(CustomDockerClient.class).withAnyArguments().thenReturn(customDockerClient);
         PowerMockito.when(customDockerClient.getDockerIPByName(anyString())).thenReturn(ip);
-        VCenterAdapterClient client = new VCenterAdapterClient(vCenterAdapterProperties);
+        VCenterAdapterClient client = new VCenterAdapterClient(vCenterAdapterDetails);
         Assert.assertNotNull(client);
     }
 
     @Test(expectedExceptions = MangleException.class, enabled = false)
     public void testTestConnectionFailure() throws MangleException {
         try {
-            VCenterAdapterClient client = new VCenterAdapterClient(vCenterAdapterProperties);
+            VCenterAdapterClient client = new VCenterAdapterClient(vCenterAdapterDetails);
             client.testConnection();
         } catch (MangleException e) {
             Assert.assertEquals(ErrorCode.INVALID_URL, e.getErrorCode());

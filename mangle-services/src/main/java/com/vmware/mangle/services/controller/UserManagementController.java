@@ -14,7 +14,9 @@ package com.vmware.mangle.services.controller;
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
 
+import java.util.Collections;
 import java.util.List;
+import javax.annotation.PostConstruct;
 
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.log4j.Log4j2;
@@ -34,14 +36,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.vmware.mangle.cassandra.model.security.User;
 import com.vmware.mangle.model.UserCreationDTO;
 import com.vmware.mangle.model.UserPasswordUpdateDTO;
 import com.vmware.mangle.model.UserRolesUpdateDTO;
-import com.vmware.mangle.model.enums.HateoasOperations;
 import com.vmware.mangle.services.PasswordResetService;
 import com.vmware.mangle.services.UserService;
+import com.vmware.mangle.utils.constants.Constants;
 import com.vmware.mangle.utils.constants.ErrorConstants;
 import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
@@ -55,11 +58,20 @@ import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 @RequestMapping("rest/api/v1/user-management/")
 @Log4j2
 public class UserManagementController {
-    @Autowired
-    private UserService userService;
+
+    private final UserService userService;
+    private final PasswordResetService passwordResetService;
 
     @Autowired
-    private PasswordResetService passwordResetService;
+    public UserManagementController(UserService userService, PasswordResetService passwordResetService) {
+        this.userService = userService;
+        this.passwordResetService = passwordResetService;
+    }
+
+    @PostConstruct
+    public void initializeDefaultPasswordResetStatus() {
+        Constants.setDefaultPasswordResetStatus(passwordResetService.readResetStatus());
+    }
 
     /**
      * API to add new user to mangle
@@ -84,13 +96,12 @@ public class UserManagementController {
             throw new MangleException(String.format(ErrorConstants.USER_ALREADY_EXISTS, user.getName()),
                     ErrorCode.USER_ALREADY_EXISTS);
         }
+        userService.validateADDetailsForUserCreation(user);
         User persisted = userService.createUser(user);
 
         Resource<User> userResource = new Resource<>(persisted);
-        Link link = linkTo(methodOn(UserManagementController.class).createUser(null)).withSelfRel();
-        userResource.add(linkTo(methodOn(UserManagementController.class).updateUser(null))
-                .withRel(HateoasOperations.UPDATE.toString()));
-        userResource.add(link);
+        userResource.add(getSelfLink(), getHateoasLinkForDeleteUser(), getHateoasLinkForGetCurrentUser(),
+                getHateoasLinkForUpdateUser(), getHateoasLinkForUpdateUserPassword());
 
         return new ResponseEntity<>(userResource, HttpStatus.CREATED);
     }
@@ -105,7 +116,8 @@ public class UserManagementController {
      */
     @ApiOperation(value = "API to update User", nickname = "updateUser")
     @PutMapping(value = "users", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Resource<User>> updateUser(@Validated @RequestBody UserRolesUpdateDTO userRolesUpdateDTO) throws MangleException {
+    public ResponseEntity<Resource<User>> updateUser(@Validated @RequestBody UserRolesUpdateDTO userRolesUpdateDTO)
+            throws MangleException {
         log.trace(String.format("Starting execution of updateUser for the user %s", userRolesUpdateDTO.getName()));
 
         User persistedUser = userService.getUserByName(userRolesUpdateDTO.getName());
@@ -119,8 +131,9 @@ public class UserManagementController {
         User persisted = userService.updateUser(user);
 
         Resource<User> userResource = new Resource<>(persisted);
-        Link link = linkTo(methodOn(UserManagementController.class).updateUser(null)).withSelfRel();
-        userResource.add(link);
+
+        userResource.add(getSelfLink(), getHateoasLinkForCreateUser(), getHateoasLinkForDeleteUser(),
+                getHateoasLinkForGetCurrentUser(), getHateoasLinkForUpdateUserPassword());
         userService.terminateUserSession(user.getName());
         userService.triggerMultiNodeResync(user.getName());
         return new ResponseEntity<>(userResource, HttpStatus.OK);
@@ -135,7 +148,7 @@ public class UserManagementController {
      * @throws MangleException
      */
     @PutMapping(value = "/password")
-    @ApiOperation(value = "API to update the current user password", nickname = "update password")
+    @ApiOperation(value = "API to update the current user password", nickname = "update password", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Resource<User>> updateUserPassword(
             @Validated @RequestBody UserPasswordUpdateDTO userPasswordUpdateDTO) throws MangleException {
         String currentUser = userService.getCurrentUserName();
@@ -157,12 +170,14 @@ public class UserManagementController {
      */
     @ApiOperation(value = "API to get all Users", nickname = "getAllUsers")
     @GetMapping(value = "users", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Resources<User>> getAllUsers() {
+    public ResponseEntity<Resources<User>> getAllUsers() throws MangleException {
         log.trace("Starting execution of getAllUsers method");
         List<User> users = userService.getAllUsers();
+
         Resources<User> userResource = new Resources<>(users);
-        Link link = linkTo(methodOn(UserManagementController.class).getAllUsers()).withSelfRel();
-        userResource.add(link);
+        userResource.add(getSelfLink(), getHateoasLinkForCreateUser(), getHateoasLinkForDeleteUser(),
+                getHateoasLinkForGetCurrentUser(), getHateoasLinkForUpdateUser(),
+                getHateoasLinkForUpdateUserPassword());
 
         return new ResponseEntity<>(userResource, HttpStatus.OK);
 
@@ -178,11 +193,10 @@ public class UserManagementController {
     public ResponseEntity<Resource<User>> getCurrentUser() throws MangleException {
         log.info("Starting execution of getAllUsers method");
         User user = userService.getCurrentUser();
+
         Resource<User> userResource = new Resource<>(user);
-        Link link = linkTo(methodOn(UserManagementController.class).getCurrentUser()).withSelfRel();
-        userResource.add(linkTo(methodOn(UserManagementController.class).updateUser(null))
-                .withRel(HateoasOperations.UPDATE.toString()));
-        userResource.add(link);
+        userResource.add(getSelfLink(), getHateoasLinkForCreateUser(), getHateoasLinkForDeleteUser(),
+                getHateoasLinkForUpdateUser(), getHateoasLinkForUpdateUserPassword());
 
         return new ResponseEntity<>(userResource, HttpStatus.OK);
     }
@@ -200,10 +214,9 @@ public class UserManagementController {
     @ApiOperation(value = "Read admin password reset status", nickname = "read-admin-password-status", hidden = true)
     public ResponseEntity<Resource<Boolean>> getAdminPasswordResetStatus() {
         log.trace("Received request to read password reset status for the default user");
-        boolean isReset = passwordResetService.readResetStatus();
-        Resource<Boolean> statusResource = new Resource<>(isReset);
-        Link link = linkTo(methodOn(UserManagementController.class).getAdminPasswordResetStatus()).withSelfRel();
-        statusResource.add(link);
+        Resource<Boolean> statusResource = new Resource<>(Constants.isDefaultPasswordResetStatus());
+        statusResource.add(getSelfLink());
+
         return new ResponseEntity<>(statusResource, HttpStatus.OK);
     }
 
@@ -221,15 +234,52 @@ public class UserManagementController {
     public ResponseEntity<Resource<User>> resetAdminCredsForFirstLogin(@Validated @RequestBody User user)
             throws MangleException {
         log.trace(String.format("Starting execution of updateUser for the user %s", user.getName()));
-
-        User persisted = userService.updateUser(user);
-        passwordResetService.updateResetStatus();
-
+        User persisted = userService.updateFirstTimePassword(user.getName(), user.getPassword());
+        Constants.setDefaultPasswordResetStatus(passwordResetService.updateResetStatus());
+        userService.terminateUserSession(user.getName());
         Resource<User> userResource = new Resource<>(persisted);
-        Link link = linkTo(methodOn(UserManagementController.class).updateUser(null)).withSelfRel();
-        userResource.add(link);
-
+        userResource.add(getSelfLink());
         return new ResponseEntity<>(userResource, HttpStatus.OK);
+    }
+
+
+    /**
+     * API to login to mangle
+     *
+     * @return true if successfully validated
+     */
+    @ApiOperation(value = "API to login to mangle", nickname = "login", hidden = true)
+    @PostMapping(value = "/login", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Boolean> loginUser() {
+        log.trace("Starting execution login");
+        return new ResponseEntity<>(true, HttpStatus.OK);
+    }
+
+    public Link getSelfLink() {
+        return new Link(ServletUriComponentsBuilder.fromCurrentRequestUri().build().toUri().toASCIIString())
+                .withSelfRel();
+    }
+
+    private Link getHateoasLinkForCreateUser() throws MangleException {
+        return linkTo(methodOn(UserManagementController.class).createUser(new UserCreationDTO())).withRel("CREATE");
+    }
+
+    private Link getHateoasLinkForUpdateUser() throws MangleException {
+        return linkTo(methodOn(UserManagementController.class).updateUser(new UserRolesUpdateDTO())).withRel("UPDATE");
+    }
+
+    private Link getHateoasLinkForUpdateUserPassword() throws MangleException {
+        return linkTo(methodOn(UserManagementController.class).updateUserPassword(new UserPasswordUpdateDTO()))
+                .withRel("UPDATE-PASSWORD");
+    }
+
+    private Link getHateoasLinkForGetCurrentUser() throws MangleException {
+        return linkTo(methodOn(UserManagementController.class).getAllUsers()).withRel("GET-CURRENT-USER");
+    }
+
+    private Link getHateoasLinkForDeleteUser() throws MangleException {
+        return linkTo(methodOn(UserManagementController.class).deleteUsersByNames(Collections.emptyList()))
+                .withRel("DELETE");
     }
 
 }

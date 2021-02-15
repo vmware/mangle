@@ -107,7 +107,8 @@ public class CORSFilter implements Filter {
                 && !request.getMethod().equals(RequestMethod.GET.name())
                 && !(request.getRequestURI().contains(URLConstants.CLUSTER_CONFIG_URL)
                         || request.getRequestURI().contains(URLConstants.DEFAULT_USER_UPDATE_FLAG_URL)
-                        || request.getRequestURI().contains(URLConstants.UPDATE_CURRENT_USER_PASSWORD)));
+                        || request.getRequestURI().contains(URLConstants.UPDATE_CURRENT_USER_PASSWORD)
+                        || request.getRequestURI().contains(URLConstants.MANGLE_USER_LOGIN)));
     }
 
     private String getHttpDateTime() {

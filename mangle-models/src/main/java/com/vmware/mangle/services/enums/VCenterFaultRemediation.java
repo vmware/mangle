@@ -17,9 +17,7 @@ package com.vmware.mangle.services.enums;
  *         VCenter VM fault remediations
  */
 public enum VCenterFaultRemediation {
-    POWERON_VM,
-    CONNECT_DISK,
-    CONNECT_NIC;
+    POWERON_VM, CONNECT_DISK, CONNECT_NIC, CONNECT_HOST;
 
     @Override
     public String toString() {

@@ -26,6 +26,7 @@ import com.vmware.mangle.cassandra.model.plugin.CustomFaultDescriptor;
 import com.vmware.mangle.cassandra.model.plugin.CustomFaultExecutionRequest;
 import com.vmware.mangle.cassandra.model.plugin.ExtensionDetails;
 import com.vmware.mangle.cassandra.model.plugin.PluginDetails;
+import com.vmware.mangle.cassandra.model.plugin.PluginMetaInfo;
 import com.vmware.mangle.model.enums.EndpointType;
 import com.vmware.mangle.services.constants.CommonConstants;
 
@@ -100,5 +101,14 @@ public class CustomFaultMockData {
             log.info(e);
         }
         return details;
+    }
+
+    public PluginMetaInfo getPluginMetaInfo() {
+        PluginMetaInfo pluginMetaInfo = new PluginMetaInfo();
+        pluginMetaInfo.setFaultName("mangle-test-plugin-customkillprocessfault");
+        pluginMetaInfo.setPluginId("mangle-test-plugin");
+        pluginMetaInfo.setPluginName("mangle-test-plugin-2.0.0");
+        pluginMetaInfo.setPluginVersion("2.0.0");
+        return pluginMetaInfo;
     }
 }

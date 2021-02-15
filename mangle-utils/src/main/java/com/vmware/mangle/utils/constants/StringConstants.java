@@ -21,6 +21,10 @@ public class StringConstants {
 
     public static final String DEPLOYMENTTYPE_ENV_STRING = "DEPLOYMENTTYPE";
 
+    public static final String REGULAR_EXP_FOR_PASS_MASK = "(?<=(--password|--userName)\\s)[^\\s]*";
+    public static final String REPLACEMENT_TXT = "******";
+    public static final String REGULAR_EXP_FOR_PASS_MASK_IN_DESC = "(?<=(__password|__userName)=)[^,]*";
+
     private StringConstants() {
 
     }

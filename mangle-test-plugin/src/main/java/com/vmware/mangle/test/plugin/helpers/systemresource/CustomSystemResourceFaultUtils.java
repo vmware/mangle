@@ -123,9 +123,6 @@ public class CustomSystemResourceFaultUtils {
     }
 
     public boolean isManualRemediationSupported(String faultName) {
-        if (!StringUtils.isEmpty(faultName)) {
-            return true;
-        }
-        return false;
+        return !StringUtils.isEmpty(faultName);
     }
 }

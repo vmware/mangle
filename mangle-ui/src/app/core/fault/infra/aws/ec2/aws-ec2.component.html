@@ -1,0 +1,18 @@
+<h2 class="modal-title">Aws EC2 Faults</h2><br>
+<ul class="nav-aws">
+    <li class="nav-item">
+        <a class="nav-link" [routerLink]="['ec2-state']" routerLinkActive="active"><span
+                class="nav-text-aws">State</span></a>
+    </li>
+    <li class="nav-item" >
+        <a class="nav-link" [routerLink]="['ec2-network']" routerLinkActive="active"><span
+                class="nav-text-aws">Network</span></a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" [routerLink]="['ec2-storage']" routerLinkActive="active"><span
+                class="nav-text-aws">Storage</span></a>
+    </li>
+</ul>
+<div class="content-area-aws">
+    <router-outlet></router-outlet>
+</div>

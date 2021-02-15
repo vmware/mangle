@@ -17,7 +17,7 @@ package com.vmware.mangle.model.enums;
  *
  */
 public enum MetricProviderType {
-    WAVEFRONT, DATADOG;
+    WAVEFRONT, DATADOG, PROMETHEUS;
     @Override
     public String toString() {
         return this.name();

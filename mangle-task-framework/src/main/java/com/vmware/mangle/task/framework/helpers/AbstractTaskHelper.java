@@ -26,8 +26,10 @@ import com.vmware.mangle.cassandra.model.tasks.TaskStatus;
 import com.vmware.mangle.cassandra.model.tasks.TaskTrigger;
 import com.vmware.mangle.cassandra.model.tasks.TaskTroubleShootingInfo;
 import com.vmware.mangle.cassandra.model.tasks.TaskType;
+import com.vmware.mangle.task.framework.helpers.AbstractCommandExecutionTaskHelper.SubStage;
 import com.vmware.mangle.task.framework.skeletons.ITaskHelper;
 import com.vmware.mangle.utils.exceptions.MangleException;
+
 
 /**
  * @author hkilari
@@ -114,6 +116,10 @@ public abstract class AbstractTaskHelper<T extends TaskSpec> implements ITaskHel
         task.getTriggers().peek().setTaskOutput(taskOutput);
     }
 
+    protected void updateSubstage(Task<T> task, SubStage triggerChildTasks) {
+        task.updateTaskSubstage(triggerChildTasks.name());
+    }
+
     @Override
     public void cancel() {
 
@@ -122,5 +128,4 @@ public abstract class AbstractTaskHelper<T extends TaskSpec> implements ITaskHel
     public abstract Task<T> init(T taskSpec) throws MangleException;
 
     public abstract Task<T> init(T taskSpec, String injectionId) throws MangleException;
-
 }

@@ -48,6 +48,7 @@ public class Task<T extends TaskSpec> extends MangleDto implements Serializable 
     private String taskDescription;
     @Indexed
     private boolean isScheduledTask;
+    @SuppressWarnings("squid:S1149")
     private Stack<TaskTrigger> triggers;
     @CassandraType(type = Name.VARCHAR)
     private T taskData;
@@ -55,6 +56,7 @@ public class Task<T extends TaskSpec> extends MangleDto implements Serializable 
     private boolean initialized;
     private String extensionName;
     private String taskClass;
+    private Long lastUpdated;
 
     public Task() {
         this.id = super.generateId();
@@ -174,6 +176,14 @@ public class Task<T extends TaskSpec> extends MangleDto implements Serializable 
         } else {
             setTaskOutput(outputText);
         }
+    }
+
+    /**
+     * @param outputText
+     *            : The outputText to Update
+     */
+    public void updateTaskDescription(String outputText) {
+        setTaskDescription(outputText);
     }
 
     public TaskInfo getMangleTaskInfo() {

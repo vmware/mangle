@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import lombok.NoArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.pf4j.Extension;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,14 +31,17 @@ import com.vmware.mangle.cassandra.model.tasks.FaultTriggeringTask;
 import com.vmware.mangle.cassandra.model.tasks.K8SSpecificArguments;
 import com.vmware.mangle.cassandra.model.tasks.RemediableTask;
 import com.vmware.mangle.cassandra.model.tasks.Task;
+import com.vmware.mangle.cassandra.model.tasks.TaskStatus;
 import com.vmware.mangle.cassandra.model.tasks.TaskType;
 import com.vmware.mangle.task.framework.endpoint.EndpointClientFactory;
 import com.vmware.mangle.task.framework.events.TaskSubstageEvent;
 import com.vmware.mangle.task.framework.helpers.AbstractTaskHelper;
 import com.vmware.mangle.task.framework.skeletons.IMultiTaskHelper;
 import com.vmware.mangle.task.framework.utils.TaskDescriptionUtils;
+import com.vmware.mangle.utils.CommonUtils;
 import com.vmware.mangle.utils.clients.kubernetes.KubernetesCommandLineClient;
 import com.vmware.mangle.utils.exceptions.MangleException;
+import com.vmware.mangle.utils.exceptions.MangleRuntimeException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
 /**
@@ -47,6 +51,7 @@ import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
  */
 @Extension(ordinal = 1)
 @Log4j2
+@NoArgsConstructor
 @SuppressWarnings("squid:CommentedOutCodeLine")
 public class K8SFaultTriggerTaskHelper<T extends K8SFaultTriggerSpec, S extends CommandExecutionFaultSpec>
         extends AbstractTaskHelper<T> implements IMultiTaskHelper<T, S> {
@@ -56,9 +61,7 @@ public class K8SFaultTriggerTaskHelper<T extends K8SFaultTriggerSpec, S extends 
     private BytemanFaultTaskHelper<S> bytemanFaultTask;
 
     private SystemResourceFaultTaskHelper<S> systemResourceFaultTask;
-
-    public K8SFaultTriggerTaskHelper() {
-    }
+    private SystemResourceFaultTaskHelper2<S> systemResourceFaultTask2;
 
     @Autowired
     public void setEndpointClientFactory(EndpointClientFactory endpointClientFactory) {
@@ -75,6 +78,11 @@ public class K8SFaultTriggerTaskHelper<T extends K8SFaultTriggerSpec, S extends 
         this.systemResourceFaultTask = systemResourceFaultTask;
     }
 
+    @Autowired
+    public void setSystemResourceFaultTaskHelper2(SystemResourceFaultTaskHelper2<S> systemResourceFaultTask) {
+        this.systemResourceFaultTask2 = systemResourceFaultTask;
+    }
+
     @Override
     public Task<T> init(T faultSpec) throws MangleException {
         return init(faultSpec, null);
@@ -89,8 +97,20 @@ public class K8SFaultTriggerTaskHelper<T extends K8SFaultTriggerSpec, S extends 
 
     @Override
     public void executeTask(Task<T> task) throws MangleException {
+        Map<String, String> podLabels =
+                CommonUtils.stringKeyValuePairToMap(task.getTaskData().getFaultSpec().getK8sArguments().getPodLabels());
+        Map<String, String> disabledResourceLabels = task.getTaskData().getFaultSpec().getEndpoint()
+                .getK8sConnectionProperties().getDisabledResourceLabels();
+        if (disabledResourceLabels.entrySet().containsAll(podLabels.entrySet())) {
+            throw new MangleException(ErrorCode.K8S_RESOURCE_LABELS_DISABLED,
+                    task.getTaskData().getFaultSpec().getK8sArguments().getPodLabels(),
+                    task.getTaskData().getFaultSpec().getEndpointName());
+        }
         handleSubstages(task);
         ((RemediableTask) task).setRemediated(true);
+        if (task.getChildTaskIDs().isEmpty() && task.getTaskStatus() != TaskStatus.FAILED) {
+            throw new MangleRuntimeException(ErrorCode.FAILED_TO_CREATE_CHILD_TASKS);
+        }
     }
 
     private void handleSubstages(Task<T> task) throws MangleException {
@@ -123,7 +143,7 @@ public class K8SFaultTriggerTaskHelper<T extends K8SFaultTriggerSpec, S extends 
                 if (childFaultSpec instanceof JVMAgentFaultSpec) {
                     childTask = bytemanFaultTask.init(childFaultSpec);
                 } else {
-                    childTask = systemResourceFaultTask.init(childFaultSpec);
+                    childTask = systemResourceFaultTask2.init(childFaultSpec);
                 }
                 childTask.setTaskName(childTask.getTaskName() + "-" + childCounter++);
                 ((FaultTriggeringTask<T, S>) task).getTaskObjmap().put(podName, childTask);
@@ -171,7 +191,7 @@ public class K8SFaultTriggerTaskHelper<T extends K8SFaultTriggerSpec, S extends 
         return pods;
     }
 
-    private KubernetesCommandLineClient getClient(Task<T> task) {
+    private KubernetesCommandLineClient getClient(Task<T> task) throws MangleException {
         return (KubernetesCommandLineClient) endpointClientFactory.getEndPointClient(
                 task.getTaskData().getFaultSpec().getCredentials(), task.getTaskData().getFaultSpec().getEndpoint());
     }
@@ -193,7 +213,7 @@ public class K8SFaultTriggerTaskHelper<T extends K8SFaultTriggerSpec, S extends 
             jvmCodefault.setClassName(parentFaultSpec.getClassName());
             jvmCodefault.setMethodName(parentFaultSpec.getMethodName());
             jvmCodefault.setRuleEvent(parentFaultSpec.getRuleEvent());
-            jvmCodefault.setJvmProperties(((JVMAgentFaultSpec) parentFaultSpec).getJvmProperties());
+            jvmCodefault.setJvmProperties(parentFaultSpec.getJvmProperties());
             k8sFaultspec = jvmCodefault;
 
         } else if (isJVMAgentFaultSpec(task.getTaskData().getFaultSpec())) {
@@ -217,6 +237,7 @@ public class K8SFaultTriggerTaskHelper<T extends K8SFaultTriggerSpec, S extends 
         k8sFaultspec.setArgs(new HashMap<>(parentFaultSpec.getArgs()));
         k8sFaultspec.setSpecType(k8sFaultspec.getClass().getName());
         k8sFaultspec.setTags(parentFaultSpec.getTags());
+        k8sFaultspec.setNotifierNames(parentFaultSpec.getNotifierNames());
         log.debug("Spec for child task created successfully.");
         return (S) k8sFaultspec;
     }
@@ -249,13 +270,5 @@ public class K8SFaultTriggerTaskHelper<T extends K8SFaultTriggerSpec, S extends 
     @Override
     public boolean isReadyForChildExecution(Task<T> task) {
         return task.getTaskData().isReadyForChildExecution();
-    }
-
-    public enum SubStage {
-        INITIALISED, TRIGGER_CHILD_TASKS, COMPLETED
-    }
-
-    private void updateSubstage(Task<T> task, SubStage stage) {
-        task.updateTaskSubstage(stage.name());
     }
 }

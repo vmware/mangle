@@ -32,7 +32,7 @@ import com.vmware.mangle.utils.constants.MetricProviderConstants;
  *
  */
 @Log4j2
-public class DatadogEventNotifier implements Notifier {
+public class DatadogEventNotifier implements MetricProviderNotifier {
 
     DatadogClient datadogClient;
 
@@ -40,6 +40,7 @@ public class DatadogEventNotifier implements Notifier {
         this.datadogClient = datadogClient;
     }
 
+    @Override
     public boolean sendEvent(FaultEventSpec faultEventInfo) {
         DatadogEventDto eventSpec = getEventSpec(faultEventInfo);
         log.debug("Event Data constucted: " + eventSpec.toString());
@@ -71,17 +72,6 @@ public class DatadogEventNotifier implements Notifier {
         return eventName;
     }
 
-    private String getEventDetails(FaultEventSpec faultEventInfo) {
-        StringBuilder details = new StringBuilder();
-        details.append(MetricProviderConstants.START_TIME_TEXT + faultEventInfo.getFaultStartTime());
-        details.append(MetricProviderConstants.SEPERATOR + MetricProviderConstants.END_TIME_TEXT
-                + faultEventInfo.getFaultEndTime());
-        details.append(MetricProviderConstants.SEPERATOR + faultEventInfo.getFaultDescription());
-        details.append(MetricProviderConstants.NEW_LINE + MetricProviderConstants.STATUS_TEXT
-                + faultEventInfo.getFaultStatus());
-        return details.toString();
-    }
-
     private ArrayList<String> getEventTags(FaultEventSpec faultEventInfo) {
         ArrayList<String> tags = new ArrayList<>();
         if (null == faultEventInfo.getTags() || faultEventInfo.getTags().isEmpty()) {
@@ -106,17 +96,21 @@ public class DatadogEventNotifier implements Notifier {
         return true;
     }
 
+    @SuppressWarnings("unchecked")
     private boolean send(DatadogEventDto eventSpec) {
         ResponseEntity<String> response =
                 (ResponseEntity<String>) datadogClient.post(MetricProviderConstants.DATADOG_API_SEND_EVENT,
-                        datadogClient.objectToJson(eventSpec), String.class);
+                        DatadogClient.objectToJson(eventSpec), String.class);
         log.debug("API Response : " + response);
         return !(StringUtils.isEmpty(response)) && (ApiUtils.isResponseCodeSuccess(response.getStatusCode().value()));
     }
 
     // Nothing to implement in close Event for now.
-    public boolean closeEvent(String eventName) {
+    @Override
+    public boolean closeEvent(FaultEventSpec faultEventInfo, String taskID, String extension) {
+        if (extension.equals("com.vmware.mangle.faults.plugin.tasks.helpers.SystemResourceFaultTaskHelper2")) {
+            return sendEvent(faultEventInfo);
+        }
         return true;
     }
-
 }

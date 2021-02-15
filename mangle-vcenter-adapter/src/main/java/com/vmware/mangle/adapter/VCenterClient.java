@@ -41,6 +41,7 @@ public class VCenterClient extends RestTemplateWrapper {
     private static final String VC_AUTH_BASIC = "Basic ";
     private static final String AUTHORIZATION = "Authorization";
     private static final String VC_HEALTH_GREEN = "green";
+    private static final String VC_HEALTH_RED = "red";
     private static final String VC_HEALTH_ORANGE = "orange";
     private static String baseURL = "https://%s";
 
@@ -79,8 +80,8 @@ public class VCenterClient extends RestTemplateWrapper {
     }
 
     /**
-     * - assigns default headers that are required for the client to communicate and perform actions
-     * on the vCenter - vmware-api-session-id is generated for the given vcUsername and vcPassword
+     * - assigns default headers that are required for the client to communicate and perform actions on
+     * the vCenter - vmware-api-session-id is generated for the given vcUsername and vcPassword
      *
      * @param vcUsername:
      *            vCenter vcUsername
@@ -111,10 +112,18 @@ public class VCenterClient extends RestTemplateWrapper {
      *
      * @return: true if vCenter is healthy; else false
      */
-    public boolean testConnection() {
-        VCHealth health = (VCHealth) get(REST_HEALTH_CHECK, VCHealth.class).getBody();
-        String healthStatus = health.getValue();
-        return healthStatus.equals(VC_HEALTH_GREEN) || healthStatus.equals(VC_HEALTH_ORANGE);
+    public boolean testConnection() throws MangleException {
+        try {
+            VCHealth health = (VCHealth) get(REST_HEALTH_CHECK, VCHealth.class).getBody();
+            String healthStatus = health == null ? VC_HEALTH_RED : health.getValue();
+            if (healthStatus.equals(VC_HEALTH_GREEN) || healthStatus.equals(VC_HEALTH_ORANGE)) {
+                return true;
+            } else {
+                throw new MangleException("VCenter health check failed");
+            }
+        } catch (Exception e) {
+            throw new MangleException("VCenter health check failed with exception " + e.getMessage());
+        }
     }
 
     public void terminateConnection() {

@@ -65,11 +65,11 @@ public class TaskSpecReadingConverterTest {
     public void testConvert() {
         Row row = mock(Row.class);
         when(row.getString(anyString())).thenReturn(FaultTask.class.getName());
-        when(mappingCassandraConverter.read(any(), anyString())).thenReturn(tasksMockData.getDummyTask());
+        when(mappingCassandraConverter.read(any(), anyString())).thenReturn(tasksMockData.getDummy1Task());
 
         Task<TaskSpec> task = taskReadingConverter.convert(row);
 
-        Assert.assertEquals(task, tasksMockData.getDummyTask());
+        Assert.assertEquals(task, tasksMockData.getDummy1Task());
         verify(mappingCassandraConverter, times(1)).read(any(), anyString());
         verify(row, times(2)).getString(anyString());
 
@@ -79,7 +79,7 @@ public class TaskSpecReadingConverterTest {
     public void testConvertFailException() {
         Row row = mock(Row.class);
         when(row.getString(anyString())).thenReturn(UUID.randomUUID().toString());
-        when(mappingCassandraConverter.read(any(), anyString())).thenReturn(tasksMockData.getDummyTask());
+        when(mappingCassandraConverter.read(any(), anyString())).thenReturn(tasksMockData.getDummy1Task());
 
         Task<TaskSpec> task = taskReadingConverter.convert(row);
 

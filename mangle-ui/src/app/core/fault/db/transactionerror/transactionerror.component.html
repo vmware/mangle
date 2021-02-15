@@ -1,0 +1,53 @@
+<app-alert [(alertMessage)]="alertMessage" [isErrorMessage]="isErrorMessage"
+    (alertMessageChange)="alertMessage = $event"></app-alert>
+<div>
+    <h3 class="modal-title">Execute/Schedule Transaction Error Fault</h3>
+    <form data-tag="db-transactionError" #transactionErrorForm="ngForm"
+        (ngSubmit)="executeTransactionErrorFault(transactionErrorForm.value);" ngNativeValidate>
+        <section class="form-block">
+            <db-fault-endpoint [faultFormData]="faultFormData" [supportedEpTypes]="supportedEpTypes"
+                [supportedDbTypes]="supportedDatabaseTypes" [endpoints]="endpoints"
+                (displayEndpointFieldsEvent)="displayEndpointFields($event);"
+                (dockerContainersEvent)="getDockerContainers($event['endPointType'], $event['name']);"
+                (click)="getTransactionErrorCode();"></db-fault-endpoint>
+            <div class="form-group">
+                <label for="tableName">Table Name</label>
+                <input type="text" name="tableName" id="tableName" [(ngModel)]="faultFormData.tableName" required>
+            </div>
+            <div class="form-group">
+                <label for="percentage">Percentage (%)</label>
+                <input type="number" name="percentage" id="percentage" [(ngModel)]="faultFormData.percentage" min="1"
+                    max="100" required>
+            </div>
+            <div class="form-group">
+                <label for="errorCode">Error Code</label>
+                <div class="select">
+                    <select name="errorCode" id="errorCode" [(ngModel)]="faultFormData.errorCode" required>
+                        <ng-container *ngFor="let dbErrorCode of dbTransactionErrorCodes">
+                            <option [value]="dbErrorCode">{{dbErrorCode}}</option>
+                        </ng-container>
+                    </select>
+                </div>
+            </div>
+            <fault-timeoutms [faultFormData]="faultFormData"></fault-timeoutms>
+            <fault-injectionhomedir [faultFormData]="faultFormData"></fault-injectionhomedir>
+            <fault-dockerargs [faultFormData]="faultFormData" [dockerHidden]="dockerHidden"
+                [dockerContainers]="dockerContainers" [searchedContainers]="searchedContainers"></fault-dockerargs>
+            <fault-k8sargs [faultFormData]="faultFormData" [k8sHidden]="k8sHidden"></fault-k8sargs>
+            <fault-schedule [faultFormData]="faultFormData" (submitButtonChange)="setSubmitButton();"
+                (setCronModal)="viewCronModal($event);"></fault-schedule>
+            <fault-tags [tagsData]="tagsData" (tagsModalEvent)="tagsModal=$event;"></fault-tags>
+            <fault-notifiers [notifiersData]="notifiersData" (notifiersModalEvent)="notifierModal=$event;">
+            </fault-notifiers>
+        </section>
+        <button type="submit" data-tag="ScheduleCPUFault" class="btn btn-primary" [clrLoading]="runBtnState"
+            [disabled]="disableSchedule">SCHEDULE FAULT</button>
+        <button type="submit" data-tag="RunCPUFault" class="btn btn-primary" [clrLoading]="runBtnState"
+            [disabled]="disableRun">RUN FAULT</button>
+    </form>
+</div>
+<app-cron [cronModal]="cronModal" [cronValOrig]="faultFormData.schedule.cronExpression"
+    (cronMessageEvent)="setScheduleCron($event);"></app-cron>
+<app-tags [tagsModal]="tagsModal" [tagsData]="tagsData" (updateTagsModal)="tagsModal=$event;"></app-tags>
+<app-notifiers [notifierModal]="notifierModal" [notifiersData]="notifiersData"
+    (updateNotifiersModal)="notifierModal=$event;"></app-notifiers>

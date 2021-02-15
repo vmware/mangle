@@ -79,6 +79,7 @@ public class CustomFaultInjectionHelper {
         faultSpec.setDockerArguments(customFaultSpec.getDockerArguments());
         faultSpec.setK8sArguments(customFaultSpec.getK8sArguments());
         faultSpec.setFaultParameters(customFaultSpec.getFaultParameters());
+        faultSpec.setNotifierNames(customFaultSpec.getNotifierNames());
         return faultSpec;
     }
 
@@ -100,6 +101,7 @@ public class CustomFaultInjectionHelper {
         return (Task<TaskSpec>) task;
     }
 
+    @SuppressWarnings("squid:S1452")
     public Task<? extends TaskSpec> getTask(FaultSpec faultSpec, String taskExtensionName) throws MangleException {
         Task<? extends TaskSpec> task = getTask(faultSpec, null, taskExtensionName);
         faultInjectionHelper.saveTask(task);

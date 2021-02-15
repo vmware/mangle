@@ -21,14 +21,14 @@ public enum NetworkFaultType {
     PACKET_DUPLICATE_PERCENTAGE("PACKET_DUPLICATE_PERCENTAGE"),
     PACKET_CORRUPT_PERCENTAGE("PACKET_CORRUPT_PERCENTAGE"),
     PACKET_LOSS_PERCENTAGE("PACKET_LOSS_PERCENTAGE");
-    private String networkFaultType;
+    private String name;
 
     NetworkFaultType(String networkFaultType) {
-        this.networkFaultType = networkFaultType;
+        this.name = networkFaultType;
     }
 
     public String networkFaultType() {
-        return networkFaultType;
+        return name;
     }
 
 }

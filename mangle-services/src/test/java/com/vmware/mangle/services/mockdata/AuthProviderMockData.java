@@ -17,6 +17,7 @@ import java.util.Properties;
 import java.util.UUID;
 
 import com.vmware.mangle.cassandra.model.security.ADAuthProviderDto;
+import com.vmware.mangle.cassandra.model.security.ADAuthProviderDtoV1;
 import com.vmware.mangle.utils.ReadProperty;
 import com.vmware.mangle.utils.constants.Constants;
 
@@ -33,6 +34,11 @@ public class AuthProviderMockData {
     private String newAdUrl;
     private String adDomain1;
     private String adDomain2;
+    private static final String adDomain = "domain.com";
+    private static final String adUser = "dummyUser";
+    private static final String adUserPassword = "dummyPassword";
+    private static final String adId = "_12345";
+    private static final String adDummyUser = "dummyUser1@domain.com";
 
     public AuthProviderMockData() {
         Properties properties = ReadProperty.readProperty(Constants.MOCKDATA_FILE);
@@ -53,8 +59,24 @@ public class AuthProviderMockData {
         return adAuthProviderDto;
     }
 
+    public ADAuthProviderDtoV1 getADAuthProviderDtoV1() {
+        ADAuthProviderDtoV1 adAuthProviderDto = new ADAuthProviderDtoV1();
+        adAuthProviderDto.setId(adDomain1);
+        adAuthProviderDto.setAdDomain(adDomain1);
+        adAuthProviderDto.setAdUrl(adUrl);
+        return adAuthProviderDto;
+    }
+
     public ADAuthProviderDto getNewADAuthProviderDto() {
         ADAuthProviderDto adAuthProviderDto = new ADAuthProviderDto();
+        adAuthProviderDto.setId(adDomain2);
+        adAuthProviderDto.setAdDomain(adDomain2);
+        adAuthProviderDto.setAdUrl(newAdUrl);
+        return adAuthProviderDto;
+    }
+
+    public ADAuthProviderDtoV1 getNewADAuthProviderDtoV1() {
+        ADAuthProviderDtoV1 adAuthProviderDto = new ADAuthProviderDtoV1();
         adAuthProviderDto.setId(adDomain2);
         adAuthProviderDto.setAdDomain(adDomain2);
         adAuthProviderDto.setAdUrl(newAdUrl);
@@ -67,5 +89,15 @@ public class AuthProviderMockData {
         lists.add(UUID.randomUUID().toString());
         lists.add(UUID.randomUUID().toString());
         return lists;
+    }
+
+    public ADAuthProviderDto getDummyAuthProvider() {
+        ADAuthProviderDto adAuthProviderDto = new ADAuthProviderDto();
+        adAuthProviderDto.setId(adId);
+        adAuthProviderDto.setAdDomain(adDomain);
+        adAuthProviderDto.setAdUrl(adUrl);
+        adAuthProviderDto.setAdUser(adUser);
+        adAuthProviderDto.setAdUserPassword(adUserPassword);
+        return adAuthProviderDto;
     }
 }

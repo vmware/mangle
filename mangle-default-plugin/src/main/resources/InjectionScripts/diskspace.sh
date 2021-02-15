@@ -24,6 +24,7 @@ main() {
     preRequisitescheck
     status
     isDirectoryExist
+    isSudoPresent
     injectFault
 }
 
@@ -70,6 +71,7 @@ help() {
 
 preRequisitescheck() {
   isDfPresent
+  isDdPresent
   isPgrepPresent
   isAwkPresent
   checkWritePermissionOfInjectionDir
@@ -89,6 +91,22 @@ isDfPresent() {
   if [ $dfRetVal -ne 0 ]; then
     precheckmessage="df required,"
   fi
+}
+
+isDdPresent() {
+  dd --version>/dev/null 2>&1
+  ddRetVal=$?
+  if [ $ddRetVal -ne 0 ]; then
+    precheckmessage="dd required,"
+  fi
+}
+
+isSudoPresent(){
+    sudo -nv > /dev/null 2>&1
+    sudoRetVal=$?
+    if [ $sudoRetVal -eq 0 ]; then
+        sudoCommand="sudo"
+    fi
 }
 
 isPgrepPresent() {
@@ -146,7 +164,7 @@ remediate() {
 }
 
 cleanup() {
-  rm -rf $directoryPath/mangleDumpFile.txt >/dev/null 2>&1
+  $sudoCommand rm -rf $directoryPath/mangleDumpFile.txt >/dev/null 2>&1
   rm -rf $basedirectory/diskspacescript.sh >/dev/null 2>&1
   rm -rf $basedirectory/diskspace.sh >/dev/null 2>&1
   rm -rf $basedirectory/diskSpaceFault.log >/dev/null 2>&1
@@ -174,6 +192,14 @@ validateInputs() {
   else
     if [ ! -w "$directoryPath" ]; then
       validationMessage="The Provided user does not have permission on ${directoryPath}"
+      $sudoCommand touch $directoryPath/mangle.txt > /dev/null 2>&1
+      touchRetValWithSudo=$?
+      if [ $touchRetValWithSudo -ne 0 ]; then
+      	validationMessage="${validationMessage} and sudo also not exists in this machine"
+      else
+        $sudoCommand rm -f $directoryPath/mangle.txt > /dev/null 2>&1
+        validationMessage=""
+      fi
     fi
   fi
 
@@ -234,7 +260,7 @@ injectFault() {
   }
 
   remediateAndClean(){
-    rm -rf "\$directoryPath/mangleDumpFile.txt" >/dev/null 2>&1
+    $sudoCommand rm -rf "\$directoryPath/mangleDumpFile.txt" >/dev/null 2>&1
     rm -rf $basedirectory/diskspacescript.sh >/dev/null 2>&1
     rm -rf $basedirectory/diskSpaceFault.log >/dev/null 2>&1
     rm -rf $basedirectory/diskspace.sh >/dev/null 2>&1
@@ -258,11 +284,11 @@ injectFault() {
         echo "diskFill: \${diskFill}"
         count=\$(awk "BEGIN { ct=\${diskFill}/1024; i=int(ct); print (ct-i<0.5)?i:i+1 }")
         echo "count: \${count}"
-        dd if=/dev/zero of="\$directoryPath/mangleDumpFile.txt" oflag=append bs=1MB count=\$count conv=notrunc
+        $sudoCommand dd if=/dev/zero of="\$directoryPath/mangleDumpFile.txt" oflag=append bs=1MB count=\$count conv=notrunc
         sleep \$timeout
         remediateAndClean
       else
-        dd if=/dev/zero of="\$directoryPath/mangleDumpFile.txt" oflag=append bs=1GB conv=notrunc
+        $sudoCommand dd if=/dev/zero of="\$directoryPath/mangleDumpFile.txt" oflag=append bs=1GB conv=notrunc
         sleep \$timeout
         remediateAndClean
       fi

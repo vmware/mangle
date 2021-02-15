@@ -55,6 +55,9 @@ import static com.vmware.mangle.utils.constants.KnownFailureConstants.AGENT_SUBM
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.AGENT_SUBMIT_JAVA_NET_CONNECT_EXCEPTION_OUTPUT;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.AGENT_SUBMIT_JAVA_NET_SOCKET_EXCEPTION_MESSAGE;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.AGENT_SUBMIT_JAVA_NET_SOCKET_EXCEPTION_OUTPUT;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.CASSANDRA_DB_CONNECTION_LEAK_CONNECTION_ERROR_FAILURE_OUTPUT;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.DB_CONNECTION_LEAK_CONNECTION_ERROR_FAILURE_MESSAGE;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.DB_CONNECTION_PROPERTIES_ERROR_FAILURE_OUTPUT;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.DISKIO_FAULT_IOSIZE_GREATER_THAN_DISK_SIZE_OUTPUT;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.DISKIO_FAULT_TARGET_DIRECTORY_DOESNT_HAVE_PERMISSION_OUTPUT;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.DISKIO_FAULT_TARGET_DIRECTORY_NOT_FOUND_OUTPUT;
@@ -78,6 +81,15 @@ import static com.vmware.mangle.utils.constants.KnownFailureConstants.DOCKER_STO
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.DOCKER_STOP_CONTAINER_ON_PAUSED_OUTPUT;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.EXPECTED_MESSAGE_FOR_FILE_NOT_FOUND;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.FAULT_ALREADY_REMEDIATED;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.FAULT_INJECTED_WITH_INVALID_TIMEOUT_MESSAGE;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.FAULT_INJECTED_WITH_INVALID_TIMEOUT_OUTPUT;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.HOSTLIST_EMPTY_AVAILABLE_MESSAGE;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.HOSTLIST_EMPTY_AVAILABLE_OUTPUT;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.INFRA_AGENT_FILES_MISSING_MESSAGE;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.INFRA_AGENT_NOT_RUNNING_AT_ENDPOINT_MESSAGE;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.INFRA_AGENT_NOT_RUNNING_AT_ENDPOINT_OUTPUT;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.INJECTION_FILES_IS_MISSING_IN_THE_ENDPOINT_OUTPUT1;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.INJECTION_FILES_IS_MISSING_IN_THE_ENDPOINT_OUTPUT2;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.K8S_INVALID_POD_CONTAINER_MAPPING_FAILURE_OUTPUT;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.K8S_POD_TAR_NOT_AVAILABLE_AGENT_COPY_FAILURE_MESSAGE;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.K8S_POD_TAR_NOT_AVAILABLE_AGENT_COPY_FAILURE_OUTPUT;
@@ -85,18 +97,37 @@ import static com.vmware.mangle.utils.constants.KnownFailureConstants.KILL_PROCE
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.KILL_PROCESS_FOUND_MORE_THAN_ONE_PROCESS_FAILURE_OUTPUT;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.KILL_PROCESS_NOT_FOUND_IDENTIFIER_FAILURE_MESSAGE;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.KILL_PROCESS_NOT_FOUND_IDENTIFIER_FAILURE_OUTPUT;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.KILL_PROCESS_NO_ROUTE_TO_HOST_FAILURE_MESSAGE;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.KILL_PROCESS_NO_ROUTE_TO_HOST_FAILURE_OUTPUT;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.MEMORY_FAULT_CURRENT_MEMORY_USAGE_GREATER_THAN_REQUESTED_MEMORY_MESSAGE;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.MEMORY_FAULT_CURRENT_MEMORY_USAGE_GREATER_THAN_REQUESTED_MEMORY_OUTPUT;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.MONGO_DB_CONNECTION_LEAK_CONNECTION_ERROR_FAILURE_OUTPUT;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.NETWORKPARTITIONFAULT_HOST_COMMUNICATION_FAILURE_MESSAGE;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.NETWORKPARTITIONFAULT_HOST_COMMUNICATION_FAILURE_OUTPUT;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.NETWORK_FAULT_INVALID_NIC_MESSAGE;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.NETWORK_FAULT_INVALID_NIC_OUTPUT;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.NETWORK_FAULT_REMEDIATION_FAIL_SOCKET_NOT_ESTABLISHED_MESSAGE;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.NETWORK_FAULT_REMEDIATION_FAIL_SOCKET_NOT_ESTABLISHED_OUTPUT;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.PG_DB_CONNECTION_LEAK_CONNECTION_ERROR_FAILURE_OUTPUT;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.PG_DB_TABLE_NOT_EXIST_FAILURE_MESSAGE;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.PG_DB_TABLE_NOT_EXIST_FAILURE_OUTPUT;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.REDIS_DB_FAULT_ALREADY_REMEDIATED_OUTPUT;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.REDIS_DB_FAULT_ALREADY_RUNNING_OUTPUT;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.REDIS_PROXY_CONN_ERROR_FAILURE_OUTPUT;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.REDIS_PROXY_CONN_ERROR_OUTPUT;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.ROUTE_COMMAND_NOT_AVAILABLE_MESSAGE;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.ROUTE_COMMAND_NOT_AVAILABLE_OUTPUT;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.STOPSERVICEFAULT_SERVICE_NOT_FOUND_FAILURE_MESSAGE;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.STOPSERVICEFAULT_SERVICE_NOT_FOUND_FAILURE_OUTPUT;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.STOPSERVICEFAULT_SERVICE_NOT_FOUND_FAILURE_OUTPUT2;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.SYSTEM_RESOURCE_FAULT_ALREADY_REMEDIATED_OUTPUT;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.SYSTEM_RESOURCE_FAULT_ALREADY_RUNNING_OUTPUT;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.SYSTEM_RESOURCE_FAULT_DIRECTORY_NOT_FOUND_OUTPUT;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.SYSTEM_RESOURCE_FAULT_PARALLEL_EXECUTION_NOT_SUPPORTED_MESSAGE;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.SYSTEM_RESOURCE_FAULT_PRECHECK_FAILED_OUTPUT;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.SYSTEM_RESOURCE_SHELL_SCRIPT_FILE_NOT_FOUND_OUTPUT;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.USER_DOES_NOT_HAVE_PERMISSION_TO_STOP_SERVICE_MESSAGE;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.USER_DOES_NOT_HAVE_PERMISSION_TO_STOP_SERVICE_OUTPUT;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.VCENTER_ADAPTER_CONNECTION_FAILURE_OUTPUT;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.VCENTER_DISCONNECTED_DISK_NIC_ALREADY_INJECTED_OUTPUT;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.VCENTER_DISCONNECT_DISK_NIC_FAULT_ALREADY_REMEDIATED_OUTPUT;
@@ -243,12 +274,37 @@ public class KnownFailuresHelper {
                 KILL_PROCESS_FOUND_MORE_THAN_ONE_PROCESS_FAILURE_MESSAGE);
         knownFailureMap.put(KILL_PROCESS_NOT_FOUND_IDENTIFIER_FAILURE_OUTPUT,
                 KILL_PROCESS_NOT_FOUND_IDENTIFIER_FAILURE_MESSAGE);
+        knownFailureMap.put(KILL_PROCESS_NO_ROUTE_TO_HOST_FAILURE_OUTPUT,
+                KILL_PROCESS_NO_ROUTE_TO_HOST_FAILURE_MESSAGE);
         knownFailureMap.put(NETWORK_FAULT_INVALID_NIC_OUTPUT, NETWORK_FAULT_INVALID_NIC_MESSAGE);
         knownFailureMap.put(DISK_SPACE_NOT_FOUND_DIRECTORY_PATH_FAILURE_OUTPUT,
                 DISK_SPACE_NOT_FOUND_DIRECTORY_PATH_FAILURE_MESSAGE);
         knownFailureMap.put(DISK_SPACE_FILL_PERCENTAGE_GREATER_THAN_USED_DISK_PERCENTAGE_FAILURE_OUTPUT,
                 DISK_SPACE_FILL_PERCENTAGE_GREATER_THAN_USED_DISK_PERCENTAGE_FAILURE_MESSAGE);
-
+        knownFailureMap.put(PG_DB_CONNECTION_LEAK_CONNECTION_ERROR_FAILURE_OUTPUT,
+                DB_CONNECTION_LEAK_CONNECTION_ERROR_FAILURE_MESSAGE);
+        knownFailureMap.put(PG_DB_TABLE_NOT_EXIST_FAILURE_OUTPUT, PG_DB_TABLE_NOT_EXIST_FAILURE_MESSAGE);
+        knownFailureMap.put(MONGO_DB_CONNECTION_LEAK_CONNECTION_ERROR_FAILURE_OUTPUT,
+                DB_CONNECTION_LEAK_CONNECTION_ERROR_FAILURE_MESSAGE);
+        knownFailureMap.put(CASSANDRA_DB_CONNECTION_LEAK_CONNECTION_ERROR_FAILURE_OUTPUT,
+                DB_CONNECTION_LEAK_CONNECTION_ERROR_FAILURE_MESSAGE);
+        knownFailureMap.put(STOPSERVICEFAULT_SERVICE_NOT_FOUND_FAILURE_OUTPUT,
+                STOPSERVICEFAULT_SERVICE_NOT_FOUND_FAILURE_MESSAGE);
+        knownFailureMap.put(STOPSERVICEFAULT_SERVICE_NOT_FOUND_FAILURE_OUTPUT2,
+                STOPSERVICEFAULT_SERVICE_NOT_FOUND_FAILURE_MESSAGE);
+        knownFailureMap.put(NETWORKPARTITIONFAULT_HOST_COMMUNICATION_FAILURE_OUTPUT,
+                NETWORKPARTITIONFAULT_HOST_COMMUNICATION_FAILURE_MESSAGE);
+        knownFailureMap.put(DB_CONNECTION_PROPERTIES_ERROR_FAILURE_OUTPUT,
+                DB_CONNECTION_LEAK_CONNECTION_ERROR_FAILURE_MESSAGE);
+        knownFailureMap.put(USER_DOES_NOT_HAVE_PERMISSION_TO_STOP_SERVICE_OUTPUT,
+                USER_DOES_NOT_HAVE_PERMISSION_TO_STOP_SERVICE_MESSAGE);
+        knownFailureMap.put(ROUTE_COMMAND_NOT_AVAILABLE_OUTPUT, ROUTE_COMMAND_NOT_AVAILABLE_MESSAGE);
+        knownFailureMap.put(INJECTION_FILES_IS_MISSING_IN_THE_ENDPOINT_OUTPUT1, INFRA_AGENT_FILES_MISSING_MESSAGE);
+        knownFailureMap.put(INJECTION_FILES_IS_MISSING_IN_THE_ENDPOINT_OUTPUT2, INFRA_AGENT_FILES_MISSING_MESSAGE);
+        knownFailureMap.put(INFRA_AGENT_NOT_RUNNING_AT_ENDPOINT_OUTPUT, INFRA_AGENT_NOT_RUNNING_AT_ENDPOINT_MESSAGE);
+        knownFailureMap.put(INFRA_AGENT_NOT_RUNNING_AT_ENDPOINT_OUTPUT, INFRA_AGENT_NOT_RUNNING_AT_ENDPOINT_MESSAGE);
+        knownFailureMap.put(FAULT_INJECTED_WITH_INVALID_TIMEOUT_OUTPUT, FAULT_INJECTED_WITH_INVALID_TIMEOUT_MESSAGE);
+        knownFailureMap.put(HOSTLIST_EMPTY_AVAILABLE_OUTPUT, HOSTLIST_EMPTY_AVAILABLE_MESSAGE);
         return knownFailureMap;
     }
 
@@ -262,6 +318,9 @@ public class KnownFailuresHelper {
         knownFailureMap.put(SYSTEM_RESOURCE_SHELL_SCRIPT_FILE_NOT_FOUND_OUTPUT, FAULT_ALREADY_REMEDIATED);
         knownFailureMap.put(NETWORK_FAULT_REMEDIATION_FAIL_SOCKET_NOT_ESTABLISHED_OUTPUT,
                 NETWORK_FAULT_REMEDIATION_FAIL_SOCKET_NOT_ESTABLISHED_MESSAGE);
+        knownFailureMap.put(INFRA_AGENT_NOT_RUNNING_AT_ENDPOINT_OUTPUT, INFRA_AGENT_NOT_RUNNING_AT_ENDPOINT_MESSAGE);
+        knownFailureMap.put(INJECTION_FILES_IS_MISSING_IN_THE_ENDPOINT_OUTPUT1, INFRA_AGENT_FILES_MISSING_MESSAGE);
+        knownFailureMap.put(INJECTION_FILES_IS_MISSING_IN_THE_ENDPOINT_OUTPUT2, INFRA_AGENT_FILES_MISSING_MESSAGE);
         return knownFailureMap;
     }
 
@@ -295,5 +354,20 @@ public class KnownFailuresHelper {
         knownFailuresForAgentFaultInjection.put(VCENTER_ADAPTER_CONNECTION_FAILURE_OUTPUT, null);
         knownFailuresForAgentFaultInjection.put(VCENTER_SERVER_CONNECTION_FAILURE_OUTPUT, null);
         return knownFailuresForAgentFaultInjection;
+    }
+
+    public Map<String, String> getKnownFailuresOfRedisDbFaultInjectionRequest() {
+        Map<String, String> knownFailureMap = new HashMap<>();
+        knownFailureMap.put(REDIS_DB_FAULT_ALREADY_RUNNING_OUTPUT,
+                SYSTEM_RESOURCE_FAULT_PARALLEL_EXECUTION_NOT_SUPPORTED_MESSAGE);
+        knownFailureMap.put(REDIS_PROXY_CONN_ERROR_OUTPUT, REDIS_PROXY_CONN_ERROR_FAILURE_OUTPUT);
+        return knownFailureMap;
+    }
+
+    public Map<String, String> getKnownFailuresOfRedisDbFaultRemediationRequest() {
+        Map<String, String> knownFailureMap = new HashMap<>();
+        knownFailureMap.put(REDIS_DB_FAULT_ALREADY_REMEDIATED_OUTPUT, FAULT_ALREADY_REMEDIATED);
+        knownFailureMap.put(REDIS_PROXY_CONN_ERROR_OUTPUT, REDIS_PROXY_CONN_ERROR_FAILURE_OUTPUT);
+        return knownFailureMap;
     }
 }

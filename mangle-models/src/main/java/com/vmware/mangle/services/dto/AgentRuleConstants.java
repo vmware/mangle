@@ -29,6 +29,10 @@ public class AgentRuleConstants {
     public static final CharSequence CLASS_NAME_STRING = "$CLASS_NAME";
     public static final CharSequence METHOD_NAME_STRING = "$METHOD_NAME";
     public static final CharSequence RULE_EVENT_STRING = "$RULE_EVENT";
+    public static final CharSequence RULE_STRING = "RULE ";
+    public static final CharSequence CLASS_STRING = "CLASS ";
+    public static final CharSequence METHOD_STRING = "METHOD ";
+    public static final CharSequence HELPER_CLASS_STRING = "HELPER ";
     public static final String LATENCY_STRING = "latency";
     public static final CharSequence AT_ENTRY_STRING = "AT ENTRY";
     public static final String IF_TRUE = "IF true";

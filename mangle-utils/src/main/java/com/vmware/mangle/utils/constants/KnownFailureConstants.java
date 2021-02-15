@@ -11,15 +11,15 @@
 
 package com.vmware.mangle.utils.constants;
 
-import lombok.experimental.UtilityClass;
-
 /**
  * @author hkilari
  *
  */
-@UtilityClass
 public class KnownFailureConstants {
 
+    private KnownFailureConstants() {
+
+    }
 
     public static final String EXPECTED_MESSAGE_FOR_FILE_NOT_FOUND = "No such file or directory";
     public static final String FAULT_ALREADY_REMEDIATED = "Requested Fault is already Remediated";
@@ -146,6 +146,7 @@ public class KnownFailureConstants {
     public static final String KILL_PROCESS_NOT_FOUND_IDENTIFIER_FAILURE_OUTPUT = "no process found with identifier";
     public static final String KILL_PROCESS_FOUND_MORE_THAN_ONE_PROCESS_FAILURE_OUTPUT =
             "Found more than one process with same process identifier";
+    public static final String KILL_PROCESS_NO_ROUTE_TO_HOST_FAILURE_OUTPUT = "connect: no route to host";
 
     public static final String DISK_SPACE_NOT_FOUND_DIRECTORY_PATH_FAILURE_OUTPUT =
             "The Provided directory path not found";
@@ -166,15 +167,36 @@ public class KnownFailureConstants {
     public static final String SYSTEM_RESOURCE_SHELL_SCRIPT_FILE_NOT_FOUND_OUTPUT =
             "input is not a terminal or the right kind of file";
 
+    public static final String PG_DB_CONNECTION_LEAK_CONNECTION_ERROR_FAILURE_OUTPUT =
+            "psql failed to get active connections";
+    public static final String PG_DB_TABLE_NOT_EXIST_FAILURE_OUTPUT = "Provided table doesn't exist in db";
+    public static final String MONGO_DB_CONNECTION_LEAK_CONNECTION_ERROR_FAILURE_OUTPUT =
+            "mongo failed to get active connections";
+    public static final String CASSANDRA_DB_CONNECTION_LEAK_CONNECTION_ERROR_FAILURE_OUTPUT =
+            "cqlsh failed to get active connections";
+    public static final String DB_CONNECTION_PROPERTIES_ERROR_FAILURE_OUTPUT =
+            "Provided db connection properties are not valid";
+
+    public static final String STOPSERVICEFAULT_SERVICE_NOT_FOUND_FAILURE_OUTPUT = "service could not be found";
+    public static final String STOPSERVICEFAULT_SERVICE_NOT_FOUND_FAILURE_OUTPUT2 =
+            "not-found (Reason: No such file or directory)";
+
     //Failure reasons for System Resource Fault Injection
     public static final String KILL_PROCESS_NOT_FOUND_IDENTIFIER_FAILURE_MESSAGE =
             "No process found for given identifier";
     public static final String KILL_PROCESS_FOUND_MORE_THAN_ONE_PROCESS_FAILURE_MESSAGE =
             "Found more than one process for given identifier";
+    public static final String KILL_PROCESS_NO_ROUTE_TO_HOST_FAILURE_MESSAGE = "Not able to connect with given host";
     public static final String SYSTEM_RESOURCE_FAULT_PARALLEL_EXECUTION_NOT_SUPPORTED_MESSAGE =
             "Parallel execution of the same fault is not supported";
     public static final String MEMORY_FAULT_CURRENT_MEMORY_USAGE_GREATER_THAN_REQUESTED_MEMORY_MESSAGE =
             "Current memory load of target machine is greater than the requested load";
+
+    //Network partition fault known failures
+    public static final String NETWORKPARTITIONFAULT_HOST_COMMUNICATION_FAILURE_OUTPUT = "Host communication failed";
+    public static final String NETWORKPARTITIONFAULT_HOST_COMMUNICATION_FAILURE_MESSAGE =
+            "Not able to connect with given host. Check Host connectivity";
+
     public static final String DISKIO_FAULT_TARGET_DIRECTORY_NOT_FOUND_OUTPUT_MESSAGE =
             "The provided target directory is invalid. Please provide an existing directory";
 
@@ -182,6 +204,10 @@ public class KnownFailureConstants {
             "Directory path not found in target machine";
     public static final String DISK_SPACE_FILL_PERCENTAGE_GREATER_THAN_USED_DISK_PERCENTAGE_FAILURE_MESSAGE =
             "The provided disk fill percentage should be greater than used disk percentage";
+
+    public static final String DB_CONNECTION_LEAK_CONNECTION_ERROR_FAILURE_MESSAGE =
+            "Failed while getting db connection, please verify db connection properties";
+    public static final String PG_DB_TABLE_NOT_EXIST_FAILURE_MESSAGE = "Provided table doesn't exist in db";
 
     //Command Outputs for vCenter adapter
     public static final String VCENTER_STATE_FAULT_ALREADY_REMEDIATED_OUTPUT = "Virtual machine is already powered on";
@@ -212,4 +238,37 @@ public class KnownFailureConstants {
             "Provided nic name is invalid.Please retrigger with a valid nic";
     public static final String NETWORK_FAULT_REMEDIATION_FAIL_SOCKET_NOT_ESTABLISHED_MESSAGE =
             "Manual remediation can't be done now as the injected latency is high.Please wait until autoremediation happens";
+
+    //Command Outputs for Redis db
+    public static final String REDIS_DB_FAULT_ALREADY_REMEDIATED_OUTPUT = "no matching rule found";
+    public static final String REDIS_DB_FAULT_ALREADY_RUNNING_OUTPUT = "a rule by the same name exists";
+    public static final String REDIS_PROXY_CONN_ERROR_OUTPUT = "Could not connect to Redis at";
+
+    //Failure messages for Redis db
+    public static final String REDIS_PROXY_CONN_ERROR_FAILURE_OUTPUT = "Redis FI Proxy is down";
+    public static final String STOPSERVICEFAULT_SERVICE_NOT_FOUND_FAILURE_MESSAGE = "Provided service is not found";
+
+    //Failure message for stop service fault
+    public static final String USER_DOES_NOT_HAVE_PERMISSION_TO_STOP_SERVICE_OUTPUT = "Access denied";
+    public static final String USER_DOES_NOT_HAVE_PERMISSION_TO_STOP_SERVICE_MESSAGE =
+            "Current user does not have permission to stop the service.Try the fault with user having proper permission.";
+    //Command Outputs for Network Partition Fault
+    public static final String ROUTE_COMMAND_NOT_AVAILABLE_OUTPUT = "route command not available";
+    //Failure message for Network Partition Fault
+    public static final String ROUTE_COMMAND_NOT_AVAILABLE_MESSAGE =
+            "route command is not available on the OS.Install the required package and retry";
+    public static final String HOSTLIST_EMPTY_AVAILABLE_OUTPUT =
+            "Recieved a hostlist which is empty or does not have hosts other than this machine";
+    public static final String HOSTLIST_EMPTY_AVAILABLE_MESSAGE =
+            "Hostlist is empty or does not have hosts other than the endpoint machine";
+    public static final String INJECTION_FILES_IS_MISSING_IN_THE_ENDPOINT_OUTPUT1 = "No such file or directory";
+    public static final String INJECTION_FILES_IS_MISSING_IN_THE_ENDPOINT_OUTPUT2 = "no such file or directory";
+    public static final String INFRA_AGENT_FILES_MISSING_MESSAGE = "Infra agent files are missing at the endpoint!";
+    public static final String INFRA_AGENT_NOT_RUNNING_AT_ENDPOINT_OUTPUT = "Connection refused";
+    public static final String INFRA_AGENT_NOT_RUNNING_AT_ENDPOINT_MESSAGE =
+            "Infra agent process has been terminated/stopped on the target.Mangle unable to communicate to infra agent.";
+    //Failure message for Filehandler Fault
+    public static final String FAULT_INJECTED_WITH_INVALID_TIMEOUT_OUTPUT = "timeout value should be an integer";
+    public static final String FAULT_INJECTED_WITH_INVALID_TIMEOUT_MESSAGE =
+            "Provide valid timeout value for the fault";
 }

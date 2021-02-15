@@ -60,4 +60,11 @@ public class DatadogEventNotifierTest {
         Assert.assertTrue(true);
     }
 
+    @Test(description = "Test to validate the methods when all valid data populated in Fault  Event Spec", priority = 50)
+    public void closeEventTestForSystemResourceTask() {
+        DatadogEventNotifier datadogEventNotifier = new DatadogEventNotifier(datadogClient);
+        Assert.assertTrue(datadogEventNotifier.closeEvent(faultEventData, "dummy-id",
+                "com.vmware.mangle.faults.plugin.tasks.helpers.SystemResourceFaultTaskHelper2"));
+    }
 }
+

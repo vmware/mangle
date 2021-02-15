@@ -63,7 +63,9 @@ public class UserLoginAttemptServiceTest {
 
         UserLoginAttempts userLoginAttempts = service.getUserAttemptsForUser(user.getName());
 
-        Assert.assertEquals(userLoginAttempts, loginAttempts);
+        Assert.assertEquals(userLoginAttempts, loginAttempts,
+                "Should have return the same user object which is in DB without any modification");
+
         verify(repository, times(1)).findByUsername(user.getName());
     }
 
@@ -79,8 +81,11 @@ public class UserLoginAttemptServiceTest {
 
         service.updateFailAttempts(user.getName());
 
-        Assert.assertEquals(user.getAccountLocked(), Boolean.TRUE);
-        Assert.assertEquals(loginAttempts.getAttempts(), 5);
+        Assert.assertEquals(user.getAccountLocked(), Boolean.TRUE,
+                "Calling updateFailAttempts should have updated the account lock status to locked");
+        Assert.assertEquals(loginAttempts.getAttempts(), 5,
+                "Calling updateFailAttempts method should have increased the user account's number of failed"
+                        + " attempts by 1");
 
         verify(repository, times(1)).findByUsername(user.getName());
         verify(repository, times(1)).save(any());
@@ -102,8 +107,11 @@ public class UserLoginAttemptServiceTest {
 
         service.updateFailAttempts(user.getName());
 
-        Assert.assertEquals(user.getAccountLocked(), Boolean.TRUE);
-        Assert.assertEquals(loginAttempts.getAttempts(), 5);
+        Assert.assertEquals(user.getAccountLocked(), Boolean.TRUE,
+                "Calling updateFailAttempts should have updated the account lock status to locked");
+        Assert.assertEquals(loginAttempts.getAttempts(), 5,
+                "Calling updateFailAttempts method should have increased the user account's number of failed"
+                        + " attempts by 1");
 
         verify(repository, times(1)).findByUsername(user.getName());
         verify(repository, times(1)).save(any());
@@ -124,19 +132,21 @@ public class UserLoginAttemptServiceTest {
 
         service.updateFailAttempts(user.getName());
 
-        Assert.assertEquals(user.getAccountLocked(), Boolean.FALSE);
-        Assert.assertEquals(loginAttempts.getAttempts(), 4);
+        Assert.assertEquals(user.getAccountLocked(), Boolean.TRUE,
+                "User account should have been locked on whom updateFailAttempts method is called");
+        Assert.assertTrue(loginAttempts.getAttempts() > 0,
+                "User account is locked, though the number of failed login attempts are lesser than 1");
 
 
         verify(repository, times(1)).findByUsername(user.getName());
         verify(repository, times(1)).save(any());
-        verify(userService, times(0)).getUserByName(user.getName());
-        verify(userService, times(0)).updateUser(any());
-        verify(userService, times(0)).terminateUserSession(user.getName());
+        verify(userService, times(1)).getUserByName(user.getName());
+        verify(userService, times(1)).updateUser(any());
+        verify(userService, times(1)).terminateUserSession(user.getName());
     }
 
     @Test
-    public void testUpdateFailAttemptsNoAttempUser() throws MangleException {
+    public void testUpdateFailAttemptsNoAttemptUser() throws MangleException {
         User user = userMockData.getMockUser();
 
         when(repository.findByUsername(user.getName())).thenReturn(null);
@@ -146,11 +156,36 @@ public class UserLoginAttemptServiceTest {
 
         service.updateFailAttempts(user.getName());
 
-        Assert.assertEquals(user.getAccountLocked(), Boolean.FALSE);
+        Assert.assertEquals(user.getAccountLocked(), Boolean.TRUE,
+                "User account is not locked when the loginAttempt object for a given username is not found. "
+                        + "A new instance for a given should have been created and the account should have been locked");
 
         verify(repository, times(1)).findByUsername(user.getName());
         verify(repository, times(1)).save(any());
-        verify(userService, times(0)).getUserByName(user.getName());
+        verify(userService, times(1)).getUserByName(user.getName());
+        verify(userService, times(1)).updateUser(any());
+        verify(userService, times(1)).terminateUserSession(user.getName());
+    }
+
+    @Test
+    public void testUpdateFailAttemptsNoUserFound() throws MangleException {
+        User user = userMockData.getMockUser();
+        UserLoginAttempts loginAttempts = userMockData.getUserLoginAttemptsForUser(user.getName());
+        int noOfFailedLoginAttempts = loginAttempts.getAttempts();
+        when(repository.findByUsername(user.getName())).thenReturn(loginAttempts);
+        when(userService.updateUser(any())).then(AdditionalAnswers.returnsFirstArg());
+        when(userService.getUserByName(user.getName())).thenReturn(null);
+
+
+        service.updateFailAttempts(user.getName());
+
+        Assert.assertEquals(loginAttempts.getAttempts(), noOfFailedLoginAttempts + 1,
+                "The login attempts were to be updated for a given user even when the corresponding user entry "
+                        + "is not found in the DB");
+
+        verify(repository, times(1)).findByUsername(user.getName());
+        verify(repository, times(1)).save(any());
+        verify(userService, times(1)).getUserByName(user.getName());
         verify(userService, times(0)).updateUser(any());
         verify(userService, times(0)).terminateUserSession(user.getName());
     }
@@ -167,11 +202,42 @@ public class UserLoginAttemptServiceTest {
 
         service.resetFailAttempts(user.getName());
 
-        Assert.assertEquals(user.getAccountLocked(), Boolean.FALSE);
-        Assert.assertEquals(loginAttempts.getAttempts(), 0);
+        Assert.assertEquals(user.getAccountLocked(), Boolean.FALSE,
+                "Account status is still locked. Calling resetFailAttempts for a given username should have "
+                        + "unlocked the user");
+        Assert.assertEquals(loginAttempts.getAttempts(), 0,
+                "Number of failed login attempts should have been 0. Calling resetFailAttempts for a given "
+                        + "username should have reset the value to 0");
 
         verify(repository, times(1)).findByUsername(user.getName());
         verify(repository, times(1)).save(any());
+        verify(userService, times(0)).updateUser(any());
+    }
+
+    @Test
+    public void testResetFailAttemptsLockUser() throws MangleException {
+        User user = userMockData.getLockedMockUser();
+        UserLoginAttempts loginAttempts = userMockData.getUserLoginAttemptsForUser(user.getName());
+        loginAttempts.setAttempts(4);
+
+
+        when(repository.findByUsername(user.getName())).thenReturn(loginAttempts);
+        when(userService.updateUser(any())).then(AdditionalAnswers.returnsFirstArg());
+        when(userService.getUserByName(user.getName())).thenReturn(user);
+
+        service.resetFailAttempts(user.getName());
+
+        Assert.assertEquals(user.getAccountLocked(), Boolean.FALSE,
+                "Account status is still locked. Calling resetFailAttempts for a given username should have "
+                        + "unlocked the user");
+        Assert.assertEquals(loginAttempts.getAttempts(), 0,
+                "Number of failed login attempts should have been 0. Calling resetFailAttempts for a given "
+                        + "username should have reset the value to 0");
+
+        verify(repository, times(1)).findByUsername(user.getName());
+        verify(repository, times(1)).save(any());
+        verify(userService, times(1)).updateUser(any());
+
     }
 
     @Test
@@ -184,7 +250,9 @@ public class UserLoginAttemptServiceTest {
 
         service.resetFailAttempts(user.getName());
 
-        Assert.assertEquals(user.getAccountLocked(), Boolean.FALSE);
+        Assert.assertEquals(user.getAccountLocked(), Boolean.FALSE,
+                "Account status is still locked. Calling resetFailAttempts for a given username should have "
+                        + "unlocked the user");
 
         verify(repository, times(1)).findByUsername(user.getName());
         verify(repository, times(1)).save(any());
@@ -194,18 +262,74 @@ public class UserLoginAttemptServiceTest {
     @Test
     public void testResetFailAttemptsNoUserObjectFound() throws MangleException {
         User user = userMockData.getMockUser();
+        UserLoginAttempts loginAttempts = userMockData.getUserLoginAttemptsForUser(user.getName());
 
-        when(repository.findByUsername(user.getName())).thenReturn(null);
+        when(repository.findByUsername(user.getName())).thenReturn(loginAttempts);
+        doThrow(new MangleException(ErrorCode.NO_RECORD_FOUND)).when(userService).updateUser(any());
+        when(userService.getUserByName(user.getName())).thenReturn(null);
+
+        service.resetFailAttempts(user.getName());
+
+        Assert.assertEquals(user.getAccountLocked(), Boolean.FALSE,
+                "Account status is still locked. Calling resetFailAttempts for a given username should have "
+                        + "unlocked the user");
+        Assert.assertEquals(loginAttempts.getAttempts(), 0,
+                "Number of failed login attempts should have been 0. Calling resetFailAttempts for a given "
+                        + "username should have reset the value to 0");
+
+        verify(repository, times(1)).findByUsername(user.getName());
+        verify(repository, times(1)).save(any());
+        verify(userService, times(1)).getUserByName(user.getName());
+        verify(userService, times(0)).updateUser(any());
+    }
+
+    @Test
+    public void testResetFailAttemptsForLockedStatusNull() throws MangleException {
+        User user = userMockData.getMockUser();
+        UserLoginAttempts loginAttempts = userMockData.getUserLoginAttemptsForUser(user.getName());
+        user.setAccountLocked(null);
+
+        when(repository.findByUsername(user.getName())).thenReturn(loginAttempts);
         doThrow(new MangleException(ErrorCode.NO_RECORD_FOUND)).when(userService).updateUser(any());
         when(userService.getUserByName(user.getName())).thenReturn(user);
 
         service.resetFailAttempts(user.getName());
 
-        Assert.assertEquals(user.getAccountLocked(), Boolean.FALSE);
+        Assert.assertEquals(user.getAccountLocked(), Boolean.FALSE,
+                "Account status is still locked. Calling resetFailAttempts for a given username should have "
+                        + "unlocked the user");
+        Assert.assertEquals(loginAttempts.getAttempts(), 0,
+                "Number of failed login attempts should have been 0. Calling resetFailAttempts for a given "
+                        + "username should have reset the value to 0");
 
         verify(repository, times(1)).findByUsername(user.getName());
         verify(repository, times(1)).save(any());
         verify(userService, times(1)).getUserByName(user.getName());
+        verify(userService, times(1)).updateUser(any());
+    }
+
+    @Test
+    public void testResetFailAttemptsFailUpdateUser() throws MangleException {
+        User user = userMockData.getLockedMockUser();
+        UserLoginAttempts loginAttempts = userMockData.getUserLoginAttemptsForUser(user.getName());
+        loginAttempts.setAttempts(4);
+
+        when(repository.findByUsername(user.getName())).thenReturn(loginAttempts);
+        doThrow(new MangleException(ErrorCode.USER_NOT_FOUND)).when(userService).updateUser(any());
+        when(userService.getUserByName(user.getName())).thenReturn(user);
+
+        service.resetFailAttempts(user.getName());
+
+        Assert.assertEquals(user.getAccountLocked(), Boolean.FALSE,
+                "Account status is still locked. Calling resetFailAttempts for a given username should have "
+                        + "unlocked the user");
+        Assert.assertEquals(loginAttempts.getAttempts(), 0,
+                "Number of failed login attempts should have been 0. Calling resetFailAttempts for a given "
+                        + "username should have reset the value to 0");
+
+        verify(repository, times(1)).findByUsername(user.getName());
+        verify(repository, times(1)).save(any());
+        verify(userService, times(1)).updateUser(any());
     }
 
 }

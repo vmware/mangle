@@ -13,7 +13,7 @@ package com.vmware.mangle.utils.clients.vcenter;
 
 import lombok.Getter;
 
-import com.vmware.mangle.cassandra.model.endpoint.VCenterAdapterProperties;
+import com.vmware.mangle.cassandra.model.endpoint.VCenterAdapterDetails;
 import com.vmware.mangle.model.vcenter.VCenterSpec;
 import com.vmware.mangle.utils.clients.endpoint.EndpointClient;
 import com.vmware.mangle.utils.exceptions.MangleException;
@@ -31,9 +31,9 @@ public class VCenterClient implements EndpointClient {
     private VCenterAdapterClient vCenterAdapterClient;
 
     public VCenterClient(String vcServerUrl, String vcUsername, String vcPassword,
-            VCenterAdapterProperties vCenterAdapterProperties) {
+            VCenterAdapterDetails vCenterAdapterDetails) {
         vCenterSpec = new VCenterSpec(vcServerUrl, vcUsername, vcPassword);
-        vCenterAdapterClient = new VCenterAdapterClient(vCenterAdapterProperties);
+        vCenterAdapterClient = new VCenterAdapterClient(vCenterAdapterDetails);
     }
 
     @Override

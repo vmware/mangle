@@ -24,7 +24,6 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Scope;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
@@ -33,21 +32,32 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import com.vmware.mangle.cassandra.model.faults.specs.TaskSpec;
+import com.vmware.mangle.cassandra.model.resiliencyscore.ResiliencyScoreTask;
+import com.vmware.mangle.cassandra.model.scheduler.SchedulerInfo;
 import com.vmware.mangle.cassandra.model.scheduler.SchedulerSpec;
 import com.vmware.mangle.cassandra.model.tasks.Task;
+import com.vmware.mangle.cassandra.model.tasks.TaskType;
 import com.vmware.mangle.model.enums.SchedulerJobType;
 import com.vmware.mangle.model.enums.SchedulerStatus;
 import com.vmware.mangle.services.SchedulerService;
 import com.vmware.mangle.services.TaskService;
+import com.vmware.mangle.services.cassandra.model.events.basic.EntityCreatedEvent;
+import com.vmware.mangle.services.cassandra.model.events.basic.EntityDeletedEvent;
+import com.vmware.mangle.services.cassandra.model.events.basic.EntityUpdatedEvent;
 import com.vmware.mangle.services.config.SchedulerConfig;
 import com.vmware.mangle.services.deletionutils.SchedulerDeletionService;
 import com.vmware.mangle.services.deletionutils.TaskDeletionService;
 import com.vmware.mangle.services.events.schedule.ScheduleCreatedEvent;
 import com.vmware.mangle.services.events.schedule.ScheduleUpdatedEvent;
+import com.vmware.mangle.services.events.web.CustomEventPublisher;
+import com.vmware.mangle.services.helpers.TaskHelper;
+import com.vmware.mangle.services.resiliencyscore.ResiliencyScoreService;
+import com.vmware.mangle.services.resiliencyscore.ResiliencyScoreTaskExecutor;
 import com.vmware.mangle.services.tasks.executor.TaskExecutor;
 import com.vmware.mangle.utils.constants.ErrorConstants;
 import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
+
 
 /**
  * Class to Intialize the Scheduler and helpers method to start the jobs
@@ -55,6 +65,7 @@ import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
  * @author bkaranam
  * @author ashrimali
  * @author jayasankarr
+ * @author dbhat
  */
 
 @Component
@@ -78,7 +89,16 @@ public class Scheduler {
     private SchedulerDeletionService schedulerDeletionService;
 
     @Autowired
-    private ApplicationEventPublisher eventPublisher;
+    private CustomEventPublisher eventPublisher;
+
+    @Autowired
+    private ResiliencyScoreTaskExecutor<Task<? extends TaskSpec>> resiliencyScoreTaskExecutor;
+
+    @Autowired
+    private TaskHelper taskHelper;
+
+    @Autowired
+    private ResiliencyScoreService resiliencyScoreService;
 
     private Map<String, ScheduledFuture<?>> scheduledJobs;
     private ThreadPoolTaskScheduler taskScheduler;
@@ -86,6 +106,7 @@ public class Scheduler {
     public static final String PAUSE_SCHEDULE = "PAUSE";
     public static final String CANCEL_SCHEDULE = "CANCEL";
     public static final String DELETE_SCHEDULE = "DELETE";
+    public static final String RESYNC_SCHEDULE = "RESYNCSCHEDULE";
     public static final String DELETE_SCHEDULE_AND_TASKS = "DELETE_SCHEDULE_AND_TASKS";
 
     private Scheduler() {
@@ -113,22 +134,18 @@ public class Scheduler {
             throws MangleException {
         ScheduledFuture<? extends Task<? extends TaskSpec>> future =
                 (ScheduledFuture<? extends Task<? extends TaskSpec>>) this.taskScheduler.schedule(() -> {
-                    try {
-                        concurrentTaskRunner.execute(task);
-                    } catch (MangleException e) {
-                        log.error(e);
-                    } catch (InterruptedException e) {
-                        log.error(e.getMessage());
-                        Thread.currentThread().interrupt();
-                    }
+                    executeTask(task);
                 }, new CronTrigger(cronExpression));
         if (null != future) {
             log.trace("Successfully created cron based schedule for the job {}", task.getId());
             task.setScheduledTask(true);
             this.scheduledJobs.put(task.getId(), future);
-            taskService.addOrUpdateTask(task);
+            eventPublisher.publishAnEvent(new EntityCreatedEvent(task.getId(), SchedulerSpec.class.getName()));
+            if (task.getTaskType() != TaskType.RESILIENCY_SCORE) {
+                taskService.addOrUpdateTask(task);
+            }
             addOrUpdateScheduleJobStatus(task.getId(), SchedulerJobType.CRON, null, cronExpression,
-                    task.getTaskData().getSchedule().getDescription());
+                    task.getTaskData().getSchedule().getDescription(), task.getTaskData().getNotifierNames());
             return (ScheduledFuture<Task<TaskSpec>>) future;
         } else {
             schedulerDeletionService.deleteSchedulerDetailsByJobId(task.getId());
@@ -149,28 +166,39 @@ public class Scheduler {
             throws MangleException {
         ScheduledFuture<? extends Task<? extends TaskSpec>> future =
                 (ScheduledFuture<? extends Task<? extends TaskSpec>>) this.taskScheduler.schedule(() -> {
-                    try {
-                        concurrentTaskRunner.execute(task);
-                    } catch (MangleException e) {
-                        log.error(e);
-                    } catch (InterruptedException e) {
-                        log.error(e.getMessage());
-                        Thread.currentThread().interrupt();
-                    }
+                    executeTask(task);
                 }, new Date(timeInMilliseconds));
 
         if (null != future) {
             log.trace("Successfully created simple schedule for the job {}", task.getId());
             task.setScheduledTask(true);
-            taskService.addOrUpdateTask(task);
+            if (task.getTaskType() != TaskType.RESILIENCY_SCORE) {
+                taskService.addOrUpdateTask(task);
+            }
             this.scheduledJobs.put(task.getId(), future);
+            eventPublisher.publishAnEvent(new EntityCreatedEvent(task.getId(), SchedulerSpec.class.getName()));
             addOrUpdateScheduleJobStatus(task.getId(), SchedulerJobType.SIMPLE, timeInMilliseconds, null,
-                    task.getTaskData().getSchedule().getDescription());
+                    task.getTaskData().getSchedule().getDescription(), task.getTaskData().getNotifierNames());
             return (ScheduledFuture<Task<TaskSpec>>) future;
         } else {
             schedulerDeletionService.deleteSchedulerDetailsByJobId(task.getId());
             taskDeletionService.deleteTaskById(task.getId());
             throw new MangleException(ErrorCode.SIMPLE_JOB_SCHEDULE_FAILURE, new Date(timeInMilliseconds).toString());
+        }
+    }
+
+    private void executeTask(Task<? extends TaskSpec> task) {
+        try {
+            if (task.getTaskType() == TaskType.RESILIENCY_SCORE) {
+                resiliencyScoreTaskExecutor.runTask(task);
+            } else {
+                concurrentTaskRunner.execute(task);
+            }
+        } catch (MangleException e) {
+            log.error(e);
+        } catch (InterruptedException e) {
+            log.error(e.getMessage());
+            Thread.currentThread().interrupt();
         }
     }
 
@@ -302,19 +330,20 @@ public class Scheduler {
      *            job id of the schedule that needs to be removed
      * @param status
      * @return
+     * @throws MangleException
      */
-    public boolean removeScheduleFromCurrentNode(String jobId, String status) {
-        boolean isOperationSuccessful = false;
+    public boolean removeScheduleFromCurrentNode(String jobId, String status) throws MangleException {
+        boolean isScheduleRemoved = false;
         if (PAUSE_SCHEDULE.equals(status)) {
             log.info("Pausing the schedule {}", jobId);
-            isOperationSuccessful = cancelAndUpdateJobsMap(jobId, SchedulerStatus.PAUSED);
+            isScheduleRemoved = cancelAndUpdateJobsMap(jobId, SchedulerStatus.PAUSED);
         } else if (CANCEL_SCHEDULE.equals(status)) {
             log.info("Cancelling the schedule {}", jobId);
-            isOperationSuccessful = cancelAndUpdateJobsMap(jobId, SchedulerStatus.CANCELLED);
+            isScheduleRemoved = cancelAndUpdateJobsMap(jobId, SchedulerStatus.CANCELLED);
         } else if (DELETE_SCHEDULE.equals(status) || DELETE_SCHEDULE_AND_TASKS.equals(status)) {
             log.info("Deleting the schedule {}", jobId);
-            isOperationSuccessful = cancelAndUpdateJobsMap(jobId, SchedulerStatus.CANCELLED);
-            if (isOperationSuccessful) {
+            isScheduleRemoved = cancelAndUpdateJobsMap(jobId, SchedulerStatus.CANCELLED);
+            if (isScheduleRemoved) {
                 try {
                     schedulerDeletionService.deleteSchedulerDetailsByJobId(jobId);
                     if (DELETE_SCHEDULE_AND_TASKS.equals(status)) {
@@ -324,8 +353,17 @@ public class Scheduler {
                     log.error("Deletion of the job entry failed with the exception: {}", jobId);
                 }
             }
+            // If the event type is resync schedule, it will first pause it and the resume it.
+        } else if (RESYNC_SCHEDULE.equals(status)) {
+            log.info("Pausing and resuming the schedule {}", jobId);
+            if (cancelAndUpdateJobsMap(jobId, SchedulerStatus.PAUSED)) {
+                List<String> jobIds = new ArrayList<>();
+                jobIds.add(jobId);
+                this.resumeJobs(jobIds);
+            }
+
         }
-        return isOperationSuccessful;
+        return isScheduleRemoved;
     }
 
     /**
@@ -343,6 +381,7 @@ public class Scheduler {
             cancelledStatus = scheduledJob.cancel(true);
             if (cancelledStatus) {
                 this.scheduledJobs.remove(jobId);
+                eventPublisher.publishAnEvent(new EntityDeletedEvent(jobId, SchedulerSpec.class.getName()));
                 log.debug("Successfully removed the scheduled job {}", jobId);
             }
         }
@@ -375,6 +414,10 @@ public class Scheduler {
             if (cancelledStatus) {
                 schedulerService.updateSchedulerStatus(jobID, status);
                 this.scheduledJobs.remove(jobID);
+                EntityUpdatedEvent event = new EntityUpdatedEvent(jobID, SchedulerSpec.class.getName());
+                event.addToMessage(
+                        String.format("Status changed from %s to %s", SchedulerStatus.SCHEDULED.name(), status.name()));
+                eventPublisher.publishAnEvent(event);
                 eventPublisher.publishEvent(new ScheduleUpdatedEvent(jobID, status.name()));
             }
         }
@@ -432,7 +475,7 @@ public class Scheduler {
     }
 
     private SchedulerSpec addOrUpdateScheduleJobStatus(String jobId, SchedulerJobType jobType, Long scheduledTime,
-            String cronExpression, String description) {
+            String cronExpression, String description, Set<String> notifiers) {
         SchedulerSpec schedulerDAO = new SchedulerSpec();
         schedulerDAO.setId(jobId);
         schedulerDAO.setJobType(jobType);
@@ -440,6 +483,7 @@ public class Scheduler {
         schedulerDAO.setCronExpression(cronExpression);
         schedulerDAO.setStatus(SchedulerStatus.SCHEDULED);
         schedulerDAO.setDescription(description);
+        schedulerDAO.setNotifierNames(notifiers);
         SchedulerSpec persistedSpec = schedulerService.addOrUpdateSchedulerDetails(schedulerDAO);
         eventPublisher.publishEvent(new ScheduleUpdatedEvent(jobId, persistedSpec.getStatus().name()));
         return persistedSpec;
@@ -448,4 +492,47 @@ public class Scheduler {
     public SchedulerSpec getScheduledJob(String taskId) {
         return schedulerService.getSchedulerDetailsById(taskId);
     }
+
+    /**
+     * @param schedulerSpec
+     * @return
+     * @throws MangleException
+     * @throws InterruptedException
+     */
+    public void modifyJob(SchedulerSpec schedulerSpec) throws MangleException {
+        log.trace("Processing request to modify the schedule for the jobs: {}", schedulerSpec.getId());
+        List<String> jobIds = new ArrayList<>();
+        jobIds.add(schedulerSpec.getId());
+        verifyJobIds(jobIds);
+        if (schedulerSpec.getJobType().equals(SchedulerJobType.CRON)) {
+            schedulerSpec.setScheduledTime(null);
+        } else {
+            schedulerSpec.setCronExpression(null);
+        }
+        schedulerService.addOrUpdateSchedulerDetails(schedulerSpec);
+        if (taskHelper.getTaskType(schedulerSpec.getId()) == TaskType.RESILIENCY_SCORE) {
+            ResiliencyScoreTask resiliencyScoreTask = resiliencyScoreService.getTaskById(schedulerSpec.getId());
+            SchedulerInfo schedulerInfo = resiliencyScoreTask.getTaskData().getSchedule();
+            updateSchedulerInfo(schedulerInfo, schedulerSpec);
+            resiliencyScoreTask.getTaskData().setSchedule(schedulerInfo);
+            resiliencyScoreTask.getTaskData().setNotifierNames(schedulerSpec.getNotifierNames());
+            resiliencyScoreService.addOrUpdateTask(resiliencyScoreTask);
+        } else {
+            Task<TaskSpec> task = taskService.getTaskById(schedulerSpec.getId());
+            SchedulerInfo schedulerInfo = task.getTaskData().getSchedule();
+            updateSchedulerInfo(schedulerInfo, schedulerSpec);
+            task.getTaskData().setSchedule(schedulerInfo);
+            task.getTaskData().setNotifierNames(schedulerSpec.getNotifierNames());
+            taskService.addOrUpdateTask(task);
+        }
+        log.debug("Refreshing existing schedules for jobId: {}", schedulerSpec.getId());
+        eventPublisher.publishEvent(new ScheduleUpdatedEvent(schedulerSpec.getId(), RESYNC_SCHEDULE));
+    }
+
+    private void updateSchedulerInfo(SchedulerInfo schedulerInfo, SchedulerSpec schedulerSpec) {
+        schedulerInfo.setCronExpression(schedulerSpec.getCronExpression());
+        schedulerInfo.setDescription(schedulerSpec.getDescription());
+        schedulerInfo.setTimeInMilliseconds(schedulerSpec.getScheduledTime());
+    }
+
 }

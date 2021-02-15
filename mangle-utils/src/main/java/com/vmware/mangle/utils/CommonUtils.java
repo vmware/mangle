@@ -24,6 +24,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -48,7 +49,7 @@ import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
 /**
- * @author Dinesh Babu TG (dgnaneswaran)
+ * @author Hemanth Kumar Kilari (hkilari)
  * @author Bhanu Karanam (bkaranam)
  * @author dbhat
  */
@@ -58,14 +59,17 @@ public class CommonUtils {
 
     public static final int TASK_TIMEOUT_SEC = 2400;
     public static final int TASK_POLLING_SEC = 20;
+    private static final String SLEEP_SECONDS_MESSAGE = "Sleeping for {} seconds";
+    private static final String SLEEP_MILLI_SECONDS_MESSAGE = "Sleeping for {} milliseconds";
+
 
     private CommonUtils() {
     }
 
-    public static void delayInSeconds(int second) {
+    public static void delayInSeconds(int seconds) {
         try {
-            log.info("Sleeping for " + second + " seconds");
-            Thread.sleep(second * 1000L);
+            log.info(SLEEP_SECONDS_MESSAGE, seconds);
+            Thread.sleep(seconds * 1000L);
         } catch (InterruptedException e) {
             log.error(e);
             Thread.currentThread().interrupt();
@@ -74,7 +78,7 @@ public class CommonUtils {
 
     public static void delayInSecondsWithDebugLog(long seconds) {
         try {
-            log.debug("Sleeping for " + seconds + " seconds");
+            log.debug(SLEEP_SECONDS_MESSAGE, seconds);
             Thread.sleep(seconds * 1000L);
         } catch (InterruptedException e) {
             log.error(e);
@@ -82,10 +86,10 @@ public class CommonUtils {
         }
     }
 
-    public static void delayInMilliSeconds(int milliSecons) {
+    public static void delayInMilliSeconds(int milliSeconds) {
         try {
-            log.info("Sleeping for " + milliSecons + " milli seconds");
-            Thread.sleep(milliSecons);
+            log.info(SLEEP_MILLI_SECONDS_MESSAGE, milliSeconds);
+            Thread.sleep(milliSeconds);
         } catch (InterruptedException e) {
             log.error(e);
             Thread.currentThread().interrupt();
@@ -240,7 +244,7 @@ public class CommonUtils {
     public static boolean checkServiceStatusInLinux(SSHUtils sshUtils, String service, String message) {
         String command = "service " + service + " status";
         String output = sshUtils.runCommand(command).getCommandOutput();
-        return output.contains(message) ? true : false;
+        return output.contains(message);
     }
 
     /**
@@ -375,6 +379,28 @@ public class CommonUtils {
         return text.substring(0, text.length() - 1);
     }
 
+
+    /**
+     * Method to Convert comma separated string with key value pair to Map<String,String>
+     *
+     * @param String
+     *            (Ex: app=springboot,version=2.0)
+     * @param delimiter
+     * @return Map<String,String>
+     */
+    public static Map<String, String> stringKeyValuePairToMap(String input) {
+        Map<String, String> outputMap = new HashMap<>();
+        if (StringUtils.hasText(input)) {
+            for (String str : input.split(",")) {
+                String[] keyValueArray = str.split("=");
+                if (keyValueArray.length == 2) {
+                    outputMap.put(keyValueArray[0], keyValueArray[1]);
+                }
+            }
+        }
+        return outputMap;
+    }
+
     /**
      * Method to extract command argument values from arguments string (ex: --vmname vm1 --faultName
      * POWEROFF_VM)
@@ -417,6 +443,19 @@ public class CommonUtils {
             log.error("Returning null");
         }
         return dateOf;
+    }
+
+    /**
+     * Get date in default time zone.
+     *
+     * @param time
+     * @return string date in {@link Constants.CURRENT_DATE_FORMAT}
+     */
+    public static String getDateInCurrentTimeZone(String time) {
+        Date dateOf = getDateObjectFor(time);
+        SimpleDateFormat formatter = new SimpleDateFormat(Constants.CURRENT_DATE_FORMAT);
+        formatter.setTimeZone(TimeZone.getDefault());
+        return formatter.format(dateOf);
     }
 
     /**

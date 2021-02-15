@@ -17,6 +17,7 @@ package com.vmware.mangle.model.enums;
  * @author chetanc
  */
 public enum HateoasOperations {
+    GET,
     UPDATE,
     DELETE,
     CREATE;

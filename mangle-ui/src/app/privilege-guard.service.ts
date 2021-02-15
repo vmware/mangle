@@ -25,7 +25,7 @@ export class PrivilegeGuardService implements CanActivate {
                 }
             }
             let privileges_res: any = await this.http.get(ServiceConstants.ROLE_MANAGEMENT_ROLES + '?' + roleString).toPromise();
-            var roleListData = privileges_res._embedded.roleList;
+            var roleListData = privileges_res.content;
             var isUserAdmin: boolean = false;
             for (var i = 0; i < roleListData.length; i++) {
                 for (var j = 0; j < roleListData[i].privilegeNames.length; j++) {

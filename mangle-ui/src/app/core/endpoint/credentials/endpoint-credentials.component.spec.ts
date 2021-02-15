@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { HttpClientModule } from '@angular/common/http';
 import { RouterTestingModule } from '@angular/router/testing';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { BrowserModule } from '@angular/platform-browser';
@@ -11,6 +10,7 @@ import { ClarityModule } from '@clr/angular';
 import { of } from 'rxjs';
 import { EndpointCredentialsComponent } from './endpoint-credentials.component';
 import { EndpointService } from 'src/app/core/endpoint/endpoint.service';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 
 describe('EndpointCredentialsComponent', () => {
   let component: EndpointCredentialsComponent;
@@ -28,7 +28,7 @@ describe('EndpointCredentialsComponent', () => {
         BrowserAnimationsModule,
         BrowserModule,
         FormsModule,
-        HttpClientModule,
+        HttpClientTestingModule,
         CommonModule,
         ClarityModule,
         RouterTestingModule.withRoutes([{ path: 'endpoint-credentials', component: EndpointCredentialsComponent }])
@@ -41,7 +41,7 @@ describe('EndpointCredentialsComponent', () => {
     })
       .compileComponents();
     endpointService = TestBed.get(EndpointService);
-    spyOn(endpointService, 'getCredentials').and.callThrough().and.returnValue(of([{ "name": "name1" }]));
+    spyOn(endpointService, 'getCredentials').and.callThrough().and.returnValue(of({ "content": [{ "name": "name1" }]}));
     fixture = TestBed.createComponent(EndpointCredentialsComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
@@ -61,45 +61,6 @@ describe('EndpointCredentialsComponent', () => {
   it('should populate credential form', () => {
     component.populateCredentialForm(vcenter_cred_data_id);
     expect(component.credentialFormData.id).toBe("some_id");
-  });
-
-  it('should show authorization', () => {
-    component.showAuthorization("apassword");
-    expect(component.passwordHidden).toBe(false);
-    component.showAuthorization("privateKey");
-    expect(component.privateKeyHidden).toBe(false);
-  });
-
-  it('should add update kubernetes credential', () => {
-    //add kubernetes credential
-    spyOn(endpointService, 'addk8sCredential').and.returnValue(of({}));
-    component.addUpdateKubernetesCredential(k8s_cred_data);
-    expect(endpointService.addk8sCredential).toHaveBeenCalled();
-    expect(endpointService.getCredentials).toHaveBeenCalled();
-    expect(component.isLoading).toBe(false);
-
-    //update kubernetes credential
-    spyOn(endpointService, 'updatek8sCredential').and.returnValue(of({}));
-    component.addUpdateKubernetesCredential(k8s_cred_data_id);
-    expect(endpointService.updatek8sCredential).toHaveBeenCalled();
-    expect(endpointService.getCredentials).toHaveBeenCalled();
-    expect(component.isLoading).toBe(false);
-  });
-
-  it('should add update vcenter credential', () => {
-    //add vcenter credential
-    spyOn(endpointService, 'addVcenterCredential').and.returnValue(of({}));
-    component.addUpdateVcenterCredential(vcenter_cred_data);
-    expect(endpointService.addVcenterCredential).toHaveBeenCalled();
-    expect(endpointService.getCredentials).toHaveBeenCalled();
-    expect(component.isLoading).toBe(false);
-
-    //update vcenter credential
-    spyOn(endpointService, 'updateVcenterCredential').and.returnValue(of({}));
-    component.addUpdateVcenterCredential(vcenter_cred_data_id);
-    expect(endpointService.updateVcenterCredential).toHaveBeenCalled();
-    expect(endpointService.getCredentials).toHaveBeenCalled();
-    expect(component.isLoading).toBe(false);
   });
 
   it('should delete credential', () => {

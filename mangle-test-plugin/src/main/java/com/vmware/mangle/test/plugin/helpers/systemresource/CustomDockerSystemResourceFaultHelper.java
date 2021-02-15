@@ -30,7 +30,7 @@ import com.vmware.mangle.task.framework.utils.DockerCommandUtils;
 import com.vmware.mangle.utils.ICommandExecutor;
 import com.vmware.mangle.utils.exceptions.MangleException;
 
-public class CustomDockerSystemResourceFaultHelper extends CustomSystemResourceFaultHelper {
+public class CustomDockerSystemResourceFaultHelper implements CustomSystemResourceFaultHelper {
 
     private EndpointClientFactory endpointClientFactory;
 
@@ -57,33 +57,30 @@ public class CustomDockerSystemResourceFaultHelper extends CustomSystemResourceF
 
     @Override
     public List<CommandInfo> getInjectionCommandInfoList(CommandExecutionFaultSpec faultSpec) throws MangleException {
+        CommandInfo injectFaultCommandInfo = CommandInfo
+                .builder(systemResourceFaultUtils.buildInjectionCommand(faultSpec.getArgs(),
+                        faultSpec.getInjectionHomeDir()))
+                .ignoreExitValueCheck(false)
+                .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfSystemResourceFaultInjectionRequest())
+                .expectedCommandOutputList(Collections.emptyList()).build();
         List<CommandInfo> commandInfoList = new ArrayList<>();
-        CommandInfo injectFaultCommandInfo = new CommandInfo();
-        injectFaultCommandInfo.setCommand(
-                systemResourceFaultUtils.buildInjectionCommand(faultSpec.getArgs(), faultSpec.getInjectionHomeDir()));
-        injectFaultCommandInfo.setIgnoreExitValueCheck(false);
-        injectFaultCommandInfo
-                .setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfSystemResourceFaultInjectionRequest());
-        injectFaultCommandInfo.setExpectedCommandOutputList(Collections.emptyList());
         commandInfoList.add(injectFaultCommandInfo);
         return commandInfoList;
     }
 
     @Override
     public List<CommandInfo> getRemediationcommandInfoList(CommandExecutionFaultSpec faultSpec) throws MangleException {
-        List<CommandInfo> commandInfoList = new ArrayList<>();
         if (!systemResourceFaultUtils.isManualRemediationSupported(faultSpec.getFaultName())) {
             return Collections.emptyList();
         }
         String remediationCommand =
                 systemResourceFaultUtils.buildRemediationCommand(faultSpec.getArgs(), faultSpec.getInjectionHomeDir());
+        List<CommandInfo> commandInfoList = new ArrayList<>();
         if (!StringUtils.isEmpty(remediationCommand)) {
-            CommandInfo commandInfo = new CommandInfo();
-            commandInfo.setCommand(remediationCommand);
-            commandInfo.setIgnoreExitValueCheck(false);
-            commandInfo.setExpectedCommandOutputList(Collections.emptyList());
-            commandInfo
-                    .setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfSystemResourceFaultRemediationRequest());
+            CommandInfo commandInfo = CommandInfo.builder(remediationCommand).ignoreExitValueCheck(false)
+                    .expectedCommandOutputList(Collections.emptyList())
+                    .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfSystemResourceFaultRemediationRequest())
+                    .build();
             commandInfoList.add(commandInfo);
         }
         return commandInfoList;

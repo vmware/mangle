@@ -25,10 +25,14 @@ public class FaultConstants {
     public static final String AGENT_NAME = "mangle-java-agent-2.0.0";
     public static final String AGENT_JAR_EXTENSION = "-full.tar.gz";
     public static final String INJECTION_SCRIPTS_FOLDER = "InjectionScripts/";
+    public static final String INFRA_AGENT_NAME = "infra-agent.tar.gz";
+    public static final String INFRA_AGENT_FILE = "infra_agent";
+    public static final String INFRA_SUBMIT = "infra_submit ";
     public static final String BASH = "/bin/sh";
     public static final String DELETE_COMMAND = "rm -rf ";
 
     public static final String KUBE_FAULT_EXEC_STRING = "exec -it %s -c %s -- %s";
+    public static final String EQUALS_ARG = "=\"%s\"";
     public static final String EXTRACT_AGENT_COMMAND = "cd %s;tar -zxvf %s";
     public static final String REMEDIATION_REQUEST_SUCCESSFUL_STRING = "Received Remediation Request Successfully";
     public static final String AGENT_NOT_AVAILABLE_STRING =
@@ -87,11 +91,15 @@ public class FaultConstants {
     public static final String LOAD = "load";
     public static final String LOAD_SCRIPT_ARG = SCRIPT_ARGUEMENT_PREFIX + LOAD;
     public static final String LOAD_ARG = ARGUEMENT_PREFIX + LOAD;
+    public static final String FAULT_ID = "faultId";
+    public static final String FAULT_ID_SCRIPT_ARG = SCRIPT_ARGUEMENT_PREFIX + FAULT_ID;
     public static final String OPERATION = "operation";
     public static final String PORT_9090 = "9090";
     public static final String PORT_9091 = "9091";
     public static final String BLOCK_SIZE = "blockSize";
     public static final String IO_SIZE = "ioSize";
+    public static final String AVG_IO_SIZE = "avgIOSize";
+    public static final String AVG_IO_SIZE_ARG = ARGUEMENT_PREFIX + AVG_IO_SIZE;
     public static final String IO_SIZE_ARG = ARGUEMENT_PREFIX + IO_SIZE;
     public static final String BLOCK_SIZE_ARG = ARGUEMENT_PREFIX + BLOCK_SIZE;
     public static final String BLOCK_SIZE_SCRIPT_ARG = SCRIPT_ARGUEMENT_PREFIX + BLOCK_SIZE;
@@ -99,6 +107,9 @@ public class FaultConstants {
     public static final String TARGET_DIRECTORY_ARG = ARGUEMENT_PREFIX + TARGET_DIRECTORY;
     public static final String TARGET_DIRECTORY_SCRIPT_ARG = SCRIPT_ARGUEMENT_PREFIX + TARGET_DIRECTORY;
     public static final String PROCESS_IDENTIFIER = "processIdentifier";
+    public static final String SERVICE_NAME = "serviceName";
+    public static final String SERVICE_NAME_ARG = ARGUEMENT_PREFIX + SERVICE_NAME;
+    public static final String SERVICE_NAME_SCRIPT_ARG = SCRIPT_ARGUEMENT_PREFIX + SERVICE_NAME;
     public static final String KILL_ALL = "killAll";
     public static final String PROCESS_ID = "processId";
     public static final String PROCESS_IDENTIFIER_UNDERSCORE = ARGUEMENT_PREFIX + PROCESS_IDENTIFIER;
@@ -119,28 +130,89 @@ public class FaultConstants {
     public static final String NIC_NAME_SCRIPT_ARG = SCRIPT_ARGUEMENT_PREFIX + NIC_NAME;
     public static final String NIC_NAME_ARG = ARGUEMENT_PREFIX + NIC_NAME;
 
-    public static final String SCRIPT_WITH_PARAMS = " %s %s > %s 2>&1";
-    public static final String OPERATION_INJECT = " --operation=inject ";
-    public static final String OPERATION_REMEDIATE = " --operation=remediate";
+    public static final String SECONDS = "seconds";
+    public static final String SECONDS_SCRIPT_ARG = SCRIPT_ARGUEMENT_PREFIX + SECONDS;
+    public static final String SECONDS_ARG = ARGUEMENT_PREFIX + SECONDS;
 
-    public static final String MEMORY_INJECTION_COMMAND_WITH_ARGS =
-            new StringBuilder(FaultName.MEMORYFAULT.getScriptFileName()).append(OPERATION_INJECT).append("%s=%s %s=%s")
+    public static final String MINUTES = "minutes";
+    public static final String MINUTES_SCRIPT_ARG = SCRIPT_ARGUEMENT_PREFIX + MINUTES;
+    public static final String MINUTES_ARG = ARGUEMENT_PREFIX + MINUTES;
+
+    public static final String HOURS = "hours";
+    public static final String HOURS_SCRIPT_ARG = SCRIPT_ARGUEMENT_PREFIX + HOURS;
+    public static final String HOURS_ARG = ARGUEMENT_PREFIX + HOURS;
+
+    public static final String DAYS = "days";
+    public static final String DAYS_SCRIPT_ARG = SCRIPT_ARGUEMENT_PREFIX + DAYS;
+    public static final String DAYS_ARG = ARGUEMENT_PREFIX + DAYS;
+
+    public static final String CLOCK_TYPE = "type";
+    public static final String CLOCK_TYPE_SCRIPT_ARG = SCRIPT_ARGUEMENT_PREFIX + CLOCK_TYPE;
+    public static final String CLOCK_TYPE_ARG = ARGUEMENT_PREFIX + CLOCK_TYPE;
+
+    public static final String SCRIPT_WITH_PARAMS = " %s %s > %s 2>&1";
+    public static final String OPERATION_INJECT = " --operation inject ";
+    public static final String OPERATION_REMEDIATE = " --operation remediate ";
+
+    public static final String OPERATION_STATUS = " --operation status ";
+
+    public static final String AGENT_PORT = "agentPort";
+    public static final String PORT_SCRIPT_ARGUEMENT = SCRIPT_ARGUEMENT_PREFIX + AGENT_PORT;
+    public static final String OPERATION_STATUS_WITH_PORT = OPERATION_STATUS + PORT_SCRIPT_ARGUEMENT + " %s";
+    public static final String OPERATION_REMEDIATE_WITH_PORT = OPERATION_REMEDIATE + PORT_SCRIPT_ARGUEMENT + " %s";
+
+    public static final String MEMORY_INJECTION_COMMAND_WITH_ARGS = new StringBuilder(INFRA_SUBMIT)
+            .append(OPERATION_INJECT).append("--faultname %s ").append("%s %s %s %s").toString();
+    public static final String DISK_IO_INJECTION_COMMAND_WITH_ARGS = new StringBuilder(INFRA_SUBMIT)
+            .append(OPERATION_INJECT).append("--faultname %s ").append("%s %s %s %s %s %s").toString();
+    public static final String CLOCK_SKEW_INJECTION_COMMAND_WITH_ARGS =
+            new StringBuilder(INFRA_SUBMIT).append(OPERATION_INJECT).append("--faultname %s ")
+                    .append("%s %s %s %s %s %s %s %s %s %s %s %s").toString();
+
+    public static final String MEMORY_INJECTION_COMMAND_WITH_ARGS_AND_PORT = new StringBuilder(INFRA_SUBMIT)
+            .append(OPERATION_INJECT).append("--faultname %s ").append("%s %s %s %s %s %s").toString();
+    public static final String DISK_IO_INJECTION_COMMAND_WITH_ARGS_AND_PORT = new StringBuilder(INFRA_SUBMIT)
+            .append(OPERATION_INJECT).append("--faultname %s ").append("%s %s %s %s %s %s %s %s").toString();
+    public static final String CLOCK_SKEW_INJECTION_COMMAND_WITH_ARGS_AND_PORT =
+            new StringBuilder("infra_submit ").append(OPERATION_INJECT).append("--faultname %s ")
+                    .append("%s %s %s %s %s %s %s %s %s %s %s %s %s %s").toString();
+    public static final String CLOCK_SKEW_REMEDIATION_COMMAND_WITH_ARGS =
+            new StringBuilder(FaultName.CLOCKSKEWFAULT.getScriptFileName()).append(OPERATION_REMEDIATE).append("%s=%s")
                     .toString();
-    public static final String DISK_IO_INJECTION_COMMAND_WITH_ARGS =
-            new StringBuilder(FaultName.DISKFAULT.getScriptFileName()).append(OPERATION_INJECT)
-                    .append("%s=%s %s=%s %s=%s").toString();
-    public static final String FILEHANDLER_INJECTION_COMMAND_WITH_ARGS =
-            new StringBuilder(FaultName.FILEHANDLERFAULT.getScriptFileName()).append(OPERATION_INJECT).append("%s=%s")
-                    .toString();
-    public static final String CPU_INJECTION_COMMAND_WITH_ARGS =
-            new StringBuilder(FaultName.CPUFAULT.getScriptFileName()).append(OPERATION_INJECT).append("%s=%s %s=%s")
-                    .toString();
+    public static final String CPU_INJECTION_COMMAND_WITH_ARGS_AND_PORT = new StringBuilder(INFRA_SUBMIT)
+            .append(OPERATION_INJECT).append("--faultname %s ").append("%s %s %s %s %s %s").toString();
+
+    public static final String FILEHANDLER_INJECTION_COMMAND_WITH_ARGS = new StringBuilder(INFRA_SUBMIT)
+            .append("--faultname %s ").append(OPERATION_INJECT).append("%s %s").toString();
+    public static final String FILEHANDLER_INJECTION_COMMAND_WITH_ARGS_AND_PORT =
+            FILEHANDLER_INJECTION_COMMAND_WITH_ARGS + " %s %s";
+
+    public static final String CPU_INJECTION_COMMAND_WITH_ARGS = new StringBuilder(INFRA_SUBMIT)
+            .append(OPERATION_INJECT).append("--faultname %s ").append("%s %s %s %s").toString();
+    public static final String DISK_SPACE_INJECTION_COMMAND_WITH_ARGS_AND_PORT = new StringBuilder(INFRA_SUBMIT)
+            .append(OPERATION_INJECT).append("--faultname %s ").append("%s %s %s %s %s %s").toString();
+    public static final String DISK_SPACE_INJECTION_COMMAND_WITH_ARGS = new StringBuilder(INFRA_SUBMIT)
+            .append(OPERATION_INJECT).append("--faultname %s ").append("%s %s %s %s").toString();
+
     public static final String KILL_SERVICE_INJECTION_COMMAND_WITH_ARGS =
+            new StringBuilder(INFRA_SUBMIT).append(OPERATION_INJECT).append("--faultname %s ")
+                    .append("--processIdentifier \"%s\" --killAll %s --processId \"%s\"").toString();
+    /*public static final String KILL_SERVICE_INJECTION_COMMAND_WITH_ARGS =
             new StringBuilder(FaultName.KILLPROCESSFAULT.getScriptFileName()).append(OPERATION_INJECT)
-                    .append("--processIdentifier=\"%s\" --killAll=%s --processId=\"%s\"").toString();
-    public static final String NETWORK_FAULT_INJECTION_COMMAND_WITH_ARGS =
-            new StringBuilder(FaultName.NETWORKFAULT.getScriptFileName()).append(OPERATION_INJECT)
-                    .append("%s=%s %s=%s %s=%s %s=%s %s=%s").toString();
+                    .append("--processIdentifier=\"%s\" --killAll=%s --processId=\"%s\"").toString();*/
+    public static final String NETWORK_FAULT_INJECTION_COMMAND_WITH_ARGS = new StringBuilder(INFRA_SUBMIT)
+            .append(OPERATION_INJECT).append("--faultname %s ").append("%s %s %s %s %s %s %s %s %s %s").toString();
+    public static final String NETWORK_FAULT_INJECTION_COMMAND_WITH_ARGS_WITH_PORT =
+            new StringBuilder(INFRA_SUBMIT).append(OPERATION_INJECT).append("--faultname %s ")
+                    .append("%s %s %s %s %s %s %s %s %s %s %s %s").toString();
+
+    public static final String STOP_SERVICE_INJECTION_COMMAND_WITH_ARGS =
+            new StringBuilder(FaultName.STOPSERVICEFAULT.getScriptFileName()).append(OPERATION_INJECT + " ")
+                    .append(SERVICE_NAME_SCRIPT_ARG).append(EQUALS_ARG + " ").append(TIMEOUT_SCRIPT_ARG)
+                    .append(EQUALS_ARG).toString();
+    public static final String STOP_SERVICE_REMEDIATION_COMMAND_WITH_ARGS =
+            new StringBuilder(FaultName.STOPSERVICEFAULT.getScriptFileName()).append(OPERATION_REMEDIATE + " ")
+                    .append(SERVICE_NAME_SCRIPT_ARG).append(EQUALS_ARG).toString();
     public static final String KILL_SERVICE_INJECTION_COMMAND_WIN_WITH_ARGS =
             FaultName.KILLPROCESSFAULT_WINDOWS.getScriptFileName() + " \"" + "%s" + "\"" + "> %s 2>&1";
     public static final String DISK_LATENCY_INJECTION_COMMAND_WITH_ARGS =
@@ -154,17 +226,103 @@ public class FaultConstants {
             "%s %s %s %s %s %s %s %s %s > %s 2>&1";
     public static final String DB_TRANSACTION_ERROR_INJECTION_COMMAND_WITH_ARGS =
             "%s %s %s %s %s %s %s %s %s > %s 2>&1";
+
     public static final String FAULT_PARAMETERS_KEY = "faultParameters";
     public static final String DIRECTORY_PATH_ARG = ARGUEMENT_PREFIX + DIRECTORY_PATH;
     public static final String DISK_FILL_SIZE = "diskFillSize";
     public static final String DISK_FILL_SIZE_ARG = ARGUEMENT_PREFIX + DISK_FILL_SIZE;
     public static final String DISK_FILL_SIZE_SCRIPT_ARG = SCRIPT_ARGUEMENT_PREFIX + DISK_FILL_SIZE;
     public static final String DIRECTORY_PATH_SCRIPT_ARG = SCRIPT_ARGUEMENT_PREFIX + DIRECTORY_PATH;
-    public static final String DISK_SPACE_INJECTION_COMMAND_WITH_ARGS = FaultName.DISKSPACEFAULT.getScriptFileName()
-            + OPERATION_INJECT + DIRECTORY_PATH_SCRIPT_ARG + "=%s " + TIMEOUT_SCRIPT_ARG + "=%s";
+
     public static final String DISK_SPACE_REMEDIATION_COMMAND_WITH_ARGS =
-            OPERATION_REMEDIATE + " " + DIRECTORY_PATH_SCRIPT_ARG + "=%s";
+            OPERATION_REMEDIATE + " " + DIRECTORY_PATH_SCRIPT_ARG + " %s";
     public static final String KERNELPANIC_INJECTION_COMMAND_WITH_ARGS =
-            new StringBuilder(FaultName.KERNELPANICFAULT.getScriptFileName()).append(OPERATION_INJECT).toString()
-                    .trim();
+            new StringBuilder(INFRA_SUBMIT).append(OPERATION_INJECT).append("--faultname ")
+                    .append(FaultName.KERNELPANICFAULT.getValue()).toString().trim();
+    public static final String DB_NAME_ARG = ARGUEMENT_PREFIX + DB_NAME;
+    public static final String DB_USER_NAME_ARG = ARGUEMENT_PREFIX + USERNAME;
+    public static final String DB_PASSWORD_ARG = ARGUEMENT_PREFIX + PASSWORD_KEY;
+    public static final String DB_PORT = "port";
+    public static final String DB_PORT_ARG = ARGUEMENT_PREFIX + DB_PORT;
+    public static final String DB_TYPE_KEY = "dbType";
+    public static final String DB_TYPE_ARG = ARGUEMENT_PREFIX + DB_TYPE_KEY;
+    public static final String DB_USER_NAME_SCRIPT_ARG = SCRIPT_ARGUEMENT_PREFIX + USERNAME;
+    public static final String DB_PASSWORD_SCRIPT_ARG = SCRIPT_ARGUEMENT_PREFIX + PASSWORD_KEY;
+    public static final String DB_PORT_SCRIPT_ARG = SCRIPT_ARGUEMENT_PREFIX + DB_PORT;
+    public static final String DB_NAME_SCRIPT_ARG = SCRIPT_ARGUEMENT_PREFIX + DB_NAME;
+    public static final String DB_SSL_ENABLED = "sslEnabled";
+    public static final String DB_SSL_ENABLED_ARG = ARGUEMENT_PREFIX + DB_SSL_ENABLED;
+    public static final String DB_SSL_ENABLED_SCRIPT_ARG = SCRIPT_ARGUEMENT_PREFIX + DB_SSL_ENABLED;
+    public static final String DATABASE_CONNECTION_LEAK_INJECTION_COMMAND_WITH_ARGS = OPERATION_INJECT
+            + DB_NAME_SCRIPT_ARG + "=%s " + DB_USER_NAME_SCRIPT_ARG + "=%s " + DB_PASSWORD_SCRIPT_ARG + "=%s "
+            + DB_PORT_SCRIPT_ARG + "=%s " + DB_SSL_ENABLED_SCRIPT_ARG + "=%s " + TIMEOUT_SCRIPT_ARG + "=%s";
+    public static final String DATABASE_CONNECTION_LEAK_REMEDIATION_COMMAND_WITH_ARGS =
+            OPERATION_REMEDIATE + " " + DB_NAME_SCRIPT_ARG + "=%s " + DB_USER_NAME_SCRIPT_ARG + "=%s "
+                    + DB_SSL_ENABLED_SCRIPT_ARG + "=%s " + DB_PORT_SCRIPT_ARG + "=%s";
+    public static final String DB_TABLE_NAME_KEY = "tableName";
+    public static final String DB_TABLE_NAME_ARG = ARGUEMENT_PREFIX + DB_TABLE_NAME_KEY;
+    public static final String DB_TABLE_NAME_SCRIPT_ARG = SCRIPT_ARGUEMENT_PREFIX + DB_TABLE_NAME_KEY;
+    public static final String DB_ERROR_CODE_KEY = "errorCode";
+    public static final String DB_ERROR_CODE_ARG = ARGUEMENT_PREFIX + DB_ERROR_CODE_KEY;
+    public static final String DB_ERROR_CODE_SCRIPT_ARG = SCRIPT_ARGUEMENT_PREFIX + DB_ERROR_CODE_KEY;
+    public static final String DB_PERCENTAGE_KEY = "percentage";
+    public static final String DB_PERCENTAGE_ARG = ARGUEMENT_PREFIX + DB_PERCENTAGE_KEY;
+    public static final String DB_PERCENTAGE_SCRIPT_ARG = SCRIPT_ARGUEMENT_PREFIX + DB_PERCENTAGE_KEY;
+    public static final String DB_LATENCY_KEY = "latency";
+    public static final String DB_LATENCY_ARG = ARGUEMENT_PREFIX + DB_LATENCY_KEY;
+    public static final String DB_LATENCY_SCRIPT_ARG = SCRIPT_ARGUEMENT_PREFIX + DB_LATENCY_KEY;
+    public static final String DATABASE_TRANSACTION_ERROR_INJECTION_COMMAND_WITH_ARGS = OPERATION_INJECT
+            + DB_NAME_SCRIPT_ARG + "=%s " + DB_USER_NAME_SCRIPT_ARG + "=%s " + DB_PASSWORD_SCRIPT_ARG + "=%s "
+            + DB_PORT_SCRIPT_ARG + "=%s " + DB_TABLE_NAME_SCRIPT_ARG + "=%s " + DB_ERROR_CODE_SCRIPT_ARG + "=%s "
+            + DB_PERCENTAGE_SCRIPT_ARG + "=%s " + DB_SSL_ENABLED_SCRIPT_ARG + "=%s " + TIMEOUT_SCRIPT_ARG + "=%s";
+    public static final String DATABASE_TRANSACTION_ERROR_REMEDIATION_COMMAND_WITH_ARGS = OPERATION_REMEDIATE + " "
+            + DB_NAME_SCRIPT_ARG + "=%s " + DB_USER_NAME_SCRIPT_ARG + "=%s " + DB_PASSWORD_SCRIPT_ARG + "=%s "
+            + DB_PORT_SCRIPT_ARG + "=%s " + DB_SSL_ENABLED_SCRIPT_ARG + "=%s " + DB_TABLE_NAME_SCRIPT_ARG + "=%s";
+    public static final String DATABASE_TRANSACTION_LATENCY_INJECTION_COMMAND_WITH_ARGS = OPERATION_INJECT
+            + DB_NAME_SCRIPT_ARG + "=%s " + DB_USER_NAME_SCRIPT_ARG + "=%s " + DB_PASSWORD_SCRIPT_ARG + "=%s "
+            + DB_PORT_SCRIPT_ARG + "=%s " + DB_TABLE_NAME_SCRIPT_ARG + "=%s " + DB_LATENCY_SCRIPT_ARG + "=%s "
+            + DB_PERCENTAGE_SCRIPT_ARG + "=%s " + DB_SSL_ENABLED_SCRIPT_ARG + "=%s " + TIMEOUT_SCRIPT_ARG + "=%s";
+    public static final String DATABASE_TRANSACTION_LATENCY_REMEDIATION_COMMAND_WITH_ARGS = OPERATION_REMEDIATE + " "
+            + DB_NAME_SCRIPT_ARG + "=%s " + DB_USER_NAME_SCRIPT_ARG + "=%s " + DB_PASSWORD_SCRIPT_ARG + "=%s "
+            + DB_PORT_SCRIPT_ARG + "=%s " + DB_SSL_ENABLED_SCRIPT_ARG + "=%s " + DB_TABLE_NAME_SCRIPT_ARG + "=%s";
+    public static final String HOSTS_KEY = "hosts";
+    public static final String HOSTS_ARG = ARGUEMENT_PREFIX + HOSTS_KEY;
+    public static final String HOSTS_SCRIPT_ARG = SCRIPT_ARGUEMENT_PREFIX + HOSTS_KEY;
+    public static final String NETWORK_PARTITION_INJECTION_COMMAND_WITH_ARGS = new StringBuilder(INFRA_SUBMIT)
+            .append(OPERATION_INJECT + "--faultname ").append(FaultName.NETWORKPARTITIONFAULT.getValue() + " ")
+            .append(HOSTS_SCRIPT_ARG + " %s " + TIMEOUT_SCRIPT_ARG + " %s").toString();
+
+    public static final String NETWORK_PARTITION_REMEDIATION_COMMAND_WITH_ARGS =
+            OPERATION_REMEDIATE + HOSTS_SCRIPT_ARG + " %s";
+    public static final String STOP_SERVICE_REMEDIATION_COMMAND_WITH_ARGS1 =
+            OPERATION_REMEDIATE + SERVICE_NAME_SCRIPT_ARG + " %s";
+    public static final String STOP_SERVICE_INJECTION_COMMAND_WITH_ARGS1 = new StringBuilder(INFRA_SUBMIT)
+            .append(OPERATION_INJECT + "--faultname ").append(FaultName.STOPSERVICEFAULT.getValue() + " ")
+            .append(SERVICE_NAME_SCRIPT_ARG).append(" %s ").append(TIMEOUT_SCRIPT_ARG).append(" %s").toString();
+    public static final String FAULT_NAME_SCRIPT_ARG = SCRIPT_ARGUEMENT_PREFIX + "faultname";
+    public static final String DATABASE_CONNECTION_LEAK_INJECTION_COMMAND_WITH_ARGS2 =
+            INFRA_SUBMIT + OPERATION_INJECT + FAULT_NAME_SCRIPT_ARG + " %s " + DB_NAME_SCRIPT_ARG + " %s "
+                    + DB_USER_NAME_SCRIPT_ARG + " %s " + DB_PASSWORD_SCRIPT_ARG + " %s " + DB_PORT_SCRIPT_ARG + " %s "
+                    + DB_SSL_ENABLED_SCRIPT_ARG + " %s " + TIMEOUT_SCRIPT_ARG + " %s";
+    public static final String DATABASE_TRANSACTION_ERROR_INJECTION_COMMAND_WITH_ARGS2 =
+            INFRA_SUBMIT + OPERATION_INJECT + FAULT_NAME_SCRIPT_ARG + " %s " + DB_NAME_SCRIPT_ARG + " %s "
+                    + DB_USER_NAME_SCRIPT_ARG + " %s " + DB_PASSWORD_SCRIPT_ARG + " %s " + DB_PORT_SCRIPT_ARG + " %s "
+                    + DB_TABLE_NAME_SCRIPT_ARG + " %s " + DB_ERROR_CODE_SCRIPT_ARG + " %s " + DB_PERCENTAGE_SCRIPT_ARG
+                    + " %s " + DB_SSL_ENABLED_SCRIPT_ARG + " %s " + TIMEOUT_SCRIPT_ARG + " %s";
+    public static final String DATABASE_TRANSACTION_LATENCY_INJECTION_COMMAND_WITH_ARGS2 =
+            INFRA_SUBMIT + OPERATION_INJECT + FAULT_NAME_SCRIPT_ARG + " %s " + DB_NAME_SCRIPT_ARG + " %s "
+                    + DB_USER_NAME_SCRIPT_ARG + " %s " + DB_PASSWORD_SCRIPT_ARG + " %s " + DB_PORT_SCRIPT_ARG + " %s "
+                    + DB_TABLE_NAME_SCRIPT_ARG + " %s " + DB_LATENCY_SCRIPT_ARG + " %s " + DB_PERCENTAGE_SCRIPT_ARG
+                    + " %s " + DB_SSL_ENABLED_SCRIPT_ARG + " %s " + TIMEOUT_SCRIPT_ARG + " %s";
+    public static final String DATABASE_CONNECTION_LEAK_REMEDIATION_COMMAND_WITH_ARGS2 =
+            INFRA_SUBMIT + OPERATION_REMEDIATE + DB_NAME_SCRIPT_ARG + " %s " + DB_USER_NAME_SCRIPT_ARG + " %s "
+                    + DB_SSL_ENABLED_SCRIPT_ARG + " %s " + DB_PORT_SCRIPT_ARG + " %s";
+    public static final String DATABASE_TRANSACTION_ERROR_REMEDIATION_COMMAND_WITH_ARGS2 =
+            INFRA_SUBMIT + OPERATION_REMEDIATE + DB_NAME_SCRIPT_ARG + " %s " + DB_USER_NAME_SCRIPT_ARG + " %s "
+                    + DB_PASSWORD_SCRIPT_ARG + " %s " + DB_PORT_SCRIPT_ARG + " %s " + DB_SSL_ENABLED_SCRIPT_ARG + " %s "
+                    + DB_TABLE_NAME_SCRIPT_ARG + " %s";
+    public static final String DATABASE_TRANSACTION_LATENCY_REMEDIATION_COMMAND_WITH_ARGS2 =
+            INFRA_SUBMIT + OPERATION_REMEDIATE + DB_NAME_SCRIPT_ARG + " %s " + DB_USER_NAME_SCRIPT_ARG + " %s "
+                    + DB_PASSWORD_SCRIPT_ARG + " %s " + DB_PORT_SCRIPT_ARG + " %s " + DB_SSL_ENABLED_SCRIPT_ARG + " %s "
+                    + DB_TABLE_NAME_SCRIPT_ARG + " %s";
 }

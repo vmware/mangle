@@ -11,6 +11,7 @@
 
 package com.vmware.mangle.utils.constants;
 
+
 /**
  * Insert your comment for ErrorConstants here
  *
@@ -50,6 +51,8 @@ public class ErrorConstants {
     public static final String ROLE = "Role";
     public static final String DEPLOYMENT_MODE = "deploymentMode";
     public static final String CLUSTER_QUORUM = "quorum";
+    public static final String SLACK_NAME = "Slack name";
+    public static final String VCENTER_ADAPTER_DETAILS = "vCenter Adapter Details";
 
     public static final String USER_ALREADY_EXISTS = "User %s already exists";
     public static final String TEST_CONNECTION_FAILED =
@@ -75,12 +78,16 @@ public class ErrorConstants {
     public static final String EVENT_NOT_FOUND = "Event not found with id: %s";
     public static final String ROLE_DELETION_PRE_CONDITION_FAILURE =
             "Role could not be Deleted. Role has active associations with existing Users";
+    public static final String AUTHSOURCE_DELETION_PRE_CONDITION_FAILURE =
+            "AuthSource could not be Deleted. AuthSource has active associations with existing Users";
     public static final String DEFAULT_PLUGIN_ID_ERROR =
             "Deletion operation of the mangle default plugin is not allowed";
     public static final String CLUSTER_CONFIG_MISMATCH_VALIDATION_TOKEN =
             "Node spin up failed, mis-matching validation token with the one configured in db";
     public static final String CLUSTER_CONFIG_MISMATCH_DEPLOYMENT_MODE =
             "Node spin up failed, mis-matching deployment mode with the one configured in db";
+    public static final String CLUSTER_CONFIG_MISMATCH_PRODUCT_VERSION =
+            "Node spin up failed, mis-matching product version of the nodes participating in cluster";
     public static final String CLUSTER_CONFIG_LESSER_QUORUM =
             "Quorum could not be updated, below possible quorum value %s";
     public static final String HZ_STANDALONE_ALREADY_EXISTS =
@@ -90,17 +97,24 @@ public class ErrorConstants {
             "Credentials delete operation failed, active association with the endpoints";
     public static final String ENDPOINTS_DELETION_PRECHECK_FAIL =
             "Endpoints delete operation failed, active association with the scheduled tasks";
+    public static final String ENDPOINTS_DELETION_PRECHECK_FAIL_WITH_ENDPOINTGROUPS =
+            "Endpoints delete operation failed, active association with the endpoint groups";
+    public static final String ENDPOINTS_DELETION_PRECHECK_FAIL_WITH_DATABASE =
+            "Endpoints delete operation failed, active association with the endpoint as database type : %s";
     public static final String METRICPROVIDER_ID = "MetricProviderId";
     public static final String METRICPROVIDER_NAME = "MetricProviderName";
     public static final String METRICPROVIDER_TYPE = "MetricProviderType";
     public static final String NO_ACTIVE_METRIC_PROVIDER = "No Active metric provider found";
     public static final String ALREADY_ACTIVE_METRIC_PROVIDER = "Provided metric provider is already active";
+    public static final String EMPTY_METRIC_PROVIDER_INSTANCE = "Metric Provider instance detail is empty or null.";
     public static final String TASK_DELETION_PRECHECK_FAIL =
-            "Task deletion operation failed, active schedules asscociated for the tasks";
+            "Task deletion operation failed, active schedules associated for the tasks";
+    public static final String RESILIENCY_SCORE_TASK_DELETION_PRECHECK_FAIL =
+            "Resiliency Score Task deletion operation failed, active schedules associated for resiliency score the tasks";
     public static final String INPROGRESS_TASK_DELETION_FAILURE =
             "Task deletion operation failed, in progress task %s can not be deleted";
     public static final String NO_RECORD_FOUND_MSG = "No Record Found for";
-    public static final String SAME_RECORD = "Metric Provider of same type is already exists.";
+    public static final String SAME_RECORD = "Metric Provider of same type already exists.";
     public static final String LOCAL_USER_EMPTY_ROLE_UPDATE_FAIL =
             "Failed to update authorization for the user %s, at least one role should be defined for local user";
     public static final String USER_EMPTY_ROLE_CREATE_FAIL =
@@ -132,8 +146,11 @@ public class ErrorConstants {
             "Node spin up failed, mandatory parameter public address provided is not valid ip4 address";
     public static final String PLUGIN_DETAILS = "PluginDetails";
     public static final String INVALID_QUERY_EXCEPTION = "Invalid query found";
+    public static final String UNAVAILABLE_EXCEPTION =
+            "Not enough replicas available for query at given consistency level";
 
-    public static final String USER_ACCOUNT_LOCKED_ERROR_MSG = "User account is locked! Contact administrator or retry after 30 minutes";
+    public static final String USER_ACCOUNT_LOCKED_ERROR_MSG =
+            "User account is locked! Contact administrator or retry after %d seconds";
     public static final String AUTHENTICATION_FAILED_ERROR_MSG = "Invalid username or password";
 
     // RemoteMAchine endpoint error constants
@@ -152,11 +169,14 @@ public class ErrorConstants {
     public static final String K8S_ERROR = "error";
     public static final String COMMAND_EXEC_EXIT_CODE_ERROR =
             "Execution of Command: %s failed. errorCode: %s output: %s";
+    public static final String K8S_CONTAINER_NOT_FOUND = "Error from server (BadRequest)";
 
     // Docker endpoint error constants
 
     public static final String DOCKER_BAD_CERTIFICATE = "bad_certificate";
-    public static final String CURRENT_CREDS_PD_MISMATCH = "Wrong current password";
+    public static final String CURRENT_CREDS_PASSWORD_MISMATCH = "Wrong current password";
+    public static final String NEW_CREDS_PASSWORD_MATCH_OLD_PASSWORD =
+            "New password should be different from current password";
     public static final String DOCKER_HOST_NAME_NULL = "Host name may not be null";
     public static final String DOCKER_INVALID_ENDPOINT = "Invalid DockerEndpoint";
 
@@ -169,6 +189,10 @@ public class ErrorConstants {
     public static final String FAULT_REMEDIATION_NOT_SUPPORTED_FOR_KERNELPANICFAULT =
             "%s does not support remediation, please restart the target machine manually for remediation";
 
+    //AWS utility error constants
+    public static final String AWS_VOLUME_STATUS_CHANGE_FAILED = "Volume %s status -> actual: %s expected: %s";
+    public static final String AWS_DESCRIBE_RDS_INSTANCES_FAILED = "No RDS instance or cluster found with identifier:";
+    public static final String AWS_RDS_OPERATION_NOT_SUPPORTED = "Aws RDS operation %s not supported on %s";
 
     //Hazelcast Cluster error constants
     public static final String CLUSTER_QUORUM_NOT_MET =
@@ -176,10 +200,70 @@ public class ErrorConstants {
     public static final String CLUSTER_ALREADY_IN_STATE = "The cluster already in the requested state";
     public static final String CLUSTER_TYPE_CONFIG_LESSER_QUORUM =
             "Quorum could not be updated, cluster deployment mode cannot have quorum lesser than 2";
-    public static final String CLUSTER_QUORUM_UPDATE_STANDADLONE_FAILURE = "Quorum modification for standalone deployment mode is not supported";
+    public static final String CLUSTER_QUORUM_UPDATE_STANDADLONE_FAILURE =
+            "Quorum modification for standalone deployment mode is not supported";
 
 
     //User Errors
-    public static final String CREDS_CHANGE_FOR_NON_LOCAL_USER = "Password update for the non-local users are not supported";
+    public static final String CREDS_CHANGE_FOR_NON_LOCAL_USER =
+            "Password update for the non-local users are not supported";
+    public static final String FIRST_TIME_PSWD_CONFIGURATION = "First time password is already configured by the user";
+    public static final String AD_DETAILS_INSUFFICIENT_FOR_USER_ADDITION =
+            "AD %s does not have sufficient information to support manual addition of user";
+    public static final String USER_NOT_FOUND_ON_AD = "User %s does not exist on the AD: %S";
+    public static final String AD_UPDATE_FAILED_BAD_CREDS = "AD update failed, Wrong AD Details";
+
+    //Remote File operation Errors
+    public static final String FAILURE_IN_DOWNLOAD_FILE = "Exception occured in FromRemoteToNewFile: ";
+    public static final String CERTIFICATES_DELETION_PRECHECK_FAIL =
+            "Certificates delete operation failed, active association with the endpoints";
+    public static final String INVALID_SCHEDULE_INPUTS =
+            "CronExpression or timeInMilliseconds should be provided for scheduling";
+    public static final String SCHEDULING_FAILED = "Scheduler failed to schedule the task";
+
+    public static final String INVALID = "invalid ";
+    public static final String RESILIENCY_SCORE = " Resiliency Score ";
+    public static final String RESILIENCY_SCORE_METRIC_CONFIG = "Resiliency score metric configuration ";
+    public static final String RESILIENCY_SCORE_METRIC_CONFIG_NAME = RESILIENCY_SCORE_METRIC_CONFIG + " name: ";
+    public static final String SAME_RECORD_EXISTS = " record already exists ";
+    public static final String ONLY_ONE_ACTIVE_CONFIG_IS_ALLOWED =
+            " Only one active Resiliency Score Metric configuration is allowed. ";
+    public static final String INVALID_RESILIENCY_SCORE_CONFIGURATION = "Resiliency Score Configuration is " + INVALID;
+    public static final String SERVICE_FAMILY_CANNOT_BE_EMPTY =
+            "Service family cannot be empty. Please provide one or more service family details. ";
+    public static final String SERVICE_CANNOT_BE_EMPTY =
+            "Service Definition cannot be empty for the service. Please provide service details. ";
+    public static final String QUERY_CONDITIONS_CANNOT_BE_EMPTY =
+            "Queries for services cannot be empty. Please provide one or more query conditions under Service Specific queries fields. ";
+    public static final String SERVICE_FAMILY = "service family ";
+    public static final String SERVICE = " service ";
+    public static final String NO_RECORD_FOUND_FOR_SERVICE = "No records found for the " + SERVICE;
+    public static final String NOT_FOUND = " not found ";
+    public static final String RESILIENCY_SCORE_ERROR_MESSAGE = " Resiliency score calculation has failed. ";
+    public static final String NO_RESILIENCY_METRIC_CONFIG_FOUND = " NO " + RESILIENCY_SCORE_METRIC_CONFIG + " found. ";
+    public static final String INVALID_RESILIENCY_SCORE = " Resiliency score calculated is " + INVALID;
+    public static final String NO_FAULT_EVENTS_FOUND = "No Fault events found ";
+    public static final String TIME_DURATION = " between Start Time %s and end time %s . ";
+    public static final String FAILED_TO_PERSIST_DATA = "Persisting %s data to DB has failed. ";
+    public static final String RESILIENCY_SCORE_TASK_NOT_FOUND = RESILIENCY_SCORE + TASK + NOT_FOUND;
+    public static final String SENDING_METRIC_FAILED = "Sending of metric: %s has failed. ";
+    public static final String WAVEFRONT_SEND_METRIC_CLOSE_FAILED =
+            "Wavefront metric sender close operation has failed.";
+    public static final String INVALID_METRIC_NAME = "Invalid metric name";
+    public static final String RESILIENCY_SCORE_METRIC_IS_NOT_SENT = "ResiliencyScore metric is NOT sent.";
+    public static final String DEFAULT_USER_CRED_NOT_RESET = "Default password not updated";
+
+    public static final String QUERY = " query ";
+    public static final String NO_RECORD_FOUND_FOR_QUERY = "No records found for the " + QUERY;
+    public static final String QUERY_CANNOT_BE_EMPTY =
+            "Query Definition cannot be empty. Please provide Query details. ";
+
+    public static final String INVALID_WEIGHTS_FOUND =
+            "Weights corresponding to queries found to be 0 or less than 0. This could happen when the Query to monitoring tool has returned empty or no data.";
+    public static final String INVALID_TIME_SERIES_DATA =
+            "Empty Or no time Series data received for the query/queries from the monitoring tool.";
+    public static final String REFER_LOG_FOR_MORE_DETAILS = " Please refer the log for more details.";
+    public static final String RETRYING_FAILED = " Multiple retying attempt wasn't even successful. ";
+    public static final String RETRYING = " Retrying ";
 
 }

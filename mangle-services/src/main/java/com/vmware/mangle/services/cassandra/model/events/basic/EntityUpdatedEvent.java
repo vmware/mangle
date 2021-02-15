@@ -23,7 +23,6 @@ import com.vmware.mangle.model.enums.EventType;
 /**
  * @author hkilari
  * @author ashrimali
- * @param <T>
  */
 @Table(value = "Event")
 @Data

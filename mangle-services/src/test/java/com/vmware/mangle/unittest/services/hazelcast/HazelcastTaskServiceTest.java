@@ -129,9 +129,9 @@ public class HazelcastTaskServiceTest {
         when(instance.getMap(any())).thenReturn(map);
         when(map.get(memberId)).thenReturn(currentNodeTasks);
         doNothing().when(injectionHelper).updateFaultSpec(any());
-        hazelcastTaskService.triggerTask(taskId);
+        hazelcastTaskService.triggerTask(task);
 
-        verify(taskService, times(1)).getTaskById(anyString());
+        verify(taskService, times(0)).getTaskById(anyString());
         verify(concurrentTaskRunner, times(1)).submitTask(any());
 
         verify(instance, times(1)).getCluster();
@@ -171,9 +171,9 @@ public class HazelcastTaskServiceTest {
         when(map.get(memberId)).thenReturn(currentNodeTasks);
         when(member.getUuid()).thenReturn(memberId);
 
-        hazelcastTaskService.triggerTask(taskId);
+        hazelcastTaskService.triggerTask(task);
 
-        verify(taskService, times(1)).getTaskById(anyString());
+        verify(taskService, times(0)).getTaskById(anyString());
         verify(concurrentTaskRunner, times(1)).submitTask(any());
 
         verify(instance, times(1)).getCluster();
@@ -203,9 +203,9 @@ public class HazelcastTaskServiceTest {
         when(taskService.getTaskById(taskId)).thenReturn(task);
         when(instance.getMap(anyString())).thenReturn(map);
 
-        hazelcastTaskService.triggerTask(taskId);
+        hazelcastTaskService.triggerTask(task);
 
-        verify(taskService, times(1)).getTaskById(anyString());
+        verify(taskService, times(0)).getTaskById(anyString());
         verify(concurrentTaskRunner, times(0)).submitTask(any());
         verify(endpointService, times(0)).getEndpointByName(anyString());
         verify(credentialService, times(0)).getCredentialByName(anyString());
@@ -231,9 +231,9 @@ public class HazelcastTaskServiceTest {
         when(schedulerService.getSchedulerDetailsById(anyString())).thenReturn(schedulerSpec);
         when(scheduler.isTaskAlreadyScheduled(taskId)).thenReturn(false);
 
-        hazelcastTaskService.triggerTask(taskId);
+        hazelcastTaskService.triggerTask(task);
 
-        verify(taskService, times(1)).getTaskById(anyString());
+        verify(taskService, times(0)).getTaskById(anyString());
         verify(concurrentTaskRunner, times(0)).submitTask(any());
         verify(endpointService, times(0)).getEndpointByName(anyString());
         verify(credentialService, times(0)).getCredentialByName(anyString());

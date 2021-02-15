@@ -11,6 +11,8 @@
 
 package com.vmware.mangle.utils;
 
+import static com.vmware.mangle.utils.constants.ErrorConstants.FAILURE_IN_DOWNLOAD_FILE;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -122,8 +124,8 @@ public class RemoteHost {
             }
             conn = makeConnection(ip, userName, password);
         } catch (Exception e) {
-            log.info("Exception occured in FromRemoteToNewFile: " + e.getMessage());
-            log.debug("Exception occured in FromRemoteToNewFile: ", e);
+            log.info(FAILURE_IN_DOWNLOAD_FILE + e.getMessage());
+            log.debug(FAILURE_IN_DOWNLOAD_FILE, e);
             return -1;
         }
         try (FileOutputStream outS = new FileOutputStream(dst)) {
@@ -131,8 +133,8 @@ public class RemoteHost {
             scp.get(src, outS);
             conn.close();
         } catch (Exception e) {
-            log.info("Exception occured in FromRemoteToNewFile: " + e.getMessage());
-            log.debug("Exception occured in FromRemoteToNewFile: ", e);
+            log.info(FAILURE_IN_DOWNLOAD_FILE + e.getMessage());
+            log.debug(FAILURE_IN_DOWNLOAD_FILE, e);
             return -1;
         }
         return 1;

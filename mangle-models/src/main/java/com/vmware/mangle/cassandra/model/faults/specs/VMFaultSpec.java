@@ -12,11 +12,14 @@
 package com.vmware.mangle.cassandra.model.faults.specs;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import com.vmware.mangle.cassandra.model.plugin.PluginMetaInfo;
 import com.vmware.mangle.cassandra.model.scheduler.SchedulerInfo;
 import com.vmware.mangle.cassandra.model.tasks.DockerSpecificArguments;
 import com.vmware.mangle.cassandra.model.tasks.K8SSpecificArguments;
@@ -30,16 +33,19 @@ import com.vmware.mangle.cassandra.model.tasks.K8SSpecificArguments;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
+@SuppressWarnings({ "squid:MaximumInheritanceDepth", "common-java:DuplicatedBlocks" })
 public class VMFaultSpec extends CommandExecutionFaultSpec implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private String vmName;
+    private boolean enableRandomInjection = true;
+
+    private Map<String, String> filters = new HashMap<>();
 
     @JsonIgnore
     @Override
-    public void setTimeoutInMilliseconds(Integer timeoutinMilliseconds) {
-        super.setTimeoutInMilliseconds(timeoutinMilliseconds);
+    public void setTimeoutInMilliseconds(Integer timeoutInMilliseconds) {
+        super.setTimeoutInMilliseconds(timeoutInMilliseconds);
     }
 
     @JsonIgnore
@@ -64,5 +70,29 @@ public class VMFaultSpec extends CommandExecutionFaultSpec implements Serializab
     @Override
     public void setSchedule(SchedulerInfo schedulerInfo) {
         super.setSchedule(schedule);
+    }
+
+    @JsonIgnore
+    @Override
+    public void setPluginMetaInfo(final PluginMetaInfo pluginMetaInfo) {
+        super.setPluginMetaInfo(pluginMetaInfo);
+    }
+
+    @JsonIgnore
+    @Override
+    public void setRandomEndpoint(final Boolean randomEndpoint) {
+        super.setRandomEndpoint(randomEndpoint);
+    }
+
+    @JsonIgnore
+    @Override
+    public void setSpecType(final String specType) {
+        super.setSpecType(specType);
+    }
+
+    @JsonIgnore
+    @Override
+    public void setTaskName(final String taskName) {
+        super.setTaskName(taskName);
     }
 }

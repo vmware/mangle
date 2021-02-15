@@ -30,8 +30,6 @@ import com.vmware.mangle.utils.constants.HazelcastConstants;
 @Log4j2
 public class HazelcastSyncTopicManager implements HazelcastInstanceAware {
 
-    private HazelcastInstance hazelcastInstance;
-
     private ITopic<HazelcastSyncEvent> topic;
 
     @Autowired
@@ -68,8 +66,7 @@ public class HazelcastSyncTopicManager implements HazelcastInstanceAware {
 
     @Override
     public void setHazelcastInstance(HazelcastInstance hazelcastInstance) {
-        this.hazelcastInstance = hazelcastInstance;
-        this.topic = this.hazelcastInstance.getTopic(HazelcastConstants.HAZELCAST_MANGLE_SYNC_TOPIC_NAME);
+        this.topic = hazelcastInstance.getTopic(HazelcastConstants.HAZELCAST_MANGLE_SYNC_TOPIC_NAME);
         syncListener.setHazelcastInstance(hazelcastInstance);
         topic.addMessageListener(syncListener);
     }

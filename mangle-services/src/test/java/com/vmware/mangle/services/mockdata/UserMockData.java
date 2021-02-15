@@ -26,6 +26,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import com.vmware.mangle.cassandra.model.security.ADAuthProviderDto;
+import com.vmware.mangle.cassandra.model.security.PasswordReset;
 import com.vmware.mangle.cassandra.model.security.Privilege;
 import com.vmware.mangle.cassandra.model.security.Role;
 import com.vmware.mangle.cassandra.model.security.User;
@@ -47,6 +49,13 @@ public class UserMockData {
     private static final String ROLE_USER = "ROLE_USER";
     private static final String pwd = UUID.randomUUID().toString();
     private static final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
+    private static final String adDomain = "domain.com";
+    private static final String adUrl = "ldap://127.0.0.1:389";
+    private static final String adUser = "dummyUser";
+    private static final String adUserPassword = "dummyPassword";
+    private static final String adId = "_12345";
+    private static final String adDummyUser = "dummyUser1@domain.com";
 
     private RolesMockData rolesMockData = new RolesMockData();
 
@@ -100,6 +109,25 @@ public class UserMockData {
         return user;
     }
 
+    public List<PasswordReset> getPasswordResetListTrue() {
+        List<PasswordReset> passwordList = new ArrayList<>();
+        PasswordReset element = new PasswordReset();
+        element.setReset(true);
+        passwordList.add(element);
+        passwordList.set(0, element);
+        return passwordList;
+
+    }
+
+    public List<PasswordReset> getPasswordResetListFalse() {
+        List<PasswordReset> passwordList = new ArrayList<>();
+        PasswordReset element = new PasswordReset();
+        element.setReset(false);
+        passwordList.add(element);
+        passwordList.set(0, element);
+        return passwordList;
+
+    }
 
     public User getMockUser3() {
         User user = new User(USER1, pwd, getDummyRole3());
@@ -143,5 +171,29 @@ public class UserMockData {
 
     public PasswordEncoder getPasswordEncoder() {
         return passwordEncoder;
+    }
+
+    public User getDummyADUser() {
+        User user = new User();
+        user.setName(adDummyUser);
+        return user;
+    }
+
+    public ADAuthProviderDto getDummyAuthProvider(User user) {
+        ADAuthProviderDto adAuthProviderDto = new ADAuthProviderDto();
+        adAuthProviderDto.setId(adId);
+        adAuthProviderDto.setAdDomain(adDomain);
+        adAuthProviderDto.setAdUrl(adUrl);
+        adAuthProviderDto.setAdUser(user.getName());
+        adAuthProviderDto.setAdUserPassword(adUserPassword);
+        return adAuthProviderDto;
+    }
+
+    public ADAuthProviderDto getDummyAuthProviderForV1() {
+        ADAuthProviderDto adAuthProviderDto = new ADAuthProviderDto();
+        adAuthProviderDto.setId(adId);
+        adAuthProviderDto.setAdDomain(adDomain);
+        adAuthProviderDto.setAdUrl(adUrl);
+        return adAuthProviderDto;
     }
 }

@@ -12,6 +12,7 @@
 package com.vmware.mangle.faults.plugin.tasks.helpers;
 
 import java.util.List;
+import java.util.Map;
 
 import org.pf4j.Extension;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,7 @@ import com.vmware.mangle.task.framework.helpers.AbstractCommandExecutionTaskHelp
 import com.vmware.mangle.task.framework.utils.TaskDescriptionUtils;
 import com.vmware.mangle.utils.ICommandExecutor;
 import com.vmware.mangle.utils.exceptions.MangleException;
+import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
 /**
  * Implementation of AbstractRemoteCommandExecutionTaskHelper to Support Injection of K8S specific
@@ -57,8 +59,14 @@ public class K8sSpecificFaultTaskHelper<T extends K8SFaultSpec> extends Abstract
 
     @Override
     public void executeTask(Task<T> task) throws MangleException {
-        if (task.getTaskType().equals(TaskType.INJECTION)
-                && CollectionUtils.isEmpty(task.getTaskData().getInjectionCommandInfoList())) {
+        Map<String, String> disabledResourceLabels =
+                task.getTaskData().getEndpoint().getK8sConnectionProperties().getDisabledResourceLabels();
+        if (!CollectionUtils.isEmpty(task.getTaskData().getResourceLabels())
+                && disabledResourceLabels.entrySet().containsAll(task.getTaskData().getResourceLabels().entrySet())) {
+            throw new MangleException(ErrorCode.K8S_RESOURCE_LABELS_DISABLED, task.getTaskData().getResourceLabels(),
+                    task.getTaskData().getEndpointName());
+        }
+        if (task.getTaskType().equals(TaskType.INJECTION)) {
             K8SFaultSpec k8SFaultSpec = task.getTaskData();
             k8SFaultSpec.setResourcesList(k8sFaultHelper.getResouceList(getExecutor(task), k8SFaultSpec));
             task.getTaskData().setInjectionCommandInfoList(
@@ -75,7 +83,7 @@ public class K8sSpecificFaultTaskHelper<T extends K8SFaultSpec> extends Abstract
      * @throws MangleException
      */
     @Override
-    protected ICommandExecutor getExecutor(Task<T> task) throws MangleException {
+    public ICommandExecutor getExecutor(Task<T> task) throws MangleException {
         return k8sFaultHelper.getExecutor(task.getTaskData());
     }
 

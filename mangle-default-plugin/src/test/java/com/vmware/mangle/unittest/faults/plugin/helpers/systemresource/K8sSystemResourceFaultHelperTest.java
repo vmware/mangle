@@ -12,7 +12,7 @@
 package com.vmware.mangle.unittest.faults.plugin.helpers.systemresource;
 
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.spy;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -20,6 +20,7 @@ import static com.vmware.mangle.utils.constants.FaultConstants.FAULT_NAME_ARG;
 import static com.vmware.mangle.utils.constants.FaultConstants.TIMEOUT_IN_MILLI_SEC_ARG;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -120,8 +121,18 @@ public class K8sSystemResourceFaultHelperTest {
         return cpuFaultSpec;
     }
 
+
     @Test
-    public void testGetRemediationCommandInfoListForCPUFault() {
+    public void testGetstatusCommandInfoList() throws MangleException {
+        CommandExecutionFaultSpec cpuFaultSpec = getTestFaultSpecForCPUFault();
+        List<CommandInfo> statusCommands = k8sSystemResourceFaultHelper.getStatusCommandInfoList(cpuFaultSpec);
+        log.info(RestTemplateWrapper.objectToJson(statusCommands));
+        List<CommandInfo> expectedCommands = getExpectedStatusCommandsForCpuFault();
+        Assert.assertEquals(statusCommands, expectedCommands);
+    }
+
+    @Test
+    public void testGetRemediationCommandInfoListForCPUFault() throws MangleException {
         CommandExecutionFaultSpec cpuFaultSpec = getTestFaultSpecForCPUFault();
 
         Mockito.when(endpointClientFactory.getEndPointClient(cpuFaultSpec.getCredentials(), cpuFaultSpec.getEndpoint()))
@@ -157,17 +168,25 @@ public class K8sSystemResourceFaultHelperTest {
 
     private List<CommandInfo> getExpectedRemediationCommandsforCPUFault() {
         List<CommandInfo> list = new ArrayList<>();
-        CommandInfo remediationCommand = new CommandInfo();
-        remediationCommand.setCommand(
-                "exec -it testPod -c testContainer -- /bin/sh /testDirectory/cpuburn.sh --operation=remediate");
-        remediationCommand.setIgnoreExitValueCheck(false);
-        remediationCommand
-                .setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfSystemResourceFaultRemediationRequest());
-        remediationCommand.setNoOfRetries(0);
-        remediationCommand.setExpectedCommandOutputList(Collections.emptyList());
-        remediationCommand.setRetryInterval(0);
-        remediationCommand.setTimeout(0);
+        CommandInfo remediationCommand = CommandInfo
+                .builder(
+                        "exec -it testPod -c testContainer -- /bin/sh -c \"cd /testDirectory//infra_agent;./infra_submit  --operation remediate  --faultId cpuFault\"")
+                .ignoreExitValueCheck(false)
+                .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfSystemResourceFaultRemediationRequest())
+                .noOfRetries(0).expectedCommandOutputList(Collections.emptyList()).retryInterval(0).timeout(0).build();
         list.add(remediationCommand);
+        return list;
+    }
+
+    private List<CommandInfo> getExpectedStatusCommandsForCpuFault() {
+        List<CommandInfo> list = new ArrayList<>();
+        CommandInfo statusCommand = CommandInfo
+                .builder(
+                        "exec -it testPod -c testContainer -- /bin/sh -c \"cd /testDirectory//infra_agent;./infra_submit  --operation status  --faultId cpuFault\"")
+                .ignoreExitValueCheck(false)
+                .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfSystemResourceFaultInjectionRequest())
+                .noOfRetries(0).expectedCommandOutputList(Collections.emptyList()).retryInterval(0).timeout(0).build();
+        list.add(statusCommand);
         return list;
     }
 
@@ -175,43 +194,45 @@ public class K8sSystemResourceFaultHelperTest {
     void testGetAgentFaultInjectionScripts() {
         CommandExecutionFaultSpec cpuFaultSpec = faultsMockData.getK8SCPUFaultSpec();
         K8sSystemResourceFaultHelper k8sSystemResourceFaultHelper =
-                spy(new K8sSystemResourceFaultHelper(endpointClientFactory, systemResourceFaultUtils));
-        Mockito.doReturn(supportScripts).when(systemResourceFaultUtils).getAgentFaultScripts(any());
+                new K8sSystemResourceFaultHelper(endpointClientFactory, systemResourceFaultUtils);
+        Mockito.doReturn(supportScripts).when(systemResourceFaultUtils).getAgentFaultScriptsPython(any());
         k8sSystemResourceFaultHelper.getFaultInjectionScripts(cpuFaultSpec);
-        verify(systemResourceFaultUtils, times(1)).getAgentFaultScripts(any(CommandExecutionFaultSpec.class));
+        verify(systemResourceFaultUtils, times(1)).getAgentFaultScriptsPython(anyString());
     }
 
     private List<CommandInfo> getExpectedInjectionCommands() {
         List<CommandInfo> list = new ArrayList<>();
-        CommandInfo copyCommand = new CommandInfo();
-        copyCommand.setCommand("cp " + ConstantsUtils.getMangleSupportScriptDirectory()
-                + "cpuburn.sh testPod:/testDirectory/cpuburn.sh -c testContainer");
-        copyCommand.setIgnoreExitValueCheck(false);
-        copyCommand.setNoOfRetries(0);
-        copyCommand.setRetryInterval(0);
-        copyCommand.setTimeout(0);
-        copyCommand.setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfSystemResourceK8SCopyRequest());
+        CommandInfo copyCommand = CommandInfo
+                .builder("cp " + ConstantsUtils.getMangleSupportScriptDirectory()
+                        + "infra-agent.tar.gz testPod:/testDirectory/infra-agent.tar.gz -c testContainer")
+                .ignoreExitValueCheck(false).noOfRetries(0).retryInterval(0).timeout(0)
+                .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfSystemResourceK8SCopyRequest()).build();
 
 
-        CommandInfo makeExecutableCommand = new CommandInfo();
-        makeExecutableCommand.setCommand("exec -it testPod -c testContainer -- chmod -R u+x /testDirectory/cpuburn.sh");
-        makeExecutableCommand.setIgnoreExitValueCheck(false);
-        makeExecutableCommand.setNoOfRetries(0);
-        makeExecutableCommand.setRetryInterval(0);
-        makeExecutableCommand.setTimeout(0);
+        CommandInfo makeExecutableCommand = CommandInfo
+                .builder("exec -it testPod -c testContainer -- chmod -R u+x /testDirectory/infra-agent.tar.gz")
+                .ignoreExitValueCheck(false).noOfRetries(0).retryInterval(0).timeout(0).build();
 
-        CommandInfo injectionCommand = new CommandInfo();
-        injectionCommand.setCommand(
-                "exec -it testPod -c testContainer -- /bin/sh /testDirectory/cpuburn.sh --operation=inject --load=80 --timeout=20000");
-        injectionCommand.setIgnoreExitValueCheck(false);
-        injectionCommand.setNoOfRetries(0);
-        injectionCommand.setRetryInterval(0);
-        injectionCommand.setTimeout(0);
-        injectionCommand
-                .setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfSystemResourceFaultInjectionRequest());
+        CommandInfo injectionCommand = CommandInfo
+                .builder(
+                        "exec -it testPod -c testContainer -- /bin/sh -c \"cd /testDirectory//infra_agent;./infra_submit  --operation inject --faultname cpuFault --load 80 --timeout 20000 --faultId cpuFault\"")
+                .ignoreExitValueCheck(false).noOfRetries(3).retryInterval(2).timeout(0)
+                .expectedCommandOutputList(Arrays.asList(""))
+                .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfSystemResourceFaultInjectionRequest()).build();
 
+        CommandInfo agentExtractionCommand = CommandInfo
+                .builder(
+                        "exec -it testPod -c testContainer -- /bin/sh -c \'tar -zxvf /testDirectory//infra-agent.tar.gz -C /testDirectory/\'")
+                .ignoreExitValueCheck(false).expectedCommandOutputList(Arrays.asList("")).build();
+        CommandInfo agentStartCommand = CommandInfo
+                .builder(
+                        "exec -it testPod -c testContainer -- nohup /bin/sh -c \"cd /testDirectory//infra_agent;./infra_agent > /dev/null 2>&1 &\"")
+                .ignoreExitValueCheck(false).expectedCommandOutputList(Arrays.asList(""))
+                .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentInstallationRequest()).build();
         list.add(copyCommand);
         list.add(makeExecutableCommand);
+        list.add(agentExtractionCommand);
+        list.add(agentStartCommand);
         list.add(injectionCommand);
         return list;
     }

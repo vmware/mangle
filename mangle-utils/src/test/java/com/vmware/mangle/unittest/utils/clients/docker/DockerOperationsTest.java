@@ -52,7 +52,7 @@ import com.vmware.mangle.utils.mockdata.DockerMockdata;
  * @author rpraveen
  */
 @PrepareForTest(value = { DockerClient.class, ExposedPort.class })
-@PowerMockIgnore(value = { "javax.net.ssl.*" })
+@PowerMockIgnore(value = { "javax.net.ssl.*", "com.sun.org.apache.xalan.internal.xsltc.trax.*" })
 public class DockerOperationsTest extends PowerMockTestCase {
 
     @InjectMocks

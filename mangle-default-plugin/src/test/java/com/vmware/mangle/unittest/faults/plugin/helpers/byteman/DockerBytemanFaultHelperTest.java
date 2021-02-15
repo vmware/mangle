@@ -57,6 +57,7 @@ import com.vmware.mangle.utils.ConstantsUtils;
 import com.vmware.mangle.utils.ICommandExecutor;
 import com.vmware.mangle.utils.clients.docker.CustomDockerClient;
 import com.vmware.mangle.utils.clients.restclient.RestTemplateWrapper;
+import com.vmware.mangle.utils.constants.FaultConstants;
 import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
@@ -133,23 +134,22 @@ public class DockerBytemanFaultHelperTest extends PowerMockTestCase {
     }
 
     private List<CommandInfo> getJVMAgentInjectionCommandInfo() {
-        CommandInfo agentInstallation = new CommandInfo();
-        agentInstallation.setCommand("/bin/sh /tmp/mangle-java-agent-2.0.0/bin/bminstall.sh -p 9091 -s -b null");
-        agentInstallation.setIgnoreExitValueCheck(true);
-        agentInstallation.setExpectedCommandOutputList(Arrays.asList(new String[] {
-                "Started Byteman Listener Successfully", "Agent is already running on requested process" }));
-        agentInstallation.setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentInstallationRequest());
-        CommandInfo faultInjection = new CommandInfo();
-        faultInjection.setCommand(null);
-        faultInjection.setIgnoreExitValueCheck(false);
-        faultInjection.setExpectedCommandOutputList(Arrays.asList(new String[] { "Created Fault Successfully" }));
-        faultInjection.setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentFaultInjectionRequest());
+        CommandInfo agentInstallation = CommandInfo
+                .builder("/bin/sh /tmp/" + FaultConstants.AGENT_NAME + "/bin/bminstall.sh -p 9091 -s -b null")
+                .ignoreExitValueCheck(true)
+                .expectedCommandOutputList(Arrays.asList(new String[] { "Started Byteman Listener Successfully",
+                        "Agent is already running on requested process" }))
+                .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentInstallationRequest()).build();
+
         List<CommandOutputProcessingInfo> commandOutputProcessingInfoList = new ArrayList<>();
         CommandOutputProcessingInfo commandOutputProcessingInfo = new CommandOutputProcessingInfo();
         commandOutputProcessingInfo.setExtractedPropertyName("faultId");
         commandOutputProcessingInfo.setRegExpression("[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}");
         commandOutputProcessingInfoList.add(commandOutputProcessingInfo);
-        faultInjection.setCommandOutputProcessingInfoList(commandOutputProcessingInfoList);
+        CommandInfo faultInjection = CommandInfo.builder(null).ignoreExitValueCheck(false)
+                .expectedCommandOutputList(Arrays.asList(new String[] { "Created Fault Successfully" }))
+                .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentFaultInjectionRequest())
+                .commandOutputProcessingInfoList(commandOutputProcessingInfoList).build();
 
         List<CommandInfo> commandInfoList = new ArrayList<>();
         commandInfoList.add(agentInstallation);
@@ -174,24 +174,25 @@ public class DockerBytemanFaultHelperTest extends PowerMockTestCase {
     }
 
     private List<CommandInfo> getJVMAgentInjectionCommandInfoListWithJavaHomeSet() {
-        CommandInfo agentInstallation = new CommandInfo();
-        agentInstallation.setCommand(
-                "export JAVA_HOME=/usr/java/latest&&/bin/sh /tmp/mangle-java-agent-2.0.0/bin/bminstall.sh -p 9091 -s -b null");
-        agentInstallation.setIgnoreExitValueCheck(true);
-        agentInstallation.setExpectedCommandOutputList(Arrays.asList(new String[] {
-                "Started Byteman Listener Successfully", "Agent is already running on requested process" }));
-        agentInstallation.setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentInstallationRequest());
-        CommandInfo faultInjection = new CommandInfo();
-        faultInjection.setCommand("export JAVA_HOME=/usr/java/latest&&null");
-        faultInjection.setIgnoreExitValueCheck(false);
-        faultInjection.setExpectedCommandOutputList(Arrays.asList(new String[] { "Created Fault Successfully" }));
-        faultInjection.setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentFaultInjectionRequest());
+        CommandInfo agentInstallation =
+                CommandInfo
+                        .builder("export JAVA_HOME=/usr/java/latest&&/bin/sh /tmp/"
+                                + FaultConstants.AGENT_NAME + "/bin/bminstall.sh -p 9091 -s -b null")
+                        .ignoreExitValueCheck(true)
+                        .expectedCommandOutputList(Arrays.asList(new String[] { "Started Byteman Listener Successfully",
+                                "Agent is already running on requested process" }))
+                        .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentInstallationRequest()).build();
+
         List<CommandOutputProcessingInfo> commandOutputProcessingInfoList = new ArrayList<>();
         CommandOutputProcessingInfo commandOutputProcessingInfo = new CommandOutputProcessingInfo();
         commandOutputProcessingInfo.setExtractedPropertyName("faultId");
         commandOutputProcessingInfo.setRegExpression("[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}");
         commandOutputProcessingInfoList.add(commandOutputProcessingInfo);
-        faultInjection.setCommandOutputProcessingInfoList(commandOutputProcessingInfoList);
+        CommandInfo faultInjection =
+                CommandInfo.builder("export JAVA_HOME=/usr/java/latest&&null").ignoreExitValueCheck(false)
+                        .expectedCommandOutputList(Arrays.asList(new String[] { "Created Fault Successfully" }))
+                        .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentFaultInjectionRequest())
+                        .commandOutputProcessingInfoList(commandOutputProcessingInfoList).build();
 
         List<CommandInfo> commandInfoList = new ArrayList<>();
         commandInfoList.add(agentInstallation);
@@ -274,22 +275,21 @@ public class DockerBytemanFaultHelperTest extends PowerMockTestCase {
     }
 
     private List<CommandInfo> getJVMAgentRemediationCommandInfoList() {
-        CommandInfo faultRemediationRequest = new CommandInfo();
-        faultRemediationRequest
-                .setCommand("/bin/sh /tmp/mangle-java-agent-2.0.0/bin/bmsubmit.sh -p 9091 -rf $FI_ADD_INFO_faultId");
-        faultRemediationRequest.setIgnoreExitValueCheck(false);
-        faultRemediationRequest.setExpectedCommandOutputList(
-                Arrays.asList(new String[] { "Received Remediation Request Successfully" }));
-        faultRemediationRequest
-                .setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentFaultRemediationRequest());
-        CommandInfo faultInjection = new CommandInfo();
-        faultInjection
-                .setCommand("/bin/sh /tmp/mangle-java-agent-2.0.0/bin/bmsubmit.sh -p 9091 -gf $FI_ADD_INFO_faultId");
-        faultInjection.setIgnoreExitValueCheck(true);
-        faultInjection.setExpectedCommandOutputList(Arrays.asList(new String[] { "\"faultStatus\":\"COMPLETED\"",
-                "Failed to process request: java.net.ConnectException: Connection refused" }));
-        faultInjection.setNoOfRetries(6);
-        faultInjection.setRetryInterval(10);
+        CommandInfo faultRemediationRequest = CommandInfo
+                .builder("/bin/sh /tmp/" + FaultConstants.AGENT_NAME
+                        + "/bin/bmsubmit.sh -p 9091 -rf $FI_ADD_INFO_faultId")
+                .ignoreExitValueCheck(false)
+                .expectedCommandOutputList(Arrays.asList(new String[] { "Received Remediation Request Successfully" }))
+                .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentFaultRemediationRequest()).build();
+
+        CommandInfo faultInjection = CommandInfo
+                .builder("/bin/sh /tmp/"
+                        + FaultConstants.AGENT_NAME + "/bin/bmsubmit.sh -p 9091 -gf $FI_ADD_INFO_faultId")
+                .ignoreExitValueCheck(true)
+                .expectedCommandOutputList(Arrays.asList(new String[] { "\"faultStatus\":\"COMPLETED\"",
+                        "Failed to process request: java.net.ConnectException: Connection refused" }))
+                .noOfRetries(6).retryInterval(10).build();
+
         List<CommandInfo> commandInfoList = new ArrayList<>();
         commandInfoList.add(faultRemediationRequest);
         commandInfoList.add(faultInjection);
@@ -314,16 +314,14 @@ public class DockerBytemanFaultHelperTest extends PowerMockTestCase {
     }
 
     private List<CommandInfo> getJVMCodeLevelRemediationCommandInfoList() {
-        CommandInfo faultRemediationRequest = new CommandInfo();
-        faultRemediationRequest
-                .setCommand("/bin/sh /tmp/mangle-java-agent-2.0.0/bin/bmsubmit.sh -p 9091 -u /tmp/123456.btm");
-        faultRemediationRequest.setIgnoreExitValueCheck(true);
-        faultRemediationRequest.setExpectedCommandOutputList(Arrays.asList(new String[] { "uninstall RULE 123456" }));
-        faultRemediationRequest.setKnownFailureMap(null);
+        CommandInfo faultRemediationRequest = CommandInfo
+                .builder("/bin/sh /tmp/" + FaultConstants.AGENT_NAME + "/bin/bmsubmit.sh -p 9091 -u /tmp/123456.btm")
+                .ignoreExitValueCheck(true)
+                .expectedCommandOutputList(Arrays.asList(new String[] { "uninstall RULE 123456" }))
+                .knownFailureMap(null).build();
 
-        CommandInfo deleteBytemanRuleRequest = new CommandInfo();
-        deleteBytemanRuleRequest.setCommand("rm -rf /tmp/123456.btm");
-        deleteBytemanRuleRequest.setIgnoreExitValueCheck(true);
+        CommandInfo deleteBytemanRuleRequest =
+                CommandInfo.builder("rm -rf /tmp/123456.btm").ignoreExitValueCheck(true).build();
 
         List<CommandInfo> commandInfoList = new ArrayList<>();
         commandInfoList.add(faultRemediationRequest);

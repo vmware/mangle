@@ -27,6 +27,7 @@ import org.springframework.hateoas.Link;
 import org.springframework.hateoas.Resource;
 import org.springframework.hateoas.Resources;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -59,14 +60,19 @@ import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 @RequestMapping("rest/api/v1/role-management/")
 public class RoleController {
 
-    @Autowired
-    private RoleService roleService;
+    private final RoleService roleService;
+
+    private final PrivilegeService privilegeService;
+
+    private final RoleDeletionService roleDeletionService;
 
     @Autowired
-    private PrivilegeService privilegeService;
-
-    @Autowired
-    private RoleDeletionService roleDeletionService;
+    public RoleController(RoleService roleService, PrivilegeService privilegeService,
+            RoleDeletionService roleDeletionService) {
+        this.roleService = roleService;
+        this.privilegeService = privilegeService;
+        this.roleDeletionService = roleDeletionService;
+    }
 
     /**
      * API to create a custom role in the application
@@ -77,15 +83,15 @@ public class RoleController {
      * @throws MangleException
      */
     @ApiOperation(value = "API to create a custom role", nickname = "createRole")
-    @PostMapping(value = "roles")
+    @PostMapping(value = "roles", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Resource<Role>> createRole(@RequestBody Role role) throws MangleException {
         log.info(String.format("Starting execution of the createRole for role %s", role.getName()));
         Role persisted = roleService.createRole(role);
 
         Resource<Role> roleResource = new Resource<>(persisted);
-        Link link = linkTo(methodOn(RoleController.class).createRole(null)).withSelfRel();
+        Link link = linkTo(methodOn(RoleController.class).createRole(role)).withSelfRel();
         roleResource.add(
-                linkTo(methodOn(RoleController.class).updateRole(null)).withRel(HateoasOperations.UPDATE.toString()));
+                linkTo(methodOn(RoleController.class).updateRole(role)).withRel(HateoasOperations.UPDATE.toString()));
         roleResource.add(linkTo(methodOn(RoleController.class).deleteRoles(Collections.singletonList(role.getName())))
                 .withRel(HateoasOperations.DELETE.toString()));
         roleResource.add(link);
@@ -103,16 +109,18 @@ public class RoleController {
      *             1. when no role is not found 2. when user tries to delete mangle default role
      */
     @ApiOperation(value = "API to update a role", nickname = "updateRole")
-    @PutMapping(value = "roles")
+    @PutMapping(value = "roles", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Resource<Role>> updateRole(@RequestBody Role role) throws MangleException {
         log.info(String.format("Starting execution of the updateRole on the role %s", role.getName()));
 
         Role persisted = roleService.updateRole(role);
 
         Resource<Role> roleResource = new Resource<>(persisted);
-        Link link = linkTo(methodOn(RoleController.class).createRole(null)).withSelfRel();
+        Link link = linkTo(methodOn(RoleController.class).createRole(role)).withSelfRel();
         roleResource.add(linkTo(methodOn(RoleController.class).deleteRoles(Collections.singletonList(role.getName())))
                 .withRel(HateoasOperations.DELETE.toString()));
+        roleResource.add(linkTo(methodOn(RoleController.class).createRole(role))
+                .withRel(HateoasOperations.CREATE.toString()));
         roleResource.add(link);
         return new ResponseEntity<>(roleResource, HttpStatus.OK);
     }
@@ -123,9 +131,9 @@ public class RoleController {
      * @return list of all the roles
      */
     @ApiOperation(value = "API to get all the roles", nickname = "getAllRoles")
-    @GetMapping(value = "roles")
+    @GetMapping(value = "roles", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Resources<Role>> getAllRoles(
-            @RequestParam(name = "names", required = false) List<String> names) {
+            @RequestParam(name = "names", required = false) List<String> names) throws MangleException {
         log.info("Starting execution of getAllRoles method");
         List<Role> roles;
         Resources<Role> roleResources;
@@ -139,6 +147,12 @@ public class RoleController {
             roleResources
                     .add(linkTo(methodOn(RoleController.class).getAllRoles(Collections.emptyList())).withSelfRel());
         }
+        roleResources.add(linkTo(methodOn(RoleController.class).deleteRoles(Collections.emptyList()))
+                .withRel(HateoasOperations.DELETE.toString()));
+        roleResources.add(linkTo(methodOn(RoleController.class).createRole(new Role()))
+                .withRel(HateoasOperations.CREATE.toString()));
+        roleResources.add(linkTo(methodOn(RoleController.class).updateRole(new Role()))
+                .withRel(HateoasOperations.UPDATE.toString()));
         return new ResponseEntity<>(roleResources, HttpStatus.OK);
     }
 
@@ -148,15 +162,17 @@ public class RoleController {
      * @return list of the privileges in the application
      */
     @ApiOperation(value = "API to get all privileges", nickname = "getPrivileges")
-    @GetMapping(value = "privileges")
-    public ResponseEntity<Resources<Privilege>> getPrivileges() {
+    @GetMapping(value = "privileges", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Resources<Privilege>> getPrivileges() throws MangleException {
         log.info("Starting execution of getPrivileges method");
 
         List<Privilege> privileges = privilegeService.getAllPrivileges();
 
         Resources<Privilege> privilegesResources = new Resources<>(privileges);
         privilegesResources.add(linkTo(methodOn(RoleController.class).getPrivileges()).withSelfRel());
-
+        privilegesResources
+                .add(linkTo(methodOn(RoleController.class).getAllRoles(Collections.emptyList())).withRel(
+                        "GET-ALL-ROLES"));
         return new ResponseEntity<>(privilegesResources, HttpStatus.OK);
     }
 
@@ -170,7 +186,7 @@ public class RoleController {
      *             if user tries to delete default role
      */
     @ApiOperation(value = "API to delete roles by names", nickname = "deleteRoles")
-    @DeleteMapping(value = "roles")
+    @DeleteMapping(value = "roles", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ErrorDetails> deleteRoles(@RequestParam List<String> roles) throws MangleException {
         log.info(String.format("Starting execution of the roles: %s", roles.toString()));
         DeleteOperationResponse response = roleDeletionService.deleteRolesByNames(roles);

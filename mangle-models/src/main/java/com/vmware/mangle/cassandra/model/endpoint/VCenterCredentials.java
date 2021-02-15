@@ -13,6 +13,7 @@ package com.vmware.mangle.cassandra.model.endpoint;
 
 import javax.validation.constraints.NotEmpty;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.springframework.data.cassandra.core.mapping.Table;
@@ -33,6 +34,7 @@ public class VCenterCredentials extends CredentialsSpec {
     private static final long serialVersionUID = 1L;
     @NotEmpty
     private String userName;
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @EncryptField
     @NotEmpty
     private String password;

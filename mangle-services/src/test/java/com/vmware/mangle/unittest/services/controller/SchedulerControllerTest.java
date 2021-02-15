@@ -11,16 +11,21 @@
 
 package com.vmware.mangle.unittest.services.controller;
 
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import java.util.HashSet;
 import java.util.List;
 
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
+import org.springframework.hateoas.Link;
+import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.Resources;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.testng.Assert;
@@ -54,7 +59,6 @@ public class SchedulerControllerTest {
         return new org.powermock.modules.testng.PowerMockObjectFactory();
     }
 
-    @InjectMocks
     private SchedulerController schedulerController;
 
     private SchedulerControllerMockData schedulerControllerMockData = new SchedulerControllerMockData();
@@ -66,6 +70,9 @@ public class SchedulerControllerTest {
     @BeforeMethod
     public void initMocks() {
         MockitoAnnotations.initMocks(this);
+        schedulerController = spy(new SchedulerController(scheduler));
+        Link link = mock(Link.class);
+        doReturn(link).when(schedulerController).getSelfLink();
     }
 
     /**
@@ -77,7 +84,7 @@ public class SchedulerControllerTest {
     public void cancelScheduledJobs() throws MangleException {
         List<String> jobIds = schedulerControllerMockData.getJobIds();
         when(scheduler.cancelScheduledJobs(jobIds)).thenReturn(new HashSet<>(jobIds));
-        ResponseEntity<SchedulerRequestStatus> response = schedulerController.cancelScheduledJobs(jobIds);
+        ResponseEntity<Resource<SchedulerRequestStatus>> response = schedulerController.cancelScheduledJobs(jobIds);
         Mockito.verify(scheduler, Mockito.atLeastOnce()).cancelScheduledJobs(Mockito.any());
         Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
     }
@@ -91,7 +98,7 @@ public class SchedulerControllerTest {
     public void pauseScheduledJobs() throws MangleException {
         List<String> jobIds = schedulerControllerMockData.getJobIds();
         when(scheduler.pauseScheduledJobs(jobIds)).thenReturn(new HashSet<>(jobIds));
-        ResponseEntity<SchedulerRequestStatus> response = schedulerController.pauseScheduledJobs(jobIds);
+        ResponseEntity<Resource<SchedulerRequestStatus>> response = schedulerController.pauseScheduledJobs(jobIds);
         Mockito.verify(scheduler, Mockito.atLeastOnce()).pauseScheduledJobs(Mockito.any());
         Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
     }
@@ -105,7 +112,7 @@ public class SchedulerControllerTest {
     public void resumeScheduledJobs() throws MangleException {
         List<String> jobIds = schedulerControllerMockData.getJobIds();
         when(scheduler.resumeJobs(jobIds)).thenReturn(new HashSet<>(jobIds));
-        ResponseEntity<SchedulerRequestStatus> response = schedulerController.resumeScheduledJobs(jobIds);
+        ResponseEntity<Resource<SchedulerRequestStatus>> response = schedulerController.resumeScheduledJobs(jobIds);
         Mockito.verify(scheduler, Mockito.atLeastOnce()).resumeJobs(Mockito.any());
         Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
     }
@@ -117,7 +124,7 @@ public class SchedulerControllerTest {
     public void resumeScheduledJobsFailureEmptyStatusMap() throws MangleException {
         List<String> jobIds = schedulerControllerMockData.getJobIds();
         when(scheduler.resumeJobs(jobIds)).thenReturn(new HashSet<>(jobIds));
-        ResponseEntity<SchedulerRequestStatus> response = schedulerController.resumeScheduledJobs(jobIds);
+        ResponseEntity<Resource<SchedulerRequestStatus>> response = schedulerController.resumeScheduledJobs(jobIds);
         Mockito.verify(scheduler, Mockito.atLeastOnce()).resumeJobs(Mockito.any());
         Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
     }
@@ -131,7 +138,7 @@ public class SchedulerControllerTest {
     public void cancelAllScheduledJobs() throws MangleException {
         List<String> jobIds = schedulerControllerMockData.getJobIds();
         when(scheduler.cancelAllScheduledJobs()).thenReturn(new HashSet<>(jobIds));
-        ResponseEntity<SchedulerRequestStatus> response = schedulerController.cancelAllScheduledJobs();
+        ResponseEntity<Resource<SchedulerRequestStatus>> response = schedulerController.cancelAllScheduledJobs();
         Mockito.verify(scheduler, Mockito.times(1)).cancelAllScheduledJobs();
         Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
     }
@@ -140,10 +147,10 @@ public class SchedulerControllerTest {
      * Test method for {@link SchedulerController#getAllScheduledJobs(SchedulerStatus)}
      */
     @Test
-    public void getAllScheduledJobsWithFilter() {
+    public void getAllScheduledJobsWithFilter() throws MangleException {
         Mockito.when(scheduler.getAllScheduledJobs(SchedulerStatus.CANCELLED))
                 .thenReturn(schedulerControllerMockData.getListOfSchedulerSpec());
-        ResponseEntity<List<SchedulerSpec>> response =
+        ResponseEntity<Resources<SchedulerSpec>> response =
                 schedulerController.getAllScheduledJobs(SchedulerStatus.CANCELLED);
         Mockito.verify(scheduler, Mockito.atLeastOnce()).getAllScheduledJobs(Mockito.any());
         Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
@@ -153,11 +160,49 @@ public class SchedulerControllerTest {
      * Test method for {@link SchedulerController#getAllScheduledJobs(SchedulerStatus)}
      */
     @Test
-    public void getAllScheduledJobsWithNoFilter() {
+    public void getAllScheduledJobsWithNoFilter() throws MangleException {
         Mockito.when(scheduler.getAllScheduledJobs()).thenReturn(schedulerControllerMockData.getListOfSchedulerSpec());
-        ResponseEntity<List<SchedulerSpec>> response = schedulerController.getAllScheduledJobs(null);
+        ResponseEntity<Resources<SchedulerSpec>> response = schedulerController.getAllScheduledJobs(null);
         Mockito.verify(scheduler, Mockito.atLeastOnce()).getAllScheduledJobs();
         Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
     }
+
+    /**
+     * Test method for {@link SchedulerController#modifyScheduledJob(SchedulerSpec)}
+     */
+    @Test
+    public void modifyScheduledJobTestCron() throws MangleException {
+        SchedulerSpec schedulerSpec = schedulerControllerMockData.getMangleSchedulerSpecScheduledCron();
+        Mockito.doNothing().when(scheduler).modifyJob(schedulerSpec);
+        ResponseEntity<Resource<SchedulerRequestStatus>> response = schedulerController.modifyScheduledJob(schedulerSpec);
+        Mockito.verify(scheduler, Mockito.atLeastOnce()).modifyJob(Mockito.any());
+        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
+    }
+
+    /**
+     * Test method for {@link SchedulerController#modifyScheduledJob(SchedulerSpec)}
+     */
+    @Test
+    public void modifyScheduledJobFailureTest() throws MangleException {
+        SchedulerSpec schedulerSpec = schedulerControllerMockData.getMangleSchedulerSpecScheduledCronWrong();
+        try {
+            schedulerController.modifyScheduledJob(schedulerSpec);
+        } catch (MangleException mangleException) {
+            Assert.assertTrue(true);
+        }
+    }
+
+    /**
+     * Test method for {@link SchedulerController#modifyScheduledJob(SchedulerSpec)}
+     */
+    @Test
+    public void modifyScheduledJobTestSimple() throws MangleException {
+        SchedulerSpec schedulerSpec = schedulerControllerMockData.getMangleSchedulerSpecScheduledSimple();
+        Mockito.doNothing().when(scheduler).modifyJob(schedulerSpec);
+        ResponseEntity<Resource<SchedulerRequestStatus>> response = schedulerController.modifyScheduledJob(schedulerSpec);
+        Mockito.verify(scheduler, Mockito.atLeastOnce()).modifyJob(Mockito.any());
+        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
+    }
+
 
 }

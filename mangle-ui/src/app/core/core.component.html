@@ -8,15 +8,15 @@
 		</div>
 		<div class="header-actions">
 			<clr-dropdown>
-				<button class="nav-text" *ngIf="user" clrDropdownTrigger>
+				<button data-tag="user-login-id" class="nav-text" *ngIf="user" clrDropdownTrigger>
 					{{ user }}<clr-icon shape="caret down"></clr-icon>
 				</button>
 				<clr-dropdown-menu *clrIfOpen clrPosition="bottom-right">
 					<a href="#" [routerLink]="['password']" clrDropdownItem *ngIf="domain == 'mangle.local'">Change Password</a>
-					<button class="btn btn-link" (click)="logout();">Log out</button>
+					<button data-tag="user-logout" class="btn btn-link" (click)="logout();">Log out</button>
 				</clr-dropdown-menu>
 			</clr-dropdown>
-			<a class="nav-link nav-icon" href="#" [routerLink]="['setting']" routerLinkActive="active" *ngIf="isAdminUser"><clr-icon shape="cog"></clr-icon></a>
+			<a class="nav-link nav-icon" data-tag="settings-button" href="#" [routerLink]="['setting']" routerLinkActive="active" *ngIf="isAdminUser"><clr-icon shape="cog"></clr-icon></a>
 			<clr-dropdown>
 				<button class="nav-text" clrDropdownTrigger>
 					<clr-icon shape="help" size="24"></clr-icon>
@@ -35,13 +35,18 @@
 				<a class="nav-link" href="#" [routerLink]="['home']" routerLinkActive="active"><clr-icon shape="home" class="is-solid"></clr-icon></a>
 			</li>
 			<li class="nav-item">
-				<a class="nav-link" href="#" [routerLink]="['endpoint']" routerLinkActive="active"><span class="nav-text">Endpoint</span></a>
+				<a class="nav-link" href="#" [routerLink]="['endpoint']" routerLinkActive="active"><span class="nav-text" data-tag="Endpoint Navigation">Endpoint</span></a>
 			</li>
 			<li class="nav-item">
-				<a class="nav-link" href="#" [routerLink]="['fault']" routerLinkActive="active"><span class="nav-text">Fault Execution</span></a>
+				<a class="nav-link" href="#" [routerLink]="['fault']" routerLinkActive="active"><span class="nav-text" data-tag="FaultExecution Navigation">Fault Execution</span></a>
 			</li>
 			<li class="nav-item">
-				<a class="nav-link" href="#" [routerLink]="['requests']" routerLinkActive="active"><span class="nav-text">Requests & Reports</span></a>
+				<a class="nav-link" href="#" [routerLink]="['resiliencyscore']" routerLinkActive="active"><span class="nav-text"
+						data-tag="Resiliencyscore Navigation">Resiliency Score <clr-icon shape="new" size="30" class="is-solid">
+						</clr-icon></span></a>
+			</li>
+			<li class="nav-item">
+				<a class="nav-link" href="#" [routerLink]="['requests']" routerLinkActive="active"><span class="nav-text" data-tag="Requests&Reports Navigation">Requests & Reports</span></a>
 			</li>
 		</ul>
 	</nav>

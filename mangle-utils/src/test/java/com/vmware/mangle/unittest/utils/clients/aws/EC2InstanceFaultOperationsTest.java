@@ -12,11 +12,15 @@
 package com.vmware.mangle.unittest.utils.clients.aws;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.validateMockitoUsage;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -33,6 +37,7 @@ import com.amazonaws.services.ec2.model.StopInstancesRequest;
 import com.amazonaws.services.ec2.model.StopInstancesResult;
 import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
 import com.amazonaws.services.ec2.model.TerminateInstancesResult;
+import org.apache.commons.lang3.concurrent.ConcurrentUtils;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.powermock.api.mockito.PowerMockito;
@@ -59,7 +64,7 @@ import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
  */
 @PrepareForTest(value = { AWSCommonUtils.class })
 @PowerMockIgnore({ "javax.net.ssl.*", "javax.xml.parsers.*", "com.sun.org.apache.xerces.internal.jaxp.*",
-        "org.apache.logging.log4j.*" })
+        "org.apache.logging.log4j.*", "com.sun.org.apache.xalan.internal.xsltc.trax.*" })
 public class EC2InstanceFaultOperationsTest extends PowerMockTestCase {
 
     @Mock
@@ -164,18 +169,20 @@ public class EC2InstanceFaultOperationsTest extends PowerMockTestCase {
     /**
      * Test method for {@link#EC2InstanceFaultOperations#blockAllNetworkTraffic }.
      *
+     * @throws MangleException
+     *
      * @throws Exception
      */
     @Test
-    public void testBlockAllNetworkTraffic() {
+    public void testBlockAllNetworkTraffic() throws Exception {
         List<String> securityGroups = new ArrayList<>();
         securityGroups.add(securityGroupID);
+        when(customAwsClient.ec2Client()).thenReturn(ec2Client);
+        when(ec2Client.rebootInstancesAsync(any(), any())).thenReturn(ConcurrentUtils.constantFuture(new RebootInstancesResult()));
         PowerMockito.when(AWSCommonUtils.getSecurityGroupIDs(any(), any())).thenReturn(securityGroups);
         PowerMockito.when(AWSCommonUtils.createSecurityGroup(any(), any(), any(), any())).thenReturn(securityGroupID);
+        PowerMockito.doNothing().when(AWSCommonUtils.class, "setInstanceSecurityGroups", any(), any(), any());
         try {
-            PowerMockito.doNothing().when(AWSCommonUtils.class, "setInstanceSecurityGroups", any(), any(), any());
-            PowerMockito.when(AWSCommonUtils.createSecurityGroup(any(), any(), any(), any()))
-                    .thenReturn(securityGroupID);
             Assert.assertEquals(
                     EC2InstanceFaultOperations.blockAllNetworkTraffic(customAwsClient, instanceID).getExitCode(), 0);
         } catch (Exception exception) {
@@ -219,6 +226,78 @@ public class EC2InstanceFaultOperationsTest extends PowerMockTestCase {
         }
     }
 
+    /**
+     * Test method for {@link#EC2InstanceFaultOperations#detachVolumesFromInstance }.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testDetachVolumesFromInstance() {
+        Map<String, String> attachedVolumes = new HashMap<>();
+        attachedVolumes.put("volume-1", "/dev/sdf");
+        try {
+            PowerMockito.when(AWSCommonUtils.getAttachedVolumes(any(), any(), anyBoolean()))
+                    .thenReturn(attachedVolumes);
+            PowerMockito.doNothing().when(AWSCommonUtils.class, "detachVolumes", any(), any(), any());
+            Assert.assertEquals(EC2InstanceFaultOperations
+                    .detachVolumesFromInstance(customAwsClient, "true", instanceID).getExitCode(), 0);
+            PowerMockito.verifyStatic(AWSCommonUtils.class, times(1));
+            AWSCommonUtils.detachVolumes(any(), any(), any());
+        } catch (Exception exception) {
+            Assert.fail("Test deatch volumes thrown unexpected expcetion" + exception.getMessage());
+        }
+
+        try {
+            PowerMockito.when(AWSCommonUtils.getAttachedVolumes(any(), any(), anyBoolean()))
+                    .thenReturn(attachedVolumes);
+            PowerMockito.doThrow(new MangleException("TestDetachVolumeFailed", ErrorCode.AWS_OPERATION_FAILURE))
+                    .when(AWSCommonUtils.class);
+            AWSCommonUtils.detachVolumes(any(), any(), any());
+            Assert.assertEquals(EC2InstanceFaultOperations
+                    .detachVolumesFromInstance(customAwsClient, "true", instanceID).getExitCode(), 1);
+        } catch (Exception exception) {
+            Assert.fail("Test deatch volumes thrown unexpected expcetion" + exception.getMessage());
+        }
+    }
+
+    /**
+     * Test method for {@link#EC2InstanceFaultOperations#attachVolumesFromInstance }.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testAttachVolumesFromInstance() {
+        Map<String, String> attachedVolumes = new HashMap<>();
+        attachedVolumes.put("volume-1", "/dev/sdf");
+        Future<RebootInstancesResult> result = getFutureObjectForRebootInstances();
+        when(customAwsClient.ec2Client()).thenReturn(ec2Client);
+        when(ec2Client.rebootInstancesAsync(any(RebootInstancesRequest.class), any(AsyncHandler.class)))
+                .thenReturn(result);
+        try {
+            PowerMockito.when(AWSCommonUtils.getAttachedVolumes(any(), any(), anyBoolean()))
+                    .thenReturn(attachedVolumes);
+            PowerMockito.doNothing().when(AWSCommonUtils.class, "attachVolumes", any(), any(), any());
+            Assert.assertEquals(EC2InstanceFaultOperations
+                    .attachVolumesToInstance(customAwsClient, instanceID + "#" + "volume-1=/dev/sdf").getExitCode(), 0);
+            PowerMockito.verifyStatic(AWSCommonUtils.class, times(1));
+            AWSCommonUtils.attachVolumes(any(), any(), any());
+        } catch (Exception exception) {
+            exception.printStackTrace();
+            Assert.fail("Test attach volumes thrown unexpected expcetion" + exception.getMessage());
+        }
+
+        try {
+            PowerMockito.when(AWSCommonUtils.getAttachedVolumes(any(), any(), anyBoolean()))
+                    .thenReturn(attachedVolumes);
+            PowerMockito.doThrow(new MangleException("TestAttachVolumeFailed", ErrorCode.AWS_OPERATION_FAILURE))
+                    .when(AWSCommonUtils.class);
+            AWSCommonUtils.attachVolumes(any(), any(), any());
+            Assert.assertEquals(EC2InstanceFaultOperations
+                    .attachVolumesToInstance(customAwsClient, instanceID + "#" + "volume-1=/dev/sdf").getExitCode(), 1);
+        } catch (Exception exception) {
+            Assert.fail("Test deatch volumes thrown unexpected expcetion" + exception.getMessage());
+        }
+    }
 
     private Future<TerminateInstancesResult> getFutureObjectForTerminateInstances() {
         return new Future<TerminateInstancesResult>() {

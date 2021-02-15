@@ -1,0 +1,34 @@
+<div class="form-group">
+    <label for="endpointName">Endpoint
+        <a id="endpointName" *ngIf="isKernelPanicFault" href="javascript://" role="tooltip" aria-haspopup="true"
+            class="tooltip tooltip-md tooltip-bottom-right">
+            <clr-icon shape="info-circle" size="24"></clr-icon>
+            <span class="tooltip-content">Please refer the documentation to run prerequisite commands on
+                target endpoint to
+                enable automatic reboot of target endpoint after Kernel Panic fault injection.</span>
+        </a>
+    </label>
+    <clr-dropdown>
+        <input autocomplete="off" clrDropdownTrigger type="text" name="endpointName" required
+            (input)="searchEndpoint($event.target['value']);displayEndpointFields($event.target['value']);"
+            (focus)="searchEndpoint('');" [(ngModel)]="faultFormData.endpointName" />
+        <clr-icon shape="caret down" clrDropdownTrigger size="24" (click)="searchEndpoint('');"></clr-icon>
+        <clr-dropdown-menu *clrIfOpen class="menu-height" clrPosition="bottom-left">
+            <ng-container *ngFor="let searchedEndpoint of searchedEndpoints">
+                <button type="button" clrDropdownItem class="option-height"
+                    *ngIf="supportedEpTypes.indexOf(searchedEndpoint.endPointType) > -1 || supportedEpTypes.indexOf(searchedEndpoint.endpointGroupType) > -1"
+                    (click)="setEndpointVal(searchedEndpoint.name);displayEndpointFields(searchedEndpoint.name);getDockerContainers(searchedEndpoint);setShowSelectRandomEndpoint(searchedEndpoint.endPointType);">{{searchedEndpoint.name}}</button>
+            </ng-container>
+        </clr-dropdown-menu>
+    </clr-dropdown>
+</div>
+
+<div *ngIf="showSelectRandomEndpoint" class="form-group">
+    <label for="randomEndpoint">Select Random Endpoint</label>
+    <div class="select">
+        <select name="randomEndpoint" id="randomEndpoint" [(ngModel)]="faultFormData.randomEndpoint">
+            <option [ngValue]="true">true</option>
+            <option [ngValue]="false">false</option>
+        </select>
+    </div>
+</div>

@@ -24,11 +24,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import com.vmware.mangle.cassandra.model.endpoint.EndpointSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.EndpointGroupFaultTriggerSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.FaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.K8SFaultTriggerSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.TaskSpec;
 import com.vmware.mangle.cassandra.model.tasks.Task;
-import com.vmware.mangle.model.response.DeleteOperationResponse;
+import com.vmware.mangle.model.enums.EndpointType;
+import com.vmware.mangle.model.response.DeleteEndpointOperationResponse;
 import com.vmware.mangle.services.SchedulerService;
 import com.vmware.mangle.services.TaskService;
 import com.vmware.mangle.services.repository.EndpointRepository;
@@ -68,7 +70,7 @@ public class EndpointDeletionService {
         }
     }
 
-    public DeleteOperationResponse deleteEndpointByNames(List<String> endpointNames) throws MangleException {
+    public DeleteEndpointOperationResponse deleteEndpointByNames(List<String> endpointNames) throws MangleException {
         log.info("Deleting endpoints by names : " + endpointNames);
         if (!CollectionUtils.isEmpty(endpointNames)) {
             List<EndpointSpec> persistedEndpointSpecs = endpointRepository.findByNames(endpointNames);
@@ -81,9 +83,10 @@ public class EndpointDeletionService {
             }
 
 
-            DeleteOperationResponse response = new DeleteOperationResponse();
-            response.setAssociations(processEndpointDeletionPrecheck(endpointNames));
-            if (response.getAssociations().size() > 0) {
+            DeleteEndpointOperationResponse response = new DeleteEndpointOperationResponse();
+            processEndpointDeletionPrecheck(persistedendpointNames, response);
+            if (response.getAssociations().size() > 0 || response.getEndpointGroupAssociations().size() > 0
+                    || response.getEndpointChildAssociations().size() > 0) {
                 return response;
             }
 
@@ -102,10 +105,11 @@ public class EndpointDeletionService {
      *
      * @param endpointNames
      *            Endpoint which needs to be verified
+     * @param response
      *
      * @return Mapping between the endpoints to tasks, to which the endpoints are bound
      */
-    private Map<String, List<String>> processEndpointDeletionPrecheck(List<String> endpointNames) {
+    private void processEndpointDeletionPrecheck(List<String> endpointNames, DeleteEndpointOperationResponse response) {
         List<String> activeScheduleIds = schedulerService.getActiveScheduleJobs();
         List<Task<TaskSpec>> tasks = taskService.getTasksByIds(activeScheduleIds);
 
@@ -115,8 +119,10 @@ public class EndpointDeletionService {
             String endpointName;
             if (task.getTaskData() instanceof FaultSpec) {
                 endpointName = ((FaultSpec) task.getTaskData()).getEndpointName();
-            } else {
+            } else if (task.getTaskData() instanceof K8SFaultTriggerSpec) {
                 endpointName = ((K8SFaultTriggerSpec) task.getTaskData()).getFaultSpec().getEndpointName();
+            } else {
+                endpointName = ((EndpointGroupFaultTriggerSpec) task.getTaskData()).getFaultSpec().getEndpointName();
             }
             if (endpointToTasksMapping.containsKey(endpointName)) {
                 endpointToTasksMapping.get(endpointName).add(task.getId());
@@ -124,16 +130,58 @@ public class EndpointDeletionService {
                 endpointToTasksMapping.put(endpointName, new ArrayList<>(Arrays.asList(task.getId())));
             }
         }
-
-        Map<String, List<String>> assocations = new HashMap<>();
-
+        Map<String, List<String>> associations = new HashMap<>();
         for (String endpoint : endpointNames) {
             if (!CollectionUtils.isEmpty(endpointToTasksMapping.get(endpoint))) {
-                assocations.put(endpoint, endpointToTasksMapping.get(endpoint));
+                associations.put(endpoint, endpointToTasksMapping.get(endpoint));
             }
         }
 
-        return assocations;
+        if (CollectionUtils.isEmpty(associations)) {
+            response.setEndpointGroupAssociations(validateInEndpointGroups(endpointNames));
+        }
+        if (CollectionUtils.isEmpty(response.getEndpointGroupAssociations())) {
+            response.setEndpointChildAssociations(validateInDatabseEndpointType(endpointNames));
+        }
+        response.setAssociations(associations);
     }
 
+    private Map<String, List<String>> validateInEndpointGroups(List<String> endpointNames) {
+        Map<String, List<String>> associations = new HashMap<>();
+        List<EndpointSpec> persistedEndpointSpecs = endpointRepository.findByEndPointType(EndpointType.ENDPOINT_GROUP);
+        if (!CollectionUtils.isEmpty(persistedEndpointSpecs)) {
+            for (String endpointName : endpointNames) {
+                List<String> listOfEndpointGroups = new ArrayList<>();
+                for (EndpointSpec endpointSpec : persistedEndpointSpecs) {
+                    if (endpointSpec.getEndpointNames().contains(endpointName)) {
+                        listOfEndpointGroups.add(endpointSpec.getName());
+                    }
+                }
+                if (!CollectionUtils.isEmpty(listOfEndpointGroups)) {
+                    associations.put(endpointName, listOfEndpointGroups);
+                }
+            }
+        }
+
+        return associations;
+    }
+
+    private Map<String, List<String>> validateInDatabseEndpointType(List<String> endpointNames) {
+        Map<String, List<String>> associations = new HashMap<>();
+        List<EndpointSpec> persistedEndpointSpecs = endpointRepository.findByEndPointType(EndpointType.DATABASE);
+        if (!CollectionUtils.isEmpty(persistedEndpointSpecs)) {
+            for (String endpointName : endpointNames) {
+                List<String> listOfChildEndpoint = new ArrayList<>();
+                for (EndpointSpec endpointSpec : persistedEndpointSpecs) {
+                    if (endpointSpec.getDatabaseConnectionProperties().getParentEndpointName().equals(endpointName)) {
+                        listOfChildEndpoint.add(endpointSpec.getName());
+                    }
+                }
+                if (!CollectionUtils.isEmpty(listOfChildEndpoint)) {
+                    associations.put(endpointName, listOfChildEndpoint);
+                }
+            }
+        }
+        return associations;
+    }
 }

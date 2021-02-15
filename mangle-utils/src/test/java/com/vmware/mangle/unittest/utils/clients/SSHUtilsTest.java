@@ -36,6 +36,7 @@ import org.apache.commons.io.FileUtils;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.testng.PowerMockTestCase;
 import org.testng.Assert;
@@ -56,6 +57,7 @@ import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
  * @author kumargautam
  */
 @PrepareForTest(value = { SSHUtils.class, FileUtils.class })
+@PowerMockIgnore( { "com.sun.org.apache.xalan.internal.xsltc.trax.*" } )
 public class SSHUtilsTest extends PowerMockTestCase {
 
     private SSHUtils sshUtils;

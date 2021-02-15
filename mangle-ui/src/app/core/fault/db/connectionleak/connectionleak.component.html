@@ -1,0 +1,33 @@
+<app-alert [(alertMessage)]="alertMessage" [(isErrorMessage)]="isErrorMessage"
+    (alertMessageChange)="alertMessage = $event"></app-alert>
+<div>
+    <h3 class="modal-title">Execute/Schedule Connection Leak Fault</h3>
+    <form data-tag="infra-connectionLeak" #connectionLeakForm="ngForm"
+        (ngSubmit)="executeConnectionLeakFault(connectionLeakForm.value);" ngNativeValidate>
+        <section class="form-block">
+            <db-fault-endpoint [(faultFormData)]="faultFormData" [(supportedEpTypes)]="supportedEpTypes"
+                [supportedDbTypes]="supportedDatabaseTypes" [(endpoints)]="endpoints"
+                (displayEndpointFieldsEvent)="displayEndpointFields($event);"
+                (dockerContainersEvent)="getDockerContainers($event.endPointType,$event.name);"></db-fault-endpoint>
+            <fault-timeoutms [(faultFormData)]="faultFormData"></fault-timeoutms>
+            <fault-injectionhomedir [(faultFormData)]="faultFormData"></fault-injectionhomedir>
+            <fault-dockerargs [(faultFormData)]="faultFormData" [(dockerHidden)]="dockerHidden"
+                [(dockerContainers)]="dockerContainers" [(searchedContainers)]="searchedContainers"></fault-dockerargs>
+            <fault-k8sargs [(faultFormData)]="faultFormData" [(k8sHidden)]="k8sHidden"></fault-k8sargs>
+            <fault-schedule [(faultFormData)]="faultFormData" (submitButtonChange)="setSubmitButton();"
+                (setCronModal)="viewCronModal($event);"></fault-schedule>
+            <fault-tags [(tagsData)]="tagsData" (tagsModalEvent)="tagsModal=$event;"></fault-tags>
+            <fault-notifiers [(notifiersData)]="notifiersData" (notifiersModalEvent)="notifierModal=$event;">
+            </fault-notifiers>
+        </section>
+        <button type="submit" data-tag="ScheduleCPUFault" class="btn btn-primary" [clrLoading]="runBtnState"
+            [disabled]="disableSchedule">SCHEDULE FAULT</button>
+        <button type="submit" data-tag="RunCPUFault" class="btn btn-primary" [clrLoading]="runBtnState"
+            [disabled]="disableRun">RUN FAULT</button>
+    </form>
+</div>
+<app-cron [(cronModal)]="cronModal" [(cronValOrig)]="faultFormData.schedule.cronExpression"
+    (cronMessageEvent)="setScheduleCron($event);"></app-cron>
+<app-tags [(tagsModal)]="tagsModal" [(tagsData)]="tagsData" (updateTagsModal)="tagsModal=$event;"></app-tags>
+<app-notifiers [(notifierModal)]="notifierModal" [(notifiersData)]="notifiersData"
+    (updateNotifiersModal)="notifierModal=$event;"></app-notifiers>

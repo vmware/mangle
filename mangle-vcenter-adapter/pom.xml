@@ -17,15 +17,20 @@
 	<parent>
 		<groupId>com.vmware.mangle</groupId>
         <artifactId>mangle-root</artifactId>
-        <version>2.0.0</version>
+        <version>3.0.0</version>
         <relativePath>../pom.xml</relativePath>
 	</parent>
 
-	<properties>        
+	<properties>
 		<sonar.jacoco.reportPath>target/jacoco-final.exec</sonar.jacoco.reportPath>
 		<sonar.coverage.exclusions>**/com/vmware/mangle/model/**/*</sonar.coverage.exclusions>
 	</properties>
+    
 	<dependencies>
+		<dependency>
+			<groupId>com.vmware.mangle</groupId>
+			<artifactId>mangle-vcenter-adapter-models</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
@@ -72,10 +77,10 @@
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>com.thoughtworks.xstream</groupId>
-			<artifactId>xstream</artifactId>
-		</dependency>
+        <dependency>
+            <groupId>com.thoughtworks.xstream</groupId>
+            <artifactId>xstream</artifactId>
+        </dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-oxm</artifactId>

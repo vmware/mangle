@@ -1,0 +1,19 @@
+<div class="main-container">
+	<div class="content-container">
+		<div class="content-area">
+			<router-outlet></router-outlet>
+		</div>
+		<clr-vertical-nav [clrVerticalNavCollapsible]="false">
+			<a clrVerticalNavLink [routerLink]="['query']" routerLinkActive="active">
+				<clr-icon shape="event" clrVerticalNavIcon></clr-icon>Query
+			</a>
+			<a clrVerticalNavLink [routerLink]="['service']" routerLinkActive="active">
+				<clr-icon shape="event" clrVerticalNavIcon></clr-icon>Service
+			</a>
+			<a clrVerticalNavLink [routerLink]="['calculaterscore']" routerLinkActive="active">
+				<clr-icon shape="event" clrVerticalNavIcon></clr-icon>Calculate Score
+			</a>
+
+		</clr-vertical-nav>
+	</div>
+</div>

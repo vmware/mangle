@@ -31,6 +31,7 @@ import com.vmware.mangle.cassandra.model.scheduler.SchedulerSpec;
 import com.vmware.mangle.model.response.DeleteOperationResponse;
 import com.vmware.mangle.services.deletionutils.SchedulerDeletionService;
 import com.vmware.mangle.services.deletionutils.TaskDeletionService;
+import com.vmware.mangle.services.events.web.CustomEventPublisher;
 import com.vmware.mangle.services.mockdata.SchedulerControllerMockData;
 import com.vmware.mangle.services.repository.SchedulerRepository;
 import com.vmware.mangle.utils.exceptions.MangleException;
@@ -46,6 +47,8 @@ public class SchedulerDeletionServiceTest {
     private SchedulerRepository schedulerRepository;
     @Mock
     private TaskDeletionService taskDeletionService;
+    @Mock
+    private CustomEventPublisher eventPublisher;
 
     private SchedulerDeletionService schedulerDeletionService;
     private SchedulerControllerMockData mockData = new SchedulerControllerMockData();
@@ -53,7 +56,8 @@ public class SchedulerDeletionServiceTest {
     @BeforeMethod
     public void initMocks() {
         MockitoAnnotations.initMocks(this);
-        schedulerDeletionService = new SchedulerDeletionService(schedulerRepository, taskDeletionService);
+        schedulerDeletionService =
+                new SchedulerDeletionService(schedulerRepository, taskDeletionService, eventPublisher);
     }
 
     @Test

@@ -11,6 +11,9 @@
 
 package com.vmware.mangle.services.controller;
 
+import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
+import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,6 +21,9 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.hateoas.Link;
+import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.Resources;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -32,6 +38,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.vmware.mangle.cassandra.model.metricprovider.MetricProviderSpec;
 import com.vmware.mangle.model.enums.MetricProviderByStatus;
@@ -58,11 +65,14 @@ import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 @Log4j2
 public class MetricProviderController {
 
-    @Autowired
-    private MetricProviderService metricProviderService;
+    private final MetricProviderService metricProviderService;
+    private final CustomEventPublisher publisher;
 
     @Autowired
-    private CustomEventPublisher publisher;
+    public MetricProviderController(MetricProviderService metricProviderService, CustomEventPublisher publisher) {
+        this.metricProviderService = metricProviderService;
+        this.publisher = publisher;
+    }
 
     /**
      * API to get metric providers
@@ -73,7 +83,7 @@ public class MetricProviderController {
      */
     @ApiOperation(value = "API to get Metric Providers.", nickname = "getMetricProviders")
     @GetMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<MetricProviderSpec>> getMetricProviders(
+    public ResponseEntity<Resources<MetricProviderSpec>> getMetricProviders(
             @RequestParam(name = "metricProviderByStatus", required = false) MetricProviderByStatus metricProviderByStatus)
             throws MangleException {
         List<MetricProviderSpec> metricProviders = new ArrayList<>();
@@ -98,7 +108,12 @@ public class MetricProviderController {
         } else {
             headers.add(CommonConstants.MESSAGE_HEADER, MetricProviderConstants.METRIC_PROVIDERS_FOUND);
         }
-        return new ResponseEntity<>(metricProviders, headers, HttpStatus.OK);
+
+        Resources<MetricProviderSpec> resources = new Resources<>(metricProviders);
+        resources.add(getSelfLink(), getHateoasLinkForDeleteMetricProvider(), getHateoasLinkForAddMetricProvider(),
+                getHateoasLinkForUpdateMetricProvider(), getHateoasLinkForTestConnection());
+
+        return new ResponseEntity<>(resources, headers, HttpStatus.OK);
     }
 
 
@@ -111,7 +126,7 @@ public class MetricProviderController {
      */
     @ApiOperation(value = "API to add a Metric Provider", nickname = "addMetricProvider")
     @PostMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<MetricProviderSpec> addMetricProvider(
+    public ResponseEntity<Resource<MetricProviderSpec>> addMetricProvider(
             @Validated @RequestBody MetricProviderSpec metricProviderSpec) throws MangleException {
         log.info("API to add a Metric Provider");
         if (this.metricProviderService.getMetricProviderByType(metricProviderSpec.getMetricProviderType()).isEmpty()) {
@@ -121,7 +136,12 @@ public class MetricProviderController {
             headers.add(CommonConstants.MESSAGE_HEADER, MetricProviderConstants.METRIC_PROVIDER_CREATED);
             publisher.publishAnEvent(
                     new EntityCreatedEvent(metricSpec.getPrimaryKey(), metricSpec.getClass().getName()));
-            return new ResponseEntity<>(metricSpec, headers, HttpStatus.OK);
+
+            Resource<MetricProviderSpec> resource = new Resource<>(metricSpec);
+            resource.add(getSelfLink(), getHateoasLinkForDeleteMetricProvider(), getHateoasLinkForGetMetricProvider(),
+                    getHateoasLinkForUpdateMetricProvider(), getHateoasLinkForTestConnection());
+
+            return new ResponseEntity<>(resource, headers, HttpStatus.OK);
 
         } else {
             log.debug("Can't add more than one metric provider of same type");
@@ -139,7 +159,7 @@ public class MetricProviderController {
      */
     @ApiOperation(value = "API to update a Metric Provider", nickname = "updateMetricProvider")
     @PutMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<MetricProviderSpec> updateMetricProvider(
+    public ResponseEntity<Resource<MetricProviderSpec>> updateMetricProvider(
             @Validated @RequestBody MetricProviderSpec metricProviderSpec) throws MangleException {
         log.info("API to update a  Metric Provider");
         this.metricProviderService.testConnectionMetricProvider(metricProviderSpec);
@@ -148,7 +168,12 @@ public class MetricProviderController {
         HttpHeaders headers = new HttpHeaders();
         headers.add(CommonConstants.MESSAGE_HEADER, MetricProviderConstants.METRIC_PROVIDER_UPDATED);
         publisher.publishAnEvent(new EntityUpdatedEvent(resultSpec.getPrimaryKey(), resultSpec.getClass().getName()));
-        return new ResponseEntity<>(resultSpec, headers, HttpStatus.OK);
+
+        Resource<MetricProviderSpec> resource = new Resource<>(resultSpec);
+        resource.add(getSelfLink(), getHateoasLinkForDeleteMetricProvider(), getHateoasLinkForGetMetricProvider(),
+                getHateoasLinkForAddMetricProvider(), getHateoasLinkForTestConnection());
+
+        return new ResponseEntity<>(resource, headers, HttpStatus.OK);
     }
 
     /**
@@ -160,7 +185,7 @@ public class MetricProviderController {
      */
     @ApiOperation(value = "API to delete Metric Provider by name", nickname = "deleteMetricProvider")
     @DeleteMapping(value = "")
-    public ResponseEntity deleteMetricProvider(@RequestParam("metricProviderName") String metricProviderName)
+    public ResponseEntity<Void> deleteMetricProvider(@RequestParam("metricProviderName") String metricProviderName)
             throws MangleException {
         log.info("API to delete Metric Provider");
         if (StringUtils.isEmpty(metricProviderName)) {
@@ -169,7 +194,7 @@ public class MetricProviderController {
             this.metricProviderService.deleteMetricProvider(metricProviderName);
         }
 
-        return new ResponseEntity(HttpStatus.NO_CONTENT);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     /**
@@ -181,7 +206,7 @@ public class MetricProviderController {
      */
     @ApiOperation(value = "API to test connection of  Metric Provider", nickname = "testConnection")
     @PostMapping(value = "/test-connection", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<MetricProviderResponse> testConnection(
+    public ResponseEntity<Resource<MetricProviderResponse>> testConnection(
             @Validated @RequestBody MetricProviderSpec metricProviderSpec) throws MangleException {
         log.info("API to test connection of  Metric Provider");
         boolean status = this.metricProviderService.testConnectionMetricProvider(metricProviderSpec);
@@ -193,7 +218,12 @@ public class MetricProviderController {
         mangleResponse.setResultStatus(status);
         HttpHeaders headers = new HttpHeaders();
         headers.add(CommonConstants.MESSAGE_HEADER, CommonConstants.TEST_CONNECTION_SUCCESS);
-        return new ResponseEntity<>(mangleResponse, headers, HttpStatus.OK);
+
+        Resource<MetricProviderResponse> resource = new Resource<>(mangleResponse);
+        resource.add(getSelfLink(), getHateoasLinkForDeleteMetricProvider(), getHateoasLinkForGetMetricProvider(),
+                getHateoasLinkForAddMetricProvider(), getHateoasLinkForUpdateMetricProvider());
+
+        return new ResponseEntity<>(resource, headers, HttpStatus.OK);
     }
 
     /**
@@ -205,7 +235,7 @@ public class MetricProviderController {
      */
     @ApiOperation(value = "API to Change Metric Provider Status", nickname = "changeMetricProviderStatus")
     @PostMapping(value = "/status", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<MetricProviderResponse> changeMetricProviderStatus(
+    public ResponseEntity<Resource<MetricProviderResponse>> changeMetricProviderStatus(
             @RequestParam("metricProviderName") String metricProviderName) throws MangleException {
         log.info("API to Change  Metric Provider status");
         this.metricProviderService.enableMetricProviderByName(metricProviderName);
@@ -213,7 +243,13 @@ public class MetricProviderController {
         headers.add(CommonConstants.MESSAGE_HEADER, MetricProviderConstants.METRIC_PROVIDER_UPDATED);
         MetricProviderResponse mangleResponse = new MetricProviderResponse();
         mangleResponse.setResultStatus(true);
-        return new ResponseEntity<>(mangleResponse, headers, HttpStatus.OK);
+
+        Resource<MetricProviderResponse> resource = new Resource<>(mangleResponse);
+        resource.add(getSelfLink(), getHateoasLinkForGetMetricCollectionStatus(), getHateoasLinkForGetMetricProvider(),
+                getHateoasLinkForAddMetricProvider(), getHateoasLinkForUpdateMetricProvider(),
+                getHateoasLinkForDeleteMetricProvider());
+
+        return new ResponseEntity<>(resource, headers, HttpStatus.OK);
     }
 
     /**
@@ -225,7 +261,7 @@ public class MetricProviderController {
      */
     @ApiOperation(value = "API to Change status of Mangle Metrics Collection status", nickname = "changeMangleMetricCollectionStatus")
     @PostMapping(value = "/mangle-metrics-collection-status", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<MetricProviderResponse> changeMangleMetricCollectionStatus(
+    public ResponseEntity<Resource<MetricProviderResponse>> changeMangleMetricCollectionStatus(
             @RequestParam("enableMangleMetrics") Boolean enableMangleMetrics) throws MangleException {
         log.info("API to Change status of Mangle Metrics Collection status");
         if (enableMangleMetrics) {
@@ -236,7 +272,13 @@ public class MetricProviderController {
             mangleResponse.setResultStatus(status);
             HttpHeaders headers = new HttpHeaders();
             headers.add(CommonConstants.MESSAGE_HEADER, MetricProviderConstants.METRIC_PROVIDER_ACTIVATED);
-            return new ResponseEntity<>(mangleResponse, headers, HttpStatus.OK);
+
+            Resource<MetricProviderResponse> resource = new Resource<>(mangleResponse);
+            resource.add(getSelfLink(), getHateoasLinkForGetMetricCollectionStatus(),
+                    getHateoasLinkForGetMetricProvider(), getHateoasLinkForAddMetricProvider(),
+                    getHateoasLinkForUpdateMetricProvider(), getHateoasLinkForDeleteMetricProvider());
+
+            return new ResponseEntity<>(resource, headers, HttpStatus.OK);
         } else {
             boolean status = this.metricProviderService.closeAllMetricCollection();
             this.metricProviderService.triggerMultiNodeResync("");
@@ -245,10 +287,15 @@ public class MetricProviderController {
             HttpHeaders headers = new HttpHeaders();
             headers.add(CommonConstants.MESSAGE_HEADER, MetricProviderConstants.METRIC_PROVIDER_DEACTIVATED);
             publisher.publishAnEvent(new EntityUpdatedEvent("Deactivated all Metrics"));
-            return new ResponseEntity<>(mangleResponse, headers, HttpStatus.OK);
+
+            Resource<MetricProviderResponse> resource = new Resource<>(mangleResponse);
+            resource.add(getSelfLink(), getHateoasLinkForGetMetricCollectionStatus(),
+                    getHateoasLinkForGetMetricProvider(), getHateoasLinkForAddMetricProvider(),
+                    getHateoasLinkForUpdateMetricProvider(), getHateoasLinkForDeleteMetricProvider());
+
+            return new ResponseEntity<>(resource, headers, HttpStatus.OK);
         }
     }
-
 
     /**
      * API to get status of Mangle Metrics Collection
@@ -257,14 +304,55 @@ public class MetricProviderController {
      */
     @ApiOperation(value = "API to get status of Mangle Metrics Collection", nickname = "getMetricProviders")
     @GetMapping(value = "/mangle-metrics-collection-status", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<MetricProviderResponse> getMetricCollectionStatus() {
-        log.info("API to get status of Mangle Metrics Collection");
+    public ResponseEntity<Resource<MetricProviderResponse>> getMetricCollectionStatus() throws MangleException {
+        log.info("API to get status of Mangle Metrics collection");
         boolean status = this.metricProviderService.isMangleMetricsEnabled();
         MetricProviderResponse mangleResponse = new MetricProviderResponse();
         mangleResponse.setResultStatus(status);
         HttpHeaders headers = new HttpHeaders();
         headers.add(CommonConstants.MESSAGE_HEADER, MetricProviderConstants.SENDING_MANGLE_METRICS_STATUS);
-        return new ResponseEntity<>(mangleResponse, headers, HttpStatus.OK);
+
+        Resource<MetricProviderResponse> resource = new Resource<>(mangleResponse);
+        resource.add(getSelfLink(), getHateoasLinkForChangeMetricCollectionStatus(),
+                getHateoasLinkForGetMetricProvider(), getHateoasLinkForAddMetricProvider(),
+                getHateoasLinkForUpdateMetricProvider(), getHateoasLinkForDeleteMetricProvider());
+
+        return new ResponseEntity<>(resource, headers, HttpStatus.OK);
+    }
+
+    private Link getHateoasLinkForDeleteMetricProvider() throws MangleException {
+        return linkTo(methodOn(MetricProviderController.class).deleteMetricProvider(null)).withRel("DELETE");
+    }
+
+    private Link getHateoasLinkForUpdateMetricProvider() throws MangleException {
+        return linkTo(methodOn(MetricProviderController.class).updateMetricProvider(null)).withRel("UPDATE");
+    }
+
+    private Link getHateoasLinkForAddMetricProvider() throws MangleException {
+        return linkTo(methodOn(MetricProviderController.class).addMetricProvider(null)).withRel("ADD");
+    }
+
+    private Link getHateoasLinkForGetMetricProvider() throws MangleException {
+        return linkTo(methodOn(MetricProviderController.class).getMetricProviders(null)).withRel("GET-BY-STATUS");
+    }
+
+    private Link getHateoasLinkForTestConnection() throws MangleException {
+        return linkTo(methodOn(MetricProviderController.class).testConnection(null)).withRel("TEST-CONNECTION");
+    }
+
+    private Link getHateoasLinkForGetMetricCollectionStatus() throws MangleException {
+        return linkTo(methodOn(MetricProviderController.class).getMetricCollectionStatus())
+                .withRel("GET-METRIC-COLLECTION-STATUS");
+    }
+
+    private Link getHateoasLinkForChangeMetricCollectionStatus() throws MangleException {
+        return linkTo(methodOn(MetricProviderController.class).changeMangleMetricCollectionStatus(true))
+                .withRel("UPDATE-METRIC-COLLECTION-STATUS");
+    }
+
+    public Link getSelfLink() {
+        return new Link(ServletUriComponentsBuilder.fromCurrentRequestUri().build().toUri().toASCIIString())
+                .withSelfRel();
     }
 
 

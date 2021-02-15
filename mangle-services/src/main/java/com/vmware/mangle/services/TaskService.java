@@ -15,15 +15,16 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import com.datastax.driver.core.PagingState;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.cassandra.core.query.CassandraPageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -31,6 +32,7 @@ import org.springframework.util.StringUtils;
 import com.vmware.mangle.cassandra.model.faults.specs.TaskSpec;
 import com.vmware.mangle.cassandra.model.tasks.RemediableTask;
 import com.vmware.mangle.cassandra.model.tasks.Task;
+import com.vmware.mangle.cassandra.model.tasks.TaskFilter;
 import com.vmware.mangle.cassandra.model.tasks.TaskInfo;
 import com.vmware.mangle.cassandra.model.tasks.TaskStatus;
 import com.vmware.mangle.cassandra.model.tasks.TaskTrigger;
@@ -59,7 +61,7 @@ public class TaskService {
     }
 
     public List<Task<TaskSpec>> getAllTasks() {
-        log.info("Retrieving all Tasks...");
+        log.debug("Retrieving all Tasks...");
         return taskRepository.findAll();
     }
 
@@ -95,6 +97,7 @@ public class TaskService {
     public Task<TaskSpec> addOrUpdateTask(Task<?> task) throws MangleException {
         if (task != null) {
             log.debug("Creating Task with Id : " + task.getId());
+            task.setLastUpdated(System.currentTimeMillis());
             return taskRepository.save(task);
         } else {
             log.error(ErrorConstants.TASK + ErrorConstants.FIELD_VALUE_EMPTY);
@@ -102,23 +105,52 @@ public class TaskService {
         }
     }
 
-    public Slice<Task<TaskSpec>> getTaskBasedOnPage(int page, int size) {
+    public Map<String, Object> getTaskBasedOnIndex(TaskFilter taskFilter) {
         log.info("Retrieving requested page for Tasks...");
-        if (page == 1) {
-            return taskRepository.findAll(CassandraPageRequest.of(page - 1, size));
-        } else {
-            CassandraPageRequest cassandraPageRequest = CassandraPageRequest.of(0, size);
-            Slice<Task<TaskSpec>> slice = taskRepository.findAll(cassandraPageRequest);
-            for (int i = 1; i < page; i++) {
-                PagingState pagingState = ((CassandraPageRequest) slice.getPageable()).getPagingState();
-                if (pagingState == null) {
-                    return slice;
-                }
-                cassandraPageRequest = CassandraPageRequest.of(slice.getPageable(), pagingState);
-                slice = taskRepository.findAll(cassandraPageRequest);
+        List<Task<TaskSpec>> allTasks = getAllTasks();
+        List<Task<TaskSpec>> tasksToReturn = new ArrayList<>();
+        List<Task<TaskSpec>> filteredTasks = getFilteredTasks(allTasks, taskFilter.getTaskType(),
+                taskFilter.getTaskDescription(), taskFilter.getTaskStatus());
+        for (int i = taskFilter.getFromIndex(); i <= taskFilter.getToIndex(); i++) {
+            if (filteredTasks.size() <= i) {
+                break;
             }
-            return slice;
+            tasksToReturn.add(filteredTasks.get(i));
         }
+        Map<String, Object> pagedObject = new HashMap<>();
+        pagedObject.put(Constants.TASK_SIZE, filteredTasks.size());
+        pagedObject.put(Constants.TASK_LIST, tasksToReturn);
+        return pagedObject;
+    }
+
+    @SuppressWarnings("squid:S1871")
+    private List<Task<TaskSpec>> getFilteredTasks(List<Task<TaskSpec>> allTasks, String taskType,
+            String taskDescription, String taskStatus) {
+        List<Task<TaskSpec>> filteredTasks = new ArrayList<>();
+        for (Task<TaskSpec> taskDataToFilter : allTasks) {
+            if (StringUtils.isEmpty(taskType) && StringUtils.isEmpty(taskDescription)
+                    && StringUtils.isEmpty(taskStatus)) {
+                filteredTasks.add(taskDataToFilter);
+            } else if (taskDataToFilter.getTaskType() != null
+                    && taskDataToFilter.getTaskType().toString().contains(taskType)
+                    && taskDataToFilter.getTaskDescription() != null
+                    && taskDataToFilter.getTaskDescription().contains(taskDescription)
+                    && taskDataToFilter.getTaskStatus() != null
+                    && taskDataToFilter.getTaskStatus().toString().contains(taskStatus)) {
+                filteredTasks.add(taskDataToFilter);
+            }
+
+        }
+        filteredTasks.sort((t1, t2) -> {
+            if (t2.getLastUpdated() != null && t1.getLastUpdated() != null) {
+                return t2.getLastUpdated().compareTo(t1.getLastUpdated());
+            } else if (t2.getTriggers().peek().getEndTime() != null && t1.getTriggers().peek().getEndTime() != null) {
+                return t2.getTriggers().peek().getEndTime().compareTo(t1.getTriggers().peek().getEndTime());
+            } else {
+                return 0;
+            }
+        });
+        return filteredTasks;
     }
 
     public Task<TaskSpec> updateRemediationFieldofTaskById(String id, Boolean isRemediated) throws MangleException {
@@ -129,6 +161,18 @@ public class TaskService {
         } else {
             RemediableTask<?> dbTask = (RemediableTask<?>) getTaskById(id);
             dbTask.setRemediated(isRemediated);
+            return addOrUpdateTask(dbTask);
+        }
+    }
+
+    public Task<TaskSpec> updateTaskStatusFieldOfTaskById(String id, TaskStatus status) throws MangleException {
+        log.info("Updating Task by id=" + id);
+        if (id == null || status == null || "".equals(id)) {
+            log.error("id and status should not be empty or null");
+            throw new MangleException(ErrorCode.FIELD_VALUE_EMPTY, ErrorConstants.TASK);
+        } else {
+            RemediableTask<?> dbTask = (RemediableTask<?>) getTaskById(id);
+            dbTask.setTaskStatus(status);
             return addOrUpdateTask(dbTask);
         }
     }
@@ -162,8 +206,22 @@ public class TaskService {
 
     public List<Task<TaskSpec>> getInProgressTasks() {
         List<Task<TaskSpec>> tasks = taskRepository.findAll();
-        return tasks.stream().filter(task -> (task.getTaskStatus() == TaskStatus.IN_PROGRESS
-                || task.getTaskStatus() == TaskStatus.INITIALIZING)).collect(Collectors.toList());
+        return tasks.stream()
+                .filter(task -> (task.getTaskStatus() == TaskStatus.IN_PROGRESS
+                        || task.getTaskStatus() == TaskStatus.INITIALIZING
+                        || task.getTaskStatus() == TaskStatus.INJECTED))
+                .collect(Collectors.toList());
+    }
+
+    public List<Task<TaskSpec>> getInjectedSystemResourceTasks() {
+        List<Task<TaskSpec>> tasks = taskRepository.findAll();
+        return tasks.stream()
+                .filter(task -> (Objects.nonNull(task.getExtensionName())
+                        && task.getExtensionName()
+                                .equals("com.vmware.mangle.faults.plugin.tasks.helpers.SystemResourceFaultTaskHelper2")
+                        && (task.getTaskStatus() == TaskStatus.INJECTED
+                                || task.getTaskStatus() == TaskStatus.TEST_MACHINE_INVALID_STATE)))
+                .collect(Collectors.toList());
     }
 
     public List<Task<TaskSpec>> getTaskByTaskName(String taskName) {

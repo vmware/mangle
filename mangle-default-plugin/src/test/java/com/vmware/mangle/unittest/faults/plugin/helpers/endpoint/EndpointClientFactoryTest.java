@@ -11,11 +11,14 @@
 
 package com.vmware.mangle.unittest.faults.plugin.helpers.endpoint;
 
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.validateMockitoUsage;
+import static org.testng.Assert.assertEquals;
 
 import java.util.Optional;
 
 import org.mockito.MockitoAnnotations;
+import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.modules.testng.PowerMockTestCase;
 import org.testng.Assert;
@@ -31,11 +34,15 @@ import com.vmware.mangle.cassandra.model.endpoint.RemoteMachineCredentials;
 import com.vmware.mangle.faults.plugin.mockdata.CredentialsSpecMockData;
 import com.vmware.mangle.faults.plugin.mockdata.EndpointMockData;
 import com.vmware.mangle.task.framework.endpoint.EndpointClientFactory;
+import com.vmware.mangle.utils.clients.azure.CustomAzureClient;
+import com.vmware.mangle.utils.clients.database.DatabaseClient;
 import com.vmware.mangle.utils.clients.docker.CustomDockerClient;
 import com.vmware.mangle.utils.clients.endpoint.EndpointClient;
 import com.vmware.mangle.utils.clients.kubernetes.KubernetesCommandLineClient;
+import com.vmware.mangle.utils.clients.redis.RedisProxyClient;
 import com.vmware.mangle.utils.clients.ssh.SSHUtils;
 import com.vmware.mangle.utils.exceptions.MangleException;
+import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
 /**
  * Insert your comment for EndpointClientFactoryTest here
@@ -69,7 +76,7 @@ public class EndpointClientFactoryTest extends PowerMockTestCase {
      * @throws java.lang.Exception
      */
     @AfterClass
-    public void tearDownAfterClass() throws Exception {
+    public void tearDownAfterClass() {
         this.credentialsSpec = null;
         this.endpointSpec = null;
         this.mockData = null;
@@ -80,13 +87,40 @@ public class EndpointClientFactoryTest extends PowerMockTestCase {
      * @throws java.lang.Exception
      */
     @AfterMethod
-    public void tearDown() throws Exception {
+    public void tearDown() {
         validateMockitoUsage();
     }
 
     /**
      * Test method for
-     * {@link com.vmware.mangle.EndpointClientFactory.endpoint.EndpointClientFactory#getEndPointClient(CredentialsSpec, EndpointSpec)}
+     * {@link EndpointClientFactory#getEndPointClient(CredentialsSpec, EndpointSpec)}
+     *
+     * @throws MangleException
+     */
+    @Test
+    public void testGetEndPointClient() {
+        EndpointSpec rmEndpointSpec = mockData.rmEndpointMockData();
+        rmEndpointSpec.setEnable(false);
+        try {
+            endpointClientFactory.getEndPointClient(credentialsSpec, rmEndpointSpec);
+            Assert.fail("test getEndpointClient() with enable false failed");
+        } catch (MangleException e) {
+            assertEquals(e.getErrorCode(), ErrorCode.ENDPOINT_DISABLED,
+                    "test getEndpointClient() failed with different error code" + e.getErrorCode());
+        }
+        rmEndpointSpec.setEnable(null);
+        try {
+            EndpointClient endpointClient = endpointClientFactory.getEndPointClient(credentialsSpec, rmEndpointSpec);
+            Assert.assertTrue(endpointClient instanceof SSHUtils, "expecting sshutils client failed");
+        } catch (MangleException e) {
+            Assert.fail("test getEndpointClient() with enable null failed");
+        }
+
+    }
+
+    /**
+     * Test method for
+     * {@link EndpointClientFactory#getEndPointClient(CredentialsSpec, EndpointSpec)}
      *
      * @throws MangleException
      */
@@ -102,7 +136,7 @@ public class EndpointClientFactoryTest extends PowerMockTestCase {
 
     /**
      * Test method for
-     * {@link com.vmware.mangle.EndpointClientFactory.endpoint.EndpointClientFactory#getEndPointClient(CredentialsSpec, EndpointSpec)}
+     * {@link EndpointClientFactory#getEndPointClient(CredentialsSpec, EndpointSpec)}
      *
      * @throws MangleException
      */
@@ -120,16 +154,18 @@ public class EndpointClientFactoryTest extends PowerMockTestCase {
 
     /**
      * Test method for
-     * {@link com.vmware.mangle.EndpointClientFactory.endpoint.EndpointClientFactory#getEndPointClient(CredentialsSpec, EndpointSpec)}
+     * {@link EndpointClientFactory#getEndPointClient(CredentialsSpec, EndpointSpec)}
      *
-     * @throws MangleException
+     * @throws Exception
      */
     @Test
-    public void testGetEndPointClientEndpointSpecForK8S() throws MangleException {
+    public void testGetEndPointClientEndpointSpecForK8S() throws Exception {
         CredentialsSpec credentialsSpec = credentialsSpecMockData.getk8SCredentialsData();
         EndpointSpec endpointSpec = mockData.k8sEndpointMockData();
-        Optional<CredentialsSpec> optional = Optional.of(credentialsSpec);
-        EndpointClient endpointClient = endpointClientFactory.getEndPointClient(credentialsSpec, endpointSpec);
+        EndpointClientFactory endpointClientFactorySpy = PowerMockito.spy(endpointClientFactory);
+        PowerMockito.doNothing().when(endpointClientFactorySpy).testConnection(any());
+
+        EndpointClient endpointClient = endpointClientFactorySpy.getEndPointClient(credentialsSpec, endpointSpec);
         boolean expectedResult = false;
         if (endpointClient instanceof KubernetesCommandLineClient) {
             expectedResult = true;
@@ -139,22 +175,38 @@ public class EndpointClientFactoryTest extends PowerMockTestCase {
 
     /**
      * Test method for
-     * {@link com.vmware.mangle.EndpointClientFactory.endpoint.EndpointClientFactory#getEndPointClient(CredentialsSpec, EndpointSpec)}
+     * {@link EndpointClientFactory#getEndPointClient(CredentialsSpec, EndpointSpec)}
      *
      * @throws MangleException
      */
     @Test
     public void testGetEndPointClientEndpointSpecForK8S1() throws MangleException {
-        CredentialsSpec credentialsSpec = credentialsSpecMockData.getk8SCredentialsData();
-        ((K8SCredentials) credentialsSpec).setKubeConfig(new byte[] {});
+        K8SCredentials credentialsSpec = credentialsSpecMockData.getk8SCredentialsData();
+        credentialsSpec.setKubeConfig(new byte[] {});
         EndpointSpec endpointSpec = mockData.k8sEndpointMockData();
+        EndpointClientFactory endpointClientFactorySpy = PowerMockito.spy(endpointClientFactory);
+        PowerMockito.doNothing().when(endpointClientFactorySpy).testConnection(any());
         Optional<CredentialsSpec> optional = Optional.of(credentialsSpec);
-        EndpointClient endpointClient = endpointClientFactory.getEndPointClient(credentialsSpec, endpointSpec);
+        EndpointClient endpointClient = endpointClientFactorySpy.getEndPointClient(credentialsSpec, endpointSpec);
         boolean expectedResult = false;
         if (endpointClient instanceof KubernetesCommandLineClient) {
             expectedResult = true;
         }
         Assert.assertTrue(expectedResult);
+    }
+
+    /**
+     * Test method for
+     * {@link EndpointClientFactory#getEndPointClient(CredentialsSpec, EndpointSpec)}
+     *
+     * @throws MangleException
+     */
+    @Test
+    public void testGetEndPointClientEndpointSpecForAzure() throws MangleException {
+        EndpointSpec endpointSpec = mockData.azureEndpointMockData();
+        EndpointClient endpointClient = endpointClientFactory
+                .getEndPointClient(credentialsSpecMockData.getAzureCredentialsData(), endpointSpec);
+        Assert.assertTrue(endpointClient instanceof CustomAzureClient, "Test for azure endpoint spec failed");
     }
 
     /**
@@ -172,5 +224,33 @@ public class EndpointClientFactoryTest extends PowerMockTestCase {
             expectedResult = true;
         }
         Assert.assertTrue(expectedResult);
+    }
+
+    /**
+     * Test method for
+     * {@link com.vmware.mangle.task.framework.endpoint.EndpointClientFactory#getEndPointClient(CredentialsSpec, EndpointSpec)}
+     *
+     * @throws MangleException
+     */
+    @Test
+    public void testGetEndPointClientEndpointSpecForRedis() throws MangleException {
+        EndpointSpec endpointSpec = mockData.getRedisProxyEndpointMockData();
+        EndpointClient endpointClient = endpointClientFactory.getEndPointClient(null, endpointSpec);
+
+        Assert.assertTrue(endpointClient instanceof RedisProxyClient);
+    }
+
+    /**
+     * Test method for
+     * {@link com.vmware.mangle.task.framework.endpoint.EndpointClientFactory#getEndPointClient(CredentialsSpec, EndpointSpec)}
+     *
+     * @throws MangleException
+     */
+    @Test
+    public void testGetEndPointClientEndpointSpecForDatabase() throws MangleException {
+        EndpointSpec endpointSpec = mockData.getDatabaseEndpointSpec();
+        EndpointClient endpointClient = endpointClientFactory.getEndPointClient(null, endpointSpec);
+
+        Assert.assertTrue(endpointClient instanceof DatabaseClient);
     }
 }

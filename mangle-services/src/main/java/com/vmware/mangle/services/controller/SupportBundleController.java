@@ -12,7 +12,6 @@
 package com.vmware.mangle.services.controller;
 
 import java.text.SimpleDateFormat;
-
 import javax.servlet.http.HttpServletResponse;
 
 import io.swagger.annotations.Api;
@@ -39,8 +38,12 @@ import com.vmware.mangle.utils.constants.Constants;
 @Log4j2
 public class SupportBundleController {
 
+    private final SupportBundleService supportBundleService;
+
     @Autowired
-    private SupportBundleService supportBundleService;
+    public SupportBundleController(SupportBundleService supportBundleService) {
+        this.supportBundleService = supportBundleService;
+    }
 
     @ApiOperation(value = "API to get support bundle for Mangle ", nickname = "getSupportBundle")
     @GetMapping(value = "/zip", produces = "application/zip")

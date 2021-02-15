@@ -1,0 +1,123 @@
+<app-alert [(alertMessage)]="alertMessage" [isErrorMessage]="isErrorMessage"
+    (alertMessageChange)="alertMessage = $event">
+</app-alert>
+
+<clr-dg-action-bar>
+    <div class="btn-group">
+        <button type="button" class="btn btn-sm btn-secondary" [disabled]="metricConfigInfo.length > 0"
+            (click)="populateMetricConfigForm(resiliencyScoreMetricConfigDefaultData); metricConfigForm=true;addEdit='Add';">
+            <clr-icon shape="plus"></clr-icon>
+            Add
+        </button>
+    </div>
+</clr-dg-action-bar>
+
+
+<clr-datagrid [clrDgLoading]="isLoading">
+    <clr-dg-column>ResiliencyScore Metric Config Name</clr-dg-column>
+    <clr-dg-column>ResiliencyScore Metric Name</clr-dg-column>
+    <clr-dg-column>ResiliencyScore Metric Source</clr-dg-column>
+    <clr-dg-column>ResiliencyScore Test reference window (in mins)</clr-dg-column>
+    <clr-dg-column>ResiliencyScore Calculation window (in hours)
+    </clr-dg-column>
+    <clr-dg-column>TimeSeries Query Granularity</clr-dg-column>
+    <clr-dg-row *clrDgItems="let metricConfig of metricConfigInfo" [clrDgItem]="metricConfig">
+        <clr-dg-action-overflow>
+            <button class="action-item"
+                (click)="populateMetricConfigForm(metricConfig);metricConfigForm=true;addEdit='Edit';">Edit
+            </button>
+            <button class="action-item" (click)="deleteMetricConfig(metricConfig)">Delete</button>
+        </clr-dg-action-overflow>
+        <clr-dg-cell>{{metricConfig.name}}</clr-dg-cell>
+        <clr-dg-cell>{{metricConfig.metricName}}</clr-dg-cell>
+        <clr-dg-cell>{{metricConfig.metricSource}}</clr-dg-cell>
+        <clr-dg-cell>{{metricConfig.testReferenceWindow}}</clr-dg-cell>
+        <clr-dg-cell>{{metricConfig.resiliencyCalculationWindow}}</clr-dg-cell>
+        <clr-dg-cell>{{metricConfig.metricQueryGranularity}}</clr-dg-cell>
+    </clr-dg-row>
+</clr-datagrid>
+
+<clr-modal [(clrModalOpen)]="metricConfigForm" [clrModalClosable]="false">
+    <h3 class="modal-title">{{addEdit}} ResiliencyScore Metric Configuration</h3>
+    <div class="modal-body">
+        <form #metricConfigInfoForm="ngForm" #nativeMetricConfigForm *ngIf="metricConfigData"
+            (ngSubmit)="addOrUpdateMetricConfig(metricConfigInfoForm.value,addEdit);metricConfigDatagrid=false;metricConfigForm=false;metricConfigInfoForm.reset();"
+            ngNativeValidate>
+            <section class="form-block">
+                <div class="form-group">
+                    <label for="name">Metric Config Name</label>
+                    <input type="text" placeholder="default-config" name="name" [(ngModel)]="metricConfigData.name"
+                        [required]="addEdit == 'Add'" [readonly]="addEdit == 'Edit'">
+                </div>
+                <div class="form-group">
+                    <label for="metricName">Metric Name
+                        <a href="javascript://" role="tooltip" aria-haspopup="true"
+                            class="tooltip tooltip-md tooltip-bottom-right">
+                            <clr-icon shape="info-circle" size="24"></clr-icon>
+                            <span class="tooltip-content">ResiliencyScore will be reported with the specified metric
+                                name</span>
+                        </a>
+                    </label>
+                    <input type="text" placeholder="mangle.resiliency.score" name="metricName"
+                        [(ngModel)]="metricConfigData.metricName" required>
+                </div>
+                <div class="form-group">
+                    <label for="metricSource">Metric Source
+                        <a href="javascript://" role="tooltip" aria-haspopup="true"
+                            class="tooltip tooltip-md tooltip-bottom-right">
+                            <clr-icon shape="info-circle" size="24"></clr-icon>
+                            <span class="tooltip-content">Source to be associated for resiliency score metric</span>
+                        </a>
+                    </label>
+                    <input type="text" placeholder="mangle" name="metricSource"
+                        [(ngModel)]="metricConfigData.metricSource" required>
+                </div>
+                <div class="form-group">
+                    <label for="testReferenceWindow">Test Reference window (in mins)
+                        <a href="javascript://" role="tooltip" aria-haspopup="true"
+                            class="tooltip tooltip-md tooltip-bottom-right">
+                            <clr-icon shape="info-circle" size="24"></clr-icon>
+                            <span class="tooltip-content">Test reference window indicates the minutes of time series
+                                data to
+                                be
+                                considered before and after every fault injection event</span>
+                        </a>
+                    </label>
+                    <input type="number" placeholder=15 name="testReferenceWindow"
+                        [(ngModel)]="metricConfigData.testReferenceWindow" required>
+                </div>
+                <div class="form-group">
+                    <label for="resiliencyCalculationWindow">Calculation Window (in hours)
+                        <a href="javascript://" role="tooltip" aria-haspopup="true"
+                            class="tooltip tooltip-md tooltip-bottom-right">
+                            <clr-icon shape="info-circle" size="24"></clr-icon>
+                            <span class="tooltip-content">Number of hours of fault injection event data to be retrieved
+                                from
+                                metric provider for calculating the resiliency score</span>
+                        </a>
+                    </label>
+                    <input type="number" placeholder=2 name="resiliencyCalculationWindow"
+                        [(ngModel)]="metricConfigData.resiliencyCalculationWindow" required>
+                </div>
+                <div class="form-group">
+                    <label for="metricQueryGranularity">Granularity of TimeSeries Data
+                        <a href="javascript://" role="tooltip" aria-haspopup="true"
+                            class="tooltip tooltip-md tooltip-bottom-right">
+                            <clr-icon shape="info-circle" size="24"></clr-icon>
+                            <span class="tooltip-content">Granularity of time series data to be retrieved from metric
+                                provider</span>
+                        </a>
+                    </label>
+                    <select name="metricQueryGranularity" [(ngModel)]="metricConfigData.metricQueryGranularity"
+                        required>
+                        <ng-container *ngFor="let granularity of metricGranularityList">
+                            <option [value]="granularity">{{granularity}}</option>
+                        </ng-container>
+                    </select>
+                </div>
+            </section>
+            <button type="submit" class="btn btn-primary" [disabled]="disableSubmit">SUBMIT</button>
+            <button type="button" class="btn btn-outline" (click)="metricConfigForm=false;ngOnInit();">CANCEL</button>
+        </form>
+    </div>
+</clr-modal>

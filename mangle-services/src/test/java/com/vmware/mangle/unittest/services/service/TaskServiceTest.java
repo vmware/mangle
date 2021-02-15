@@ -23,17 +23,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
-import com.datastax.driver.core.PagingState;
 import lombok.extern.log4j.Log4j2;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.internal.stubbing.answers.ReturnsArgumentAt;
-import org.springframework.data.cassandra.core.query.CassandraPageRequest;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
@@ -43,6 +40,7 @@ import com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.TaskSpec;
 import com.vmware.mangle.cassandra.model.tasks.FaultTask;
 import com.vmware.mangle.cassandra.model.tasks.Task;
+import com.vmware.mangle.cassandra.model.tasks.TaskFilter;
 import com.vmware.mangle.cassandra.model.tasks.TaskStatus;
 import com.vmware.mangle.cassandra.model.tasks.TaskTrigger;
 import com.vmware.mangle.services.TaskService;
@@ -60,7 +58,6 @@ import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
  */
 @Log4j2
 public class TaskServiceTest {
-
 
     @Mock
     private TaskRepository taskRepository;
@@ -82,7 +79,7 @@ public class TaskServiceTest {
     @Test
     public void getAllTasksTest() {
         log.info("Executing test: getAllTasksTest on TaskService#getAllTasks");
-        List<Task<TaskSpec>> tasks = tasksMockData.getDummyTasks();
+        List<Task<TaskSpec>> tasks = tasksMockData.getDummy1Tasks();
         Mockito.when(taskRepository.findAll()).thenReturn(tasks);
         List<Task<TaskSpec>> response = taskService.getAllTasks();
         verify(taskRepository, Mockito.times(1)).findAll();
@@ -96,7 +93,7 @@ public class TaskServiceTest {
     @Test
     public void getAllTasksWithFiltersTest() {
         log.info("Executing test: getAllTasksTest on TaskService#getAllTasks(isScheduledTask,taskName)");
-        List<Task<TaskSpec>> tasks = tasksMockData.getDummyTasks();
+        List<Task<TaskSpec>> tasks = tasksMockData.getDummy1Tasks();
         Mockito.when(taskRepository.findAll()).thenReturn(tasks);
         Mockito.when(taskRepository.findByIsScheduledTask(anyBoolean())).thenReturn(tasks);
         Mockito.when(taskRepository.findByTaskNameAndIsScheduledTask(any(), anyBoolean())).thenReturn(tasks);
@@ -108,7 +105,7 @@ public class TaskServiceTest {
         verify(taskRepository, Mockito.times(1)).findByTaskName(any());
         Assert.assertEquals(response.size(), tasks.size());
         response = taskService.getAllTasks(true, tasks.get(0).getTaskName());
-        verify(taskRepository, Mockito.times(1)).findByTaskNameAndIsScheduledTask(any(),anyBoolean());
+        verify(taskRepository, Mockito.times(1)).findByTaskNameAndIsScheduledTask(any(), anyBoolean());
         Assert.assertEquals(response.size(), tasks.size());
         response = taskService.getAllTasks(null, null);
         verify(taskRepository, Mockito.times(1)).findAll();
@@ -122,7 +119,7 @@ public class TaskServiceTest {
     @Test
     public void getTaskByIdTest() {
         log.info("Executing test: getTaskByIdTest on TaskService#getTaskById");
-        Task<TaskSpec> task = tasksMockData.getDummyTask();
+        Task<TaskSpec> task = tasksMockData.getDummy1Task();
         Mockito.when(taskRepository.findById(anyString())).thenReturn(Optional.of(task));
         Task<TaskSpec> persistedTask = null;
         try {
@@ -144,7 +141,7 @@ public class TaskServiceTest {
     @Test(expectedExceptions = { MangleException.class })
     public void getTaskByIdFailureForNullIdTest() throws MangleException {
         log.info("Executing test: getTaskByIdFailureForNullIdTest on TaskService#getTaskById");
-        Task<TaskSpec> task = tasksMockData.getDummyTask();
+        Task<TaskSpec> task = tasksMockData.getDummy1Task();
         Mockito.when(taskRepository.findById(anyString())).thenReturn(Optional.of(task));
         try {
             taskService.getTaskById(null);
@@ -163,7 +160,7 @@ public class TaskServiceTest {
     @Test(expectedExceptions = { MangleRuntimeException.class })
     public void getTaskByIdFailureForNotPresentTaskId() throws MangleException {
         log.info("Executing test: getTaskByIdFailureForNotPresentTaskId on TaskService#getTaskById");
-        Task<TaskSpec> task = tasksMockData.getDummyTask();
+        Task<TaskSpec> task = tasksMockData.getDummy1Task();
         Mockito.when(taskRepository.findById(anyString())).thenReturn(Optional.empty());
         try {
             taskService.getTaskById(task.getId());
@@ -182,7 +179,7 @@ public class TaskServiceTest {
     @Test(expectedExceptions = { MangleException.class })
     public void getTaskByIdFailureForEmptyIdTest() throws MangleException {
         log.info("Executing test: getTaskByIdFailureForEmptyIdTest on TaskService#getTaskById");
-        Task<TaskSpec> task = tasksMockData.getDummyTask();
+        Task<TaskSpec> task = tasksMockData.getDummy1Task();
         Mockito.when(taskRepository.findById(anyString())).thenReturn(Optional.of(task));
         taskService.getTaskById(null);
         try {
@@ -200,7 +197,7 @@ public class TaskServiceTest {
     @Test
     public void addOrUpdateTaskTest() throws MangleException {
         log.info("Executing test: addOrUpdateTaskTest on method TaskService#addOrUpdateTask(Task)");
-        Task<TaskSpec> task = tasksMockData.getDummyTask();
+        Task<TaskSpec> task = tasksMockData.getDummy1Task();
         Mockito.when(taskRepository.save(Mockito.any())).thenReturn(task);
         Task<TaskSpec> persistedTest = taskService.addOrUpdateTask(task);
         verify(taskRepository, Mockito.times(1)).save(Mockito.any());
@@ -214,7 +211,7 @@ public class TaskServiceTest {
     @Test(expectedExceptions = MangleException.class)
     public void addOrUpdateTaskTestFailure() throws MangleException {
         log.info("Executing test: addOrUpdateTaskTestFailure on method TaskService#createTask(Task)");
-        Task<TaskSpec> task = tasksMockData.getDummyTask();
+        Task<TaskSpec> task = tasksMockData.getDummy1Task();
         Mockito.when(taskRepository.save(Mockito.any())).thenReturn(task);
         try {
             taskService.addOrUpdateTask(null);
@@ -231,7 +228,7 @@ public class TaskServiceTest {
     @Test(expectedExceptions = MangleException.class)
     public void updateTaskTestFailureNoRecord() throws MangleException {
         log.info("Executing test: updateTaskTestFailureNoRecord on method TaskService#updateTask(Task)");
-        tasksMockData.getDummyTask();
+        tasksMockData.getDummy1Task();
         Mockito.when(taskRepository.save(Mockito.any())).thenReturn(null);
         try {
             taskService.addOrUpdateTask(null);
@@ -249,7 +246,7 @@ public class TaskServiceTest {
     @Test
     public void udpateTaskTest() throws MangleException {
         log.info("Executing test: udpateTaskTest on method TaskService#updateTask(Task)");
-        Task<TaskSpec> task = tasksMockData.getDummyTask();
+        Task<TaskSpec> task = tasksMockData.getDummy1Task();
         Mockito.when(taskRepository.save(task)).then(new ReturnsArgumentAt(0));
         Task<TaskSpec> persistedTask1 = taskService.addOrUpdateTask(task);
         persistedTask1.setTaskDescription(persistedTask1.getTaskDescription() + "Modified");
@@ -268,7 +265,7 @@ public class TaskServiceTest {
     public void updateRemediationFieldofTaskByIdTest() throws MangleException {
         log.info(
                 "Executing test: updateRemediationFieldofTaskByIdTest on method TaskService#updateRemediationFieldofTaskById(Task)");
-        FaultTask<?> task = (FaultTask<?>) tasksMockData.getDummyTask();
+        FaultTask<?> task = (FaultTask<?>) tasksMockData.getDummy1Task();
         Mockito.when(taskRepository.save(Mockito.any())).thenReturn(task);
         Mockito.when(taskRepository.findById(task.getId())).thenReturn(Optional.of((Task<TaskSpec>) task));
         FaultTask<?> persistedTask1 = (FaultTask<?>) taskService.updateRemediationFieldofTaskById(task.getId(), true);
@@ -346,60 +343,13 @@ public class TaskServiceTest {
      *
      */
     @Test
-    public void getAllTasksBasedOnPageTest() {
-        log.info("Executing test: getAllTasksBy on TaskService#getAllTasksBasedOnPageTest");
-        List<Task<TaskSpec>> tasks = tasksMockData.getDummyTasks();
-        Mockito.when(taskRepository.findAll(Mockito.any(Pageable.class))).thenReturn(new PageImpl<>(tasks));
-        Slice<Task<TaskSpec>> response = taskService.getTaskBasedOnPage(1, 2);
-        verify(taskRepository, Mockito.times(1)).findAll(Mockito.any(Pageable.class));
-        Assert.assertTrue(response.getContent() != null);
-    }
-
-    /**
-     * Test method for {@link TaskService#getTaskBasedOnPage(int, int)}.
-     *
-     */
-    @SuppressWarnings("unchecked")
-    @Test
-    public void getAllTasksFromSecondPageTest() {
-        log.info("Executing test: getAllTasksBy on TaskService#getAllTasksFromSecondPageTest");
-        Slice<Task<TaskSpec>> slice = Mockito.mock(Slice.class);
-        List<Task<TaskSpec>> tasks = tasksMockData.getDummyTasks();
-        Mockito.when(slice.getContent()).thenReturn(tasks);
-        Mockito.when(taskRepository.findAll(Mockito.any(Pageable.class))).thenReturn(slice);
-        CassandraPageRequest pageable = Mockito.mock(CassandraPageRequest.class);
-        when(slice.getPageable()).thenReturn(pageable);
-        when(pageable.getPagingState()).thenReturn(null);
-        Slice<Task<TaskSpec>> response = taskService.getTaskBasedOnPage(2, 2);
-        verify(taskRepository, Mockito.times(1)).findAll(Mockito.any(Pageable.class));
-        verify(slice, times(1)).getPageable();
-        verify(pageable, times(1)).getPagingState();
-        Assert.assertTrue(response.getContent() != null);
-    }
-
-    /**
-     * Test method for {@link TaskService#getTaskBasedOnPage(int, int)}.
-     *
-     */
-    @SuppressWarnings("unchecked")
-    @Test
-    public void getAllTasksFromThirdPageTest() {
-        log.info("Executing test: getAllTasksBy on TaskService#getAllTasksFromThirdPageTest");
-        Slice<Task<TaskSpec>> slice = Mockito.mock(Slice.class);
-        List<Task<TaskSpec>> tasks = tasksMockData.getDummyTasks();
-        Mockito.when(slice.getContent()).thenReturn(tasks);
-        Mockito.when(taskRepository.findAll(Mockito.any(Pageable.class))).thenReturn(slice);
-        CassandraPageRequest pageable = Mockito.mock(CassandraPageRequest.class);
-        when(slice.getPageable()).thenReturn(pageable);
-        when(pageable.getPageNumber()).thenReturn(3);
-        when(pageable.getPageSize()).thenReturn(2);
-        PagingState pagingState = Mockito.mock(PagingState.class);
-        when(pageable.getPagingState()).thenReturn(pagingState);
-        Slice<Task<TaskSpec>> response = taskService.getTaskBasedOnPage(3, 2);
-        verify(taskRepository, Mockito.times(3)).findAll(Mockito.any(Pageable.class));
-        verify(slice, times(4)).getPageable();
-        verify(pageable, times(2)).getPagingState();
-        Assert.assertTrue(response.getContent() != null);
+    public void getTaskBasedOnIndexTest() {
+        log.info("Executing test: getTaskBasedOnIndexTest on TaskService#getTaskBasedOnIndex");
+        List<Task<TaskSpec>> tasks = tasksMockData.getDummy1Tasks();
+        Mockito.when(taskRepository.findAll()).thenReturn(tasks);
+        Map<String, Object> response = taskService.getTaskBasedOnIndex(new TaskFilter());
+        verify(taskRepository, Mockito.times(1)).findAll();
+        Assert.assertTrue(response != null);
     }
 
     /**
@@ -410,7 +360,7 @@ public class TaskServiceTest {
     public void getTaskByIsScheduledTaskTest() {
         log.info("Executing test: getTaskByIdTest on TaskService#getTaskByIsScheduledTask");
         List<Task<TaskSpec>> tasks = new ArrayList<>();
-        tasks.add(tasksMockData.getDummyTask());
+        tasks.add(tasksMockData.getDummy1Task());
         Mockito.when(taskRepository.findByIsScheduledTask(anyBoolean())).thenReturn(tasks);
         List<Task<TaskSpec>> persistedTask = null;
         persistedTask = taskService.getTaskByIsScheduledTask(true);
@@ -450,10 +400,9 @@ public class TaskServiceTest {
         Assert.assertEquals(response, 1);
     }
 
-
     @Test
     public void testGetTasksByIds() {
-        Task<TaskSpec> task = tasksMockData.getDummyTask();
+        Task<TaskSpec> task = tasksMockData.getDummy1Task();
         List<Task<TaskSpec>> tasks = new ArrayList<>();
         tasks.add(task);
         List<String> taskIds = new ArrayList<>(Arrays.asList(task.getId()));
@@ -468,7 +417,7 @@ public class TaskServiceTest {
     @SuppressWarnings("deprecation")
     @Test
     public void testCleanupInprogressTasks() throws ParseException, MangleException {
-        Task<TaskSpec> task = tasksMockData.getDummyTask();
+        Task<TaskSpec> task = tasksMockData.getDummy1Task();
         TaskTrigger trigger = task.getTriggers().peek();
         trigger.setStartTime(new Date(System.currentTimeMillis() - 60000).toGMTString());
         trigger.setTaskStatus(TaskStatus.IN_PROGRESS);

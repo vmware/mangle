@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 
 import { ConfigService } from './config.service';
-import { HttpClientModule, HttpClient } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 
 describe('ConfigService', () => {
   let configService: ConfigService;
@@ -10,7 +11,7 @@ describe('ConfigService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [
-        HttpClientModule
+        HttpClientTestingModule
       ]
     });
     configService = TestBed.get(ConfigService);
@@ -23,7 +24,7 @@ describe('ConfigService', () => {
   });
 
   it('should update local user config', () => {
-    configService.updateLocalUserConfig({}, "");
+    configService.updateLocalUserConfig({});
     expect(http.put).toHaveBeenCalled();
   });
 

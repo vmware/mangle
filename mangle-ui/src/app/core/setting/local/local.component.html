@@ -1,0 +1,46 @@
+<app-alert [(alertMessage)]="alertMessage" [isErrorMessage]="isErrorMessage" (alertMessageChange)="alertMessage = $event"></app-alert>
+<clr-dg-action-bar>
+    <div class="btn-group">
+        <button type="button" class="btn btn-sm btn-secondary" (click)="populateLocalUserForm({'id':null,'username':null,'password':null});localUserModal=true;addEdit='Add'"><clr-icon shape="plus"></clr-icon> Local User</button>
+    </div>
+</clr-dg-action-bar>
+<clr-datagrid [clrDgLoading]="isLoading">
+	<clr-dg-column>User Name</clr-dg-column>
+    <clr-dg-column>Password</clr-dg-column>
+    <clr-dg-row *clrDgItems="let localUser of localUserList" [clrDgItem]="localUser">
+        <clr-dg-action-overflow *ngIf="localUser.username != 'admin@mangle.local'">
+            <button class="action-item" (click)="populateLocalUserForm(localUser);localUserModal=true;addEdit='Edit'">Edit</button>
+            <button class="action-item" (click)="deleteLocalUser(localUser)">Delete</button>
+        </clr-dg-action-overflow>
+		<clr-dg-cell>{{localUser.username}}</clr-dg-cell>
+		<clr-dg-cell>XXXXXXXXX</clr-dg-cell>
+    </clr-dg-row>
+	<clr-dg-footer>
+		<clr-dg-pagination #pagination [clrDgPageSize]="10">
+			<clr-dg-page-size [clrPageSizeOptions]="[10,20,50,100]">Local User per page</clr-dg-page-size>
+			{{pagination.firstItem + 1}} - {{pagination.lastItem + 1}} of {{pagination.totalItems}} localUserList
+		</clr-dg-pagination>
+	</clr-dg-footer>
+</clr-datagrid>
+<clr-modal [(clrModalOpen)]="localUserModal">
+    <h3 class="modal-title">{{addEdit}} Local User</h3>
+    <div class="modal-body">
+        <form #localUserForm="ngForm" (ngSubmit)="addOrUpdateLocalUser(localUserForm.value);localUserModal=false;" *ngIf="localUserFormData" ngNativeValidate>
+            <section class="form-block">
+				<div class="form-group">
+                    <input type="text" name="id" [(ngModel)]="localUserFormData.id" [hidden]="true">
+                </div>
+				<div class="form-group">
+                    <label for="username">User Name</label>
+					<input type="text" placeholder="user_id" name="username" [(ngModel)]="localUserFormData.username" [required]="addEdit == 'Add'" [readonly]="addEdit == 'Edit'"><span *ngIf="addEdit == 'Add'">@mangle.local</span>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+					<input type="password" name="password" [(ngModel)]="localUserFormData.password" required>
+                </div>
+            </section>
+            <button type="submit" class="btn btn-primary">SUBMIT</button>
+            <button type="button" class="btn btn-outline" (click)="localUserModal=false;">CANCEL</button>
+        </form>
+    </div>
+</clr-modal>

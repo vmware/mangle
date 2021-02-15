@@ -19,6 +19,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 
 import org.mockito.Mock;
@@ -34,13 +36,14 @@ import com.vmware.mangle.cassandra.model.tasks.commands.CommandExecutionResult;
 import com.vmware.mangle.model.response.VCenterAdapterResponse;
 import com.vmware.mangle.model.response.VCenterOperationTaskQueryResponse;
 import com.vmware.mangle.model.vcenter.VCenterSpec;
-import com.vmware.mangle.model.vcenter.VMDisk;
+import com.vmware.mangle.model.vcenter.VMDiskObj;
 import com.vmware.mangle.utils.clients.vcenter.VCenterAdapterClient;
 import com.vmware.mangle.utils.clients.vcenter.VCenterClient;
 import com.vmware.mangle.utils.clients.vcenter.VMOperations;
 import com.vmware.mangle.utils.constants.VCenterConstants;
 import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
+import com.vmware.mangle.utils.mockdata.VMOperationsMockData;
 
 /**
  *
@@ -53,6 +56,9 @@ public class VMOperationsTest extends PowerMockTestCase {
 
     @Mock
     private VCenterClient vCenterClient;
+    private VMOperationsMockData vmOperationsMockData = new VMOperationsMockData();
+    private String VM_NAME = "vmName";
+    private String VM_ID = "vmID";
 
     @BeforeMethod
     public void initMocks() {
@@ -80,17 +86,226 @@ public class VMOperationsTest extends PowerMockTestCase {
     }
 
     @Test(expectedExceptions = MangleException.class)
+    public void testConnectionTestFailureInternalServerError() throws MangleException {
+        ResponseEntity responseEntity = new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
+        VCenterSpec vCenterSpec = new VCenterSpec("", "", "");
+        when(vCenterAdapterClient.post(anyString(), anyString(), eq(Object.class))).thenReturn(responseEntity);
+        VMOperations.testConnection(vCenterAdapterClient, vCenterSpec);
+    }
+
+    @Test(expectedExceptions = MangleException.class)
     public void testConnectionTestFailureIOException() throws MangleException {
         VCenterSpec vCenterSpec = new VCenterSpec("", "", "");
         doThrow(IOException.class).when(vCenterAdapterClient).post(anyString(), anyString(), eq(Object.class));
         try {
-            boolean result = VMOperations.testConnection(vCenterAdapterClient, vCenterSpec);
+            VMOperations.testConnection(vCenterAdapterClient, vCenterSpec);
         } catch (MangleException e) {
             Assert.assertEquals(e.getErrorCode(), ErrorCode.GENERIC_ERROR);
             verify(vCenterAdapterClient, times(1)).post(anyString(), anyString(), eq(Object.class));
             throw e;
         }
     }
+
+    @Test
+    public void testGetVMsListRandomFalse() throws MangleException {
+        ResponseEntity<Object> responseEntity = new ResponseEntity<>(vmOperationsMockData.getVMList(), HttpStatus.OK);
+        when(vCenterAdapterClient.post(anyString(), anyString(), eq(Object.class))).thenReturn(responseEntity);
+        when(vCenterAdapterClient.testConnection()).thenReturn(true);
+        when(vCenterClient.getVCenterAdapterClient()).thenReturn(vCenterAdapterClient);
+
+        List<String> vms = VMOperations.getVMsList(vCenterClient, false, new HashMap<>());
+
+        Assert.assertEquals(vms.size(), 2);
+        verify(vCenterAdapterClient, times(1)).post(anyString(), anyString(), eq(Object.class));
+        verify(vCenterClient, times(1)).getVCenterAdapterClient();
+    }
+
+    @Test
+    public void testGetVMsListRandomTrue() throws MangleException {
+        ResponseEntity<Object> responseEntity = new ResponseEntity<>(vmOperationsMockData.getVMList(), HttpStatus.OK);
+        when(vCenterAdapterClient.post(anyString(), anyString(), eq(Object.class))).thenReturn(responseEntity);
+        when(vCenterAdapterClient.testConnection()).thenReturn(true);
+        when(vCenterClient.getVCenterAdapterClient()).thenReturn(vCenterAdapterClient);
+
+        List<String> vms = VMOperations.getVMsList(vCenterClient, true, new HashMap<>());
+
+        Assert.assertEquals(vms.size(), 1);
+        verify(vCenterAdapterClient, times(1)).post(anyString(), anyString(), eq(Object.class));
+        verify(vCenterClient, times(1)).getVCenterAdapterClient();
+    }
+
+    @Test
+    public void testGetVMsListByNameRandomFalse() throws MangleException {
+        ResponseEntity<Object> responseEntity = new ResponseEntity<>(vmOperationsMockData.getVMList(), HttpStatus.OK);
+        when(vCenterAdapterClient.post(anyString(), anyString(), eq(Object.class))).thenReturn(responseEntity);
+        when(vCenterAdapterClient.testConnection()).thenReturn(true);
+        when(vCenterClient.getVCenterAdapterClient()).thenReturn(vCenterAdapterClient);
+
+        List<String> vms = VMOperations.getVMsList(vCenterClient, VM_NAME, vmOperationsMockData.getFilters());
+
+        Assert.assertEquals(vms.size(), 2);
+        verify(vCenterAdapterClient, times(1)).post(anyString(), anyString(), eq(Object.class));
+        verify(vCenterClient, times(1)).getVCenterAdapterClient();
+    }
+
+    @Test
+    public void testGetVMNicListRandomFalse() throws MangleException {
+        ResponseEntity<Object> responseEntity =
+                new ResponseEntity<>(vmOperationsMockData.getVMNicList(), HttpStatus.OK);
+        when(vCenterAdapterClient.post(anyString(), anyString(), eq(Object.class))).thenReturn(responseEntity);
+        when(vCenterAdapterClient.testConnection()).thenReturn(true);
+        when(vCenterClient.getVCenterAdapterClient()).thenReturn(vCenterAdapterClient);
+
+        List<String> vmNics = VMOperations.getVMNicList(vCenterClient, VM_ID, false);
+
+        Assert.assertEquals(vmNics.size(), 2);
+        verify(vCenterAdapterClient, times(1)).testConnection();
+        verify(vCenterAdapterClient, times(1)).post(anyString(), anyString(), eq(Object.class));
+        verify(vCenterClient, times(1)).getVCenterAdapterClient();
+    }
+
+    @Test
+    public void testGetVMNicListRandomTrue() throws MangleException {
+        ResponseEntity<Object> responseEntity =
+                new ResponseEntity<>(vmOperationsMockData.getVMNicList(), HttpStatus.OK);
+        when(vCenterAdapterClient.post(anyString(), anyString(), eq(Object.class))).thenReturn(responseEntity);
+        when(vCenterAdapterClient.testConnection()).thenReturn(true);
+        when(vCenterClient.getVCenterAdapterClient()).thenReturn(vCenterAdapterClient);
+
+        List<String> vmNics = VMOperations.getVMNicList(vCenterClient, VM_ID, true);
+
+        Assert.assertEquals(vmNics.size(), 1);
+        verify(vCenterAdapterClient, times(1)).testConnection();
+        verify(vCenterAdapterClient, times(1)).post(anyString(), anyString(), eq(Object.class));
+        verify(vCenterClient, times(1)).getVCenterAdapterClient();
+    }
+
+    @Test
+    public void testGetVMDiskListRandomFalse() throws MangleException {
+        ResponseEntity<Object> responseEntity =
+                new ResponseEntity<>(vmOperationsMockData.getVMDiskList(), HttpStatus.OK);
+        when(vCenterAdapterClient.post(anyString(), anyString(), eq(Object.class))).thenReturn(responseEntity);
+        when(vCenterAdapterClient.testConnection()).thenReturn(true);
+        when(vCenterClient.getVCenterAdapterClient()).thenReturn(vCenterAdapterClient);
+
+        List<String> vmDisks = VMOperations.getVMDiskList(vCenterClient, VM_ID, false);
+
+        Assert.assertEquals(vmDisks.size(), 2);
+        verify(vCenterAdapterClient, times(1)).testConnection();
+        verify(vCenterAdapterClient, times(1)).post(anyString(), anyString(), eq(Object.class));
+        verify(vCenterClient, times(1)).getVCenterAdapterClient();
+    }
+
+    @Test
+    public void testGetVMDiskListRandomTrue() throws MangleException {
+        ResponseEntity<Object> responseEntity =
+                new ResponseEntity<>(vmOperationsMockData.getVMDiskList(), HttpStatus.OK);
+        when(vCenterAdapterClient.post(anyString(), anyString(), eq(Object.class))).thenReturn(responseEntity);
+        when(vCenterAdapterClient.testConnection()).thenReturn(true);
+        when(vCenterClient.getVCenterAdapterClient()).thenReturn(vCenterAdapterClient);
+
+        List<String> vmDisks = VMOperations.getVMDiskList(vCenterClient, VM_ID, true);
+
+        Assert.assertEquals(vmDisks.size(), 1);
+        verify(vCenterAdapterClient, times(1)).testConnection();
+        verify(vCenterAdapterClient, times(1)).post(anyString(), anyString(), eq(Object.class));
+        verify(vCenterClient, times(1)).getVCenterAdapterClient();
+    }
+
+    @Test(expectedExceptions = MangleException.class)
+    public void testGetVMsListFailure() throws MangleException {
+
+        ResponseEntity<Object> responseEntity =
+                new ResponseEntity<>(vmOperationsMockData.getErrorMockDetails(), HttpStatus.INTERNAL_SERVER_ERROR);
+        when(vCenterAdapterClient.post(anyString(), anyString(), eq(Object.class))).thenReturn(responseEntity);
+        when(vCenterAdapterClient.testConnection()).thenReturn(true);
+        when(vCenterClient.getVCenterAdapterClient()).thenReturn(vCenterAdapterClient);
+        try {
+            VMOperations.getVMsList(vCenterClient, false, new HashMap<>());
+        } catch (MangleException e) {
+            Assert.assertEquals(e.getErrorCode(), ErrorCode.VCENTER_VM_NOT_FOUND);
+            throw e;
+        }
+    }
+
+    @Test(expectedExceptions = MangleException.class)
+    public void testGetVMsListFailureVMNotFound() throws MangleException {
+
+        ResponseEntity<Object> responseEntity = null;
+        when(vCenterAdapterClient.post(anyString(), anyString(), eq(Object.class))).thenReturn(responseEntity);
+        when(vCenterAdapterClient.testConnection()).thenReturn(true);
+        when(vCenterClient.getVCenterAdapterClient()).thenReturn(vCenterAdapterClient);
+        try {
+            VMOperations.getVMsList(vCenterClient, false, new HashMap<>());
+        } catch (MangleException e) {
+            Assert.assertEquals(e.getErrorCode(), ErrorCode.VCENTER_VM_NOT_FOUND);
+            throw e;
+        }
+    }
+
+    @Test(expectedExceptions = MangleException.class)
+    public void testGetVMsListByNameFailure() throws MangleException {
+
+        ResponseEntity<Object> responseEntity =
+                new ResponseEntity<>(vmOperationsMockData.getErrorMockDetails(), HttpStatus.INTERNAL_SERVER_ERROR);
+        when(vCenterAdapterClient.post(anyString(), anyString(), eq(Object.class))).thenReturn(responseEntity);
+        when(vCenterAdapterClient.testConnection()).thenReturn(true);
+        when(vCenterClient.getVCenterAdapterClient()).thenReturn(vCenterAdapterClient);
+        try {
+            VMOperations.getVMsList(vCenterClient, VM_NAME, vmOperationsMockData.getFilters());
+        } catch (MangleException e) {
+            Assert.assertEquals(e.getErrorCode(), ErrorCode.VCENTER_VM_NOT_FOUND);
+            throw e;
+        }
+    }
+
+    @Test(expectedExceptions = MangleException.class)
+    public void testGetVMsListFailureByNameVMNotFound() throws MangleException {
+
+        ResponseEntity<Object> responseEntity = null;
+        when(vCenterAdapterClient.post(anyString(), anyString(), eq(Object.class))).thenReturn(responseEntity);
+        when(vCenterAdapterClient.testConnection()).thenReturn(true);
+        when(vCenterClient.getVCenterAdapterClient()).thenReturn(vCenterAdapterClient);
+        try {
+            VMOperations.getVMsList(vCenterClient, VM_NAME, vmOperationsMockData.getFilters());
+        } catch (MangleException e) {
+            Assert.assertEquals(e.getErrorCode(), ErrorCode.VCENTER_VM_NOT_FOUND);
+            throw e;
+        }
+    }
+
+    @Test(expectedExceptions = MangleException.class)
+    public void testGetVMNicsListFailure() throws MangleException {
+
+        ResponseEntity<Object> responseEntity =
+                new ResponseEntity<>(vmOperationsMockData.getErrorMockDetails(), HttpStatus.INTERNAL_SERVER_ERROR);
+        when(vCenterAdapterClient.post(anyString(), anyString(), eq(Object.class))).thenReturn(responseEntity);
+        when(vCenterAdapterClient.testConnection()).thenReturn(true);
+        when(vCenterClient.getVCenterAdapterClient()).thenReturn(vCenterAdapterClient);
+        try {
+            VMOperations.getVMNicList(vCenterClient, VM_ID, true);
+        } catch (MangleException e) {
+            Assert.assertEquals(e.getErrorCode(), ErrorCode.VCENTER_VM_NIC_NOT_FOUND);
+            throw e;
+        }
+    }
+
+    @Test(expectedExceptions = MangleException.class)
+    public void testGetVMDiskListFailureVMNotFound() throws MangleException {
+
+        ResponseEntity<Object> responseEntity =
+                new ResponseEntity<>(vmOperationsMockData.getErrorMockDetails(), HttpStatus.INTERNAL_SERVER_ERROR);
+        when(vCenterAdapterClient.post(anyString(), anyString(), eq(Object.class))).thenReturn(responseEntity);
+        when(vCenterAdapterClient.testConnection()).thenReturn(true);
+        when(vCenterClient.getVCenterAdapterClient()).thenReturn(vCenterAdapterClient);
+        try {
+            VMOperations.getVMDiskList(vCenterClient, VM_ID, true);
+        } catch (MangleException e) {
+            Assert.assertEquals(e.getErrorCode(), ErrorCode.VCENTER_VM_DISK_NOT_FOUND);
+            throw e;
+        }
+    }
+
 
     @Test
     public void powerOffVMTest() throws MangleException {
@@ -411,13 +626,13 @@ public class VMOperationsTest extends PowerMockTestCase {
     @Test
     public void disconnectDiskFromVMTest() throws MangleException {
         VCenterAdapterResponse vCenterAdapterResponse = new VCenterAdapterResponse();
-        VMDisk vmDisk = new VMDisk();
-        VMDisk.Backing backing = vmDisk.new Backing();
+        VMDiskObj vmDiskObj = new VMDiskObj();
+        VMDiskObj.Backing backing = vmDiskObj.new Backing();
         backing.setVmdk_file("VMDK_FILE");
         backing.setType("VMDK");
-        vmDisk.setBacking(backing);
+        vmDiskObj.setBacking(backing);
         VCenterOperationTaskQueryResponse taskQueryResponse = new VCenterOperationTaskQueryResponse(
-                UUID.randomUUID().toString(), VCenterConstants.TASK_STATUS_COMPLETED, "", vmDisk);
+                UUID.randomUUID().toString(), VCenterConstants.TASK_STATUS_COMPLETED, "", vmDiskObj);
         ResponseEntity responseEntity = new ResponseEntity(vCenterAdapterResponse, HttpStatus.OK);
         ResponseEntity pollResponse = new ResponseEntity(taskQueryResponse, HttpStatus.OK);
         when(vCenterAdapterClient.testConnection()).thenReturn(true);
@@ -448,13 +663,13 @@ public class VMOperationsTest extends PowerMockTestCase {
     @Test
     public void disconnectDiskFromVMTestFailureTaskFail() throws MangleException {
         VCenterAdapterResponse vCenterAdapterResponse = new VCenterAdapterResponse();
-        VMDisk vmDisk = new VMDisk();
-        VMDisk.Backing backing = vmDisk.new Backing();
+        VMDiskObj vmDiskObj = new VMDiskObj();
+        VMDiskObj.Backing backing = vmDiskObj.new Backing();
         backing.setVmdk_file("VMDK_FILE");
         backing.setType("VMDK");
-        vmDisk.setBacking(backing);
+        vmDiskObj.setBacking(backing);
         VCenterOperationTaskQueryResponse taskQueryResponse = new VCenterOperationTaskQueryResponse(
-                UUID.randomUUID().toString(), VCenterConstants.TASK_STATUS_FAILED, "", vmDisk);
+                UUID.randomUUID().toString(), VCenterConstants.TASK_STATUS_FAILED, "", vmDiskObj);
         ResponseEntity responseEntity = new ResponseEntity(vCenterAdapterResponse, HttpStatus.OK);
         ResponseEntity pollResponse = new ResponseEntity(taskQueryResponse, HttpStatus.BAD_REQUEST);
         when(vCenterAdapterClient.testConnection()).thenReturn(true);

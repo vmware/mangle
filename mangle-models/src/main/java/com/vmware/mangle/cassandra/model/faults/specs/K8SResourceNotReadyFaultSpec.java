@@ -11,11 +11,13 @@
 
 package com.vmware.mangle.cassandra.model.faults.specs;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
+import com.vmware.mangle.cassandra.model.scheduler.SchedulerInfo;
 import com.vmware.mangle.services.enums.K8SFaultName;
 
 /**
@@ -36,5 +38,11 @@ public class K8SResourceNotReadyFaultSpec extends K8SFaultSpec {
     public K8SResourceNotReadyFaultSpec() {
         setFaultName(K8SFaultName.NOTREADY_RESOURCE.name());
         setSpecType(this.getClass().getName());
+    }
+
+    @JsonIgnore
+    @Override
+    public void setSchedule(SchedulerInfo schedule) {
+        super.setSchedule(schedule);
     }
 }

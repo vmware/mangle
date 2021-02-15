@@ -20,15 +20,15 @@ import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.datadog.DatadogMeterRegistry;
 import io.micrometer.wavefront.WavefrontMeterRegistry;
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import com.vmware.mangle.cassandra.model.MangleAdminConfigurationSpec;
 import com.vmware.mangle.cassandra.model.metricprovider.MetricProviderSpec;
 import com.vmware.mangle.model.enums.MetricProviderType;
+import com.vmware.mangle.services.config.MangleMetricsConfiguration;
 import com.vmware.mangle.services.hazelcast.HazelcastClusterSyncAware;
-import com.vmware.mangle.services.repository.AdminConfigurationRepository;
 import com.vmware.mangle.services.repository.MetricProviderRepository;
 import com.vmware.mangle.task.framework.metric.providers.MetricProviderClientFactory;
 import com.vmware.mangle.utils.constants.ErrorConstants;
@@ -59,7 +59,9 @@ public class MetricProviderService implements HazelcastClusterSyncAware {
     private MetricProviderClientFactory mangleMetricProviderClientFactory;
 
     @Autowired
-    private AdminConfigurationRepository adminConfigurationRepository;
+    private MangleMetricsConfiguration mangleMetricsConfiguration;
+
+    private MetricProviderSpec activeMetricProvider;
 
     /**
      * This method will check if sendingMetric property is set to true at boot time. If yes it will
@@ -69,13 +71,8 @@ public class MetricProviderService implements HazelcastClusterSyncAware {
     @PostConstruct
     public void initializeMeterRegistryAtBoot() {
         try {
-            Optional<MangleAdminConfigurationSpec> sendingMetricProperty = this.adminConfigurationRepository
-                    .findByPropertyName(MetricProviderConstants.SENDING_MANGLE_METRICS);
-            if (sendingMetricProperty.isPresent()) {
-                MangleAdminConfigurationSpec sendingMetricPropertySpec = sendingMetricProperty.get();
-                if (sendingMetricPropertySpec.getPropertyValue().equals("true")) {
-                    this.sendMetrics();
-                }
+            if (mangleMetricsConfiguration.getMetricsEnabled()) {
+                this.sendMetrics();
             }
         } catch (MangleException mangleException) {
             log.debug(mangleException.getMessage());
@@ -109,21 +106,14 @@ public class MetricProviderService implements HazelcastClusterSyncAware {
      */
     public MetricProviderSpec getActiveMetricProvider() {
         log.debug("Finding active metric provider.");
-        Optional<MangleAdminConfigurationSpec> optional =
-                this.adminConfigurationRepository.findByPropertyName(MetricProviderConstants.ACTIVE_METRIC_PROVIDER);
-        MangleAdminConfigurationSpec adminConfiguration;
-        if (optional.isPresent()) {
-            adminConfiguration = optional.get();
-            String activeMetricProvider = adminConfiguration.getPropertyValue();
-            if (StringUtils.isNotEmpty(activeMetricProvider)) {
-                Optional<MetricProviderSpec> optionalMetricProvider =
-                        this.metricProviderRepository.findByName(activeMetricProvider);
-                return optionalMetricProvider.isPresent() ? optionalMetricProvider.get() : null;
-            } else {
-                log.warn(ErrorConstants.NO_ACTIVE_METRIC_PROVIDER);
-                return null;
-            }
+        if (StringUtils.hasText(mangleMetricsConfiguration.getActiveMetricProvider())) {
+            Optional<MetricProviderSpec> optionalMetricProvider =
+                    this.metricProviderRepository.findByName(mangleMetricsConfiguration.getActiveMetricProvider());
+            this.activeMetricProvider = optionalMetricProvider.orElse(null);
+            return this.activeMetricProvider;
         } else {
+            log.warn(ErrorConstants.NO_ACTIVE_METRIC_PROVIDER);
+            this.activeMetricProvider = null;
             return null;
         }
     }
@@ -164,7 +154,7 @@ public class MetricProviderService implements HazelcastClusterSyncAware {
      */
     public MetricProviderSpec getMetricProviderByName(String metricProviderName) throws MangleException {
         log.info("Getting Metric Provider by Name: " + metricProviderName);
-        if (!StringUtils.isEmpty(metricProviderName)) {
+        if (StringUtils.hasText(metricProviderName)) {
             Optional<MetricProviderSpec> optional = this.metricProviderRepository.findByName(metricProviderName);
             if (optional.isPresent()) {
                 return optional.get();
@@ -202,12 +192,16 @@ public class MetricProviderService implements HazelcastClusterSyncAware {
      */
     public boolean deleteMetricProvider(String metricProviderName) throws MangleException {
         log.info("Deleting Metric Provider: " + metricProviderName);
-        if (!StringUtils.isEmpty(metricProviderName)) {
+        if (StringUtils.hasText(metricProviderName)) {
             Optional<MetricProviderSpec> optional = this.metricProviderRepository.findByName(metricProviderName);
             if (optional.isPresent()) {
-                MetricProviderSpec activeMetricProviderSpec = this.getActiveMetricProvider();
-                if (null != activeMetricProviderSpec && activeMetricProviderSpec.getName().equals(metricProviderName)) {
+                if (null != this.activeMetricProvider
+                        && this.activeMetricProvider.getName().equals(metricProviderName)) {
                     resetAdminConfigDetails();
+                }
+                if (MetricProviderType.PROMETHEUS == optional.get().getMetricProviderType()) {
+                    throw new MangleException(ErrorCode.UNSUPPORTED_DELETE_METRIC_PROVIDER_TYPE,
+                            optional.get().getMetricProviderType());
                 }
                 this.metricProviderRepository.deleteByName(metricProviderName);
                 Optional<MetricProviderSpec> verifyMetricProvider =
@@ -240,7 +234,7 @@ public class MetricProviderService implements HazelcastClusterSyncAware {
     public MetricProviderSpec updateMetricProviderById(String id, MetricProviderSpec metricProviderSpec)
             throws MangleException {
         log.info("Updating Metric Provider by Id: " + id);
-        if (!StringUtils.isEmpty(id)) {
+        if (StringUtils.hasText(id)) {
             Optional<MetricProviderSpec> metricProvider = this.metricProviderRepository.findById(id);
             MetricProviderSpec metricProviderSpecToUpdate;
             if (metricProvider.isPresent()) {
@@ -265,7 +259,7 @@ public class MetricProviderService implements HazelcastClusterSyncAware {
     public MetricProviderSpec updateMetricProviderByName(String metricProviderName,
             MetricProviderSpec metricProviderSpec) throws MangleException {
         log.info("Updating Metric Provider by Name: " + metricProviderName);
-        if (!StringUtils.isEmpty(metricProviderName)) {
+        if (StringUtils.hasText(metricProviderName)) {
             Optional<MetricProviderSpec> metricProvider = this.metricProviderRepository.findByName(metricProviderName);
             MetricProviderSpec metricProviderSpecToUpdate;
             if (metricProvider.isPresent()) {
@@ -289,8 +283,12 @@ public class MetricProviderService implements HazelcastClusterSyncAware {
      * @throws MangleException
      */
     public boolean testConnectionMetricProvider(MetricProviderSpec metricProviderSpec) throws MangleException {
-        log.info("Checking Connection with  Metric Provider: " + metricProviderSpec.getName());
-        if (!StringUtils.isEmpty(metricProviderSpec.getName())) {
+        log.info("Checking Connection with Metric Provider: " + metricProviderSpec.getName());
+        if (MetricProviderType.PROMETHEUS == metricProviderSpec.getMetricProviderType()) {
+            throw new MangleException(ErrorCode.UNSUPPORTED_METRIC_PROVIDER_TYPE,
+                    metricProviderSpec.getMetricProviderType());
+        }
+        if (StringUtils.hasText(metricProviderSpec.getName())) {
             boolean status =
                     this.mangleMetricProviderClientFactory.getMetricProviderClient(metricProviderSpec).testConnection();
             if (status) {
@@ -313,14 +311,14 @@ public class MetricProviderService implements HazelcastClusterSyncAware {
      */
     public MangleAdminConfigurationSpec enableMetricProviderByName(String metricProviderName) throws MangleException {
         log.info("Enabling the  Metric Provider: " + metricProviderName + " for Sending Metrics");
-        if (!StringUtils.isEmpty(metricProviderName)) {
+        if (StringUtils.hasText(metricProviderName)) {
             Optional<MetricProviderSpec> metricProviderOptional =
                     this.metricProviderRepository.findByName(metricProviderName);
             MangleAdminConfigurationSpec adminConfigSpec = null;
             if (metricProviderOptional.isPresent()) {
-                MetricProviderSpec activeMetricProvider = this.getActiveMetricProvider();
                 //Enable operation of already active metric provider will disable it.
-                if (null != activeMetricProvider && activeMetricProvider.getName().equals(metricProviderName)) {
+                if (null != this.activeMetricProvider
+                        && this.activeMetricProvider.getName().equals(metricProviderName)) {
                     return disableMetricProvider();
                 } else {
                     adminConfigSpec = changeActiveMetricProvider(metricProviderName);
@@ -338,9 +336,7 @@ public class MetricProviderService implements HazelcastClusterSyncAware {
     }
 
     private void changeMetricMeterRegistry(MetricProviderSpec metricProviderSpec) throws MangleException {
-        Optional<MangleAdminConfigurationSpec> optional =
-                this.adminConfigurationRepository.findByPropertyName(MetricProviderConstants.SENDING_MANGLE_METRICS);
-        if (optional.isPresent() && optional.get().getPropertyValue().equals("true")) {
+        if (mangleMetricsConfiguration.getMetricsEnabled()) {
             log.info("Changing Metric Meter Registry...");
             if (!enableMetricsBasedOnType(metricProviderSpec)) {
                 throw new MangleRuntimeException(ErrorCode.METER_REGISTERY_FAILED);
@@ -349,56 +345,45 @@ public class MetricProviderService implements HazelcastClusterSyncAware {
     }
 
     private MangleAdminConfigurationSpec changeActiveMetricProvider(String name) throws MangleException {
-        Optional<MangleAdminConfigurationSpec> adminConfigOptional =
-                this.adminConfigurationRepository.findByPropertyName(MetricProviderConstants.ACTIVE_METRIC_PROVIDER);
-        MangleAdminConfigurationSpec adminConfigSpec = null;
-        if (adminConfigOptional.isPresent() && !adminConfigOptional.get().getPropertyValue().isEmpty()) {
-            MetricProviderSpec metricProviderSpec = this.getActiveMetricProvider();
-            if (metricProviderSpec.getMetricProviderType().equals(MetricProviderType.DATADOG)) {
+        MangleAdminConfigurationSpec adminConfigSpec = new MangleAdminConfigurationSpec();
+        adminConfigSpec.setPropertyName(MetricProviderConstants.ACTIVE_METRIC_PROVIDER);
+        if (null != this.activeMetricProvider) {
+            if (this.activeMetricProvider.getMetricProviderType().equals(MetricProviderType.DATADOG)) {
                 this.datadogMeterRegistry.stop();
-            } else if (metricProviderSpec.getMetricProviderType().equals(MetricProviderType.WAVEFRONT)) {
+            } else if (this.activeMetricProvider.getMetricProviderType().equals(MetricProviderType.WAVEFRONT)) {
                 this.wavefrontMeterRegistry.stop();
             }
-            adminConfigSpec = adminConfigOptional.get();
-            adminConfigSpec.setPropertyValue(name);
-            adminConfigSpec = this.adminConfigurationRepository.save(adminConfigSpec);
-
-        } else if (adminConfigOptional.isPresent() && adminConfigOptional.get().getPropertyValue().isEmpty()) {
-            adminConfigSpec = adminConfigOptional.get();
-            adminConfigSpec.setPropertyValue(name);
-            adminConfigSpec = this.adminConfigurationRepository.save(adminConfigSpec);
+            if (StringUtils.hasText(mangleMetricsConfiguration.getActiveMetricProvider())) {
+                mangleMetricsConfiguration.setActiveMetricProvider(name);
+                adminConfigSpec.setPropertyValue(name);
+            } else {
+                throw new MangleException(ErrorCode.NO_ACTIVE_METRIC_PROVIDER,
+                        ErrorConstants.NO_ACTIVE_METRIC_PROVIDER);
+            }
         } else {
-            adminConfigSpec = new MangleAdminConfigurationSpec();
-            adminConfigSpec.setPropertyName(MetricProviderConstants.ACTIVE_METRIC_PROVIDER);
+            mangleMetricsConfiguration.setActiveMetricProvider(name);
             adminConfigSpec.setPropertyValue(name);
-            adminConfigSpec = this.adminConfigurationRepository.save(adminConfigSpec);
         }
+        getActiveMetricProvider();
         return adminConfigSpec;
     }
 
-    private MangleAdminConfigurationSpec disableMetricProvider() {
-        Optional<MangleAdminConfigurationSpec> adminConfigOptional =
-                this.adminConfigurationRepository.findByPropertyName(MetricProviderConstants.ACTIVE_METRIC_PROVIDER);
+    private MangleAdminConfigurationSpec disableMetricProvider() throws MangleException {
         MangleAdminConfigurationSpec adminConfigSpec = null;
-        if (adminConfigOptional.isPresent() && !adminConfigOptional.get().getPropertyValue().isEmpty()) {
-            MetricProviderSpec metricProviderSpec = this.getActiveMetricProvider();
-            if (metricProviderSpec.getMetricProviderType().equals(MetricProviderType.DATADOG)) {
+        if (StringUtils.hasText(mangleMetricsConfiguration.getActiveMetricProvider())) {
+            if (this.activeMetricProvider.getMetricProviderType().equals(MetricProviderType.DATADOG)) {
                 this.datadogMeterRegistry.stop();
-            } else if (metricProviderSpec.getMetricProviderType().equals(MetricProviderType.WAVEFRONT)) {
+            } else if (this.activeMetricProvider.getMetricProviderType().equals(MetricProviderType.WAVEFRONT)) {
                 this.wavefrontMeterRegistry.stop();
             }
-            adminConfigSpec = adminConfigOptional.get();
-            adminConfigSpec.setPropertyValue("");
+            adminConfigSpec = changeActiveMetricProvider("");
             changeMetricSendingStatus(false);
-            adminConfigSpec = this.adminConfigurationRepository.save(adminConfigSpec);
-
         }
         return adminConfigSpec;
     }
 
     private MetricProviderSpec getUpdatedSpec(MetricProviderSpec metricProviderSpecToUpdate,
             MetricProviderSpec metricProviderSpec) {
-
         metricProviderSpecToUpdate.setName(metricProviderSpec.getName());
         metricProviderSpecToUpdate.setDatadogConnectionProperties(metricProviderSpec.getDatadogConnectionProperties());
         metricProviderSpecToUpdate.setMetricProviderType(metricProviderSpec.getMetricProviderType());
@@ -413,32 +398,12 @@ public class MetricProviderService implements HazelcastClusterSyncAware {
      */
     public boolean sendMetrics() throws MangleException {
         log.info("Enabling Mangle Metrics...");
-        MetricProviderSpec metricProviderSpec = this.getActiveMetricProvider();
-        if (null != metricProviderSpec) {
+        if (null != this.activeMetricProvider) {
             changeMetricSendingStatus(true);
-            return enableMetricsBasedOnType(metricProviderSpec);
+            return enableMetricsBasedOnType(this.activeMetricProvider);
         } else {
             throw new MangleException(ErrorCode.NO_ACTIVE_METRIC_PROVIDER, ErrorConstants.NO_ACTIVE_METRIC_PROVIDER);
         }
-    }
-
-    /**
-     * @return Giving status if Mangle is sending Metrics or not
-     */
-    public boolean isMangleMetricsEnabled() {
-        Optional<MangleAdminConfigurationSpec> optional =
-                this.adminConfigurationRepository.findByPropertyName(MetricProviderConstants.SENDING_MANGLE_METRICS);
-        if (optional.isPresent()) {
-            String status = optional.get().getPropertyValue();
-            if (null == status) {
-                return false;
-            } else if (status.equals("false")) {
-                return false;
-            } else if (status.equals("true")) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private boolean enableMetricsBasedOnType(MetricProviderSpec metricProviderSpec) {
@@ -447,6 +412,9 @@ public class MetricProviderService implements HazelcastClusterSyncAware {
             return enableDatadogMetrics();
         case WAVEFRONT:
             return enableWavefrontMetrics();
+        case PROMETHEUS:
+            changeMetricSendingStatus(true);
+            return true;
         default:
             return false;
         }
@@ -463,38 +431,24 @@ public class MetricProviderService implements HazelcastClusterSyncAware {
     }
 
     private void changeMetricSendingStatus(boolean status) {
-        Optional<MangleAdminConfigurationSpec> optional =
-                this.adminConfigurationRepository.findByPropertyName(MetricProviderConstants.SENDING_MANGLE_METRICS);
-        MangleAdminConfigurationSpec adminConfigSpec;
-        if (optional.isPresent()) {
-            adminConfigSpec = optional.get();
-        } else {
-            adminConfigSpec = new MangleAdminConfigurationSpec();
-            adminConfigSpec.setPropertyName(MetricProviderConstants.SENDING_MANGLE_METRICS);
-        }
-
-        adminConfigSpec.setPropertyValue(String.valueOf(status));
-        this.adminConfigurationRepository.save(adminConfigSpec);
+        mangleMetricsConfiguration.setMetricsEnabled(status);
     }
 
     @Override
     public void resync(String objectIdentifier) {
         log.debug("Enabling send metrics on the current node");
-        Optional<MangleAdminConfigurationSpec> optional =
-                this.adminConfigurationRepository.findByPropertyName(MetricProviderConstants.SENDING_MANGLE_METRICS);
-        MangleAdminConfigurationSpec configurationSpec = optional.orElse(null);
-        if (configurationSpec != null) {
-            if (Boolean.valueOf(configurationSpec.getPropertyValue())) {
-                try {
-                    sendMetrics();
-                } catch (MangleException e) {
-                    log.error("Enabling of the send metrics failed");
-                }
-            } else {
-                closeAllMetricCollection();
+        if (mangleMetricsConfiguration.getMetricsEnabled()) {
+            try {
+                sendMetrics();
+            } catch (MangleException e) {
+                log.error("Enabling of the send metrics failed");
             }
-
+        } else {
+            closeAllMetricCollection();
         }
+    }
 
+    public boolean isMangleMetricsEnabled() {
+        return mangleMetricsConfiguration.getMetricsEnabled();
     }
 }

@@ -21,7 +21,7 @@ import com.vmware.mangle.model.ResourceList;
 import com.vmware.mangle.model.ResourceObject;
 import com.vmware.mangle.model.VCenterVMNic;
 import com.vmware.mangle.model.VCenterVMState;
-import com.vmware.mangle.model.VMStates;
+import com.vmware.mangle.model.enums.VMStates;
 import com.vmware.mangle.utils.status.VCenterVmNicStatus;
 
 /**
@@ -62,6 +62,19 @@ public class InventoryHelperMockData {
         VCenterVMState vCenterVMState = new VCenterVMState();
         vCenterVMState.setState(VMStates.POWERED_ON.name());
         return vCenterVMState;
+    }
+
+    public ResourceObject<ArrayList> getSuccessHostConnectedObject() {
+        LinkedHashMap<String, String> map = new LinkedHashMap<>();
+        map.put("host", "host_id");
+        map.put("name", "host_name");
+        map.put("connection_state", "conn_state");
+        map.put("power_state", "POWERED_ON");
+        ArrayList<LinkedHashMap<String, String>> arrayList = new ArrayList<>();
+        arrayList.add(map);
+        ResourceObject<ArrayList> resourceObject = new ResourceObject<>();
+        resourceObject.setValue(arrayList);
+        return resourceObject;
     }
 
     public VCenterVMState getFailureVCenterVMGuestOSState() {

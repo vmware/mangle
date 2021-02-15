@@ -28,6 +28,7 @@ import com.github.dockerjava.core.DockerClientImpl;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.testng.PowerMockTestCase;
 import org.testng.Assert;
@@ -46,6 +47,7 @@ import com.vmware.mangle.utils.clients.docker.JerseyDockerCmdExecFactory;
  */
 
 @PrepareForTest(value = { DockerClientImpl.class })
+@PowerMockIgnore({ "com.sun.org.apache.xalan.internal.xsltc.trax.*" })
 public class DockerClientBuilderTest extends PowerMockTestCase {
 
     @Mock

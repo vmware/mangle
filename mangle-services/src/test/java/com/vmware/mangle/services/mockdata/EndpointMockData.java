@@ -11,16 +11,21 @@
 
 package com.vmware.mangle.services.mockdata;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Properties;
 
 import com.vmware.mangle.cassandra.model.endpoint.AWSConnectionProperties;
+import com.vmware.mangle.cassandra.model.endpoint.AzureConnectionProperties;
+import com.vmware.mangle.cassandra.model.endpoint.DatabaseConnectionProperties;
 import com.vmware.mangle.cassandra.model.endpoint.DockerConnectionProperties;
 import com.vmware.mangle.cassandra.model.endpoint.EndpointSpec;
 import com.vmware.mangle.cassandra.model.endpoint.K8SConnectionProperties;
+import com.vmware.mangle.cassandra.model.endpoint.RedisProxyConnectionProperties;
 import com.vmware.mangle.cassandra.model.endpoint.RemoteMachineConnectionProperties;
 import com.vmware.mangle.cassandra.model.endpoint.VCenterConnectionProperties;
 import com.vmware.mangle.cassandra.model.metricprovider.WaveFrontConnectionProperties;
+import com.vmware.mangle.model.enums.DatabaseType;
 import com.vmware.mangle.model.enums.EndpointType;
 import com.vmware.mangle.model.enums.OSType;
 import com.vmware.mangle.utils.ReadProperty;
@@ -53,6 +58,10 @@ public class EndpointMockData {
     //vCenter Connection Properties
     private String vcenterIp;
 
+    //Azure Mock Data
+    private String azureSubscriptionId;
+    private String azureTenant;
+
     public EndpointMockData() {
         this.properties = ReadProperty.readProperty(Constants.MOCKDATA_FILE);
         this.awsRegion = properties.getProperty("awsRegion");
@@ -67,16 +76,19 @@ public class EndpointMockData {
         this.namespace = properties.getProperty("k8sNamespace");
 
         vcenterIp = properties.getProperty("vcenter.ip");
+
+        this.azureSubscriptionId = properties.getProperty("azureSubscriptionId");
+        this.azureTenant = properties.getProperty("azureTenant");
     }
 
     public EndpointSpec k8sEndpointMockData() {
-        EndpointSpec k8sEndpointSpec = new EndpointSpec();
+        EndpointSpec k8SEndpointSpec = new EndpointSpec();
         Properties properties = ReadProperty.readProperty(Constants.MOCKDATA_FILE);
-        k8sEndpointSpec.setName(properties.getProperty("k8sEndpointName"));
-        k8sEndpointSpec.setEndPointType(EndpointType.K8S_CLUSTER);
-        k8sEndpointSpec.setCredentialsName(properties.getProperty("k8sName"));
-        k8sEndpointSpec.setK8sConnectionProperties(getK8sConnectionProperties());
-        return k8sEndpointSpec;
+        k8SEndpointSpec.setName(properties.getProperty("k8sEndpointName"));
+        k8SEndpointSpec.setEndPointType(EndpointType.K8S_CLUSTER);
+        k8SEndpointSpec.setCredentialsName(properties.getProperty("k8sName"));
+        k8SEndpointSpec.setK8sConnectionProperties(getK8sConnectionProperties());
+        return k8SEndpointSpec;
     }
 
     public EndpointSpec dockerEndpointMockData() {
@@ -88,6 +100,14 @@ public class EndpointMockData {
         return dockerEndpointSpec;
     }
 
+    public EndpointSpec getRedisProxyEndpointMockData() {
+        EndpointSpec dockerEndpointSpec = new EndpointSpec();
+        dockerEndpointSpec.setName("redisProxyTest");
+        dockerEndpointSpec.setEndPointType(EndpointType.REDIS_FI_PROXY);
+        dockerEndpointSpec.setRedisProxyConnectionProperties(getRedisProxyConnectionProperties());
+        return dockerEndpointSpec;
+    }
+
     public EndpointSpec rmEndpointMockData() {
         EndpointSpec rmEndpointSpec = new EndpointSpec();
         Properties properties = ReadProperty.readProperty(Constants.MOCKDATA_FILE);
@@ -96,6 +116,15 @@ public class EndpointMockData {
         rmEndpointSpec.setCredentialsName(properties.getProperty("rmName"));
         rmEndpointSpec.setRemoteMachineConnectionProperties(getRemoteMachineConnectionProperties());
         return rmEndpointSpec;
+    }
+
+    public EndpointSpec rmEndpointGroupMockData() {
+        EndpointSpec rmGroupEndpointSpec = new EndpointSpec();
+        Properties properties = ReadProperty.readProperty(Constants.MOCKDATA_FILE);
+        rmGroupEndpointSpec.setName(properties.getProperty("rmGroupEndpointName"));
+        rmGroupEndpointSpec.setEndPointType(EndpointType.ENDPOINT_GROUP);
+        rmGroupEndpointSpec.setEndpointNames(Arrays.asList(properties.getProperty("rmEndpointName")));
+        return rmGroupEndpointSpec;
     }
 
     public EndpointSpec rmEndpointMockData(String rmEndpointName, EndpointType endpointType, String rmName,
@@ -123,6 +152,13 @@ public class EndpointMockData {
         return dockerConnectionProperties;
     }
 
+    public RedisProxyConnectionProperties getRedisProxyConnectionProperties() {
+        RedisProxyConnectionProperties connectionProperties = new RedisProxyConnectionProperties();
+        connectionProperties.setHost(host);
+        connectionProperties.setPort(sshPort);
+        return connectionProperties;
+    }
+
     public RemoteMachineConnectionProperties getRemoteMachineConnectionProperties() {
         RemoteMachineConnectionProperties rmConnectionProperties = new RemoteMachineConnectionProperties();
         rmConnectionProperties.setHost(host);
@@ -137,7 +173,7 @@ public class EndpointMockData {
         vcenterEndpointSpec.setName("vCenterMock");
         vcenterEndpointSpec.setEndPointType(EndpointType.VCENTER);
         vcenterEndpointSpec.setCredentialsName("vCenterMockCred");
-        vcenterEndpointSpec.setVCenterConnectionProperties(getVCenterConnectionPropertiess());
+        vcenterEndpointSpec.setVCenterConnectionProperties(getVCenterConnectionProperties());
         return vcenterEndpointSpec;
     }
 
@@ -150,6 +186,22 @@ public class EndpointMockData {
         return awsEndpointSpec;
     }
 
+    public EndpointSpec azureEndpointMockData() {
+        EndpointSpec azureEndpointSpec = new EndpointSpec();
+        Properties properties = ReadProperty.readProperty(Constants.MOCKDATA_FILE);
+        azureEndpointSpec.setName(properties.getProperty("azureEndpointName"));
+        azureEndpointSpec.setEndPointType(EndpointType.AZURE);
+        azureEndpointSpec.setAzureConnectionProperties(getAzureConnectionProperties());
+        return azureEndpointSpec;
+    }
+
+    public AzureConnectionProperties getAzureConnectionProperties() {
+        AzureConnectionProperties azureConnectionProperties = new AzureConnectionProperties();
+        azureConnectionProperties.setSubscriptionId(azureSubscriptionId);
+        azureConnectionProperties.setTenant(azureTenant);
+        return azureConnectionProperties;
+    }
+
     public EndpointSpec getDockerEndpointSpecMock() {
         EndpointSpec dockerEndpointSpec = new EndpointSpec();
         dockerEndpointSpec.setName("dockerMockEndpoint");
@@ -158,7 +210,7 @@ public class EndpointMockData {
         return dockerEndpointSpec;
     }
 
-    public VCenterConnectionProperties getVCenterConnectionPropertiess() {
+    public VCenterConnectionProperties getVCenterConnectionProperties() {
         VCenterConnectionProperties vCenterConnectionProperties = new VCenterConnectionProperties();
         vCenterConnectionProperties.setHostname(vcenterIp);
         return vCenterConnectionProperties;
@@ -180,5 +232,24 @@ public class EndpointMockData {
                 properties.getProperty("WaveFrontStaticTagValue"));
         waveFrontConnectionProperties.setStaticTags(staticTags);
         return waveFrontConnectionProperties;
+    }
+
+    public EndpointSpec getDatabaseEndpointSpec() {
+        EndpointSpec dbEndpointSpec = new EndpointSpec();
+        dbEndpointSpec.setEnable(true);
+        dbEndpointSpec.setEndPointType(EndpointType.DATABASE);
+        dbEndpointSpec.setName("EP_Database_test");
+        dbEndpointSpec.setDatabaseConnectionProperties(getDatabaseConnectionProperties());
+        dbEndpointSpec.setCredentialsName(new CredentialsSpecMockData().getDatabaseCredentials().getName());
+        return dbEndpointSpec;
+    }
+
+    public DatabaseConnectionProperties getDatabaseConnectionProperties() {
+        DatabaseConnectionProperties connectionProperties = new DatabaseConnectionProperties();
+        EndpointSpec endpointSpec = rmEndpointMockData();
+        connectionProperties.setParentEndpointName(endpointSpec.getName());
+        connectionProperties.setDbType(DatabaseType.POSTGRES);
+        connectionProperties.setParentEndpointType(endpointSpec.getEndPointType());
+        return connectionProperties;
     }
 }

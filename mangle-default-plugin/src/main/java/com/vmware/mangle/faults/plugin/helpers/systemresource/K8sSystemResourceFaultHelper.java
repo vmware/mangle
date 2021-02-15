@@ -11,7 +11,10 @@
 
 package com.vmware.mangle.faults.plugin.helpers.systemresource;
 
+import static com.vmware.mangle.utils.constants.FaultConstants.INFRA_AGENT_NAME;
+
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -19,10 +22,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 
 import com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec;
-import com.vmware.mangle.cassandra.model.tasks.SupportScriptInfo;
 import com.vmware.mangle.cassandra.model.tasks.commands.CommandInfo;
+import com.vmware.mangle.faults.plugin.helpers.FaultConstants;
 import com.vmware.mangle.faults.plugin.helpers.KnownFailuresHelper;
-import com.vmware.mangle.services.enums.FaultName;
 import com.vmware.mangle.task.framework.endpoint.EndpointClientFactory;
 import com.vmware.mangle.utils.ConstantsUtils;
 import com.vmware.mangle.utils.ICommandExecutor;
@@ -36,14 +38,12 @@ import com.vmware.mangle.utils.exceptions.MangleException;
  */
 public class K8sSystemResourceFaultHelper extends SystemResourceFaultHelper {
     private EndpointClientFactory endpointClientFactory;
-    private SystemResourceFaultUtils systemResourceFaultUtils;
 
     @Autowired
     public K8sSystemResourceFaultHelper(EndpointClientFactory endpointClientFactory,
             SystemResourceFaultUtils systemResourceFaultUtils) {
-        super();
+        super(systemResourceFaultUtils);
         this.endpointClientFactory = endpointClientFactory;
-        this.systemResourceFaultUtils = systemResourceFaultUtils;
     }
 
     @Override
@@ -55,78 +55,110 @@ public class K8sSystemResourceFaultHelper extends SystemResourceFaultHelper {
     @Override
     public List<CommandInfo> getInjectionCommandInfoList(CommandExecutionFaultSpec faultSpec) throws MangleException {
         List<CommandInfo> commandInfoList = new ArrayList<>();
-        CommandInfo injectFaultCommandInfo = new CommandInfo();
-        FaultName faultName = systemResourceFaultUtils.getFaultName(faultSpec.getArgs());
-        createK8SCopyCommandInfoList(commandInfoList, faultName, faultSpec);
-        createExecutableCommandInfoList(commandInfoList, faultName, faultSpec);
-
-        injectFaultCommandInfo.setCommand(String.format(Constants.KUBE_FAULT_EXEC_STRING,
-                faultSpec.getK8sArguments().getPodInAction(), faultSpec.getK8sArguments().getContainerName(),
-                Constants.SH_COMMAND_PREFIX + systemResourceFaultUtils.buildInjectionCommand(faultSpec.getArgs(),
-                        faultSpec.getInjectionHomeDir())));
-        injectFaultCommandInfo.setIgnoreExitValueCheck(false);
-        injectFaultCommandInfo
-                .setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfSystemResourceFaultInjectionRequest());
-        injectFaultCommandInfo.setExpectedCommandOutputList(null);
-
+        createK8SCopyCommandInfoList(commandInfoList, faultSpec);
+        createExecutableCommandInfoList(commandInfoList, faultSpec);
+        CommandInfo agentExtractCommandInfo = CommandInfo
+                .builder(String.format(Constants.KUBE_FAULT_EXEC_STRING, faultSpec.getK8sArguments().getPodInAction(),
+                        faultSpec.getK8sArguments().getContainerName(), Constants.SH_COMMAND_PREFIX)
+                        + String.format("-c 'tar -zxvf %s/%s -C %s'", faultSpec.getInjectionHomeDir(), INFRA_AGENT_NAME,
+                                faultSpec.getInjectionHomeDir()))
+                .ignoreExitValueCheck(false).expectedCommandOutputList(Arrays.asList("")).build();
+        commandInfoList.add(agentExtractCommandInfo);
+        CommandInfo agentStartCommandInfo = CommandInfo
+                .builder(
+                        String.format(Constants.KUBE_FAULT_EXEC_STRING, faultSpec.getK8sArguments().getPodInAction(),
+                                faultSpec.getK8sArguments().getContainerName(),
+                                "nohup " + Constants.SH_COMMAND_PREFIX + Constants.K8S_SHELL_COMMAND_ARGUMENT
+                                        + systemResourceFaultUtils.getPythonAgentInstallCommandInfo(faultSpec)
+                                                .getCommand()
+                                        + "\""))
+                .ignoreExitValueCheck(false)
+                .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentInstallationRequest())
+                .expectedCommandOutputList(Arrays.asList("")).build();
+        commandInfoList.add(agentStartCommandInfo);
+        String injectionCommand =
+                systemResourceFaultUtils.buildInjectionCommand(faultSpec.getArgs(), faultSpec.getInjectionHomeDir());
+        CommandInfo injectFaultCommandInfo = CommandInfo
+                .builder(String.format(Constants.KUBE_FAULT_EXEC_STRING, faultSpec.getK8sArguments().getPodInAction(),
+                        faultSpec.getK8sArguments().getContainerName(),
+                        Constants.SH_COMMAND_PREFIX + Constants.K8S_SHELL_COMMAND_ARGUMENT
+                                + String.format(FaultConstants.INFRA_AGENT_SUBMIT_COMMAND,
+                                        faultSpec.getInjectionHomeDir() + FaultConstants.INFRA_AGENT_NAME_FOLDER,
+                                        injectionCommand, faultSpec.getFaultName())
+                                + "\""))
+                .ignoreExitValueCheck(false)
+                .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfSystemResourceFaultInjectionRequest())
+                .expectedCommandOutputList(Arrays.asList("")).noOfRetries(3).retryInterval(2).build();
         commandInfoList.add(injectFaultCommandInfo);
+
         return commandInfoList;
     }
 
-    private void createK8SCopyCommandInfoList(List<CommandInfo> commandInfoList, FaultName faultName,
-            CommandExecutionFaultSpec faultSpec) {
-        String scriptFileName = systemResourceFaultUtils.getScriptNameforFault(faultName);
-        CommandInfo k8sCopyCommandInfo = new CommandInfo();
-        k8sCopyCommandInfo.setCommand("cp " + ConstantsUtils.getMangleSupportScriptDirectory() + scriptFileName + " "
-                + faultSpec.getK8sArguments().getPodInAction() + ":" + faultSpec.getInjectionHomeDir() + scriptFileName
-                + " -c " + faultSpec.getK8sArguments().getContainerName());
+    private void createK8SCopyCommandInfoList(List<CommandInfo> commandInfoList, CommandExecutionFaultSpec faultSpec) {
+        CommandInfo k8sCopyCommandInfo = CommandInfo
+                .builder("cp " + ConstantsUtils.getMangleSupportScriptDirectory() + FaultConstants.INFRA_AGENT_NAME
+                        + " " + faultSpec.getK8sArguments().getPodInAction() + ":" + faultSpec.getInjectionHomeDir()
+                        + FaultConstants.INFRA_AGENT_NAME + " -c " + faultSpec.getK8sArguments().getContainerName())
+                .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfSystemResourceK8SCopyRequest()).build();
         commandInfoList.add(k8sCopyCommandInfo);
-        k8sCopyCommandInfo.setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfSystemResourceK8SCopyRequest());
     }
 
-    private void createExecutableCommandInfoList(List<CommandInfo> commandInfoList, FaultName faultName,
+    private void createExecutableCommandInfoList(List<CommandInfo> commandInfoList,
             CommandExecutionFaultSpec faultSpec) {
-        String scriptFileName = systemResourceFaultUtils.getScriptNameforFault(faultName);
-        CommandInfo setExecutableCommandInfo = new CommandInfo();
-        setExecutableCommandInfo.setCommand(String.format(Constants.KUBE_FAULT_EXEC_STRING,
-                faultSpec.getK8sArguments().getPodInAction(), faultSpec.getK8sArguments().getContainerName(),
-                String.format(Constants.LINUX_COMMAND_FOR_ASSIGN_EXECUTE_PERMISSION_RECURSIVELY,
-                        faultSpec.getInjectionHomeDir()) + scriptFileName));
-        setExecutableCommandInfo.setIgnoreExitValueCheck(false);
-        setExecutableCommandInfo.setExpectedCommandOutputList(null);
+        CommandInfo setExecutableCommandInfo = CommandInfo
+                .builder(String.format(Constants.KUBE_FAULT_EXEC_STRING, faultSpec.getK8sArguments().getPodInAction(),
+                        faultSpec.getK8sArguments().getContainerName(),
+                        String.format(Constants.LINUX_COMMAND_FOR_ASSIGN_EXECUTE_PERMISSION_RECURSIVELY,
+                                faultSpec.getInjectionHomeDir()) + FaultConstants.INFRA_AGENT_NAME))
+                .ignoreExitValueCheck(false).expectedCommandOutputList(null).build();
         commandInfoList.add(setExecutableCommandInfo);
     }
 
-    @SuppressWarnings("serial")
     @Override
     public List<CommandInfo> getRemediationcommandInfoList(CommandExecutionFaultSpec faultSpec) throws MangleException {
-        List<CommandInfo> commandInfoList = new ArrayList<>();
         if (!systemResourceFaultUtils.isManualRemediationSupported(faultSpec.getFaultName())) {
             return Collections.emptyList();
         }
         String remediationCommand =
                 systemResourceFaultUtils.buildRemediationCommand(faultSpec.getArgs(), faultSpec.getInjectionHomeDir());
+        List<CommandInfo> commandInfoList = new ArrayList<>();
         if (!StringUtils.isEmpty(remediationCommand)) {
-            CommandInfo commandInfo = new CommandInfo();
-            commandInfo.setCommand(String.format(Constants.KUBE_FAULT_EXEC_STRING,
-                    faultSpec.getK8sArguments().getPodInAction(), faultSpec.getK8sArguments().getContainerName(),
-                    Constants.SH_COMMAND_PREFIX + remediationCommand));
-            commandInfo.setIgnoreExitValueCheck(false);
-            commandInfo.setExpectedCommandOutputList(Collections.emptyList());
-            commandInfo
-                    .setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfSystemResourceFaultRemediationRequest());
+            CommandInfo commandInfo = CommandInfo
+                    .builder(String.format(Constants.KUBE_FAULT_EXEC_STRING,
+                            faultSpec.getK8sArguments().getPodInAction(),
+                            faultSpec.getK8sArguments().getContainerName(),
+                            Constants.SH_COMMAND_PREFIX + Constants.K8S_SHELL_COMMAND_ARGUMENT
+                                    + String.format(FaultConstants.INFRA_AGENT_SUBMIT_COMMAND,
+                                            faultSpec.getInjectionHomeDir() + FaultConstants.INFRA_AGENT_NAME_FOLDER,
+                                            remediationCommand, faultSpec.getFaultName())
+                                    + "\""))
+                    .ignoreExitValueCheck(false).expectedCommandOutputList(Collections.emptyList())
+                    .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfSystemResourceFaultRemediationRequest())
+                    .build();
             commandInfoList.add(commandInfo);
         }
         return commandInfoList;
     }
 
     @Override
-    public List<SupportScriptInfo> getFaultInjectionScripts(CommandExecutionFaultSpec faultSpec) {
-        return systemResourceFaultUtils.getAgentFaultScripts(faultSpec);
-    }
-
-    @Override
-    public void checkTaskSpecificPrerequisites(CommandExecutionFaultSpec spec) throws MangleException {
-        //No Specific Requirements
+    public List<CommandInfo> getStatusCommandInfoList(CommandExecutionFaultSpec faultSpec) throws MangleException {
+        String statusCommand = systemResourceFaultUtils.buildStatusCommand(faultSpec.getArgs());
+        List<CommandInfo> commandInfoList = new ArrayList<>();
+        if (!StringUtils.isEmpty(statusCommand)) {
+            CommandInfo commandInfo = CommandInfo
+                    .builder(String.format(Constants.KUBE_FAULT_EXEC_STRING,
+                            faultSpec.getK8sArguments().getPodInAction(),
+                            faultSpec.getK8sArguments().getContainerName(),
+                            Constants.SH_COMMAND_PREFIX + Constants.K8S_SHELL_COMMAND_ARGUMENT
+                                    + String.format(FaultConstants.INFRA_AGENT_SUBMIT_COMMAND,
+                                            faultSpec.getInjectionHomeDir() + FaultConstants.INFRA_AGENT_NAME_FOLDER,
+                                            statusCommand, faultSpec.getFaultName())
+                                    + "\""))
+                    .ignoreExitValueCheck(false).expectedCommandOutputList(Collections.emptyList())
+                    .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfSystemResourceFaultInjectionRequest())
+                    .build();
+            commandInfoList.add(commandInfo);
+        }
+        return commandInfoList;
     }
 }

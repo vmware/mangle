@@ -14,6 +14,7 @@ package com.vmware.mangle.task.framework.utils;
 import com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec;
 import com.vmware.mangle.cassandra.model.tasks.Task;
 import com.vmware.mangle.cassandra.model.tasks.TaskType;
+import com.vmware.mangle.utils.constants.StringConstants;
 
 /**
  * @author hkilari
@@ -35,6 +36,7 @@ public class TaskDescriptionUtils {
         }
 
         description = removeNullMembersFromString(description);
+        description = maskDescription(description);
         if (task.getTaskType() == TaskType.INJECTION) {
             return "Executing Fault: " + description;
         } else {
@@ -45,5 +47,9 @@ public class TaskDescriptionUtils {
     public static String removeNullMembersFromString(String description) {
         return description.replaceAll(", [^,]*?=null", "")
                 .replaceAll("super=JVMAgentFaultSpec\\(jvmProperties=null\\),* *", "");
+    }
+
+    public static String maskDescription(String desc) {
+        return desc.replaceAll(StringConstants.REGULAR_EXP_FOR_PASS_MASK_IN_DESC, StringConstants.REPLACEMENT_TXT);
     }
 }

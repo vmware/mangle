@@ -17,5 +17,5 @@ package com.vmware.mangle.cassandra.model.tasks;
  *
  */
 public enum TaskType {
-    INJECTION, REMEDIATION, TEST_EXECUTION
+    INJECTION, REMEDIATION, TEST_EXECUTION, RESILIENCY_SCORE
 }

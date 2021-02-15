@@ -30,6 +30,9 @@ public class URLConstants {
     public static final String SYSTEM_STATUS_OK = "Healthy";
 
     public static class UserUrl {
+        private UserUrl() {
+        }
+
         public static final String USER = "/user";
     }
 
@@ -40,16 +43,23 @@ public class URLConstants {
     public static final String CONTAINER_NAME = "containerName";
 
     public static final String API_V1 = "/api/v1/";
+    public static final String API_V2 = "/api/v2/";
+    public static final String VCENTER_ADAPTER_URL = API_V1 + "vcenter-adapter-details";
     public static final String CLUSTER_CONFIG_URL = API_V1 + "cluster-config";
     public static final String INJECTION_URL = API_V1 + "faults";
     public static final String ENDPOINT_URL = API_V1 + "endpoints";
+    public static final String ENDPOINT_V2_URL = API_V2 + "endpoints";
     public static final String DEFAULT_USER_UPDATE_FLAG_URL = API_V1 + "user-management/users/admin";
     public static final String UPDATE_CURRENT_USER_PASSWORD = API_V1 + "user-management/password";
+    public static final String MANGLE_USER_LOGIN = API_V1 + "user-management/login";
 
     public static final String VCENTER_STATE_FAULT_API = INJECTION_URL + "/vcenter/state";
+    public static final String VCENTER_HOST_FAULT_API = INJECTION_URL + "/vcenter/host";
     public static final String VCENTER_NIC_FAULT_API = INJECTION_URL + "/vcenter/nic";
     public static final String VCENTER_DISK_FAULT_API = INJECTION_URL + "/vcenter/disk";
     public static final String DOCKER_FAULT_API = INJECTION_URL + "/docker";
+    public static final String APPLICATION_SERVLET_CONTEXT_PATH = "/mangle-services/";
+    public static final String APPLICATION_HEALTH_PATH = "/application/health";
 
     public static MangleNodeStatus getMangleNodeCurrentStatus() {
         return mangleNodeCurrentStatus;

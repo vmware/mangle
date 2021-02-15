@@ -16,6 +16,8 @@ import com.amazonaws.regions.RegionUtils;
 import com.amazonaws.services.ec2.AmazonEC2Async;
 import com.amazonaws.services.ec2.AmazonEC2AsyncClientBuilder;
 import com.amazonaws.services.ec2.model.AmazonEC2Exception;
+import com.amazonaws.services.rds.AmazonRDSAsync;
+import com.amazonaws.services.rds.AmazonRDSAsyncClientBuilder;
 
 import com.vmware.mangle.utils.clients.endpoint.EndpointClient;
 import com.vmware.mangle.utils.constants.ErrorConstants;
@@ -62,6 +64,17 @@ public class CustomAwsClient implements EndpointClient {
         AmazonEC2AsyncClientBuilder builder = AmazonEC2AsyncClientBuilder.standard().withRegion(region);
         return builder.build();
 
+    }
+
+    /**
+     * Amazon RDS client. Abstracted to aid testing
+     *
+     * @return the Amazon RDS client
+     */
+    @SuppressWarnings("deprecation")
+    public AmazonRDSAsync rdsClient() {
+        AmazonRDSAsyncClientBuilder builder = AmazonRDSAsyncClientBuilder.standard().withRegion(region);
+        return builder.build();
     }
 
     @Override

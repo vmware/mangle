@@ -12,11 +12,13 @@
 package com.vmware.mangle.cassandra.model.custom.faults;
 
 import java.util.Map;
+import java.util.Set;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import org.springframework.data.annotation.Transient;
@@ -52,4 +54,6 @@ public class CustomFaultSpec {
     private K8SSpecificArguments k8sArguments;
     @Valid
     private DockerSpecificArguments dockerArguments;
+    @JsonProperty(required = false)
+    private Set<String> notifierNames;
 }

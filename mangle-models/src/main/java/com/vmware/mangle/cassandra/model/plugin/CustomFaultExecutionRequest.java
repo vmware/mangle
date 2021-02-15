@@ -13,10 +13,12 @@ package com.vmware.mangle.cassandra.model.plugin;
 
 import java.io.Serializable;
 import java.util.Map;
+import java.util.Set;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import org.springframework.data.cassandra.core.mapping.UserDefinedType;
@@ -51,4 +53,7 @@ public class CustomFaultExecutionRequest implements Serializable {
     private K8SSpecificArguments k8sArguments;
     @Valid
     private DockerSpecificArguments dockerArguments;
+    @ApiModelProperty(notes = "Notifier names to be used while sending the notification.", required = false, example = "[\"mangle-test\"]")
+    @JsonProperty(required = false)
+    private Set<String> notifierNames;
 }

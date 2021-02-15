@@ -18,7 +18,7 @@
 	<parent>
 		<groupId>com.vmware.mangle</groupId>
 		<artifactId>mangle-root</artifactId>
-		<version>2.0.0</version>
+		<version>3.0.0</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
@@ -29,9 +29,11 @@
 
 	<properties>
 		<node.version>v10.14.1</node.version>
+		<node.download.root>https://nodejs.org/dist/</node.download.root>
 		<npm.version>6.4.1</npm.version>
+		<npm.download.root>http://registry.npmjs.org/npm/-/</npm.download.root>
 		<frontend-maven-plugin.version>1.7.5</frontend-maven-plugin.version>
-		<mangle.ui.proxy></mangle.ui.proxy>
+		<npmInstallArgs></npmInstallArgs>
 	</properties>
 
 	<dependencies>
@@ -49,7 +51,9 @@
 				<version>${frontend-maven-plugin.version}</version>
 				<configuration>
 					<nodeVersion>${node.version}</nodeVersion>
+					<nodeDownloadRoot>${node.download.root}</nodeDownloadRoot>
 					<npmVersion>${npm.version}</npmVersion>
+					<npmDownloadRoot>${npm.download.root}</npmDownloadRoot>
 				</configuration>
 				<executions>
 					<execution>
@@ -64,7 +68,7 @@
 							<goal>npm</goal>
 						</goals>
 						<configuration>
-							<arguments>install --audit false ${mangle.ui.proxy}</arguments>
+							<arguments>install --audit false ${npmInstallArgs}</arguments>
 						</configuration>
 					</execution>
 					<execution>

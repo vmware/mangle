@@ -33,7 +33,9 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import com.vmware.mangle.cassandra.model.endpoint.AWSCredentials;
+import com.vmware.mangle.cassandra.model.endpoint.AzureCredentials;
 import com.vmware.mangle.cassandra.model.endpoint.CredentialsSpec;
+import com.vmware.mangle.cassandra.model.endpoint.DatabaseCredentials;
 import com.vmware.mangle.cassandra.model.endpoint.K8SCredentials;
 import com.vmware.mangle.cassandra.model.endpoint.RemoteMachineCredentials;
 import com.vmware.mangle.cassandra.model.endpoint.VCenterCredentials;
@@ -87,7 +89,7 @@ public class CredentialsSpecReadingConverterTest extends PowerMockTestCase {
 
     /**
      * Test method for
-     * {@link com.vmware.mangle.cassandra.converters.CredentialsSpecReadingConverter#convert(com.datastax.driver.core.Row)}.
+     * {@link CredentialsSpecReadingConverter#convert(com.datastax.driver.core.Row)}.
      */
     @Test
     public void testConvertForMachineCase() {
@@ -103,7 +105,7 @@ public class CredentialsSpecReadingConverterTest extends PowerMockTestCase {
 
     /**
      * Test method for
-     * {@link com.vmware.mangle.cassandra.converters.CredentialsSpecReadingConverter#convert(com.datastax.driver.core.Row)}.
+     * {@link CredentialsSpecReadingConverter#convert(com.datastax.driver.core.Row)}.
      */
     @Test
     public void testConvertForAwsCase() {
@@ -119,7 +121,7 @@ public class CredentialsSpecReadingConverterTest extends PowerMockTestCase {
 
     /**
      * Test method for
-     * {@link com.vmware.mangle.cassandra.converters.CredentialsSpecReadingConverter#convert(com.datastax.driver.core.Row)}.
+     * {@link CredentialsSpecReadingConverter#convert(com.datastax.driver.core.Row)}.
      */
     @Test
     public void testConvertForK8sclusterCase() {
@@ -135,7 +137,7 @@ public class CredentialsSpecReadingConverterTest extends PowerMockTestCase {
 
     /**
      * Test method for
-     * {@link com.vmware.mangle.cassandra.converters.CredentialsSpecReadingConverter#convert(com.datastax.driver.core.Row)}.
+     * {@link CredentialsSpecReadingConverter#convert(com.datastax.driver.core.Row)}.
      */
     @Test
     public void testConvertForVcenterCase() {
@@ -151,7 +153,7 @@ public class CredentialsSpecReadingConverterTest extends PowerMockTestCase {
 
     /**
      * Test method for
-     * {@link com.vmware.mangle.cassandra.converters.CredentialsSpecReadingConverter#convert(com.datastax.driver.core.Row)}.
+     * {@link CredentialsSpecReadingConverter#convert(com.datastax.driver.core.Row)}.
      */
     @Test
     public void testConvertForDefaultCase() {
@@ -161,6 +163,38 @@ public class CredentialsSpecReadingConverterTest extends PowerMockTestCase {
                 .thenReturn(credentialsSpecMockData.getAWSCredentialsData());
         CredentialsSpec actualResult = credentialsSpecReadingConverter.convert(source);
         Assert.assertTrue(actualResult != null);
+        verify(source, times(1)).getString(anyString());
+        verify(mappingCassandraConverter, times(1)).read(any(), any(Row.class));
+    }
+
+    /**
+     * Test method for
+     * {@link CredentialsSpecReadingConverter#convert(com.datastax.driver.core.Row)}.
+     */
+    @Test
+    public void testConvertForDatabase() {
+        Row source = mock(Row.class);
+        when(source.getString(anyString())).thenReturn(EndpointType.DATABASE.toString());
+        when(mappingCassandraConverter.read(any(), any(Row.class)))
+                .thenReturn(credentialsSpecMockData.getDatabaseCredentials());
+        CredentialsSpec actualResult = credentialsSpecReadingConverter.convert(source);
+        Assert.assertTrue(actualResult instanceof DatabaseCredentials);
+        verify(source, times(1)).getString(anyString());
+        verify(mappingCassandraConverter, times(1)).read(any(), any(Row.class));
+    }
+
+    /**
+     * Test method for
+     * {@link CredentialsSpecReadingConverter#convert(com.datastax.driver.core.Row)}.
+     */
+    @Test
+    public void testConvertForAzure() {
+        Row source = mock(Row.class);
+        when(source.getString(anyString())).thenReturn(EndpointType.AZURE.toString());
+        when(mappingCassandraConverter.read(any(), any(Row.class)))
+                .thenReturn(credentialsSpecMockData.getAzureCredentialsData());
+        CredentialsSpec actualResult = credentialsSpecReadingConverter.convert(source);
+        Assert.assertTrue(actualResult instanceof AzureCredentials);
         verify(source, times(1)).getString(anyString());
         verify(mappingCassandraConverter, times(1)).read(any(), any(Row.class));
     }

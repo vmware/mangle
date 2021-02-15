@@ -19,20 +19,24 @@ import org.springframework.data.cassandra.core.cql.PrimaryKeyType;
 import org.springframework.data.cassandra.core.mapping.PrimaryKeyColumn;
 import org.springframework.data.cassandra.core.mapping.Table;
 
+import com.vmware.mangle.model.enums.EncryptField;
+
 /**
- *
- *
  * @author chetanc
  */
 @Table(value = "authenticationprovider")
 @Data
 public class ADAuthProviderDto {
-
     private String id;
 
     private String adUrl;
     @PrimaryKeyColumn(value = "adDomain", ordering = Ordering.ASCENDING, type = PrimaryKeyType.PARTITIONED)
     private String adDomain;
+
+    private String adUser;
+
+    @EncryptField
+    private String adUserPassword;
 
     public ADAuthProviderDto() {
         this.id = UUID.randomUUID().toString();

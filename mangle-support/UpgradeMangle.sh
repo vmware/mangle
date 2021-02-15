@@ -26,8 +26,9 @@ help(){
     echo "--MANGLE_BUILD_NUMBER=<mangle docker container tag. ex: 1.0.0.15> \\"
     echo "[--MANGLE_NODE_SSH_KEY_PATH=<ssh public key path for mangle nodes> \\"
     echo "--MANGLE_NODE_SSH_USER=<ssh user (should have admin rights) to connect mangle nodes> ]\\"
-    echo "[--MANGLE_CONTAINER_NAME=<name of the mangle container>]  [--MANGLE_APP_PORT=<Mangle application port>]"
-    echo "[--MANGLE_DOCKER_ARTIFACTORY=<artificatory server> ex: es-fault-injection-docker-local.artifactory.eng.vmware.com]"
+    echo "[--MANGLE_CONTAINER_NAME=<name of the mangle container>]  [--MANGLE_APP_PORT=<Mangle application port>] \\"
+    echo "[--MANGLE_DOCKER_ARTIFACTORY=<artificatory server> ex: es-fault-injection-docker-local.artifactory.eng.vmware.com] \\"
+    echo "[--NIC_NAME=<nic name of machine's ipaddress assigned>]"
     exit $errorExitCode
 }
 
@@ -37,10 +38,14 @@ init()
     errorExitCode=127
     LOG_LOCATION="mangle_upgrade.log"
 
-    CurrentMangleNodeIP=$(ifconfig eth0 | grep "inet addr" | cut -d ':' -f 2 | cut -d ' ' -f 1)
+    if [ -z $NIC_NAME ]; then
+        NIC_NAME="eth0"
+    fi
+    
+    CurrentMangleNodeIP=$(ifconfig $NIC_NAME | grep "inet addr" | cut -d ':' -f 2 | cut -d ' ' -f 1)
 
     if [ -z $CurrentMangleNodeIP ]; then
-        echo "could not find ip address of current node on eth0. Please provide valid ip address"
+        echo "could not find ip address of current node on $NIC_NAME. Please provide valid ip address"
         read CurrentMangleNodeIP
         echo $CurrentMangleNodeIP
     fi

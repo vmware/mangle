@@ -3,7 +3,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { VcenterComponent } from './vcenter.component';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { HttpClientModule } from '@angular/common/http';
 import { RouterTestingModule } from '@angular/router/testing';
 import { EndpointService } from '../endpoint.service';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -11,6 +10,7 @@ import { BrowserModule } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
 import { ClarityModule } from '@clr/angular';
 import { of } from 'rxjs';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 
 describe('VcenterComponent', () => {
   let component: VcenterComponent;
@@ -27,7 +27,7 @@ describe('VcenterComponent', () => {
         BrowserAnimationsModule,
         BrowserModule,
         FormsModule,
-        HttpClientModule,
+        HttpClientTestingModule,
         CommonModule,
         ClarityModule,
         RouterTestingModule.withRoutes([{ path: 'vcenter', component: VcenterComponent }])
@@ -40,8 +40,8 @@ describe('VcenterComponent', () => {
     })
       .compileComponents();
     endpointService = TestBed.get(EndpointService);
-    spyOn(endpointService, 'getEndpoints').and.returnValue(of([ep_data]));
-    spyOn(endpointService, 'getCredentials').and.returnValue(of([cred_data]));
+    spyOn(endpointService, 'getEndpoints').and.returnValue(of({"content": [ep_data]}));
+    spyOn(endpointService, 'getCredentials').and.returnValue(of({ "content" : [cred_data] }));
     fixture = TestBed.createComponent(VcenterComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
@@ -91,16 +91,6 @@ describe('VcenterComponent', () => {
     component.deleteEndpoint(ep_data.name);
     expect(component.alertMessage).toBeTruthy();
     expect(endpointService.deleteEndpoint).toHaveBeenCalled();
-  });
-
-  it('should add vcenter credential', () => {
-    spyOn(endpointService, 'addVcenterCredential').and.returnValue(of(cred_data));
-    component.populateEndpointForm(ep_data);
-    component.addVcenterCredential(cred_data);
-    expect(component.alertMessage).toBeTruthy();
-    expect(endpointService.addVcenterCredential).toHaveBeenCalled();
-    expect(component.credentials[0].name).toBe("vcenter_cred");
-    expect(endpointService.getCredentials).toHaveBeenCalled();
   });
 
   it('should test endpoint connection', () => {

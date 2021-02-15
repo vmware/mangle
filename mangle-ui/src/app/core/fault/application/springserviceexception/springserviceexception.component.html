@@ -1,37 +1,20 @@
-<app-alert [(alertMessage)]="alertMessage" [(isErrorMessage)]="isErrorMessage" (alertMessageChange)="alertMessage = $event"></app-alert>
+<app-alert [(alertMessage)]="alertMessage" [isErrorMessage]="isErrorMessage" (alertMessageChange)="alertMessage = $event"></app-alert>
 <div>
     <h3 class="modal-title">Execute Spring Service Exception Fault</h3>
-    <form #springServiceExceptionForm="ngForm"
-        (ngSubmit)="executeSpringServiceExceptionFault(springServiceExceptionForm.value);" ngNativeValidate>
+    <form #springServiceExceptionForm="ngForm" (ngSubmit)="executeSpringServiceExceptionFault(springServiceExceptionForm.value);" ngNativeValidate>
         <section class="form-block">
-            <div class="form-group">
-                <label for="endpointName">Endpoint</label>
-                <clr-dropdown>
-                    <input autocomplete="off" clrDropdownTrigger type="text" name="endpointName"
-                        (input)="searchEndpoint($event.target.value);displayEndpointFields($event.target.value);"
-                        (focus)="searchEndpoint('');" [(ngModel)]="faultFormData.endpointName" />
-                    <clr-icon shape="caret down" clrDropdownTrigger size="24" (click)="searchEndpoint('');"></clr-icon>
-                    <clr-dropdown-menu *clrIfOpen class="menu-height" clrPosition="bottom-left">
-                        <ng-container *ngFor="let searchedEndpoint of searchedEndpoints">
-                            <button type="button" clrDropdownItem class="option-height"
-                                *ngIf="searchedEndpoint.endPointType == 'MACHINE' || searchedEndpoint.endPointType == 'K8S_CLUSTER' || searchedEndpoint.endPointType == 'DOCKER'"
-                                (click)="setEndpointVal(searchedEndpoint.name);displayEndpointFields(searchedEndpoint.name);getDockerContainers(searchedEndpoint.endPointType,searchedEndpoint.name);">{{searchedEndpoint.name}}</button>
-                        </ng-container>
-                    </clr-dropdown-menu>
-                </clr-dropdown>
-            </div>
-            <div class="form-group">
-                <label for="injectionHomeDir">Injection Home Dir (optional)</label>
-                <input type="text" name="injectionHomeDir" [(ngModel)]="faultFormData.injectionHomeDir">
-            </div>
+            <fault-endpoint [faultFormData]="faultFormData" [supportedEpTypes]="supportedEpTypes" [endpoints]="endpoints" (displayEndpointFieldsEvent)="displayEndpointFields($event);" (dockerContainersEvent)="getDockerContainers($event['endPointType'], $event['name']);"></fault-endpoint>
+            <fault-dockerargs [faultFormData]="faultFormData" [dockerHidden]="dockerHidden" [dockerContainers]="dockerContainers" [searchedContainers]="searchedContainers"></fault-dockerargs>
+            <fault-k8sargs [faultFormData]="faultFormData" [k8sHidden]="k8sHidden"></fault-k8sargs>
+            <fault-jvmargs [faultFormData]="faultFormData" [k8sHidden]="k8sHidden" [dockerHidden]="dockerHidden"></fault-jvmargs>
             <div class="form-group">
                 <label for="servicesString">Service URI</label>
-                <input type="text" name="servicesString" [(ngModel)]="faultFormData.servicesString" required>
+                <input type="text" name="servicesString" id="servicesString" [(ngModel)]="faultFormData.servicesString" required>
             </div>
             <div class="form-group">
                 <label for="httpMethodsString">Http Method</label>
                 <div class="select">
-                    <select name="httpMethodsString" [(ngModel)]="faultFormData.httpMethodsString" required>
+                    <select name="httpMethodsString" id="httpMethodsString" [(ngModel)]="faultFormData.httpMethodsString" required>
                         <ng-container *ngFor="let httpMethodString of httpMethodsValues">
                             <option [value]="httpMethodString">{{httpMethodString}}</option>
                         </ng-container>
@@ -40,118 +23,18 @@
             </div>
             <div class="form-group">
                 <label for="exceptionClass">Exception class</label>
-                <input type="text" name="exceptionClass" [(ngModel)]="faultFormData.exceptionClass" required>
+                <input type="text" name="exceptionClass" id="exceptionClass" [(ngModel)]="faultFormData.exceptionClass" required>
             </div>
-
             <div class="form-group">
                 <label for="exceptionMessage">Exception Message</label>
-                <input type="text" name="exceptionMessage" [(ngModel)]="faultFormData.exceptionMessage" required>
+                <input type="text" name="exceptionMessage" id="exceptionMessage" [(ngModel)]="faultFormData.exceptionMessage" required>
             </div>
-
-            <div [hidden]="dockerHidden">
-                <div class="form-group">
-                    <label><b>Docker Arguments</b></label>
-                </div>
-                <br />
-                <fieldset ngModelGroup="dockerArguments">
-                    <div class="form-group">
-                        <label for="containerName">Container Name</label>
-                        <clr-dropdown>
-                            <input autocomplete="off" clrDropdownTrigger type="text" name="containerName"
-                                (input)="searchContainer($event.target.value);" (focus)="searchContainer('');"
-                                [(ngModel)]="faultFormData.dockerArguments.containerName" />
-                            <clr-icon shape="caret down" clrDropdownTrigger size="24" (click)="searchContainer('');">
-                            </clr-icon>
-                            <clr-dropdown-menu *clrIfOpen class="menu-height" clrPosition="bottom-left">
-                                <ng-container *ngFor="let searchedContainer of searchedContainers">
-                                    <button type="button" clrDropdownItem class="option-height"
-                                        (click)="setContainerVal(searchedContainer);">{{searchedContainer}}</button>
-                                </ng-container>
-                            </clr-dropdown-menu>
-                        </clr-dropdown>
-                    </div>
-                </fieldset>
-            </div>
-
-            <div [hidden]="k8sHidden">
-                <div class="form-group">
-                    <label><b>K8S Arguments</b></label>
-                </div>
-                <br />
-                <fieldset ngModelGroup="k8sArguments">
-                    <div class="form-group">
-                        <label for="containerName">Container Name</label>
-                        <input type="text" name="containerName" [(ngModel)]="faultFormData.k8sArguments.containerName"
-                            [required]="!k8sHidden">
-                    </div>
-                    <div class="form-group">
-                        <label for="podLabels">Pod Labels</label>
-                        <input type="text" name="podLabels" [(ngModel)]="faultFormData.k8sArguments.podLabels"
-                            [required]="!k8sHidden">
-                    </div>
-                    <div class="form-group">
-                        <label for="enableRandomInjection">Random Injection</label>
-                        <div class="select">
-                            <select name="enableRandomInjection"
-                                [(ngModel)]="faultFormData.k8sArguments.enableRandomInjection" [required]="!k8sHidden">
-                                <option [ngValue]="true">true</option>
-                                <option [ngValue]="false">false</option>
-                            </select>
-                        </div>
-                    </div>
-                </fieldset>
-            </div>
-            <div class="form-group">
-                <label><b>JVM Properties</b></label>
-            </div>
-            <br />
-            <fieldset ngModelGroup="jvmProperties">
-                <div class="form-group">
-                    <label for="javaHomePath">Java Home</label>
-                    <input type="text" name="javaHomePath" [(ngModel)]="faultFormData.jvmProperties.javaHomePath">
-                </div>
-                <div class="form-group">
-                    <label for="jvmprocess">JVM Process</label>
-                    <input type="text" name="jvmprocess" [(ngModel)]="faultFormData.jvmProperties.jvmprocess" required>
-                </div>
-                <div class="form-group">
-                    <label for="port">Free Port</label>
-                    <input type="number" name="port" [(ngModel)]="faultFormData.jvmProperties.port" min="0" max="65535"
-                        required>
-                </div>
-                <div class="form-group" [hidden]="!k8sHidden || !dockerHidden">
-                    <label for="user">Logon User</label>
-                    <input type="text" name="user" [(ngModel)]="faultFormData.jvmProperties.user">
-                </div>
-            </fieldset>
-            <div class="form-group">
-                <label for="tags">Tags</label>
-                <span class="label label-info"
-                    *ngFor="let item of tagsData | keyvalue">{{item.key}}={{item.value}}&nbsp;<clr-icon shape="times"
-                        size="12" (click)="removeTag(item.key);"></clr-icon></span>
-                <clr-icon shape="plus-circle" (click)="tagsModal=true;" style="width:21px;height:30px;"></clr-icon>
-            </div>
+            <fault-injectionhomedir [faultFormData]="faultFormData"></fault-injectionhomedir>
+            <fault-tags [tagsData]="tagsData" (tagsModalEvent)="tagsModal=$event;"></fault-tags>
+            <fault-notifiers [notifiersData]="notifiersData" (notifiersModalEvent)="notifierModal=$event;"></fault-notifiers>
         </section>
-        <button type="submit" class="btn btn-primary" [clrLoading]="runBtnState" [disabled]="disableRun">RUN
-            FAULT</button>
+        <button type="submit" class="btn btn-primary" [clrLoading]="runBtnState" [disabled]="disableRun">RUN FAULT</button>
     </form>
 </div>
-<clr-modal [(clrModalOpen)]="tagsModal">
-    <h3 class="modal-title">Add Tags</h3>
-    <div class="modal-body">
-        <form #tagsForm="ngForm" (ngSubmit)="updateTags(tagsForm.value);tagsModal=false;tagsForm.reset();">
-            <section class="form-block">
-                <div class="form-group">
-                    <label for="tagKey">Key</label>
-                    <input type="text" name="tagKey" ngModel>
-                </div>
-                <div class="form-group">
-                    <label for="tagValue">Value</label>
-                    <input type="text" name="tagValue" ngModel>
-                </div>
-            </section>
-            <button type="button" class="btn btn-outline" (click)="tagsModal=false;">CANCEL</button>
-            <button type="submit" class="btn btn-primary">ADD</button>
-        </form>
-    </div>
-</clr-modal>
+<app-tags [tagsModal]="tagsModal" [tagsData]="tagsData" (updateTagsModal)="tagsModal=$event;"></app-tags>
+<app-notifiers [notifierModal]="notifierModal" [notifiersData]="notifiersData" (updateNotifiersModal)="notifierModal=$event;"></app-notifiers>

@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -29,11 +30,13 @@ import com.amazonaws.services.ec2.model.StopInstancesRequest;
 import com.amazonaws.services.ec2.model.StopInstancesResult;
 import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
 import com.amazonaws.services.ec2.model.TerminateInstancesResult;
+import lombok.NonNull;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import com.vmware.mangle.cassandra.model.tasks.commands.CommandExecutionResult;
+import com.vmware.mangle.utils.CommonUtils;
 import com.vmware.mangle.utils.exceptions.MangleException;
 
 /**
@@ -57,12 +60,13 @@ public class EC2InstanceFaultOperations {
      * @return CommandExecutionResult object with exit code set to 0 if terminating instances is
      *         successful, else sets it to 1
      */
-    public static CommandExecutionResult terminateInstances(CustomAwsClient client, String... instanceIDs) {
-        log.debug("Terminating instances {}", Arrays.asList(instanceIDs));
+    public static CommandExecutionResult terminateInstances(@NonNull CustomAwsClient client, @NonNull String instanceIds) {
+        log.debug("Terminating instances {}", instanceIds);
         CommandExecutionResult commandExecutionResult = new CommandExecutionResult();
         AmazonEC2Async ec2Client = client.ec2Client();
         try {
-            TerminateInstancesRequest terminateRequest = new TerminateInstancesRequest().withInstanceIds(instanceIDs);
+            TerminateInstancesRequest terminateRequest =
+                    new TerminateInstancesRequest().withInstanceIds(instanceIds.split(","));
             Future<TerminateInstancesResult> result = ec2Client.terminateInstancesAsync(terminateRequest,
                     new AsyncHandler<TerminateInstancesRequest, TerminateInstancesResult>() {
                         @Override
@@ -100,13 +104,13 @@ public class EC2InstanceFaultOperations {
      * @return CommandExecutionResult object with exit code set to 0 if starting the instances is
      *         successful, else sets it to 1
      */
-    public static CommandExecutionResult startInstances(CustomAwsClient client, String... instanceIDs) {
-        log.debug("Starting instances {}", Arrays.asList(instanceIDs));
+    public static CommandExecutionResult startInstances(@NonNull CustomAwsClient client, @NonNull String instanceIds) {
+        log.debug("Starting instances {}", instanceIds);
         CommandExecutionResult commandExecutionResult = new CommandExecutionResult();
         AmazonEC2Async ec2Client = client.ec2Client();
         try {
 
-            StartInstancesRequest startRequest = new StartInstancesRequest().withInstanceIds(instanceIDs);
+            StartInstancesRequest startRequest = new StartInstancesRequest().withInstanceIds(instanceIds.split(","));
 
             Future<StartInstancesResult> result = ec2Client.startInstancesAsync(startRequest,
                     new AsyncHandler<StartInstancesRequest, StartInstancesResult>() {
@@ -145,13 +149,13 @@ public class EC2InstanceFaultOperations {
      * @return CommandExecutionResult object with exit code set to 0 if stopping instances is
      *         successful, else sets it to 1
      */
-    public static CommandExecutionResult stopInstances(CustomAwsClient client, String... instanceIDs) {
-        log.debug("Stopping instances {}", Arrays.asList(instanceIDs));
+    public static CommandExecutionResult stopInstances(@NonNull CustomAwsClient client, @NonNull String instanceIds) {
+        log.debug("Stopping instances {}", instanceIds);
         CommandExecutionResult commandExecutionResult = new CommandExecutionResult();
         AmazonEC2Async ec2Client = client.ec2Client();
         try {
 
-            StopInstancesRequest terminateRequest = new StopInstancesRequest().withInstanceIds(instanceIDs);
+            StopInstancesRequest terminateRequest = new StopInstancesRequest().withInstanceIds(instanceIds.split(","));
             Future<StopInstancesResult> result = ec2Client.stopInstancesAsync(terminateRequest,
                     new AsyncHandler<StopInstancesRequest, StopInstancesResult>() {
                         @Override
@@ -189,12 +193,13 @@ public class EC2InstanceFaultOperations {
      * @return CommandExecutionResult object with exit code set to 0 if rebooting instances is
      *         successful, else sets it to 1
      */
-    public static CommandExecutionResult rebootInstances(CustomAwsClient client, String... instanceIDs) {
-        log.debug("Rebooting instances {}", Arrays.asList(instanceIDs));
+    public static CommandExecutionResult rebootInstances(@NonNull CustomAwsClient client, @NonNull String instanceIds) {
+        log.debug("Rebooting instances {}", instanceIds);
         CommandExecutionResult commandExecutionResult = new CommandExecutionResult();
         AmazonEC2Async ec2Client = client.ec2Client();
         try {
-            RebootInstancesRequest terminateRequest = new RebootInstancesRequest().withInstanceIds(instanceIDs);
+            RebootInstancesRequest terminateRequest =
+                    new RebootInstancesRequest().withInstanceIds(instanceIds.split(","));
             Future<RebootInstancesResult> result = ec2Client.rebootInstancesAsync(terminateRequest,
                     new AsyncHandler<RebootInstancesRequest, RebootInstancesResult>() {
                         @Override
@@ -205,8 +210,7 @@ public class EC2InstanceFaultOperations {
 
                         @Override
                         public void onSuccess(RebootInstancesRequest request, RebootInstancesResult result) {
-                            commandExecutionResult
-                                    .setCommandOutput("Successfully rebooted instances: " + Arrays.asList(instanceIDs));
+                            commandExecutionResult.setCommandOutput("Successfully rebooted instances: " + instanceIds);
                             commandExecutionResult.setExitCode(0);
                         }
                     });
@@ -233,11 +237,12 @@ public class EC2InstanceFaultOperations {
      * @return CommandExecutionResult object with exit code set to 0 if blocking all the network is
      *         successful, else sets it to 1
      */
-    public static CommandExecutionResult blockAllNetworkTraffic(CustomAwsClient client, String... instanceIDs) {
-        log.debug("Blocking all network traffic for instances {}", Arrays.asList(instanceIDs));
+    public static CommandExecutionResult blockAllNetworkTraffic(@NonNull CustomAwsClient client, @NonNull String instanceIds) {
+        log.debug("Blocking all network traffic for instances {}", instanceIds);
         List<String> affectedInstancesWithSGs = new ArrayList<>();
         CommandExecutionResult commandExecutionResult = new CommandExecutionResult();
-        for (String instanceID : instanceIDs) {
+        List<String> instances = Arrays.asList(instanceIds.split(","));
+        for (String instanceID : instances) {
             String dummySecurityGroupID = null;
             try {
                 List<String> existingSecurityGroupIDs = AWSCommonUtils.getSecurityGroupIDs(client, instanceID);
@@ -245,6 +250,7 @@ public class EC2InstanceFaultOperations {
                         AWSCommonUtils.getRandomSecurityGroupName(instanceID),
                         "Dummy Security Group Created by Mangle for instance" + instanceID);
                 AWSCommonUtils.setInstanceSecurityGroups(client, instanceID, Arrays.asList(dummySecurityGroupID));
+                rebootInstances(client, instanceID);
                 affectedInstancesWithSGs.add(
                         (instanceID + "#" + String.join(",", existingSecurityGroupIDs) + "#" + dummySecurityGroupID));
             } catch (MangleException e) {
@@ -253,7 +259,7 @@ public class EC2InstanceFaultOperations {
             }
         }
 
-        if (!CollectionUtils.isEmpty(affectedInstancesWithSGs)) {
+        if (affectedInstancesWithSGs.size() == instances.size()) {
             commandExecutionResult.setCommandOutput(
                     "Successfully blocked all the network to Instances->" + String.join("&", affectedInstancesWithSGs));
             commandExecutionResult.setExitCode(0);
@@ -271,36 +277,106 @@ public class EC2InstanceFaultOperations {
      * @return CommandExecutionResult object with exit code set to 0 if unblocking all the networks
      *         is successful, else sets it to 1
      */
-    public static CommandExecutionResult unblockAllNetworkTraffic(CustomAwsClient client,
-            String... instanceIDsWithSecurtyGroups) {
+    public static CommandExecutionResult unblockAllNetworkTraffic(@NonNull CustomAwsClient client,
+            @NonNull String instanceIDsWithSecurtyGroups) {
         log.debug("Unblocking all network traffic for instances with security groups {}",
                 Arrays.asList(instanceIDsWithSecurtyGroups));
         CommandExecutionResult commandExecutionResult = new CommandExecutionResult();
         Set<String> securityGroupsToRemove = new HashSet<>();
-        for (String instanceIDsWithSecurityGroup : instanceIDsWithSecurtyGroups) {
-            for (String instanceIDWithSecurityGroup : instanceIDsWithSecurityGroup.split("&")) {
-                String[] instanceAndSecurityGroups = instanceIDWithSecurityGroup.split("#");
-                String instanceID = instanceAndSecurityGroups[0];
-                List<String> securityGroupsToApply = Arrays.asList(instanceAndSecurityGroups[1].split(":"));
-                securityGroupsToRemove.add(instanceAndSecurityGroups[2]);
-                try {
-                    AWSCommonUtils.setInstanceSecurityGroups(client, instanceID, securityGroupsToApply);
-                    commandExecutionResult.setCommandOutput("Successfully unblocked instance " + instanceID + "\n");
-                } catch (MangleException e) {
-                    if (StringUtils.hasText(commandExecutionResult.getCommandOutput())) {
-                        commandExecutionResult
-                                .setCommandOutput(commandExecutionResult.getCommandOutput() + "\n" + e.getMessage());
-                    } else {
-                        commandExecutionResult.setCommandOutput(e.getMessage());
-                    }
-                    commandExecutionResult.setExitCode(1);
+        for (String instanceIDWithSecurityGroup : instanceIDsWithSecurtyGroups.split("&")) {
+            String[] instanceAndSecurityGroups = instanceIDWithSecurityGroup.split("#");
+            String instanceID = instanceAndSecurityGroups[0];
+            List<String> securityGroupsToApply = Arrays.asList(instanceAndSecurityGroups[1].split(":"));
+            securityGroupsToRemove.add(instanceAndSecurityGroups[2]);
+            try {
+                AWSCommonUtils.setInstanceSecurityGroups(client, instanceID, securityGroupsToApply);
+                commandExecutionResult.setCommandOutput("Successfully unblocked instance " + instanceID + "\n");
+            } catch (MangleException e) {
+                if (StringUtils.hasText(commandExecutionResult.getCommandOutput())) {
+                    commandExecutionResult
+                            .setCommandOutput(commandExecutionResult.getCommandOutput() + "\n" + e.getMessage());
+                } else {
+                    commandExecutionResult.setCommandOutput(e.getMessage());
                 }
+                commandExecutionResult.setExitCode(1);
             }
         }
 
         for (String securityGroupToRemove : securityGroupsToRemove) {
             try {
                 AWSCommonUtils.deleteSecurityGroup(client, securityGroupToRemove);
+            } catch (MangleException e) {
+                if (StringUtils.hasText(commandExecutionResult.getCommandOutput())) {
+                    commandExecutionResult
+                            .setCommandOutput(commandExecutionResult.getCommandOutput() + "\n" + e.getMessage());
+                } else {
+                    commandExecutionResult.setCommandOutput(e.getMessage());
+                }
+                commandExecutionResult.setExitCode(1);
+            }
+        }
+        return commandExecutionResult;
+    }
+
+    /**
+     * Detach volumes from specified aws instances
+     *
+     * @param instanceIDs
+     * @param random
+     * @param CustomAwsClient
+     *            client
+     * @return CommandExecutionResult object with exit code set to 0 if detaching volumes from
+     *         instances is successful, else sets it to 1
+     */
+    public static CommandExecutionResult detachVolumesFromInstance(@NonNull CustomAwsClient client, @NonNull String selectRandomVolumes,
+            String instanceIds) {
+        log.debug("Detaching volumes for instances {}", instanceIds);
+        List<String> affectedInstancesWithVolumeIds = new ArrayList<>();
+        CommandExecutionResult commandExecutionResult = new CommandExecutionResult();
+
+        for (String instanceId : instanceIds.split(",")) {
+            try {
+                Map<String, String> attachedVolumes = AWSCommonUtils.getAttachedVolumes(client, instanceId,
+                        Boolean.parseBoolean(selectRandomVolumes));
+                AWSCommonUtils.detachVolumes(client, instanceId, attachedVolumes.keySet());
+                affectedInstancesWithVolumeIds
+                        .add(instanceId + "#" + CommonUtils.maptoDelimitedKeyValuePairString(attachedVolumes, ","));
+            } catch (MangleException e) {
+                commandExecutionResult.setCommandOutput(e.getMessage());
+                commandExecutionResult.setExitCode(1);
+            }
+        }
+
+        if (!CollectionUtils.isEmpty(affectedInstancesWithVolumeIds)) {
+            commandExecutionResult.setCommandOutput("Successfully detached all the volumes from Instances->"
+                    + String.join("&", affectedInstancesWithVolumeIds));
+            commandExecutionResult.setExitCode(0);
+        }
+        return commandExecutionResult;
+    }
+
+    /**
+     * Attach volumes to specified aws instances
+     *
+     * @param instanceIDsWithVolumeIds
+     * @param CustomAwsClient
+     *            client
+     * @return CommandExecutionResult object with exit code set to 0 if attaching volumes to all the
+     *         instances is successful, else sets it to 1
+     */
+    public static CommandExecutionResult attachVolumesToInstance(@NonNull CustomAwsClient client,
+            @NonNull String instanceIDsWithVolumeIds) {
+        log.debug("Reattaching volumes to instances {}", Arrays.asList(instanceIDsWithVolumeIds));
+        CommandExecutionResult commandExecutionResult = new CommandExecutionResult();
+        for (String instanceIDWithVolumesId : instanceIDsWithVolumeIds.split("&")) {
+            String[] instanceAndVolumeIds = instanceIDWithVolumesId.split("#");
+            String instanceId = instanceAndVolumeIds[0];
+            Map<String, String> volumeIdsMap = CommonUtils.stringKeyValuePairToMap(instanceAndVolumeIds[1]);
+            try {
+                rebootInstances(client, instanceId);
+                AWSCommonUtils.attachVolumes(client, instanceId, volumeIdsMap);
+                commandExecutionResult.setCommandOutput(
+                        "Successfully attached volumes " + volumeIdsMap.keySet() + " to instance " + instanceId + "\n");
             } catch (MangleException e) {
                 if (StringUtils.hasText(commandExecutionResult.getCommandOutput())) {
                     commandExecutionResult

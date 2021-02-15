@@ -55,11 +55,14 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import com.vmware.mangle.cassandra.model.custom.faults.CustomFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec;
+import com.vmware.mangle.cassandra.model.plugin.PluginDetails;
 import com.vmware.mangle.services.FileStorageService;
 import com.vmware.mangle.services.PluginDetailsService;
 import com.vmware.mangle.services.PluginService;
 import com.vmware.mangle.services.constants.CommonConstants;
+import com.vmware.mangle.services.mockdata.CustomFaultMockData;
 import com.vmware.mangle.task.framework.helpers.faults.AbstractCustomFault;
 import com.vmware.mangle.task.framework.skeletons.ITaskHelper;
 import com.vmware.mangle.unittest.services.helpers.CustomFault;
@@ -91,6 +94,7 @@ public class PluginServiceTest extends PowerMockTestCase {
     private static final String RESOURCES = "resources";
     private String pathname = new StringBuilder("src").append(File.separator).append("test").append(File.separator)
             .append(RESOURCES).toString();
+    private CustomFaultMockData customFaultMockData;
 
     /**
      * @throws java.lang.Exception
@@ -100,6 +104,7 @@ public class PluginServiceTest extends PowerMockTestCase {
         MockitoAnnotations.initMocks(this);
         PowerMockito.mockStatic(Paths.class);
         PowerMockito.mockStatic(FileUtils.class);
+        this.customFaultMockData = new CustomFaultMockData();
     }
 
     /**
@@ -143,8 +148,7 @@ public class PluginServiceTest extends PowerMockTestCase {
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.services.PluginService#getExtension(java.lang.String)}.
+     * Test method for {@link com.vmware.mangle.services.PluginService#getExtension(java.lang.String)}.
      */
     @SuppressWarnings("rawtypes")
     @Test
@@ -157,6 +161,46 @@ public class PluginServiceTest extends PowerMockTestCase {
         ITaskHelper<?> actualResult = pluginService.getExtension("IFaultInjectionTask");
         Assert.assertNull(actualResult);
         verify(pluginManager, times(1)).getExtensions(eq(ITaskHelper.class));
+    }
+
+    /**
+     * Test method for {@link com.vmware.mangle.services.PluginService#getExtension(java.lang.String)}.
+     */
+    @SuppressWarnings("rawtypes")
+    @Test
+    public void testGetExtensionMatchingTaskClass() {
+        List<ITaskHelper> listFaultInjectionTask = new ArrayList<>();
+        ITaskHelper<?> injectionTask = mock(ITaskHelper.class);
+        listFaultInjectionTask.add(injectionTask);
+
+        when(pluginManager.getExtensions(eq(ITaskHelper.class))).thenReturn(listFaultInjectionTask);
+        when(appContext.getBean(anyString())).thenReturn(null);
+
+        ITaskHelper<?> actualResult = pluginService.getExtension(injectionTask.getClass().getName());
+
+        Assert.assertNotNull(actualResult);
+        verify(pluginManager, times(1)).getExtensions(eq(ITaskHelper.class));
+        verify(appContext, times(0)).getBean(anyString());
+    }
+
+    /**
+     * Test method for {@link com.vmware.mangle.services.PluginService#getExtension(java.lang.String)}.
+     */
+    @SuppressWarnings("rawtypes")
+    @Test
+    public void testGetExtensionNotMatchingTaskClass() {
+        List<ITaskHelper> listFaultInjectionTask = new ArrayList<>();
+        ITaskHelper<?> injectionTask = mock(ITaskHelper.class);
+        listFaultInjectionTask.add(injectionTask);
+
+        when(pluginManager.getExtensions(eq(ITaskHelper.class))).thenReturn(listFaultInjectionTask);
+        when(appContext.getBean(anyString())).thenReturn(injectionTask);
+
+        ITaskHelper<?> actualResult = pluginService.getExtension("IFaultInjectionTask");
+
+        Assert.assertNotNull(actualResult);
+        verify(pluginManager, times(1)).getExtensions(eq(ITaskHelper.class));
+        verify(appContext, times(1)).getBean(anyString());
     }
 
     /**
@@ -179,8 +223,7 @@ public class PluginServiceTest extends PowerMockTestCase {
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.services.PluginService#loadPlugin(java.lang.String)}.
+     * Test method for {@link com.vmware.mangle.services.PluginService#loadPlugin(java.lang.String)}.
      */
     @Test(description = "Verifying positive case for test load plugin")
     public void testLoadPluginCase1() {
@@ -197,8 +240,7 @@ public class PluginServiceTest extends PowerMockTestCase {
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.services.PluginService#loadPlugin(java.lang.String)}.
+     * Test method for {@link com.vmware.mangle.services.PluginService#loadPlugin(java.lang.String)}.
      */
     @Test(description = "Verifying failure case if loadPlugin throwing exception")
     public void testLoadPluginCase2() {
@@ -219,8 +261,7 @@ public class PluginServiceTest extends PowerMockTestCase {
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.services.PluginService#loadPlugin(java.lang.String)}.
+     * Test method for {@link com.vmware.mangle.services.PluginService#loadPlugin(java.lang.String)}.
      */
     @Test(description = "Verifying failure case if loadPlugin returning pluginId as null")
     public void testLoadPluginCase3() {
@@ -241,8 +282,7 @@ public class PluginServiceTest extends PowerMockTestCase {
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.services.PluginService#unloadPlugin(java.lang.String)}.
+     * Test method for {@link com.vmware.mangle.services.PluginService#unloadPlugin(java.lang.String)}.
      */
     @Test(description = "Verifying positive case for test unload plugin")
     public void testUnloadPluginCase1() {
@@ -253,8 +293,7 @@ public class PluginServiceTest extends PowerMockTestCase {
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.services.PluginService#unloadPlugin(java.lang.String)}.
+     * Test method for {@link com.vmware.mangle.services.PluginService#unloadPlugin(java.lang.String)}.
      */
     @Test(description = "Verifying failure case if unloadPlugin returning false")
     public void testUnloadPluginCase2() {
@@ -270,8 +309,7 @@ public class PluginServiceTest extends PowerMockTestCase {
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.services.PluginService#unloadPlugin(java.lang.String)}.
+     * Test method for {@link com.vmware.mangle.services.PluginService#unloadPlugin(java.lang.String)}.
      */
     @Test(description = "Verifying failure case if unloadPlugin throwing exception")
     public void testUnloadPluginCase3() {
@@ -287,8 +325,7 @@ public class PluginServiceTest extends PowerMockTestCase {
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.services.PluginService#disablePlugin(java.lang.String)}.
+     * Test method for {@link com.vmware.mangle.services.PluginService#disablePlugin(java.lang.String)}.
      */
     @Test(description = "Verifying positive case for disablePlugin")
     public void testDisablePluginCase1() {
@@ -299,8 +336,7 @@ public class PluginServiceTest extends PowerMockTestCase {
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.services.PluginService#disablePlugin(java.lang.String)}.
+     * Test method for {@link com.vmware.mangle.services.PluginService#disablePlugin(java.lang.String)}.
      */
     @Test(description = "Verifying failure case if disablePlugin returning false")
     public void testDisablePluginCase2() {
@@ -316,8 +352,7 @@ public class PluginServiceTest extends PowerMockTestCase {
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.services.PluginService#disablePlugin(java.lang.String)}.
+     * Test method for {@link com.vmware.mangle.services.PluginService#disablePlugin(java.lang.String)}.
      */
     @Test(description = "Verifying failure case if disablePlugin throwing exception")
     public void testDisablePluginCase3() {
@@ -333,8 +368,7 @@ public class PluginServiceTest extends PowerMockTestCase {
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.services.PluginService#enablePlugin(java.lang.String)}.
+     * Test method for {@link com.vmware.mangle.services.PluginService#enablePlugin(java.lang.String)}.
      */
     @Test(description = "Verifying positive case for enablePlugin")
     public void testEnablePluginCase1() {
@@ -347,8 +381,7 @@ public class PluginServiceTest extends PowerMockTestCase {
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.services.PluginService#enablePlugin(java.lang.String)}.
+     * Test method for {@link com.vmware.mangle.services.PluginService#enablePlugin(java.lang.String)}.
      */
     @Test(description = "Verifying failure case if enablePlugin returning false")
     public void testEnablePluginCase2() {
@@ -366,8 +399,7 @@ public class PluginServiceTest extends PowerMockTestCase {
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.services.PluginService#enablePlugin(java.lang.String)}.
+     * Test method for {@link com.vmware.mangle.services.PluginService#enablePlugin(java.lang.String)}.
      */
     @Test(description = "Verifying failure case if enablePlugin throwing exception")
     public void testEnablePluginCase3() {
@@ -385,8 +417,20 @@ public class PluginServiceTest extends PowerMockTestCase {
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.services.PluginService#deletePlugin(java.lang.String)}.
+     * Test method for {@link com.vmware.mangle.services.PluginService#enablePlugin(java.lang.String)}.
+     */
+    @Test(description = "Verifying failure of enablePlugin but startPlugin works")
+    public void testEnablePluginCase4() {
+        when(pluginManager.enablePlugin(anyString())).thenReturn(false);
+        when(pluginManager.startPlugin(anyString())).thenReturn(PluginState.STARTED);
+        boolean actualResult = pluginService.enablePlugin(pluginId);
+        Assert.assertFalse(actualResult);
+        verify(pluginManager, times(1)).enablePlugin(anyString());
+        verify(pluginManager, times(1)).startPlugin(anyString());
+    }
+
+    /**
+     * Test method for {@link com.vmware.mangle.services.PluginService#deletePlugin(java.lang.String)}.
      */
     @Test(description = "Verifying positive case for deletePlugin")
     public void testDeletePluginCase1() {
@@ -397,8 +441,7 @@ public class PluginServiceTest extends PowerMockTestCase {
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.services.PluginService#deletePlugin(java.lang.String)}.
+     * Test method for {@link com.vmware.mangle.services.PluginService#deletePlugin(java.lang.String)}.
      */
     @Test(description = "Verifying failure case if deletePlugin returning false")
     public void testDeletePluginCase2() {
@@ -414,8 +457,7 @@ public class PluginServiceTest extends PowerMockTestCase {
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.services.PluginService#deletePlugin(java.lang.String)}.
+     * Test method for {@link com.vmware.mangle.services.PluginService#deletePlugin(java.lang.String)}.
      */
     @Test(description = "Verifying failure case if deletePlugin throwing exception")
     public void testDeletePluginCase3() {
@@ -431,8 +473,7 @@ public class PluginServiceTest extends PowerMockTestCase {
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.services.PluginService#deletePlugin(java.lang.String)}.
+     * Test method for {@link com.vmware.mangle.services.PluginService#deletePlugin(java.lang.String)}.
      */
     @Test(description = "Verifying failure case if deletePluginId same as mangle-default-plugin throwing exception")
     public void testDeletePluginCase4() {
@@ -446,8 +487,7 @@ public class PluginServiceTest extends PowerMockTestCase {
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.services.PluginService#deletePlugin(java.lang.String)}.
+     * Test method for {@link com.vmware.mangle.services.PluginService#deletePlugin(java.lang.String)}.
      */
     @Test(description = "DeletePlugin failure case for Invalid plugin id")
     public void testDeletePluginCase5() {
@@ -499,6 +539,52 @@ public class PluginServiceTest extends PowerMockTestCase {
         verify(pluginManager, times(1)).getExtensions(eq(CommandExecutionFaultSpec.class), anyString());
         verify(pluginManager, times(1)).getExtensions(eq(AbstractCustomFault.class), anyString());
 
+    }
+
+    /**
+     * Test method for
+     * {@link com.vmware.mangle.services.PluginService#validatePlugin(String pluginName, Path pluginPath)}.
+     *
+     * @throws IOException
+     */
+    @SuppressWarnings("rawtypes")
+    @Test
+    public void testPostValidatePluginForIOException() throws IOException {
+        List<ITaskHelper> listFaultInjectionTask = new ArrayList<>();
+        ITaskHelper<?> injectionTask = new CustomTaskHelper();
+        listFaultInjectionTask.add(injectionTask);
+        when(pluginManager.getExtensions(eq(ITaskHelper.class), anyString())).thenReturn(listFaultInjectionTask);
+        List<CommandExecutionFaultSpec> listCommandExecutionFaultSpec = new ArrayList<>();
+        CommandExecutionFaultSpec commandExecutionFaultSpec = new CommandExecutionFaultSpec();
+        listCommandExecutionFaultSpec.add(commandExecutionFaultSpec);
+        when(pluginManager.getExtensions(eq(CommandExecutionFaultSpec.class), anyString()))
+                .thenReturn(listCommandExecutionFaultSpec);
+        List<AbstractCustomFault> listAbstractCustomFault = new ArrayList<>();
+        CustomFault abstractCustomFault = new CustomFault();
+        listAbstractCustomFault.add(abstractCustomFault);
+        when(pluginManager.getExtensions(eq(AbstractCustomFault.class), anyString()))
+                .thenReturn(listAbstractCustomFault);
+
+        File file = new File(pathname);
+        Path path = file.toPath();
+        PowerMockito.mockStatic(Paths.class);
+        when(Paths.get(anyString())).thenReturn(path);
+        PowerMockito.mockStatic(FileUtils.class);
+        PowerMockito.doThrow(new IOException()).when(FileUtils.class);
+        FileUtils.expandIfZip(any(Path.class));
+        PluginWrapper pluginWrapper = mock(PluginWrapper.class);
+        when(pluginWrapper.getPluginPath()).thenReturn(path);
+        when(pluginWrapper.getPluginId()).thenReturn(pluginId);
+        List<PluginWrapper> lPluginWrappers = new ArrayList<>();
+        lPluginWrappers.add(pluginWrapper);
+        when(pluginManager.getPlugins()).thenReturn(lPluginWrappers);
+        when(pluginManager.deletePlugin(anyString())).thenReturn(true);
+
+        try {
+            pluginService.postValidatePlugin(RESOURCES, path);
+        } catch (MangleRuntimeException e) {
+            assertEquals(e.getErrorCode(), ErrorCode.IO_EXCEPTION);
+        }
     }
 
     /**
@@ -575,7 +661,7 @@ public class PluginServiceTest extends PowerMockTestCase {
      * @throws IOException
      */
     @Test
-    public void testValidatePluginForClassNotFound() throws IOException {
+    public void testPostValidatePluginForClassNotFound() throws IOException {
         File file = new File(pathname);
         Path path = file.toPath();
         PowerMockito.mockStatic(Paths.class);
@@ -610,6 +696,15 @@ public class PluginServiceTest extends PowerMockTestCase {
         when(file.exists()).thenReturn(false);
         when(pluginPath.toFile()).thenReturn(file);
         pluginService.isFileExist(pluginPath);
+    }
+
+    /**
+     * Test method for {@link com.vmware.mangle.services.PluginService#isFileExist(Path)}.
+     *
+     */
+    @Test(expectedExceptions = { IllegalArgumentException.class })
+    public void testIsFileExistPathNull() {
+        pluginService.isFileExist(null);
     }
 
     /**
@@ -692,8 +787,7 @@ public class PluginServiceTest extends PowerMockTestCase {
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.services.PluginService#getExtensionForModel(String)}.
+     * Test method for {@link com.vmware.mangle.services.PluginService#getExtensionForModel(String)}.
      *
      * @throws MangleException
      */
@@ -711,8 +805,7 @@ public class PluginServiceTest extends PowerMockTestCase {
     }
 
     /**
-     * Test method for
-     * {@link com.vmware.mangle.services.PluginService#getExtensionForModel(String)}.
+     * Test method for {@link com.vmware.mangle.services.PluginService#getExtensionForModel(String)}.
      */
     @Test
     public void testGetExtensionForModelWithMangleException() {
@@ -750,6 +843,22 @@ public class PluginServiceTest extends PowerMockTestCase {
     }
 
     /**
+     * Test method for
+     * {@link com.vmware.mangle.services.PluginService#getExtensionForCustomFault(String)}.
+     */
+    @Test
+    public void testGetExtensionForCustomFault() throws MangleException {
+        List<AbstractCustomFault> listAbstractCustomFault = new ArrayList<>();
+        AbstractCustomFault customFault = mock(AbstractCustomFault.class);
+        listAbstractCustomFault.add(customFault);
+        when(pluginManager.getExtensions(eq(AbstractCustomFault.class))).thenReturn(listAbstractCustomFault);
+        AbstractCustomFault customFault1 =
+                pluginService.getExtensionForCustomFault(customFault.getClass().getName());
+        Assert.assertNotNull(customFault1);
+        verify(pluginManager, times(1)).getExtensions(eq(AbstractCustomFault.class));
+    }
+
+    /**
      * Test method for {@link com.vmware.mangle.services.PluginService#deletePluginFile(Path)}.
      *
      * @throws Exception
@@ -770,5 +879,48 @@ public class PluginServiceTest extends PowerMockTestCase {
         PowerMockito.doThrow(new NoSuchFileException("src/test")).when(FileUtils.class);
         FileUtils.delete(any(Path.class));
         assertFalse(pluginService.deletePluginFile(pluginPath));
+    }
+
+    /**
+     * Test method for
+     * {@link com.vmware.mangle.services.PluginService#getFaultDetailsFromPluginDescriptor(String, String, PluginDetailsService)}.
+     *
+     * @throws MangleException
+     *
+     */
+    @Test
+    public void testGetFaultDetailsFromPluginDescriptor() throws MangleException {
+        CustomFaultSpec customFaultSpec = customFaultMockData.getCustomFaultSpec();
+        PluginDetails pluginDetails = customFaultMockData.getPluginDetails();
+        PluginDetailsService pluginDetailsService = mock(PluginDetailsService.class);
+        pluginDetails.setIsActive(false);
+        pluginDetails.setIsLoaded(false);
+        when(pluginDetailsService.getActivePluginDetailsByPluginId(anyString())).thenReturn(null);
+        try {
+            pluginService.getFaultDetailsFromPluginDescriptor(pluginDetails.getPluginId(),
+                    customFaultSpec.getFaultName(), pluginDetailsService);
+        } catch (MangleRuntimeException e) {
+            assertEquals(e.getErrorCode(), ErrorCode.PLUGIN_ID_NOT_LOADED);
+        }
+    }
+
+    /**
+     * Test method for
+     * {@link com.vmware.mangle.services.PluginService#getFaultDetailsFromPluginDescriptor(String, String, PluginDetailsService)}.
+     *
+     */
+    @Test
+    public void testGetFaultDetailsFromPluginDescriptorForFaultNameNotFound() {
+        CustomFaultSpec customFaultSpec = customFaultMockData.getCustomFaultSpec();
+        customFaultSpec.setFaultName(customFaultSpec.getFaultName() + "1");
+        PluginDetails pluginDetails = customFaultMockData.getPluginDetails();
+        PluginDetailsService pluginDetailsService = mock(PluginDetailsService.class);
+        when(pluginDetailsService.getActivePluginDetailsByPluginId(anyString())).thenReturn(pluginDetails);
+        try {
+            pluginService.getFaultDetailsFromPluginDescriptor(pluginDetails.getPluginId(),
+                    customFaultSpec.getFaultName(), pluginDetailsService);
+        } catch (MangleException e) {
+            assertEquals(e.getErrorCode(), ErrorCode.FAULT_NAME_NOT_FOUND_IN_PLUGIN_DESCRIPTOR);
+        }
     }
 }

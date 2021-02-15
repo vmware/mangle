@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.testng.PowerMockTestCase;
 import org.testng.Assert;
@@ -35,6 +36,7 @@ import com.vmware.mangle.utils.mockdata.CommandResultUtils;
  * @author chetanc
  */
 @PrepareForTest(value = { CommandUtils.class })
+@PowerMockIgnore({ "com.sun.org.apache.xalan.internal.xsltc.trax.*" })
 public class NodeClientTest extends PowerMockTestCase {
 
     private String ips = "10.10.10.10 10.10.10.11 10.10.10.12";

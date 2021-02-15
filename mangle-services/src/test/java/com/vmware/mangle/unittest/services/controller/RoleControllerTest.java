@@ -18,12 +18,12 @@ import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import lombok.extern.log4j.Log4j2;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
@@ -33,7 +33,7 @@ import org.springframework.hateoas.Resources;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.testng.Assert;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import com.vmware.mangle.cassandra.model.security.Privilege;
@@ -59,7 +59,6 @@ import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 @Log4j2
 public class RoleControllerTest extends PowerMockTestCase {
 
-    @InjectMocks
     private RoleController roleController;
 
     @Mock
@@ -74,9 +73,10 @@ public class RoleControllerTest extends PowerMockTestCase {
     private RolesMockData rolesMockData = new RolesMockData();
     private UserMockData userMockData = new UserMockData();
 
-    @BeforeTest
+    @BeforeMethod
     public void initMocks() {
         MockitoAnnotations.initMocks(this);
+        roleController = new RoleController(roleService, privilegeService, roleDeletionService);
     }
 
     /**
@@ -84,7 +84,7 @@ public class RoleControllerTest extends PowerMockTestCase {
      *
      */
     @Test
-    public void getAllRolesTest() {
+    public void getAllRolesTest() throws MangleException {
         log.info("Executing test: getAllRolesTest on RoleController#getAllRoles");
         Role role = rolesMockData.getDummyRole();
         List<Role> roles = new ArrayList<>();
@@ -104,7 +104,7 @@ public class RoleControllerTest extends PowerMockTestCase {
      */
     @SuppressWarnings("unchecked")
     @Test
-    public void getAllRolesUsingNamesTest() {
+    public void getAllRolesUsingNamesTest() throws MangleException {
         log.info("Executing test: getAllRolesTest on RoleController#getAllRoles");
         Role role = rolesMockData.getDummyRole();
         List<Role> roles = new ArrayList<>();
@@ -123,7 +123,7 @@ public class RoleControllerTest extends PowerMockTestCase {
      *
      */
     @Test
-    public void getPrivilegesTest() {
+    public void getPrivilegesTest() throws MangleException {
         log.info("Executing test: getPrivilegesTest on RoleController#getPrivileges()");
         Role role = rolesMockData.getDummyRole();
         List<Privilege> privileges = new ArrayList<>();
@@ -169,7 +169,7 @@ public class RoleControllerTest extends PowerMockTestCase {
 
         User user = userMockData.getMockUser();
         Map<String, List<String>> associations = new HashMap<>();
-        associations.put(role.getName(), Arrays.asList(user.getName()));
+        associations.put(role.getName(), Collections.singletonList(user.getName()));
         DeleteOperationResponse deleteOperationResponse = new DeleteOperationResponse();
         deleteOperationResponse.setAssociations(associations);
         deleteOperationResponse.setResponseMessage(ErrorConstants.ROLE_DELETION_PRE_CONDITION_FAILURE);
@@ -196,6 +196,7 @@ public class RoleControllerTest extends PowerMockTestCase {
         Assert.assertEquals(response.getStatusCode(), HttpStatus.CREATED);
 
         Resource<Role> resource = response.getBody();
+        Assert.assertNotNull(resource);
         Assert.assertEquals(resource.getContent(), role);
 
         Mockito.verify(roleService, Mockito.times(1)).createRole(Mockito.any());
@@ -235,6 +236,7 @@ public class RoleControllerTest extends PowerMockTestCase {
         Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
 
         Resource<Role> resource = response.getBody();
+        Assert.assertNotNull(resource);
         Assert.assertEquals(resource.getContent(), role);
 
         Mockito.verify(roleService, Mockito.atLeastOnce()).updateRole(Mockito.any());

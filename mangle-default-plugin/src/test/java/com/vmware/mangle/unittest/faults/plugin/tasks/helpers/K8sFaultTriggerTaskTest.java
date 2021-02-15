@@ -44,7 +44,7 @@ import com.vmware.mangle.faults.plugin.helpers.systemresource.SystemResourceFaul
 import com.vmware.mangle.faults.plugin.mockdata.FaultsMockData;
 import com.vmware.mangle.faults.plugin.tasks.helpers.BytemanFaultTaskHelper;
 import com.vmware.mangle.faults.plugin.tasks.helpers.K8SFaultTriggerTaskHelper;
-import com.vmware.mangle.faults.plugin.tasks.helpers.SystemResourceFaultTaskHelper;
+import com.vmware.mangle.faults.plugin.tasks.helpers.SystemResourceFaultTaskHelper2;
 import com.vmware.mangle.task.framework.endpoint.EndpointClientFactory;
 import com.vmware.mangle.task.framework.events.TaskSubstageEvent;
 import com.vmware.mangle.task.framework.helpers.CommandInfoExecutionHelper;
@@ -85,7 +85,7 @@ public class K8sFaultTriggerTaskTest {
     @Spy
     BytemanFaultTaskHelper<JVMAgentFaultSpec> bytemanFaultTask;
     @Spy
-    SystemResourceFaultTaskHelper<JVMAgentFaultSpec> systemResourceFaultTask;
+    SystemResourceFaultTaskHelper2<JVMAgentFaultSpec> systemResourceFaultTask2;
     @Spy
     CommandInfoExecutionHelper commandInfoExecutionHelper;
     @Mock
@@ -117,6 +117,7 @@ public class K8sFaultTriggerTaskTest {
 
         task.getTriggers().add(new TaskTrigger());
     }
+
 
     @Test
     public void testInitOfRemediation() throws MangleException {
@@ -171,6 +172,29 @@ public class K8sFaultTriggerTaskTest {
     }
 
     @Test
+    public void testExecutionWithDisabledResourceLabels() throws MangleException {
+        Task<K8SFaultTriggerSpec> task =
+                injectionTask.init(faultsMockData.getK8SCPUFaultTriggerSpecWithDisabledRsourceLabels());
+        task.getTriggers().add(new TaskTrigger());
+        injectionTask.setEventPublisher(publisher);
+        Mockito.when(endpointClientFactory.getEndPointClient(task.getTaskData().getFaultSpec().getCredentials(),
+                task.getTaskData().getFaultSpec().getEndpoint())).thenReturn(kubernetesCommandLineClient);
+        Mockito.when(kubernetesCommandLineClient.executeCommand(Mockito.any()))
+                .thenReturn(CommandResultUtils.getCommandResult(K8sFaultHelperTest.getPodsListString()));
+        Mockito.when(kubernetesCommandLineClient.getPODClient()).thenReturn(podClient);
+        Mockito.when(podClient.getPodsWithLabels(Mockito.any())).thenReturn(K8sFaultHelperTest.getPodsAsList());
+        when(bytemanFaultHelperFactory.getHelper(Mockito.any())).thenReturn(bytemanFaultHelper);
+        try {
+            injectionTask.executeTask(task);
+            Assert.fail("Test executeTask of K8SFaultTriggerTaskHelper failed with disabled resource labels");
+        } catch (MangleException exception) {
+            Assert.assertEquals(exception.getErrorCode(), ErrorCode.K8S_RESOURCE_LABELS_DISABLED,
+                    "Test executeTask of K8SFaultTriggerTaskHelper failed with disabled resource labels");
+        }
+    }
+
+
+    @Test
     public void testExecutionOfRandomJVMCodeLevelInjection() throws MangleException {
         Task<K8SFaultTriggerSpec> task = jvmCodeInjectionTask.init(faultsMockData.getK8SJVMCodeLevelFaultTriggerSpec());
         bytemanFaultTask.setBytemanFaultHelperFactory(bytemanFaultHelperFactory);
@@ -206,8 +230,8 @@ public class K8sFaultTriggerTaskTest {
         K8SFaultTriggerSpec spec = faultsMockData.getK8SCPUFaultTriggerSpec();
         ((CpuFaultSpec) spec.getFaultSpec()).setJvmProperties(null);
         Task<K8SFaultTriggerSpec> task = injectionTask.init(spec);
-        injectionTask.setSystemResourceFaultTaskHelper(systemResourceFaultTask);
-        systemResourceFaultTask.setSystemResourceFaultHelperFactory(systemResourceFaultHelperFactory);
+        injectionTask.setSystemResourceFaultTaskHelper2(systemResourceFaultTask2);
+        systemResourceFaultTask2.setSystemResourceFaultHelperFactory(systemResourceFaultHelperFactory);
         Assert.assertTrue(task.isInitialized());
         Assert.assertEquals(task.getTaskType(), TaskType.INJECTION);
         Assert.assertEquals(task.getTaskDescription(),
@@ -281,7 +305,7 @@ public class K8sFaultTriggerTaskTest {
     }
 
     @Test
-    public void testExecutionOfInjectionForPODSelectionCommandFailure() {
+    public void testExecutionOfInjectionForPODSelectionCommandFailure() throws MangleException {
         K8SFaultTriggerSpec spec = faultsMockData.getK8SCPUFaultTriggerSpec();
         spec.getFaultSpec().getK8sArguments().setEnableRandomInjection(false);
         Task<K8SFaultTriggerSpec> task = null;

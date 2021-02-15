@@ -38,6 +38,7 @@ import com.vmware.mangle.services.MappingService;
 import com.vmware.mangle.services.controller.VersioningModelController;
 import com.vmware.mangle.services.mockdata.FaultServiceMockData;
 import com.vmware.mangle.services.repository.FaultRepository;
+import com.vmware.mangle.utils.exceptions.MangleException;
 
 /**
  * Test class for testing version modelling related code
@@ -50,7 +51,6 @@ public class VersioningModelControllerTest {
     @Mock
     private FaultRepository repository;
 
-    private FaultService service;
     private VersioningModelController controller;
     private FaultServiceMockData mockData = new FaultServiceMockData();
     private MappingService mappingService = new MappingService();
@@ -58,7 +58,7 @@ public class VersioningModelControllerTest {
     @BeforeMethod
     public void initMocks() {
         MockitoAnnotations.initMocks(this);
-        service = new FaultService(repository);
+        FaultService service = new FaultService(repository);
         controller = new VersioningModelController(service, mappingService);
     }
 
@@ -70,8 +70,9 @@ public class VersioningModelControllerTest {
         log.info("Testing getAllFaults method on the versionModelController");
         List<Fault> faults = mockData.getDummyFaultsList();
         when(repository.findAll()).thenReturn(faults);
-        ResponseEntity responseEntity = controller.getAllFaults();
-        Resources<Fault> body = ((Resources) responseEntity.getBody());
+        ResponseEntity<Resources<Fault>> responseEntity = controller.getAllFaults();
+        Resources<Fault> body = responseEntity.getBody();
+        Assert.assertNotNull(body);
         List<Fault> persisted = new ArrayList<>(body.getContent());
         Assert.assertEquals(persisted.size(), 2);
         verify(repository, atLeast(1)).findAll();
@@ -85,10 +86,9 @@ public class VersioningModelControllerTest {
         log.info("Testing getAllV0Faults method on the versionModelController");
         List<Fault> faults = mockData.getDummyFaultsList();
         when(repository.findAll()).thenReturn(faults);
-        ResponseEntity responseEntity = controller.getAllV0Faults();
-        Resources<FaultV0> persisted = ((Resources) responseEntity.getBody());
-        List<FaultV0> faults1 = new ArrayList<FaultV0>();
-        faults1.addAll(persisted.getContent());
+        ResponseEntity<Resources<FaultV0>> responseEntity = controller.getAllV0Faults();
+        Resources<FaultV0> persisted = responseEntity.getBody();
+        Assert.assertNotNull(persisted);
         Assert.assertEquals(persisted.getContent().size(), 2);
     }
 
@@ -96,12 +96,13 @@ public class VersioningModelControllerTest {
      * Test method for {@link VersioningModelController#getFault(String)}
      */
     @Test
-    public void getFaultTest() {
+    public void getFaultTest() throws MangleException {
         log.info("Testing getFault method on the versionModelController");
         Fault fault = mockData.getDummyFault();
         when(repository.findByName(anyString())).thenReturn(fault);
-        ResponseEntity responseEntity = controller.getFault(fault.getName());
-        Fault persisted = (Fault) ((Resource) responseEntity.getBody()).getContent();
+        ResponseEntity<Resource<Fault>> responseEntity = controller.getFault(fault.getName());
+        Assert.assertNotNull(responseEntity.getBody());
+        Fault persisted = responseEntity.getBody().getContent();
         Assert.assertEquals(persisted, fault);
         verify(repository, atLeast(1)).findByName(anyString());
     }
@@ -110,12 +111,13 @@ public class VersioningModelControllerTest {
      * Test method for {@link VersioningModelController#getV0Fault(String)}
      */
     @Test
-    public void getV0FaultTest() {
+    public void getV0FaultTest() throws MangleException {
         log.info("Testing getFault method on the versionModelController");
         Fault fault = mockData.getDummyFault();
         when(repository.findByName(anyString())).thenReturn(fault);
-        ResponseEntity responseEntity = controller.getV0Fault(fault.getName());
-        FaultV0 persisted = (FaultV0) ((Resource) responseEntity.getBody()).getContent();
+        ResponseEntity<Resource<FaultV0>> responseEntity = controller.getV0Fault(fault.getName());
+        Assert.assertNotNull(responseEntity.getBody());
+        FaultV0 persisted = responseEntity.getBody().getContent();
         Assert.assertEquals(persisted.getName(), fault.getName());
         verify(repository, atLeastOnce()).findByName(anyString());
     }
@@ -128,8 +130,9 @@ public class VersioningModelControllerTest {
         log.info("Testing getFaultByTypeTest method on the VersioningModelController#getFaultByType");
         List<Fault> faults = mockData.getDummyFaultsList();
         when(repository.findByType(anyString())).thenReturn(faults);
-        ResponseEntity responseEntity = controller.getFaultByType(mockData.getDummyFault().getType());
-        Resources<Fault> body = ((Resources) responseEntity.getBody());
+        ResponseEntity<Resources<Fault>> responseEntity = controller.getFaultByType(mockData.getDummyFault().getType());
+        Resources<Fault> body = responseEntity.getBody();
+        Assert.assertNotNull(body);
         List<Fault> persisted = new ArrayList<>(body.getContent());
         Assert.assertEquals(persisted.size(), 2);
         verify(repository, atLeast(1)).findByType(anyString());
@@ -143,8 +146,9 @@ public class VersioningModelControllerTest {
         log.info("Testing createFaultTest method on the VersioningModelController#createFault");
         Fault fault = mockData.getDummyFault();
         when(repository.save(any())).thenReturn(fault);
-        ResponseEntity responseEntity = controller.createFault(fault);
-        Resource<Fault> body = ((Resource) responseEntity.getBody());
+        ResponseEntity<Resource<Fault>> responseEntity = controller.createFault(fault);
+        Resource<Fault> body = responseEntity.getBody();
+        Assert.assertNotNull(body);
         Fault persisted = body.getContent();
         Assert.assertEquals(persisted, fault);
         verify(repository, atLeast(1)).save(any());
@@ -159,8 +163,9 @@ public class VersioningModelControllerTest {
         FaultV0 fault = mockData.getDummyFaultV0();
         Fault fault1 = mockData.getDummyFault();
         when(repository.save(any())).thenReturn(fault1);
-        ResponseEntity responseEntity = controller.createV0Fault(fault);
-        Resource<FaultV0> body = ((Resource) responseEntity.getBody());
+        ResponseEntity<Resource<FaultV0>> responseEntity = controller.createV0Fault(fault);
+        Resource<FaultV0> body = responseEntity.getBody();
+        Assert.assertNotNull(body);
         FaultV0 persisted = body.getContent();
         Assert.assertEquals(persisted.getName(), fault1.getName());
         verify(repository, atLeast(1)).save(any());

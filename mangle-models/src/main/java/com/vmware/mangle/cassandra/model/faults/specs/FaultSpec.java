@@ -59,4 +59,8 @@ public class FaultSpec extends TaskSpec implements Serializable {
 
     @Valid
     private PluginMetaInfo pluginMetaInfo;
+
+    @Valid
+    private Boolean randomEndpoint;
+
 }

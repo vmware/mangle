@@ -48,6 +48,7 @@ import com.vmware.mangle.task.framework.endpoint.EndpointClientFactory;
 import com.vmware.mangle.utils.ICommandExecutor;
 import com.vmware.mangle.utils.clients.restclient.RestTemplateWrapper;
 import com.vmware.mangle.utils.clients.ssh.SSHUtils;
+import com.vmware.mangle.utils.constants.FaultConstants;
 import com.vmware.mangle.utils.exceptions.MangleException;
 
 /**
@@ -114,7 +115,7 @@ public class LinuxBytemanFaultHelperTest {
     }
 
     @Test
-    public void testGetJVMAgentRemediationCommandInfoList() {
+    public void testGetJVMAgentRemediationCommandInfoList() throws MangleException {
         CommandExecutionFaultSpec cpuFaultSpec = faultsMockData.getLinuxCpuJvmAgentFaultSpec();
         Mockito.when(endpointClientFactory.getEndPointClient(cpuFaultSpec.getCredentials(), cpuFaultSpec.getEndpoint()))
                 .thenReturn(sshUtils);
@@ -128,7 +129,7 @@ public class LinuxBytemanFaultHelperTest {
     }
 
     @Test
-    public void testGetJVMAgentRemediationCommandInfoListforFileHandler() {
+    public void testGetJVMAgentRemediationCommandInfoListforFileHandler() throws MangleException {
         CommandExecutionFaultSpec fileHandlerFaultSpec = faultsMockData.getFilehandlerLeakFaultSpec();
         Mockito.when(endpointClientFactory.getEndPointClient(null, fileHandlerFaultSpec.getEndpoint()))
                 .thenReturn(sshUtils);
@@ -164,7 +165,7 @@ public class LinuxBytemanFaultHelperTest {
     }
 
     @Test
-    public void testGetJVMCodeLevelRemediationCommandInfoList() {
+    public void testGetJVMCodeLevelRemediationCommandInfoList() throws MangleException {
 
         JVMCodeLevelFaultSpec springServiceExceptionFaultSpec = faultsMockData.getLinuxJvmCodelevelFaultSpec();
         Mockito.when(endpointClientFactory.getEndPointClient(springServiceExceptionFaultSpec.getCredentials(),
@@ -183,16 +184,15 @@ public class LinuxBytemanFaultHelperTest {
     }
 
     private List<CommandInfo> getJVMCodeLevelRemediationCommandInfoList() {
-        CommandInfo faultRemediationRequest = new CommandInfo();
-        faultRemediationRequest.setCommand(
-                "sudo -u bytemanUser bash -c \"export JAVA_HOME=/usr/java/latest;export PATH=$JAVA_HOME/bin:$PATH;/bin/sh /tmp/mangle-java-agent-2.0.0/bin/bmsubmit.sh -p 9091 -u /tmp/123456.btm\"");
-        faultRemediationRequest.setIgnoreExitValueCheck(false);
-        faultRemediationRequest.setExpectedCommandOutputList(Arrays.asList(new String[] { "uninstall RULE 123456" }));
-        faultRemediationRequest.setKnownFailureMap(null);
+        CommandInfo faultRemediationRequest = CommandInfo.builder(
+                "sudo -u bytemanUser bash -c \"export JAVA_HOME=/usr/java/latest;export PATH=$JAVA_HOME/bin:$PATH;/bin/sh /tmp/"
+                        + FaultConstants.AGENT_NAME + "/bin/bmsubmit.sh -p 9091 -u /tmp/123456.btm\"")
+                .ignoreExitValueCheck(false)
+                .expectedCommandOutputList(Arrays.asList(new String[] { "uninstall RULE 123456" }))
+                .knownFailureMap(null).build();
 
-        CommandInfo deleteBytemanRuleRequest = new CommandInfo();
-        deleteBytemanRuleRequest.setCommand("rm -rf /tmp/123456.btm");
-        deleteBytemanRuleRequest.setIgnoreExitValueCheck(true);
+        CommandInfo deleteBytemanRuleRequest =
+                CommandInfo.builder("rm -rf /tmp/123456.btm").ignoreExitValueCheck(true).build();
 
         List<CommandInfo> commandInfoList = new ArrayList<>();
         commandInfoList.add(faultRemediationRequest);

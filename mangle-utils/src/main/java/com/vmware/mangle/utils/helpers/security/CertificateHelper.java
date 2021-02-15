@@ -14,6 +14,7 @@ package com.vmware.mangle.utils.helpers.security;
 import java.security.GeneralSecurityException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
@@ -42,23 +43,7 @@ public class CertificateHelper {
 
     public static SSLContext getSSLContextWithValidateCert(String hostIP) {
         HttpsURLConnection.setDefaultHostnameVerifier((hostname, session) -> hostname.equals(hostIP));
-        TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
-
-            @Override
-            public X509Certificate[] getAcceptedIssuers() {
-                return new X509Certificate[]{};
-            }
-
-            @Override
-            public void checkServerTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
-                    //No code changes required in this method
-            }
-
-            @Override
-            public void checkClientTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
-                    //No code changes required in this method
-            }
-        } };
+        TrustManager[] trustAllCerts = new TrustManager[] { getX509TrustManager() };
 
         // Install the all-trusting trust manager
         try {
@@ -69,6 +54,26 @@ public class CertificateHelper {
             log.error(e);
         }
         return null;
+    }
+
+    public static X509TrustManager getX509TrustManager() {
+        return new X509TrustManager() {
+
+            @Override
+            public X509Certificate[] getAcceptedIssuers() {
+                return new X509Certificate[] {};
+            }
+
+            @Override
+            public void checkServerTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
+                //No code changes required in this method
+            }
+
+            @Override
+            public void checkClientTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
+                //No code changes required in this method
+            }
+        };
     }
 
 }

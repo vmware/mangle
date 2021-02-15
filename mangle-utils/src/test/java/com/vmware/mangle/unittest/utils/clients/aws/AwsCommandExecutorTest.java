@@ -23,6 +23,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import com.vmware.mangle.cassandra.model.tasks.commands.CommandExecutionResult;
+import com.vmware.mangle.model.aws.AwsService;
 import com.vmware.mangle.utils.ICommandClientExecutor;
 import com.vmware.mangle.utils.clients.aws.AWSCommandExecutor;
 import com.vmware.mangle.utils.clients.aws.CustomAwsClient;
@@ -48,7 +49,9 @@ public class AwsCommandExecutorTest {
 
     @Test
     public void testAwsCommandExecutorInstantiation() {
-        AWSCommandExecutor executor = new AWSCommandExecutor(awsClient);
+        AWSCommandExecutor executor = new AWSCommandExecutor(awsClient, AwsService.EC2);
+        Assert.assertNotNull(executor);
+        executor = new AWSCommandExecutor(awsClient, AwsService.RDS);
         Assert.assertNotNull(executor);
     }
 
@@ -56,7 +59,7 @@ public class AwsCommandExecutorTest {
     public void testExecuteCommand() throws MangleException {
         CommandExecutionResult commandExecutionResult = new CommandExecutionResult();
         commandExecutionResult.setExitCode(0);
-        AWSCommandExecutor executor = spy(new AWSCommandExecutor(awsClient));
+        AWSCommandExecutor executor = spy(new AWSCommandExecutor(awsClient, AwsService.EC2));
         doReturn(commandExecutionResult).when((ICommandClientExecutor) executor).callOperation(any(), any());
         CommandExecutionResult result = executor.executeCommand(command);
         Assert.assertEquals(result.getExitCode(), 0);
@@ -66,7 +69,7 @@ public class AwsCommandExecutorTest {
     public void testExecuteCommandFailure() throws MangleException {
         CommandExecutionResult commandExecutionResult = new CommandExecutionResult();
         commandExecutionResult.setExitCode(0);
-        AWSCommandExecutor executor = spy(new AWSCommandExecutor(awsClient));
+        AWSCommandExecutor executor = spy(new AWSCommandExecutor(awsClient, AwsService.EC2));
         doThrow(new MangleException(ErrorCode.GENERIC_ERROR)).when((ICommandClientExecutor) executor)
                 .callOperation(any(), any());
         CommandExecutionResult result = executor.executeCommand(command);

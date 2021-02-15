@@ -14,7 +14,7 @@ package com.vmware.mangle.task.framework.skeletons;
 import java.util.Map;
 
 import com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec;
-import com.vmware.mangle.cassandra.model.faults.specs.K8SFaultTriggerSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.MultiTaskSpec;
 import com.vmware.mangle.cassandra.model.tasks.Task;
 import com.vmware.mangle.utils.exceptions.MangleException;
 
@@ -22,7 +22,7 @@ import com.vmware.mangle.utils.exceptions.MangleException;
  * @author hkilari
  *
  */
-public interface IMultiTaskHelper<T extends K8SFaultTriggerSpec, U extends CommandExecutionFaultSpec> {
+public interface IMultiTaskHelper<T extends MultiTaskSpec, U extends CommandExecutionFaultSpec> {
     /**
      * Method should be Overriden by concrete classes to return the child Tasks Spanned during its
      * execution.
@@ -33,4 +33,12 @@ public interface IMultiTaskHelper<T extends K8SFaultTriggerSpec, U extends Comma
     public Map<String, Task<U>> getChildTasks(Task<T> task);
 
     public boolean isReadyForChildExecution(Task<T> task);
+
+    public enum SubStage {
+        INITIALISED, TRIGGER_CHILD_TASKS, COMPLETED
+    }
+
+    default void updateSubstage(Task<T> task, SubStage stage) {
+        task.updateTaskSubstage(stage.name());
+    }
 }

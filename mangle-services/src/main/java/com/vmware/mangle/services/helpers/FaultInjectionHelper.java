@@ -22,15 +22,22 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import com.vmware.mangle.cassandra.model.endpoint.CertificatesSpec;
+import com.vmware.mangle.cassandra.model.endpoint.CredentialsSpec;
+import com.vmware.mangle.cassandra.model.endpoint.DatabaseCredentials;
 import com.vmware.mangle.cassandra.model.endpoint.DockerCertificates;
+import com.vmware.mangle.cassandra.model.endpoint.EndpointSpec;
+import com.vmware.mangle.cassandra.model.endpoint.VCenterAdapterDetails;
 import com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.EndpointGroupFaultTriggerSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.FaultSpec;
-import com.vmware.mangle.cassandra.model.faults.specs.K8SFaultTriggerSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.K8SFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.KillProcessFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.NetworkFaultSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.NetworkPartitionFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.TaskSpec;
 import com.vmware.mangle.cassandra.model.plugin.PluginMetaInfo;
 import com.vmware.mangle.cassandra.model.tasks.FaultTriggeringTask;
+import com.vmware.mangle.cassandra.model.tasks.RemediableTask;
 import com.vmware.mangle.cassandra.model.tasks.Task;
 import com.vmware.mangle.cassandra.model.tasks.TaskStatus;
 import com.vmware.mangle.model.enums.EndpointType;
@@ -39,10 +46,14 @@ import com.vmware.mangle.services.EndpointCertificatesService;
 import com.vmware.mangle.services.EndpointService;
 import com.vmware.mangle.services.PluginDetailsService;
 import com.vmware.mangle.services.TaskService;
+import com.vmware.mangle.services.VCenterAdapterDetailsService;
+import com.vmware.mangle.services.constants.CommonConstants;
 import com.vmware.mangle.services.enums.NetworkFaultType;
 import com.vmware.mangle.services.events.task.TaskCreatedEvent;
 import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
+import com.vmware.mangle.utils.helpers.security.DecryptFields;
+import com.vmware.mangle.utils.task.TaskUtils;
 
 /**
  * @author chetanc
@@ -72,14 +83,36 @@ public class FaultInjectionHelper {
     @Autowired
     private PluginDetailsService pluginDetailsService;
 
+    @Autowired
+    private VCenterAdapterDetailsService vCenterAdapterDetailsService;
+
     public void updateFaultSpec(TaskSpec spec) throws MangleException {
-        CommandExecutionFaultSpec commandExecutionFaultSpec = getCommandExecutionFaultSpec(spec);
+        CommandExecutionFaultSpec commandExecutionFaultSpec = TaskUtils.getFaultSpec(spec);
 
         commandExecutionFaultSpec
                 .setEndpoint(endpointService.getEndpointByName(commandExecutionFaultSpec.getEndpointName()));
-        if (commandExecutionFaultSpec.getEndpoint().getEndPointType() != EndpointType.DOCKER) {
+        EndpointType endpointType = commandExecutionFaultSpec.getEndpoint().getEndPointType();
+        if (endpointType == EndpointType.DATABASE) {
+            EndpointSpec childEndpointSpec = commandExecutionFaultSpec.getEndpoint();
+            EndpointSpec parentEndpointSpec = endpointService
+                    .getEndpointByName(childEndpointSpec.getDatabaseConnectionProperties().getParentEndpointName());
+            CredentialsSpec childCredentialsSpec =
+                    credentialService.getCredentialByName(childEndpointSpec.getCredentialsName());
+            DatabaseCredentials databaseCredentials = (DatabaseCredentials) DecryptFields.decrypt(childCredentialsSpec);
+            commandExecutionFaultSpec.setEndpoint(parentEndpointSpec);
+            commandExecutionFaultSpec.setChildEndpoint(childEndpointSpec);
+            commandExecutionFaultSpec.setChildCredentials(databaseCredentials);
+        }
+        endpointType = commandExecutionFaultSpec.getEndpoint().getEndPointType();
+        if (endpointType != EndpointType.DOCKER && endpointType != EndpointType.REDIS_FI_PROXY
+                && endpointType != EndpointType.ENDPOINT_GROUP) {
             commandExecutionFaultSpec.setCredentials(credentialService
                     .getCredentialByName(commandExecutionFaultSpec.getEndpoint().getCredentialsName()));
+        }
+
+        if (commandExecutionFaultSpec.getEndpoint().getEndPointType() == EndpointType.ENDPOINT_GROUP
+                && spec instanceof EndpointGroupFaultTriggerSpec) {
+            ((EndpointGroupFaultTriggerSpec) spec).setEndpoints(getEndpoints(commandExecutionFaultSpec));
         }
 
         if (commandExecutionFaultSpec.getEndpoint().getEndPointType() == EndpointType.DOCKER && StringUtils.hasText(
@@ -88,6 +121,14 @@ public class FaultInjectionHelper {
                     commandExecutionFaultSpec.getEndpoint().getDockerConnectionProperties().getCertificatesName());
             commandExecutionFaultSpec.getEndpoint().getDockerConnectionProperties()
                     .setCertificatesSpec((DockerCertificates) certificatesSpec);
+        }
+
+        if (commandExecutionFaultSpec.getEndpoint().getEndPointType() == EndpointType.VCENTER) {
+            VCenterAdapterDetails vCenterAdapterDetails = (VCenterAdapterDetails) DecryptFields
+                    .decrypt(vCenterAdapterDetailsService.getVCAdapterDetailsByName(commandExecutionFaultSpec
+                            .getEndpoint().getVCenterConnectionProperties().getVCenterAdapterDetailsName()));
+            commandExecutionFaultSpec.getEndpoint().getVCenterConnectionProperties()
+                    .setVCenterAdapterDetails(vCenterAdapterDetails);
         }
     }
 
@@ -100,8 +141,8 @@ public class FaultInjectionHelper {
         return task;
     }
 
-    public Task<? extends TaskSpec> getTask(CommandExecutionFaultSpec faultSpec) throws MangleException {
-        Task<? extends TaskSpec> task = faultTaskFactory.getTask(faultSpec);
+    public Task<TaskSpec> getTask(CommandExecutionFaultSpec faultSpec) throws MangleException {
+        Task<TaskSpec> task = faultTaskFactory.getTask(faultSpec);
         saveTask(task);
         return task;
     }
@@ -116,6 +157,11 @@ public class FaultInjectionHelper {
             throw new MangleException(ErrorCode.REMEDIATION_K8S_TASK, k8sChildTaskNames);
         }
 
+        if (task.getExtensionName()
+                .equals("com.vmware.mangle.faults.plugin.tasks.helpers.SystemResourceFaultTaskHelper2")
+                && task.getTaskStatus().equals(TaskStatus.COMPLETED)) {
+            throw new MangleException(ErrorCode.FAULT_ALREADY_REMEDIATED);
+        }
         updateFaultSpec(task.getTaskData());
         Task<TaskSpec> remediationTask = faultTaskFactory.getRemediationTask(task, taskIdentifier);
         remediationTask.setTaskTroubleShootingInfo(task.getTaskTroubleShootingInfo());
@@ -123,11 +169,16 @@ public class FaultInjectionHelper {
         return remediationTask;
     }
 
+    @SuppressWarnings("rawtypes")
     public Task<TaskSpec> rerunFault(String taskIdentifier) throws MangleException {
         Task<TaskSpec> task = getTaskByIdentifier(taskIdentifier);
         checkIfPluginIsAvailable(task);
         if (task.getTaskStatus().equals(TaskStatus.COMPLETED) || task.getTaskStatus().equals(TaskStatus.FAILED)) {
             task.setTaskRetriggered(true);
+            if (task instanceof RemediableTask && (((RemediableTask) task).isRemediated())
+                    && !(task instanceof FaultTriggeringTask)) {
+                ((RemediableTask) task).setRemediated(false);
+            }
             saveTask(task);
             return task;
         } else {
@@ -155,14 +206,6 @@ public class FaultInjectionHelper {
         return taskService.addOrUpdateTask(task);
     }
 
-    private CommandExecutionFaultSpec getCommandExecutionFaultSpec(TaskSpec taskSpec) {
-        if (taskSpec instanceof K8SFaultTriggerSpec) {
-            return ((K8SFaultTriggerSpec) taskSpec).getFaultSpec();
-        } else {
-            return (CommandExecutionFaultSpec) taskSpec;
-        }
-    }
-
     public void validateSpec(CommandExecutionFaultSpec faultSpec) throws MangleException {
         faultSpec.setEndpoint(endpointService.getEndpointByName(faultSpec.getEndpointName()));
         validateScheduleInfo(faultSpec);
@@ -175,7 +218,6 @@ public class FaultInjectionHelper {
                 && killProcessFaultSpec.getRemediationCommand().trim().isEmpty()) {
             throw new MangleException(ErrorCode.BAD_REQUEST, "remediationCommand: must not be empty");
         }
-        validateSpec(faultSpec);
     }
 
     private void validateScheduleInfo(CommandExecutionFaultSpec faultSpec) throws MangleException {
@@ -200,6 +242,9 @@ public class FaultInjectionHelper {
      * @throws MangleException
      */
     public void validateEndpointTypeSpecificArguments(CommandExecutionFaultSpec faultSpec) throws MangleException {
+        if (skipToValidateEndpointTypeSpecificArguments(faultSpec)) {
+            return;
+        }
         if (faultSpec.getEndpoint().getEndPointType() == EndpointType.DOCKER
                 && faultSpec.getDockerArguments() == null) {
             throw new MangleException(ErrorCode.DOCKER_SPECIFIC_ARGUMENTS_REQUIRED);
@@ -211,7 +256,7 @@ public class FaultInjectionHelper {
         }
     }
 
-    public void validateNertworkFaultSpec(NetworkFaultSpec faultSpec) throws MangleException {
+    public void validateNetworkFaultSpec(NetworkFaultSpec faultSpec) throws MangleException {
         if (faultSpec.getFaultOperation().equals(NetworkFaultType.NETWORK_DELAY_MILLISECONDS)
                 && faultSpec.getLatency() == 0) {
             throw new MangleException(ErrorCode.LATENCY_REQUIRED_FOR_NETWORK_LATENCY_FAULT);
@@ -220,7 +265,37 @@ public class FaultInjectionHelper {
                 && faultSpec.getPercentage() == 0) {
             throw new MangleException(ErrorCode.PERCENTAGE_REQUIRED_FOR_NETWORK_PACKET_RELATED_FAULT);
         }
-
-
     }
+
+    public void validateNetworkPartitionFaultSpec(NetworkPartitionFaultSpec faultSpec) throws MangleException {
+        List<String> hostListForNetworkPartition = faultSpec.getHosts();
+        EndpointSpec endpointSpec = endpointService.getEndpointByName(faultSpec.getEndpointName());
+
+        if (endpointSpec.getEndPointType().equals(EndpointType.MACHINE)) {
+            String endpointHost = endpointSpec.getRemoteMachineConnectionProperties().getHost();
+            hostListForNetworkPartition.remove(endpointHost);
+        }
+
+        if (hostListForNetworkPartition.isEmpty()) {
+            throw new MangleException(ErrorCode.HOSTS_IDENTICAL_FOR_NETWORK_PARTITION_FAULT,
+                    faultSpec.getEndpointName());
+        }
+    }
+
+    public boolean skipToValidateEndpointTypeSpecificArguments(CommandExecutionFaultSpec faultSpec) {
+        return (CommonConstants.getSkipToValidateEndpointTypeClass().contains(faultSpec.getClass().getName()));
+    }
+
+    private List<EndpointSpec> getEndpoints(FaultSpec faultSpec) throws MangleException {
+        List<String> endpointNames = ((CommandExecutionFaultSpec) faultSpec).getEndpoint().getEndpointNames();
+        return endpointService.getEndpointsWithTagsAndNames(null, endpointNames);
+    }
+
+    public void validateScheduleForK8sSpecificFault(K8SFaultSpec faultSpec) throws MangleException {
+        if (null != faultSpec.getSchedule() && (CollectionUtils.isEmpty(faultSpec.getResourceLabels())
+                && StringUtils.hasText(faultSpec.getResourceName()))) {
+            throw new MangleException(ErrorCode.SCHEDULING_FAULT_NOT_SUPPORTED_WITH_RESOURCENAME);
+        }
+    }
+
 }

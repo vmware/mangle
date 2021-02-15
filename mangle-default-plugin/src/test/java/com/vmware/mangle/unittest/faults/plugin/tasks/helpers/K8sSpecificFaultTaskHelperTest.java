@@ -11,6 +11,9 @@
 
 package com.vmware.mangle.unittest.faults.plugin.tasks.helpers;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import lombok.extern.log4j.Log4j2;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -23,6 +26,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import com.vmware.mangle.cassandra.model.faults.specs.K8SFaultSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.K8SResourceNotReadyFaultSpec;
 import com.vmware.mangle.cassandra.model.tasks.Task;
 import com.vmware.mangle.cassandra.model.tasks.TaskTrigger;
 import com.vmware.mangle.cassandra.model.tasks.TaskType;
@@ -36,6 +40,7 @@ import com.vmware.mangle.unittest.faults.plugin.helpers.k8s.K8sFaultHelperTest;
 import com.vmware.mangle.utils.clients.kubernetes.KubernetesCommandLineClient;
 import com.vmware.mangle.utils.clients.restclient.RestTemplateWrapper;
 import com.vmware.mangle.utils.exceptions.MangleException;
+import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
 /**
  *
@@ -94,15 +99,11 @@ public class K8sSpecificFaultTaskHelperTest {
         task.getTaskData().setRandomInjection(false);
         injectionTask.setEventPublisher(publisher);
         injectionTask.setK8sFaultHelper(new K8sFaultHelper(endpointClientFactory));
-        /*task.getTaskData().setInjectionCommandInfoList(
-                K8sFaultHelperTest.getExpectedInjectionCommandsForNonRandomResourceNotReadyFaultInjection());
-        task.getTaskData().setRemediationCommandInfoList(
-                K8sFaultHelperTest.getExpectedRemediationCommandsForNonRandomResourceNotReadyFaultRemediation());
-        */ Mockito.when(endpointClientFactory.getEndPointClient(task.getTaskData().getCredentials(),
+        Mockito.when(endpointClientFactory.getEndPointClient(task.getTaskData().getCredentials(),
                 task.getTaskData().getEndpoint())).thenReturn(kubernetesCommandLineClient);
         Mockito.doNothing().when(publisher).publishEvent(Mockito.any());
-        Mockito.doNothing().when(commandInfoExecutionHelper).runCommands(Mockito.any(), Mockito.any(), Mockito.any(),
-                Mockito.any());
+        Mockito.when(commandInfoExecutionHelper.runCommands(Mockito.any(), Mockito.any(), Mockito.any(),
+                Mockito.any())).thenReturn("");
         Mockito.when(kubernetesCommandLineClient.executeCommand(Mockito.any()))
                 .thenReturn(CommandResultUtils.getCommandResult(K8sFaultHelperTest.getPodsListString()));
         injectionTask.executeTask(task);
@@ -115,7 +116,24 @@ public class K8sSpecificFaultTaskHelperTest {
     }
 
     @Test
-    public void testExecutionOfInjectionWithCommandExecutionFailure() {
+    public void testExecutionOfInjectionWithDisabledResourceLabels() throws MangleException {
+        K8SResourceNotReadyFaultSpec faultSpec = faultsMockData.getK8SResourceNotReadyFaultSpec();
+        Map<String, String> resourceLabels = new HashMap<>();
+        resourceLabels.put("app", "testPod");
+        faultSpec.setResourceLabels(resourceLabels);
+        faultSpec.getEndpoint().getK8sConnectionProperties().setDisabledResourceLabels(resourceLabels);
+        Task<K8SFaultSpec> task = injectionTask.init(faultSpec, null);
+        try {
+            injectionTask.executeTask(task);
+            Assert.fail("Test executeTask of K8sSpecificFaultTaskHelper failed with disabled resource labels");
+        } catch (MangleException exception) {
+            Assert.assertEquals(exception.getErrorCode(), ErrorCode.K8S_RESOURCE_LABELS_DISABLED,
+                    "Test executeTask of K8sSpecificFaultTaskHelper failed with disabled resource labels");
+        }
+    }
+
+    @Test
+    public void testExecutionOfInjectionWithCommandExecutionFailure() throws MangleException {
         Task<K8SFaultSpec> task = injectionTask.init(faultsMockData.getDeleteK8SResourceFaultSpec(), null);
         Assert.assertTrue(task.isInitialized());
         Assert.assertEquals(task.getTaskType(), TaskType.INJECTION);
@@ -140,9 +158,8 @@ public class K8sSpecificFaultTaskHelperTest {
         try {
             injectionTask.executeTask(task);
         } catch (MangleException e) {
-            Assert.assertEquals(e.getMessage(), "");
+            Assert.assertEquals(e.getErrorCode(), ErrorCode.INVALID_RESOURCE_LABELS);
         }
         log.info(RestTemplateWrapper.objectToJson(task));
-        Assert.assertEquals(task.getTaskSubstage(), "PREPARE_TARGET_MACHINE");
     }
 }

@@ -28,3 +28,15 @@ mangle-vcenter-adapter/mangle-vcenter-adapter.iml
 resilience-calculator/resilience-calculator.iml
 resiliency-score-calculator/resiliency-score-calculator.iml
 mangle-services/.checkstyle
+mangle-vcenter-adapter-integration-tests/mangle-vcenter-adapter-integration-tests.iml
+mangle-vcenter-adapter-models/mangle-vcenter-adapter-models.iml
+mangle-ui/debug.log
+mangle-ui/src/main/main4.iml
+mangle-ui/src/test/test9.iml
+mangle-byteman-root/agent-integration-tests/agent-integration-tests.iml
+mangle-byteman-root/agent/mangle-byteman.iml
+mangle-byteman-root/download/mangle-java-agent.iml
+mangle-byteman-root/install/mangle-byteman-install.iml
+mangle-byteman-root/mangle-byteman-root.iml
+mangle-byteman-root/submit/mangle-byteman-submit.iml
+mangle-byteman-root/agent-faults/mangle-byteman-faults.iml

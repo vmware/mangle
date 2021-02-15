@@ -12,6 +12,7 @@
 package com.vmware.mangle.metric.reporter;
 
 import java.util.HashMap;
+import java.util.Map;
 
 import lombok.extern.log4j.Log4j2;
 import org.springframework.util.CollectionUtils;
@@ -27,8 +28,7 @@ public class WavefrontMetricHelper {
     private WavefrontMetricHelper() {
     }
 
-    public static HashMap<String, String> constructTags(HashMap<String, String> customTags,
-            HashMap<String, String> staticTags) {
+    public static Map<String, String> constructTags(Map<String, String> customTags, Map<String, String> staticTags) {
         log.debug("Constructing tags for metric from static tags and custom tags");
         HashMap<String, String> finalTags = new HashMap<>(staticTags);
         if (!CollectionUtils.isEmpty(customTags)) {

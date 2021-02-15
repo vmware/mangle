@@ -106,7 +106,8 @@ public class PopulateFaultEventData<T extends Task<TaskSpec>> {
     }
 
     private void updateFaultStartTime() {
-        if (task.getTaskStatus() == TaskStatus.COMPLETED) {
+        if (task.getTaskStatus() == TaskStatus.COMPLETED && !(task.getExtensionName()
+                .equals("com.vmware.mangle.faults.plugin.tasks.helpers.SystemResourceFaultTaskHelper2"))) {
             faultEventInfo.setFaultStartTime(trigger.getEndTime());
             faultEventInfo.setFaultStartTimeInEpoch(CommonUtils.getDateObjectFor(trigger.getEndTime()).getTime());
             log.debug("Updating the taskCompletedEvent spec with date: " + trigger.getEndTime());
@@ -119,6 +120,7 @@ public class PopulateFaultEventData<T extends Task<TaskSpec>> {
 
     private void updateFaultEndTime() {
         Integer faultTimeOut = commandExecutionFaultSpec.getTimeoutInMilliseconds();
+        faultEventInfo.setTimeoutInMilliseconds(faultTimeOut);
         if (!(commandExecutionFaultSpec instanceof JVMAgentFaultSpec) && faultTimeOut == null) {
             log.debug("The fault : " + commandExecutionFaultSpec.getFaultName()
                     + " does not have timeout property , hence setting the event end time to current time");
@@ -127,10 +129,19 @@ public class PopulateFaultEventData<T extends Task<TaskSpec>> {
         }
         if (faultTimeOut != null && task.getTaskType() == TaskType.INJECTION) {
             if (task.getTaskStatus() == TaskStatus.COMPLETED) {
-                long faultTimeOutInMilis = CommonUtils.getDateObjectFor(trigger.getEndTime()).getTime() + faultTimeOut;
-                log.debug("Updating the Fault time out timestamp as : " + faultTimeOutInMilis);
-                faultEventInfo.setFaultEndTime(CommonUtils.getTime(faultTimeOutInMilis));
-                faultEventInfo.setFaultEndTimeInEpoch(faultTimeOutInMilis);
+                if (StringUtils.isEmpty(trigger.getEndTime())) {
+                    long faultTimeOutInMilis =
+                            CommonUtils.getDateObjectFor(trigger.getEndTime()).getTime() + faultTimeOut;
+                    setFaultEndTime(faultTimeOutInMilis);
+                } else {
+                    updateFaultEventEndTimeAsNow();
+                }
+                return;
+            }
+            if (task.getTaskStatus() == TaskStatus.INJECTED) {
+                long faultTimeOutInMilis =
+                        CommonUtils.getDateObjectFor(trigger.getStartTime()).getTime() + faultTimeOut;
+                setFaultEndTime(faultTimeOutInMilis);
                 return;
             }
             log.debug(" The task status is: " + task.getTaskStatus() + " hence updating the event endtime as now");
@@ -147,6 +158,12 @@ public class PopulateFaultEventData<T extends Task<TaskSpec>> {
         }
         log.debug(" Fault timeout is NOT specified. Hence, corresponding fault event will have NO end time.");
         log.debug(" The event corresponding to fault will automatically be closed once fault is remediated.");
+    }
+
+    private void setFaultEndTime(long faultTimeOutInMilis) {
+        log.debug("Updating the Fault time out timestamp as : " + faultTimeOutInMilis);
+        faultEventInfo.setFaultEndTime(CommonUtils.getTime(faultTimeOutInMilis));
+        faultEventInfo.setFaultEndTimeInEpoch(faultTimeOutInMilis);
     }
 
     private void updateFaultEventEndTimeAsNow() {

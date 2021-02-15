@@ -1,0 +1,100 @@
+<app-alert [(alertMessage)]="alertMessage" [isErrorMessage]="isErrorMessage"
+    (alertMessageChange)="alertMessage = $event"></app-alert><br />
+<div [hidden]="epDatagrid">
+    <app-actions [addDisabled]="addDisabled" [editDisabled]="editDisabled" [deleteDisabled]="deleteDisabled"
+        [enableDisabled]="enableDisabled" [disabledDisabled]="disabledDisabled"
+        (addEmitter)="populateEndpointForm({'id':null,'name':null,'endPointType':'ENDPOINT_GROUP','endpointNames':[],'tags':null});epDatagrid=true;epForm=false;addEdit='Add';"
+        (editEmitter)="populateEndpointForm(selectedEP[0]);epDatagrid=true;epForm=false;addEdit='Edit';populateEndpointsOfGroupType(epFormData.endpointGroupType);"
+        (deleteEmitter)="deleteEndpoint(selectedEP);" (enableDisableEmitter)="enableEndpoints(selectedEP,$event);">
+    </app-actions>
+
+    <clr-datagrid [clrDgLoading]="isLoading" [(clrDgSelected)]="selectedEP"
+        (clrDgSelectedChange)="updateActionButtons()">
+        <clr-dg-column [clrDgField]="'name'">Group Name</clr-dg-column>
+        <clr-dg-column [clrDgField]="'endpointGroupType'">Endpoint Type</clr-dg-column>
+        <clr-dg-column [clrDgField]="'endpointNames'">Endpoints</clr-dg-column>
+        <clr-dg-column [clrDgField]="'status'">Status</clr-dg-column>
+        <clr-dg-row *clrDgItems="let endpointGroupVal of endpoints" [clrDgItem]="endpointGroupVal">
+            <clr-dg-cell>{{endpointGroupVal.name}}</clr-dg-cell>
+            <clr-dg-cell>{{endpointGroupVal.endpointGroupType}}</clr-dg-cell>
+            <clr-dg-cell><span class="label label-info"
+                    *ngFor="let endpointName of endpointGroupVal.endpointNames">{{endpointName}}&nbsp;
+                </span>
+            </clr-dg-cell>
+            <clr-dg-cell>
+                <span class="label label-success"
+                    [hidden]="!endpointGroupVal.enable && endpointGroupVal.enable != null">enabled</span>
+                <span class="label label-danger"
+                    [hidden]="endpointGroupVal.enable == null || endpointGroupVal.enable">disabled</span>
+            </clr-dg-cell>
+        </clr-dg-row>
+        <clr-dg-footer>
+            <clr-dg-pagination #pagination [clrDgPageSize]="10">
+                <clr-dg-page-size [clrPageSizeOptions]="[10,20,50,100]">EndpointGroups per page</clr-dg-page-size>
+                {{pagination.firstItem + 1}} - {{pagination.lastItem + 1}} of {{pagination.totalItems}} credentials
+            </clr-dg-pagination>
+        </clr-dg-footer>
+    </clr-datagrid>
+</div>
+
+<div [hidden]="epForm">
+    <h3 class="modal-title">{{addEdit}} Endpoint Group</h3>
+    <form #endpointGroupForm="ngForm" #nativeEndpointGroupForm *ngIf="epFormData"
+        (ngSubmit)="addOrUpdateEndpoint(endpointGroupForm.value);epDatagrid=false;epForm=true;validateMultiSelectOptions(epFormData.endpointNames);"
+        ngNativeValidate>
+        <section class="form-block">
+            <div class="form-group">
+                <input type="text" name="id" [(ngModel)]="epFormData.id" [hidden]="true">
+            </div>
+            <div class="form-group">
+                <input type="text" name="endPointType" [(ngModel)]="epFormData.endPointType" [hidden]="true">
+            </div>
+            <div class="form-group">
+                <label for="name">Endpoint Name</label>
+                <input type="text" name="name" id="name" [(ngModel)]="epFormData.name" pattern="^[A-Za-z0-9-_.]+$"
+                    title="alphanumeric and special characters (_ - .) are allowed" [required]="addEdit == 'Add'"
+                    [readonly]="addEdit == 'Edit'">
+            </div>
+            <div class="form-group">
+                <label for="endpointGroupType">Endpoint Group Type</label>
+                <clr-dropdown>
+                    <input autocomplete="off" clrDropdownTrigger type="text" name="endpointGroupType"
+                        id="endpointGroupType" required [(ngModel)]="epFormData.endpointGroupType" />
+                    <clr-icon shape="caret down" clrDropdownTrigger size="24">
+                    </clr-icon>
+                    <clr-dropdown-menu *clrIfOpen class="menu-height" clrPosition="bottom-left">
+                        <ng-container *ngFor="let supportedEndpointGroupType of supportedEndpointGroupTypes">
+                            <button type="button" clrDropdownItem class="option-height"
+                                (click)="setEndpointGroupType(supportedEndpointGroupType);populateEndpointsOfGroupType(supportedEndpointGroupType);">{{supportedEndpointGroupType}}</button>
+                        </ng-container>
+                    </clr-dropdown-menu>
+                </clr-dropdown>
+            </div>
+            <div class="form-group">
+                <label for="endpointNames">Endpoints
+                </label>
+                <div class="select multiple">
+                    <select name="endpointNames" id="endpointNames" [(ngModel)]="epFormData.endpointNames" multiple
+                        required>
+                        <ng-container *ngFor="let endpointName of groupTypeEPNames">
+                            <option [value]="endpointName">{{endpointName}}</option>
+                        </ng-container>
+                    </select>
+
+                </div>
+                <span class="alert-text"
+                    *ngIf="epFormData.endpointNames.length >=1 && epFormData.endpointNames.length < 2">
+                    <clr-icon class="alert-icon" shape="exclamation-circle"></clr-icon>{{epGroupValidateMessage}}
+                </span>
+            </div>
+            <fault-tags [tagsData]="tagsData" (tagsModalEvent)="tagsModal=$event;"></fault-tags>
+        </section>
+        <button type="submit" class="btn btn-primary" [disabled]="disableSubmit">SUBMIT</button>
+        <button [clrLoading]="testEndpointBtnState" type="button" class="btn btn-outline"
+            (click)="testEndpointConnection(nativeEndpointGroupForm.reportValidity(), endpointGroupForm.value);"
+            [disabled]="epFormData.endpointNames.length < 2">TEST
+            CONNECTION</button>
+        <button type="button" class="btn btn-outline" (click)="epDatagrid=false;epForm=true;ngOnInit();">CANCEL</button>
+    </form>
+</div>
+<app-tags [tagsModal]="tagsModal" [tagsData]="tagsData" (updateTagsModal)="tagsModal=$event;"></app-tags>

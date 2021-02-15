@@ -5,6 +5,7 @@ import { FaultService } from '../../../fault.service';
 import { DataService } from 'src/app/shared/data.service';
 import { CommonNetwork } from '../common.network';
 import { CommonConstants } from 'src/app/common/common.constants';
+import { CommonUtils } from 'src/app/shared/commonUtils';
 
 @Component({
   selector: 'app-network-delay',
@@ -12,31 +13,17 @@ import { CommonConstants } from 'src/app/common/common.constants';
 })
 export class PacketDelayComponent extends CommonNetwork implements OnInit {
 
-  public errorAlertMessage: string;
-  public successAlertMessage: string;
-
   public latencyHidden: boolean = false;
   public percentageHidden: boolean = false;
   public faultDescription: string = "Execute Packet Delay Fault"
 
-
-  constructor(faultService: FaultService, private endpointService: EndpointService, router: Router, private dataService: DataService) {
-    super(faultService, router, CommonConstants.NETWORK_DELAY_MILLISECONDS);
+  constructor(faultService: FaultService, endpointService: EndpointService, router: Router, private dataService: DataService, commonUtils: CommonUtils) {
+    super(endpointService, faultService, router, CommonConstants.NETWORK_DELAY_MILLISECONDS, commonUtils);
   }
+
   ngOnInit() {
     this.latencyHidden = true;
-    this.endpointService.getAllEndpoints().subscribe(
-      res => {
-        if (res.code) {
-          this.endpoints = [];
-        } else {
-          this.endpoints = res;
-        }
-      }, err => {
-        this.endpoints = [];
-        this.errorAlertMessage = err.error.description;
-      });
-
+    this.getAllEndpoints();
     if (this.dataService.sharedData != null) {
       this.populateFaultData(this.dataService);
     }

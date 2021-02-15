@@ -19,14 +19,14 @@ package com.vmware.mangle.model.enums;
  */
 public enum OSType {
     LINUX("linux");
-    private String osType;
+    private String name;
 
     OSType(String osType) {
-        this.osType = osType;
+        this.name = osType;
     }
 
     public String osType() {
-        return osType;
+        return name;
     }
 
 }

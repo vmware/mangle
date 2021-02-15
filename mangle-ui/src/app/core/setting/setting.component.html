@@ -1,0 +1,36 @@
+<div class="main-container">
+	<div class="content-container">
+		<div class="content-area">
+			<router-outlet></router-outlet>
+		</div>
+		<clr-vertical-nav [clrVerticalNavCollapsible]="false">
+			<clr-vertical-nav-group routerLinkActive="active">
+				<clr-icon shape="user" clrVerticalNavIcon></clr-icon>Auth Management
+				<clr-vertical-nav-group-children *clrIfExpanded="true">
+					<a clrVerticalNavLink [routerLink]="['identity']" routerLinkActive="active">Auth Source</a>
+					<a clrVerticalNavLink [routerLink]="['users']" routerLinkActive="active">Users</a>
+					<a clrVerticalNavLink [routerLink]="['roles']" routerLinkActive="active">Roles</a>
+				</clr-vertical-nav-group-children>
+			</clr-vertical-nav-group>
+			<clr-vertical-nav-group routerLinkActive="active">
+				<clr-icon shape="link" clrVerticalNavIcon></clr-icon>Integrations
+				<clr-vertical-nav-group-children *clrIfExpanded="false">
+					<a clrVerticalNavLink [routerLink]="['integration']" routerLinkActive="active">Metric Providers</a>
+					<a clrVerticalNavLink [routerLink]="['notifier']" routerLinkActive="active">Notifier</a>
+				</clr-vertical-nav-group-children>
+			</clr-vertical-nav-group>
+			<clr-vertical-nav-group routerLinkActive="active">
+				<clr-icon shape="cog" clrVerticalNavIcon></clr-icon>Configuration
+				<clr-vertical-nav-group-children *clrIfExpanded="false">
+					<a clrVerticalNavLink [routerLink]="['logging']" routerLinkActive="active">Logging</a>
+					<a clrVerticalNavLink [routerLink]="['cluster']" routerLinkActive="active">Cluster Config</a>
+					<a clrVerticalNavLink [routerLink]="['plugins']" routerLinkActive="active">Fault Plugins</a>
+					<a title="ResiliencyScore Metric Configuration" clrVerticalNavLink [routerLink]="['resiliencyscore-metric-config']" routerLinkActive="active">ResiliencyScore Metric Configuration</a>
+				</clr-vertical-nav-group-children>
+			</clr-vertical-nav-group>
+			<a clrVerticalNavLink [routerLink]="['events']" routerLinkActive="active">
+				<clr-icon shape="event" clrVerticalNavIcon></clr-icon>Application Events
+			</a>
+		</clr-vertical-nav>
+	</div>
+</div>

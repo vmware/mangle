@@ -26,6 +26,7 @@ import com.vmware.mangle.services.repository.ADAuthProviderRepository;
 import com.vmware.mangle.utils.constants.ErrorConstants;
 import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
+import com.vmware.mangle.utils.helpers.security.EncryptFields;
 
 /**
  * Acts as a wrapper over mongodb repository, and provide some default operations for Active
@@ -72,6 +73,8 @@ public class ADAuthProviderService {
         ADAuthProviderDto persistence = getADAuthProviderByAdDomain(adAuthProvider.getAdDomain());
         persistence.setAdUrl(adAuthProvider.getAdUrl());
         persistence.setAdDomain(adAuthProvider.getAdDomain());
+        persistence.setAdUser(adAuthProvider.getAdUser());
+        persistence.setAdUserPassword(adAuthProvider.getAdUserPassword());
         return adAuthProviderRepository.save(persistence);
     }
 
@@ -83,7 +86,7 @@ public class ADAuthProviderService {
      */
     public ADAuthProviderDto addADAuthProvider(ADAuthProviderDto adAuthProvider) {
         log.info("Configuring a new authentication provider");
-        return adAuthProviderRepository.save(adAuthProvider);
+        return adAuthProviderRepository.save((ADAuthProviderDto) EncryptFields.encrypt(adAuthProvider));
     }
 
     /**

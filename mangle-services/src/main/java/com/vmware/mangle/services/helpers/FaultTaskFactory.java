@@ -16,18 +16,25 @@ import org.springframework.stereotype.Component;
 
 import com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.DockerFaultSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.EndpointGroupFaultTriggerSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.FaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.JVMAgentFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.K8SFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.K8SFaultTriggerSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.TaskSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.VCenterFaultTriggerSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.VMFaultSpec;
+import com.vmware.mangle.cassandra.model.redis.faults.specs.RedisFaultSpec;
 import com.vmware.mangle.cassandra.model.tasks.RemediableTask;
 import com.vmware.mangle.cassandra.model.tasks.Task;
 import com.vmware.mangle.cassandra.model.tasks.TaskStatus;
 import com.vmware.mangle.cassandra.model.tasks.TaskType;
 import com.vmware.mangle.model.aws.faults.spec.AwsEC2FaultSpec;
+import com.vmware.mangle.model.aws.faults.spec.AwsRDSFaultSpec;
+import com.vmware.mangle.model.azure.faults.spec.AzureVMFaultSpec;
 import com.vmware.mangle.model.enums.EndpointType;
+import com.vmware.mangle.model.vcenter.specs.HostFaultSpec;
+import com.vmware.mangle.services.EndpointService;
 import com.vmware.mangle.services.PluginService;
 import com.vmware.mangle.services.enums.FaultName;
 import com.vmware.mangle.task.framework.helpers.AbstractTaskHelper;
@@ -50,18 +57,30 @@ public class FaultTaskFactory {
     @Autowired
     private PluginService pluginService;
 
+    @Autowired
+    private EndpointService endpointService;
 
     public Task<TaskSpec> getTask(FaultSpec faultSpec) throws MangleException {
         return getTask(faultSpec, null);
     }
 
     /**
-     * Method to trigger any fault task example: BytemanTask If there is specific way to trigger
-     * fault task on endpoint, it takes endpoint as an argument ex: K8S_Cluster as we may need to
-     * trigger same type of task on more than resource (pod)
+     * Method to trigger any fault task example: BytemanTask If there is specific way to trigger fault
+     * task on endpoint, it takes endpoint as an argument ex: K8S_Cluster as we may need to trigger same
+     * type of task on more than resource (pod)
      */
     public Task<TaskSpec> getTask(FaultSpec faultSpec, String taskId) throws MangleException {
         AbstractTaskHelper<TaskSpec> taskHelper = null;
+
+        if (isEndpointGroupTriggerTaskFault(faultSpec)) {
+            EndpointGroupFaultTriggerSpec nodeGroupFaultSpec = new EndpointGroupFaultTriggerSpec();
+            nodeGroupFaultSpec.setChildSpecType(faultSpec.getClass().getName());
+            nodeGroupFaultSpec.setFaultSpec((CommandExecutionFaultSpec) faultSpec);
+            nodeGroupFaultSpec.setSchedule(faultSpec.getSchedule());
+            taskHelper =
+                    getExtension("com.vmware.mangle.faults.plugin.tasks.helpers.EndpointGroupFaultTriggerTaskHelper");
+            return taskHelper.init(nodeGroupFaultSpec, taskId);
+        }
 
         if (faultSpec instanceof K8SFaultSpec) {
             taskHelper = getExtension("com.vmware.mangle.faults.plugin.tasks.helpers.K8sSpecificFaultTaskHelper");
@@ -72,14 +91,41 @@ public class FaultTaskFactory {
             taskHelper = getExtension("com.vmware.mangle.faults.plugin.tasks.helpers.DockerSpecificFaultTaskHelper");
             return taskHelper.init(faultSpec, taskId);
         }
-        if (faultSpec instanceof VMFaultSpec) {
-            taskHelper = getExtension("com.vmware.mangle.faults.plugin.tasks.helpers.VCenterSpecificFaultTaskHelper");
-            return taskHelper.init(faultSpec, taskId);
-        }
 
         if (faultSpec instanceof AwsEC2FaultSpec) {
             taskHelper = getExtension("com.vmware.mangle.faults.plugin.tasks.helpers.AwsEC2SpecificFaultTaskHelper");
             return taskHelper.init(faultSpec, taskId);
+        }
+
+        if (faultSpec instanceof AwsRDSFaultSpec) {
+            taskHelper = getExtension("com.vmware.mangle.faults.plugin.tasks.helpers.AwsRDSFaultTaskHelper");
+            return taskHelper.init(faultSpec, taskId);
+        }
+
+        if (faultSpec instanceof AzureVMFaultSpec) {
+            taskHelper = getExtension("com.vmware.mangle.faults.plugin.tasks.helpers.AzureVMSpecificFaultTaskHelper");
+            return taskHelper.init(faultSpec, taskId);
+        }
+
+        if (faultSpec instanceof RedisFaultSpec) {
+            taskHelper = getExtension("com.vmware.mangle.faults.plugin.tasks.helpers.RedisFaultTaskHelper");
+            return taskHelper.init(faultSpec, taskId);
+        }
+
+
+        if (isVCenterFaultTriggerTaskFault(faultSpec)) {
+            VCenterFaultTriggerSpec vCenterFaultTriggerSpec = new VCenterFaultTriggerSpec();
+            vCenterFaultTriggerSpec.setChildSpecType(faultSpec.getClass().getName());
+            vCenterFaultTriggerSpec.setFaultSpec((CommandExecutionFaultSpec) faultSpec);
+            if (faultSpec instanceof VMFaultSpec) {
+                vCenterFaultTriggerSpec.setEnableRandomInjection(((VMFaultSpec) faultSpec).isEnableRandomInjection());
+            } else if (faultSpec instanceof HostFaultSpec) {
+                vCenterFaultTriggerSpec.setEnableRandomInjection(((HostFaultSpec) faultSpec).isEnableRandomInjection());
+            }
+
+            taskHelper =
+                    getExtension("com.vmware.mangle.faults.plugin.tasks.helpers.VCenterSpecificFaultTriggerTaskHelper");
+            return taskHelper.init(vCenterFaultTriggerSpec, taskId);
         }
 
         if (isK8SFaultTriggerTaskFault(faultSpec)) {
@@ -97,7 +143,7 @@ public class FaultTaskFactory {
             taskHelper = getExtension("com.vmware.mangle.faults.plugin.tasks.helpers.BytemanFaultTaskHelper");
             return taskHelper.init(faultSpec, taskId);
         } else {
-            taskHelper = getExtension("com.vmware.mangle.faults.plugin.tasks.helpers.SystemResourceFaultTaskHelper");
+            taskHelper = getExtension("com.vmware.mangle.faults.plugin.tasks.helpers.SystemResourceFaultTaskHelper2");
             return taskHelper.init(faultSpec, taskId);
         }
     }
@@ -113,12 +159,27 @@ public class FaultTaskFactory {
                 && null != faultSpec.getK8sArguments() && null == faultSpec.getK8sArguments().getPodInAction();
     }
 
+    private boolean isVCenterFaultTriggerTaskFault(FaultSpec faultSpecParam) {
+        CommandExecutionFaultSpec faultSpec = (CommandExecutionFaultSpec) faultSpecParam;
+        return (faultSpec instanceof VMFaultSpec || faultSpec instanceof HostFaultSpec)
+                && faultSpec.getEndpoint() != null
+                && faultSpec.getEndpoint().getEndPointType().equals(EndpointType.VCENTER);
+    }
+
+    private boolean isEndpointGroupTriggerTaskFault(FaultSpec faultSpecParam) {
+        CommandExecutionFaultSpec faultSpec = (CommandExecutionFaultSpec) faultSpecParam;
+        return faultSpec.getEndpoint() != null
+                && faultSpec.getEndpoint().getEndPointType().equals(EndpointType.ENDPOINT_GROUP);
+    }
+
     public Task<TaskSpec> getRemediationTask(Task<TaskSpec> injectedTask, String taskId) throws MangleException {
         checkPreConditionOnRemediationRequest(injectedTask);
         FaultSpec faultSpec;
 
-        if (null != injectedTask.getTaskData() && injectedTask.getTaskData() instanceof K8SFaultTriggerSpec) {
+        if (injectedTask.getTaskData() instanceof K8SFaultTriggerSpec) {
             faultSpec = ((K8SFaultTriggerSpec) injectedTask.getTaskData()).getFaultSpec();
+        } else if (injectedTask.getTaskData() instanceof EndpointGroupFaultTriggerSpec) {
+            faultSpec = ((EndpointGroupFaultTriggerSpec) injectedTask.getTaskData()).getFaultSpec();
         } else {
             faultSpec = (FaultSpec) injectedTask.getTaskData();
         }
@@ -140,7 +201,8 @@ public class FaultTaskFactory {
         if (!(TaskType.INJECTION.equals(injectedTask.getTaskType()))) {
             throw new MangleException(ErrorCode.NOT_A_INJECTION_TASK);
         }
-        if (injectedTask.getTaskStatus() != TaskStatus.COMPLETED) {
+        if (injectedTask.getTaskStatus() != TaskStatus.COMPLETED
+                && injectedTask.getTaskStatus() != TaskStatus.INJECTED) {
             throw new MangleException(ErrorCode.INVALID_STATE_FOR_REMEDIATION);
         }
         if (((RemediableTask<TaskSpec>) injectedTask).isRemediated()) {

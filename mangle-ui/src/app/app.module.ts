@@ -1,49 +1,45 @@
-import { BrowserModule } from '@angular/platform-browser';
-import { NgModule } from '@angular/core';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
-import { InterceptorService } from "./interceptor.service";
-import { ConfigGuardService } from './config-guard.service';
-
-import { AppRoutingModule } from './app-routing.module';
-import { AppComponent } from './app.component';
-import { ClarityModule } from '@clr/angular';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { ConfigModule } from './config/config.module';
-import { AuthModule } from './auth/auth.module';
-import { CoreModule } from './core/core.module';
-import { HomeModule } from './home/home.module';
-import { SettingModule } from './setting/setting.module';
-import { LocationStrategy, HashLocationStrategy } from '@angular/common';
-import { PagesModule } from './pages/pages.module';
-import { AuthGuardService } from './auth-guard.service';
-import { SharedModule } from './shared/shared.module';
-import { PrivilegeGuardService } from './privilege-guard.service';
+import {BrowserModule} from "@angular/platform-browser";
+import {NgModule} from "@angular/core";
+import {FormsModule, ReactiveFormsModule} from "@angular/forms";
+import {HTTP_INTERCEPTORS, HttpClientModule} from "@angular/common/http";
+import {InterceptorService} from "./interceptor.service";
+import {ConfigGuardService} from "./shared/guards/config-guard.service";
+import {AppComponent} from "./app.component";
+import {ClarityModule} from "@clr/angular";
+import {BrowserAnimationsModule} from "@angular/platform-browser/animations";
+import {HashLocationStrategy, LocationStrategy} from "@angular/common";
+import {PagesModule} from "./pages/pages.module";
+import {AuthGuardService} from "./shared/guards/auth-guard.service";
+import {PrivilegeGuardService} from "./privilege-guard.service";
+import {ConfigComponent} from "./config/config.component";
+import {PasswordStrengthBarModule} from "ng2-password-strength-bar";
+import {RouterModule} from "@angular/router";
+import {AppRoutingModule} from "./app-routing.module";
+import {LoginGuardService} from "./shared/guards/login-guard.service";
+import {UnavailableGuardService} from "./shared/guards/unavailable-guard.service";
 
 @NgModule({
   declarations: [
-    AppComponent
+    AppComponent, ConfigComponent
   ],
   imports: [
     BrowserModule,
     FormsModule,
     ReactiveFormsModule,
     HttpClientModule,
-    AppRoutingModule,
     ClarityModule,
     BrowserAnimationsModule,
-    ConfigModule,
-    AuthModule,
-    CoreModule,
-    HomeModule,
     PagesModule,
-    SettingModule,
-    SharedModule
+    PasswordStrengthBarModule,
+    RouterModule,
+    AppRoutingModule
   ],
   providers: [
     ConfigGuardService,
     AuthGuardService,
+    LoginGuardService,
     PrivilegeGuardService,
+    UnavailableGuardService,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: InterceptorService,
@@ -56,4 +52,5 @@ import { PrivilegeGuardService } from './privilege-guard.service';
   ],
   bootstrap: [AppComponent]
 })
-export class AppModule { }
+export class AppModule {
+}

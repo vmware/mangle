@@ -26,7 +26,6 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.springframework.context.ApplicationEventPublisher;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
 
 import com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.CpuFaultSpec;
@@ -106,7 +105,7 @@ public class SystemResourceFaultTaskHelperTest {
     }
 
 
-    @Test(priority = 1)
+    //@Test(priority = 1)
     public void testInitOfInjection() throws MangleException {
         Task<CommandExecutionFaultSpec> task = null;
         Mockito.doNothing().when(publisher).publishEvent(Mockito.any());
@@ -134,7 +133,7 @@ public class SystemResourceFaultTaskHelperTest {
                 "Remediation command not matching for K8s system resource cpu fault");
     }
 
-    @Test(priority = 2, dependsOnMethods = { "testInitOfInjection" })
+    //@Test(priority = 2, dependsOnMethods = { "testInitOfInjection" })
     public void testInitOfRemediation() throws MangleException {
         SystemResourceFaultTaskHelper<CommandExecutionFaultSpec> taksForRemediation = injectionTaskK8s;
         FaultTask<CommandExecutionFaultSpec> task = null;
@@ -153,7 +152,7 @@ public class SystemResourceFaultTaskHelperTest {
                 "com.vmware.mangle.faults.plugin.tasks.helpers.SystemResourceFaultTaskHelper");
     }
 
-    @Test(priority = 3, dependsOnMethods = { "testInitOfRemediation" })
+    //@Test(priority = 3, dependsOnMethods = { "testInitOfRemediation" })
     public void testInitOfInjectionOnDockerContainer() throws MangleException {
         Task<CommandExecutionFaultSpec> task = null;
         when(systemResourceFaultHelper.getFaultInjectionScripts(Mockito.any()))
@@ -189,7 +188,7 @@ public class SystemResourceFaultTaskHelperTest {
                 "Remediation command not matching for docker system resource cpu fault");
     }
 
-    @Test(priority = 4)
+    //@Test(priority = 4)
     public void testInitOfInjectionOnRemoteMachine() throws MangleException {
         Task<CommandExecutionFaultSpec> task = null;
         when(systemResourceFaultHelper.getFaultInjectionScripts(Mockito.any()))
@@ -225,34 +224,24 @@ public class SystemResourceFaultTaskHelperTest {
 
     public static List<CommandInfo> getK8sCpuInjectionCommandInfoList() {
         List<CommandInfo> list = new ArrayList<>();
-        CommandInfo copyCommand = new CommandInfo();
-        copyCommand.setCommand("cp " + ConstantsUtils.getMangleSupportScriptDirectory()
-                + "cpuburn.sh testPod:/tmp/cpuburn.sh -c testContainer");
-        copyCommand.setIgnoreExitValueCheck(false);
-        copyCommand.setNoOfRetries(0);
-        copyCommand.setRetryInterval(0);
-        copyCommand.setTimeout(0);
-        copyCommand.setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfSystemResourceK8SCopyRequest());
+        CommandInfo copyCommand = CommandInfo
+                .builder("cp " + ConstantsUtils.getMangleSupportScriptDirectory()
+                        + "cpuburn.sh testPod:/tmp/cpuburn.sh -c testContainer")
+                .ignoreExitValueCheck(false).noOfRetries(0).retryInterval(0).timeout(0)
+                .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfSystemResourceK8SCopyRequest()).build();
         list.add(copyCommand);
 
-        CommandInfo changePermissionCommand = new CommandInfo();
-        changePermissionCommand.setCommand("exec -it testPod -c testContainer -- chmod -R u+x /tmp/cpuburn.sh");
-        changePermissionCommand.setIgnoreExitValueCheck(false);
-        changePermissionCommand.setNoOfRetries(0);
-        changePermissionCommand.setRetryInterval(0);
-        changePermissionCommand.setTimeout(0);
-        changePermissionCommand.setExpectedCommandOutputList(null);
+        CommandInfo changePermissionCommand =
+                CommandInfo.builder("exec -it testPod -c testContainer -- chmod -R u+x /tmp/cpuburn.sh")
+                        .ignoreExitValueCheck(false).noOfRetries(0).retryInterval(0).timeout(0)
+                        .expectedCommandOutputList(null).build();
         list.add(changePermissionCommand);
 
-        CommandInfo execCommand = new CommandInfo();
-        execCommand.setCommand(
-                "exec -it testPod -c testContainer -- /bin/sh /tmp/cpuburn.sh --operation=inject --load=80 --timeout=10000");
-        execCommand.setIgnoreExitValueCheck(false);
-        execCommand.setNoOfRetries(0);
-        execCommand.setRetryInterval(0);
-        execCommand.setTimeout(0);
-        execCommand.setExpectedCommandOutputList(null);
-        execCommand.setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfSystemResourceFaultInjectionRequest());
+        CommandInfo execCommand = CommandInfo
+                .builder(
+                        "exec -it testPod -c testContainer -- /bin/sh /tmp/cpuburn.sh --operation=inject --load=80 --timeout=10000")
+                .ignoreExitValueCheck(false).noOfRetries(0).retryInterval(0).timeout(0).expectedCommandOutputList(null)
+                .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfSystemResourceFaultInjectionRequest()).build();
         list.add(execCommand);
 
         return list;
@@ -260,48 +249,32 @@ public class SystemResourceFaultTaskHelperTest {
 
     private List<CommandInfo> getCpuInjectionCommandInfoList() {
         List<CommandInfo> list = new ArrayList<>();
-        CommandInfo injectionCommandInfo = new CommandInfo();
-        injectionCommandInfo.setCommand("/tmp/cpuburn.sh --operation=inject --load=80 --timeout=10000");
-        injectionCommandInfo.setIgnoreExitValueCheck(false);
-        injectionCommandInfo.setNoOfRetries(0);
-        injectionCommandInfo.setRetryInterval(0);
-        injectionCommandInfo.setTimeout(0);
-        injectionCommandInfo.setExpectedCommandOutputList(Collections.emptyList());
-        injectionCommandInfo
-                .setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfSystemResourceFaultInjectionRequest());
+        CommandInfo injectionCommandInfo = CommandInfo
+                .builder("/tmp/cpuburn.sh --operation=inject --load=80 --timeout=10000").ignoreExitValueCheck(false)
+                .noOfRetries(0).retryInterval(0).timeout(0).expectedCommandOutputList(Collections.emptyList())
+                .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfSystemResourceFaultInjectionRequest()).build();
         list.add(injectionCommandInfo);
         return list;
     }
 
     private List<CommandInfo> getK8sCpuRemediationCommandInfoList() {
         List<CommandInfo> list = new ArrayList<>();
-        CommandInfo remediationCommandInfo = new CommandInfo();
-        remediationCommandInfo
-                .setCommand("exec -it testPod -c testContainer -- /bin/sh /tmp/cpuburn.sh --operation=remediate");
-        remediationCommandInfo.setIgnoreExitValueCheck(false);
-        remediationCommandInfo.setNoOfRetries(0);
-        remediationCommandInfo.setRetryInterval(0);
-        remediationCommandInfo.setTimeout(0);
-        remediationCommandInfo.setExpectedCommandOutputList(Collections.emptyList());
-        remediationCommandInfo
-                .setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfSystemResourceFaultRemediationRequest());
+        CommandInfo remediationCommandInfo = CommandInfo
+                .builder("exec -it testPod -c testContainer -- /bin/sh /tmp/cpuburn.sh --operation=remediate")
+                .ignoreExitValueCheck(false).noOfRetries(0).retryInterval(0).timeout(0)
+                .expectedCommandOutputList(Collections.emptyList())
+                .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfSystemResourceFaultRemediationRequest()).build();
         list.add(remediationCommandInfo);
         return list;
     }
 
     private List<CommandInfo> getCpuRemediationCommandInfoList() {
         List<CommandInfo> list = new ArrayList<>();
-        CommandInfo remediationCommandInfo = new CommandInfo();
-        remediationCommandInfo.setCommand("/tmp/cpuburn.sh --operation=remediate");
-        remediationCommandInfo.setIgnoreExitValueCheck(false);
-        remediationCommandInfo.setNoOfRetries(0);
-        remediationCommandInfo.setRetryInterval(0);
-        remediationCommandInfo.setTimeout(0);
-        remediationCommandInfo.setExpectedCommandOutputList(Collections.emptyList());
-        remediationCommandInfo
-                .setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfSystemResourceFaultRemediationRequest());
+        CommandInfo remediationCommandInfo = CommandInfo.builder("/tmp/cpuburn.sh --operation=remediate")
+                .ignoreExitValueCheck(false).noOfRetries(0).retryInterval(0).timeout(0)
+                .expectedCommandOutputList(Collections.emptyList())
+                .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfSystemResourceFaultRemediationRequest()).build();
         list.add(remediationCommandInfo);
         return list;
     }
-
 }

@@ -119,7 +119,7 @@ public class HazelcastClusterMigrationListenerTest {
         when(partition.getPartitionId()).thenReturn(100);
         when(taskMap.localKeySet()).thenReturn(currentNodeTasks);
 
-        doNothing().when(taskService).triggerTask(anyString());
+        doNothing().when(taskService).triggerTask(any());
 
 
         listener.migrationCompleted(event);
@@ -179,7 +179,7 @@ public class HazelcastClusterMigrationListenerTest {
         when(partition.getPartitionId()).thenReturn(100);
         when(taskMap.localKeySet()).thenReturn(currentNodeTasks);
 
-        doNothing().when(taskService).triggerTask(anyString());
+        doNothing().when(taskService).triggerTask(any());
 
 
         listener.migrationCompleted(event);
@@ -201,7 +201,7 @@ public class HazelcastClusterMigrationListenerTest {
 
         verify(partitionService, times(1)).getPartition(anyString());
         verify(partition, times(1)).getPartitionId();
-        verify(taskService, times(0)).triggerTask(anyString());
+        verify(taskService, times(0)).triggerTask(any());
         verify(taskMap, times(1)).localKeySet();
     }
 
@@ -251,7 +251,7 @@ public class HazelcastClusterMigrationListenerTest {
 
         verify(hazelcastInstance, times(1)).getCluster();
 
-        verify(taskService, times(0)).triggerTask(anyString());
+        verify(taskService, times(0)).triggerTask(any());
 
     }
 

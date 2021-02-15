@@ -30,18 +30,17 @@ public class DockerCommandUtils implements ICommandExecutor {
     private CommandExecutionFaultSpec faultSpec;
 
 
-    public DockerCommandUtils(CommandExecutionFaultSpec jvmAgentFaultSpec,
-            EndpointClientFactory endpointClientFactory) {
+    public DockerCommandUtils(CommandExecutionFaultSpec jvmAgentFaultSpec, EndpointClientFactory endpointClientFactory)
+            throws MangleException {
         this.faultSpec = jvmAgentFaultSpec;
         this.dockerClient = (CustomDockerClient) endpointClientFactory
                 .getEndPointClient(jvmAgentFaultSpec.getCredentials(), jvmAgentFaultSpec.getEndpoint());
     }
 
     public CommandExecutionResult runCommand(String command) throws MangleException {
-        CommandExecutionResult commandExecutionResult = new CommandExecutionResult();
-        commandExecutionResult = this.dockerClient
+        CommandExecutionResult commandExecutionResult = this.dockerClient
                 .execCommandInContainerByName(faultSpec.getDockerArguments().getContainerName(), command);
-        log.debug("Executing Command: " + commandExecutionResult.getCommandOutput());
+        log.debug("Executing Command on container: " + commandExecutionResult.getCommandOutput());
         return commandExecutionResult;
     }
 

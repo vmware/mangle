@@ -11,7 +11,9 @@
 
 package com.vmware.mangle.cassandra.model.faults.specs;
 
-import com.datastax.driver.core.DataType.Name;
+import javax.validation.constraints.NotEmpty;
+
+import com.datastax.driver.core.DataType;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.springframework.data.cassandra.core.mapping.CassandraType;
@@ -31,9 +33,13 @@ public class VMNicFaultSpec extends VMFaultSpec {
 
     private static final long serialVersionUID = 1L;
 
-    private String vmNicId;
-    @CassandraType(type = Name.VARCHAR)
+    @NotEmpty
+    private String vmName;
+
+    @CassandraType(type = DataType.Name.VARCHAR)
     private VCenterNicFaults fault;
+
+    private String vmNicId;
 
     public VMNicFaultSpec() {
         setSpecType(this.getClass().getName());

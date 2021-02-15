@@ -135,7 +135,7 @@ public class WavefrontNotifierTest {
     public void closeEventWhenEventsFailedToRetrieve() {
         WavefrontNotifier wfn = spy(new WavefrontNotifier(wfc));
         when(wfn.retrieveEvents(any(String.class))).thenReturn(null);
-        boolean status = wfn.closeEvent("dummy");
+        boolean status = wfn.closeEvent(faultEventData, "dummy", "dummyid");
         Assert.assertFalse(status, "Event close should have failed");
     }
 
@@ -146,7 +146,7 @@ public class WavefrontNotifierTest {
         eventDetails.setItems(new ArrayList<>());
         doReturn(eventDetails).when(wfn).retrieveEvents(any(String.class));
 
-        boolean status = wfn.closeEvent("dummy");
+        boolean status = wfn.closeEvent(faultEventData, "dummy", "dummyId");
         Assert.assertFalse(status, "Event close should have failed");
     }
 
@@ -158,7 +158,7 @@ public class WavefrontNotifierTest {
         eventItem.setRunningState("COMPLETED");
         doReturn(eventDetails).when(wfn).retrieveEvents(any(String.class));
 
-        boolean status = wfn.closeEvent("dummy");
+        boolean status = wfn.closeEvent(faultEventData, "dummy", "dummId");
         Assert.assertFalse(status, "Event close should have failed when specified event is not in ONGOING state");
         verify(wfc, times(0)).delete(any(String.class), any(Class.class));
         verify(wfc, times(0)).post(any(String.class), any(String.class), any(Class.class));
@@ -178,7 +178,7 @@ public class WavefrontNotifierTest {
         when(wfc.post(any(String.class), any(String.class), any(Class.class)))
                 .thenReturn(new ResponseEntity(response, HttpStatus.ACCEPTED));
 
-        boolean status = wfn.closeEvent("dummy");
+        boolean status = wfn.closeEvent(faultEventData, "dummy", "dummyId");
         Assert.assertTrue(true, "Event close should have failed when specified event is not in ONGOING state");
         verify(wfc, times(0)).delete(any(String.class), any(Class.class));
         verify(wfc, times(1)).post(any(String.class), any(String.class), any(Class.class));
@@ -196,11 +196,27 @@ public class WavefrontNotifierTest {
         when(wfc.post(any(String.class), any(String.class), any(Class.class)))
                 .thenReturn(new ResponseEntity(response, HttpStatus.ACCEPTED));
 
-        boolean status = wfn.closeEvent("dummy-event-name");
+        boolean status = wfn.closeEvent(faultEventData, "dummy-event-name", "dummyid");
         Assert.assertTrue(true, "Event close should have failed when specified event is not in ONGOING state");
         verify(wfc, times(1)).delete(any(String.class), any(Class.class));
         verify(wfc, times(1)).post(any(String.class), any(String.class), any(Class.class));
     }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @Test(description = "Validating close event when specified event is in OnGoing state and end time is already set")
+    public void validateCloseEventForEventWithEndTimeAndRunningStateEnded() {
+        WavefrontNotifier wfn = spy(new WavefrontNotifier(wfc));
+        String response = apiResponseMockData.getApiResponse(200);
+        WavefrontEventDetailsDto eventDetails = wavefrontEventMockData.getEventDetailsDtoForEndedEvent();
+        doReturn(eventDetails).when(wfn).retrieveEvents(any(String.class));
+        when(wfc.delete(any(String.class), any(Class.class)))
+                .thenReturn(new ResponseEntity(response, HttpStatus.ACCEPTED));
+        when(wfc.post(any(String.class), any(String.class), any(Class.class)))
+                .thenReturn(new ResponseEntity(response, HttpStatus.ACCEPTED));
 
+        boolean status = wfn.closeEvent(faultEventData, "dummy-event-name", "dummyid");
+        Assert.assertTrue(true, "Event close should have failed when specified event is not in ONGOING state");
+        verify(wfc, times(1)).delete(any(String.class), any(Class.class));
+        verify(wfc, times(1)).post(any(String.class), any(String.class), any(Class.class));
+    }
 }

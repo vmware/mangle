@@ -17,6 +17,7 @@ import java.util.List;
 
 import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.testng.PowerMockTestCase;
 import org.testng.Assert;
@@ -34,6 +35,7 @@ import com.vmware.mangle.utils.mockdata.CommandResultUtils;
  *
  */
 @PrepareForTest(value = { CommonUtils.class, CommandUtils.class })
+@PowerMockIgnore({ "com.sun.org.apache.xalan.internal.xsltc.trax.*" })
 public class PODClientNegativeTest extends PowerMockTestCase {
     private KubernetesCommandLineClient client;
 

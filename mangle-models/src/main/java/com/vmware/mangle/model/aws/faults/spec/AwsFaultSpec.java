@@ -14,8 +14,6 @@ package com.vmware.mangle.model.aws.faults.spec;
 import java.io.Serializable;
 import java.util.HashMap;
 
-import javax.validation.constraints.NotEmpty;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -39,7 +37,6 @@ public class AwsFaultSpec extends CommandExecutionFaultSpec implements Serializa
 
     private static final long serialVersionUID = 1L;
 
-    @NotEmpty
     private HashMap<String, String> awsTags;
 
     @ApiModelProperty(value = "true or false , specify this option along with tags", example = "true")

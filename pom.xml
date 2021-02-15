@@ -5,15 +5,13 @@
 	product may include a number of subcomponents with separate copyright notices 
 	and license terms. Your use of these subcomponents is subject to the terms 
 	and conditions of the subcomponent's license, as noted in the LICENSE file. -->
-
-
 <project xmlns="http://maven.apache.org/POM/4.0.0"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.vmware.mangle</groupId>
 	<artifactId>mangle-root</artifactId>
-	<version>2.0.0</version>
+	<version>3.0.0</version>
 	<packaging>pom</packaging>
 	<name>mangle</name>
 	<description>Mangle</description>
@@ -27,8 +25,8 @@
 
 	<repositories>
 		<repository>
-			<id>build-artifactory.eng.vmware.com</id>
-			<url>https://build-artifactory.eng.vmware.com/artifactory/fiaasco-release</url>
+			<id>jitpack.io</id>
+			<url>https://jitpack.io</url>
 		</repository>
 	</repositories>
 
@@ -51,7 +49,7 @@
 		<spring.boot.version>2.2.2.RELEASE</spring.boot.version>
 		<spring.cloud.version>2.0.2.RELEASE</spring.cloud.version>
 		<swagger-version>2.9.2</swagger-version>
-		<spring.hateoas.version>0.24.0.RELEASE</spring.hateoas.version>
+		<spring.hateoas.version>0.25.1.RELEASE</spring.hateoas.version>
 		<spring.security.ldap.version>5.1.0.RELEASE</spring.security.ldap.version>
 		<lombok.version>1.18.2</lombok.version>
 		<testng.version>6.11</testng.version>
@@ -90,14 +88,18 @@
 		<glassfish.jersey.version>2.26</glassfish.jersey.version>
 		<pf4j.version>3.0.1</pf4j.version>
 		<pf4j-spring.version>0.5.0</pf4j-spring.version>
-		<osstp.plugin.version>1.1.1</osstp.plugin.version>
 		<cassandra.migration.version>2.2.0</cassandra.migration.version>
 		<hazelcast.version>3.11</hazelcast.version>
+		<hazelcast-kubernetes.version>1.3.1</hazelcast-kubernetes.version>
 		<org.json.version>20180130</org.json.version>
 		<net.jpountz.lz4.version>1.3.0</net.jpountz.lz4.version>
 		<log4j.version>1.2.17</log4j.version>
 		<aws-sdk.version>1.11.579</aws-sdk.version>
+		<azure-sdk.version>1.29.0</azure-sdk.version>
 		<jackson.databind.version>2.10.1</jackson.databind.version>
+		<allbegray.slack-api.version>1.7.0.RELEASE</allbegray.slack-api.version>
+		<cassandra.migration.tool.version>2.1.9.0</cassandra.migration.tool.version>
+		<com.wavefront.version>1.15</com.wavefront.version>
 		<mangle.services.build.directory>mangle-services/target</mangle.services.build.directory>
 		<mangle.models.build.directory>mangle-models/target</mangle.models.build.directory>
 		<mangle.utils.build.directory>mangle-utils/target</mangle.utils.build.directory>
@@ -122,14 +124,6 @@
 		<sonar.coverage.exclusions>**/com/vmware/mangle/model/**,**/com/vmware/mangle/constants/**,**/com/vmware/mangle/services/dto/**
 			,**/com/vmware/mangle/services/enums/**,**/com/vmware/mangle/cassandra/**</sonar.coverage.exclusions>
 	</properties>
-
-	<!-- Plugin for OSSTP -->
-	<pluginRepositories>
-		<pluginRepository>
-			<id>osstp</id>
-			<url>https://build-artifactory.eng.vmware.com/artifactory/osmclient-plugins/</url>
-		</pluginRepository>
-	</pluginRepositories>
 
 	<dependencyManagement>
 		<dependencies>
@@ -163,6 +157,11 @@
 				</exclusions>
 			</dependency>
 			<dependency>
+				<groupId>com.vmware.mangle</groupId>
+				<artifactId>mangle-vcenter-adapter-models</artifactId>
+				<version>3.0.0</version>
+			</dependency>
+			<dependency>
 				<groupId>com.amazonaws</groupId>
 				<artifactId>aws-java-sdk</artifactId>
 				<version>${aws-sdk.version}</version>
@@ -181,6 +180,16 @@
 				<groupId>com.amazonaws</groupId>
 				<artifactId>aws-java-sdk-ec2</artifactId>
 				<version>${aws-sdk.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.amazonaws</groupId>
+				<artifactId>aws-java-sdk-rds</artifactId>
+				<version>${aws-sdk.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.microsoft.azure</groupId>
+				<artifactId>azure</artifactId>
+				<version>${azure-sdk.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>org.springframework.boot</groupId>
@@ -298,17 +307,14 @@
 				<groupId>org.testng</groupId>
 				<artifactId>testng</artifactId>
 				<version>${testng.version}</version>
+				<scope>provided</scope>
+				<optional>true</optional>
 			</dependency>
 			<dependency>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-starter-test</artifactId>
 				<version>${spring.boot.version}</version>
 				<scope>test</scope>
-			</dependency>
-			<dependency>
-				<groupId>com.fasterxml.jackson.core</groupId>
-				<artifactId>jackson-databind</artifactId>
-				<version>${jackson.databind.version}</version>
 			</dependency>
 			<dependency>
 				<artifactId>jackson-datatype-joda</artifactId>
@@ -556,6 +562,11 @@
 				<version>${hazelcast.version}</version>
 			</dependency>
 			<dependency>
+				<groupId>com.hazelcast</groupId>
+				<artifactId>hazelcast-kubernetes</artifactId>
+				<version>${hazelcast-kubernetes.version}</version>
+			</dependency>
+			<dependency>
 				<groupId>org.json</groupId>
 				<artifactId>json</artifactId>
 				<version>${org.json.version}</version>
@@ -575,6 +586,26 @@
 						<groupId>commons-logging</groupId>
 					</exclusion>
 				</exclusions>
+			</dependency>
+			<dependency>
+				<groupId>com.github.allbegray</groupId>
+				<artifactId>slack-api</artifactId>
+				<version>${allbegray.slack-api.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>io.smartcat</groupId>
+				<artifactId>cassandra-migration-tool</artifactId>
+				<version>${cassandra.migration.tool.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.wavefront</groupId>
+				<artifactId>wavefront-sdk-java</artifactId>
+				<version>${com.wavefront.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-starter-aop</artifactId>
+				<version>${spring.boot.version}</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
@@ -811,11 +842,6 @@
 					<version>3.5.0.1254</version>
 				</plugin>
 				<plugin>
-					<groupId>com.vmware.osstpmgt.plugins</groupId>
-					<artifactId>osstpmgt-maven-plugin</artifactId>
-					<version>${osstp.plugin.version}</version>
-				</plugin>
-				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-failsafe-plugin</artifactId>
 					<version>2.18.1</version>
@@ -867,6 +893,20 @@
 				<module>mangle-default-plugin</module>
 				<module>mangle-ui</module>
 				<module>mangle-services</module>
+				<module>mangle-integration-tests</module>
+			</modules>
+		</profile>
+		<profile>
+			<id>build-without-ui</id>
+			<modules>
+				<module>mangle-models</module>
+				<module>mangle-metric-reporter</module>
+				<module>mangle-utils</module>
+				<module>mangle-task-framework</module>
+				<module>mangle-test-plugin</module>
+				<module>mangle-default-plugin</module>
+				<module>mangle-services</module>
+				<module>mangle-integration-tests</module>
 			</modules>
 		</profile>
 		<profile>
@@ -878,6 +918,7 @@
 		<profile>
 			<id>vcenter-adapter</id>
 			<modules>
+				<module>mangle-vcenter-adapter-models</module>
 				<module>mangle-vcenter-adapter</module>
 			</modules>
 		</profile>
@@ -893,29 +934,111 @@
 				<module>mangle-default-plugin</module>
 				<module>mangle-ui</module>
 				<module>mangle-services</module>
+				<module>mangle-integration-tests</module>
 				<module>mangle-vcenter-adapter</module>
 			</modules>
 		</profile>
 		<profile>
-			<id>osstp</id>
+			<id>integration-test</id>
+			<modules>
+				<module>mangle-integration-tests</module>
+			</modules>
 			<build>
 				<plugins>
-					<!-- Plugin for OSSTP -->
 					<plugin>
-						<groupId>com.vmware.osstpmgt.plugins</groupId>
-						<artifactId>osstpmgt-maven-plugin</artifactId>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-failsafe-plugin</artifactId>
+						<configuration>
+							<suiteXmlFiles>
+								<file>src/test/resources/integration-test-suite.xml</file>
+							</suiteXmlFiles>
+							<properties>
+								<property>
+									<name>listener</name>
+									<value>com.vmware.fiaasco.services.test.listeners.TestNGListener</value>
+								</property>
+							</properties>
+						</configuration>
 						<executions>
 							<execution>
-								<id>create-inventory-file</id>
+								<id>integration-test</id>
+								<phase>integration-test</phase>
 								<goals>
-									<goal>inventory</goal>
+									<goal>integration-test</goal>
+									<goal>verify</goal>
 								</goals>
 							</execution>
 						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<id>vc-integration-test</id>
+			<modules>
+				<module>mangle-vcenter-adapter-integration-tests</module>
+			</modules>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-failsafe-plugin</artifactId>
 						<configuration>
-							<outputName>osstpmgt.yaml</outputName>
-							<excludedGroups>com.vmware,com.sun</excludedGroups>
+							<suiteXmlFiles>
+								<file>src/test/resources/integration-test-suite.xml</file>
+							</suiteXmlFiles>
+							<properties>
+								<property>
+									<name>listener</name>
+									<value>com.vmware.mangle.listeners.TestNGListener</value>
+								</property>
+							</properties>
 						</configuration>
+						<executions>
+							<execution>
+								<id>integration-test</id>
+								<phase>integration-test</phase>
+								<goals>
+									<goal>integration-test</goal>
+									<goal>verify</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<id>mangle-vc-integration-test</id>
+			<modules>
+				<module>mangle-integration-tests</module>
+			</modules>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-failsafe-plugin</artifactId>
+						<configuration>
+							<suiteXmlFiles>
+								<file>src/test/resources/vcenter-integration-test-suite.xml</file>
+							</suiteXmlFiles>
+							<properties>
+								<property>
+									<name>listener</name>
+									<value>com.vmware.fiaasco.services.test.listeners.TestNGListener</value>
+								</property>
+							</properties>
+						</configuration>
+						<executions>
+							<execution>
+								<id>integration-test</id>
+								<phase>integration-test</phase>
+								<goals>
+									<goal>integration-test</goal>
+									<goal>verify</goal>
+								</goals>
+							</execution>
+						</executions>
 					</plugin>
 				</plugins>
 			</build>

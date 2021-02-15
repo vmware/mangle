@@ -11,7 +11,11 @@
 
 package com.vmware.mangle.services.controller;
 
+import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
+import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
+
 import java.text.ParseException;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -23,25 +27,37 @@ import io.swagger.annotations.ApiParam;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.hateoas.Link;
+import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.Resources;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.vmware.mangle.cassandra.model.faults.specs.TaskSpec;
+import com.vmware.mangle.cassandra.model.resiliencyscore.ResiliencyScoreTask;
 import com.vmware.mangle.cassandra.model.tasks.Task;
+import com.vmware.mangle.cassandra.model.tasks.TaskFilter;
+import com.vmware.mangle.cassandra.model.tasks.TaskType;
 import com.vmware.mangle.model.response.DeleteOperationResponse;
 import com.vmware.mangle.model.response.ErrorDetails;
 import com.vmware.mangle.services.TaskService;
-import com.vmware.mangle.services.deletionutils.TaskDeletionService;
+import com.vmware.mangle.services.helpers.TaskHelper;
+import com.vmware.mangle.services.resiliencyscore.ResiliencyScoreService;
 import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
+
 
 /**
  * @author hkilari
@@ -54,39 +70,66 @@ import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 public class TaskController {
 
     private TaskService taskService;
-    private TaskDeletionService taskDeletionService;
+    private TaskHelper taskHelper;
+    private ResiliencyScoreService resiliencyScoreService;
 
     @Autowired
-    public TaskController(TaskService taskService, TaskDeletionService taskDeletionService) {
+    public TaskController(TaskService taskService, TaskHelper taskHelper,
+            ResiliencyScoreService resiliencyScoreService) {
         this.taskService = taskService;
-        this.taskDeletionService = taskDeletionService;
+        this.taskHelper = taskHelper;
+        this.resiliencyScoreService = resiliencyScoreService;
     }
 
     @ApiOperation(value = "API to get details of a Tasks Executed by Mangle", nickname = "getAllTasks")
-    @GetMapping(value = "", produces = "application/json")
-    public ResponseEntity<List<Task<TaskSpec>>> getAllTasks(
+    @GetMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Resources<Task<TaskSpec>>> getAllTasks(
             @RequestParam(name = "isScheduledTask", required = false) Boolean isScheduledTask,
             @RequestParam(name = "taskName", required = false) String taskName) throws MangleException {
         log.info("Received request to retrieve details of all the tasks");
-        return new ResponseEntity<>(taskService.getAllTasks(isScheduledTask, taskName), HttpStatus.OK);
+        Resources<Task<TaskSpec>> resources = new Resources<>(taskService.getAllTasks(isScheduledTask, taskName));
+        resources.add(getSelfLink(), getTaskHateoasLink(), deleteTasksHateoasLink());
+        return new ResponseEntity<>(resources, HttpStatus.OK);
+    }
+
+    @ApiOperation(value = "API to get all the sorted task based on index", nickname = "getTaskBasedOnIndex")
+    @PostMapping(value = "/pagination", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Resource<Map<String, Object>>> getTaskBasedOnIndex(@RequestBody TaskFilter taskFilter)
+            throws MangleException {
+        log.debug("Start execution of getTaskBasedOnIndex() method with filter:" + taskFilter);
+
+        Resource<Map<String, Object>> resource = new Resource<>(taskHelper
+                .getTaskBasedOnIndex(taskService.getAllTasks(), resiliencyScoreService.getAllTasks(), taskFilter));
+        resource.add(getSelfLink(), getTaskHateoasLink(), deleteTasksHateoasLink());
+        return new ResponseEntity<>(resource, HttpStatus.OK);
     }
 
     @ApiOperation(value = "API to get task details from Mangle using its id", nickname = "getTaskInfo")
-    @GetMapping(value = "/{taskId}", produces = "application/json")
-    public ResponseEntity<Task<TaskSpec>> getTask(@PathVariable String taskId) throws MangleException {
+    @GetMapping(value = "/{taskId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Resource<Object>> getTask(@PathVariable String taskId) throws MangleException {
         log.info("Received request to retrieve details for the task with the taskId: {}", taskId);
         if (StringUtils.isEmpty(taskId)) {
             throw new MangleException(ErrorCode.NO_TASK_FOUND, taskId);
         }
-        Task<TaskSpec> task = taskService.getTaskById(taskId);
+        Resource<Object> taskResource;
+        if (taskHelper.getTaskType(taskId) == TaskType.RESILIENCY_SCORE) {
+            ResiliencyScoreTask resiliencyScoreTask = resiliencyScoreService.getTaskById(taskId);
+            taskResource = new Resource<>(resiliencyScoreTask);
+        } else {
+            Task<TaskSpec> task = taskService.getTaskById(taskId);
+            taskResource = new Resource<>(task);
+        }
         HttpHeaders headers = new HttpHeaders();
-        return new ResponseEntity<>(task, headers, HttpStatus.OK);
+        taskResource.add(getSelfLink(), getAllTasksHateoasLink(), getTaskHateoasLink(), deleteTasksHateoasLink());
+
+        return new ResponseEntity<>(taskResource, headers, HttpStatus.OK);
     }
 
+
     @ApiOperation(value = "API to delete tasks from the application")
-    @DeleteMapping(value = "", produces = "application/json")
+    @DeleteMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ErrorDetails> deleteTasks(@RequestParam List<String> tasksIds) throws MangleException {
-        DeleteOperationResponse response = taskDeletionService.deleteTasksByIds(tasksIds);
+        DeleteOperationResponse response = taskHelper.deleteTasks(tasksIds);
         ErrorDetails errorDetails = new ErrorDetails();
         if (response.getAssociations().size() == 0) {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -103,11 +146,28 @@ public class TaskController {
     }
 
     @ApiOperation(value = "API to clean-up of InProgress tasks since threshold time specified", nickname = "cleanupInprogressTasks")
-    @PutMapping(value = "/clean-up")
+    @PutMapping(value = "/clean-up", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> cleanupInprogressTasks(
             @ApiParam(value = "Task cleanup threshold value in minutes") @RequestParam(value = "taskCleanupThreshold", required = false, defaultValue = "60") String taskCleanupThreshold)
             throws ParseException, MangleException {
         return new ResponseEntity<>(taskService.cleanupInprogressTasks(Long.parseLong(taskCleanupThreshold)),
                 HttpStatus.OK);
+    }
+
+    public Link getSelfLink() {
+        return new Link(ServletUriComponentsBuilder.fromCurrentRequestUri().build().toUri().toASCIIString())
+                .withSelfRel();
+    }
+
+    public Link getAllTasksHateoasLink() throws MangleException {
+        return linkTo(methodOn(TaskController.class).getAllTasks(false, "")).withRel("GET-ALL");
+    }
+
+    public Link getTaskHateoasLink() throws MangleException {
+        return linkTo(methodOn(TaskController.class).getTask("")).withRel("GET-TASK");
+    }
+
+    public Link deleteTasksHateoasLink() throws MangleException {
+        return linkTo(methodOn(TaskController.class).deleteTasks(Collections.emptyList())).withRel("DELETE");
     }
 }

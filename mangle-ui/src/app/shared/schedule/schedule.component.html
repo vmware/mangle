@@ -1,0 +1,35 @@
+<div class="form-group">
+    <label><b>Schedule</b></label>
+</div>
+<br />
+<fieldset ngModelGroup="schedule">
+    <div class="form-group">
+        <label>Schedule</label>
+        <div class="clr-control-container clr-control-inline">
+            <div class="clr-radio-wrapper">
+                <input type="radio" id="timeInMilliseconds" name="scheduleBody" value="timeInMilliseconds" class="clr-radio" (click)="setScheduleVal($event.target);">
+                <label for="timeInMilliseconds" class="clr-control-label">One Time</label>
+            </div>
+            <div class="clr-radio-wrapper">
+                <input type="radio" id="cronExpression" name="scheduleBody" value="cronExpression" class="clr-radio" (click)="setScheduleVal($event.target);">
+                <label for="cronExpression" class="clr-control-label">Recurrence</label>
+            </div>
+        </div>
+    </div>
+    <div class="form-group" [hidden]="timeInMillisecondsHidden">
+        <input type="number" min="1" max="9223372036854775807" name="timeInMilliseconds" [(ngModel)]="faultFormData.schedule.timeInMilliseconds" [required]="!timeInMillisecondsHidden" (input)="callSubmitButtonChange();">&nbsp;&nbsp;<span style="height:39px;">Epoch Milliseconds</span>
+    </div>
+    <div class="form-group" [hidden]="cronExpressionHidden">
+        <input type="text" name="cronExpression" [(ngModel)]="faultFormData.schedule.cronExpression" [required]="!cronExpressionHidden" (input)="callSubmitButtonChange();">
+        <clr-icon shape="calendar" style="width:21px;height:39px;" (click)="showCronModal();"></clr-icon>&nbsp;
+        <clr-signpost>
+            <clr-icon shape="info" style="width:24px;height:41px;" clrSignpostTrigger></clr-icon>
+            <clr-signpost-content [clrPosition]="'top-right'" *clrIfOpen>Please provide the Spring supported cron expressions only. Refer to
+                <a href="https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/scheduling/support/CronSequenceGenerator.html" target="_blank">https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/scheduling/support/CronSequenceGenerator.html</a>
+            </clr-signpost-content>
+        </clr-signpost>
+    </div>
+    <div class="form-group" [hidden]="descriptionHidden">
+        <input type="text" name="description" [(ngModel)]="faultFormData.schedule.description">&nbsp;&nbsp;<span style="height:39px;">Description (optional)</span>
+    </div>
+</fieldset>

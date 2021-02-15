@@ -237,7 +237,7 @@ public class CustomDockerClient implements EndpointClient {
             throw new MangleException(ErrorConstants.DOCKER_CONNECTION_FAILURE, ErrorCode.DOCKER_CONNECTION_FAILURE,
                     e.getMessage());
         }
-        List<String> containerList = new ArrayList<String>();
+        List<String> containerList = new ArrayList<>();
         if (containers != null && !containers.isEmpty()) {
             for (Container container : containers) {
                 containerList.add(container.getNames()[0].substring(1));

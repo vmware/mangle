@@ -1,9 +1,9 @@
 <div class="main-container">
 	<div class="content-container">
-		<div class="content-area">
+		<div class="content-area" style="padding-top: 0;">
 			<router-outlet></router-outlet>
 		</div>
-		<clr-vertical-nav [clrVerticalNavCollapsible]="faultCollapsible">
+		<clr-vertical-nav [clrVerticalNavCollapsible]="false">
 			<clr-vertical-nav-group routerLinkActive="active">
 				<clr-icon shape="cloud" clrVerticalNavIcon></clr-icon>Infrastructure Faults
 				<clr-vertical-nav-group-children *clrIfExpanded="infraExpand">
@@ -11,10 +11,14 @@
 					<a clrVerticalNavLink [routerLink]="['memory-infra']" routerLinkActive="active">Memory</a>
 					<a clrVerticalNavLink [routerLink]="['diskio-infra']" routerLinkActive="active">Disk IO</a>
 					<a clrVerticalNavLink [routerLink]="['killprocess']" routerLinkActive="active">Kill Process</a>
+					<a clrVerticalNavLink [routerLink]="['stopservice']" routerLinkActive="active">Stop Service</a>
 					<a clrVerticalNavLink [routerLink]="['filehandler-leak-infra']" routerLinkActive="active">File
 						Handler Leak</a>
 					<a clrVerticalNavLink [routerLink]="['disk-space']" routerLinkActive="active">Disk Space</a>
 					<a clrVerticalNavLink [routerLink]="['kernel-panic']" routerLinkActive="active">Kernel Panic</a>
+					<a clrVerticalNavLink [routerLink]="['clock-skew']" routerLinkActive="active">Clock Skew</a>
+					<a clrVerticalNavLink [routerLink]="['network-partition']" routerLinkActive="active">Network
+						Partition</a>
 					<clr-vertical-nav-group routerLinkActive="active">
 						<span>&emsp;<clr-icon shape="network-globe" clrVerticalNavIcon></clr-icon>Network</span>
 						<clr-vertical-nav-group-children *clrIfExpanded="networkExpand">
@@ -49,27 +53,30 @@
 					<clr-vertical-nav-group routerLinkActive="active">
 						<span>&emsp;<clr-icon shape="vmw-app" clrVerticalNavIcon></clr-icon>vCenter</span>
 						<clr-vertical-nav-group-children *clrIfExpanded="vcenterExpand">
-							<a clrVerticalNavLink [routerLink]="['vcenter-disk']"
-								routerLinkActive="active">&emsp;Disk</a>
-							<a clrVerticalNavLink [routerLink]="['vcenter-nic']" routerLinkActive="active">&emsp;Nic</a>
-							<a clrVerticalNavLink [routerLink]="['vcenter-state']"
-								routerLinkActive="active">&emsp;State</a>
+							<a clrVerticalNavLink [routerLink]="['vcenter']"
+								routerLinkActive="active">&emsp;VM</a>
+							<a clrVerticalNavLink [routerLink]="['vcenter/vcenter-host']" routerLinkActive="active">&emsp;Host</a>
 						</clr-vertical-nav-group-children>
 					</clr-vertical-nav-group>
 					<clr-vertical-nav-group routerLinkActive="active">
 						<span style="margin-left: 25px"><img src="assets/images/aws/aws.png" height="20"
 								width="20" />&emsp;&emsp;AWS</span>
 						<clr-vertical-nav-group-children *clrIfExpanded="awsExpand">
-							<clr-vertical-nav-group routerLinkActive="active">
-								<span style="margin-left: 35px;"><img src="assets/images/aws/ec2.png" height="20"
-										width="20" />EC2</span>
-								<clr-vertical-nav-group-children *clrIfExpanded="awsEC2Expand">
-									<a clrVerticalNavLink style="margin-left: 45px;" [routerLink]="['aws-ec2-state']"
-										routerLinkActive="active">State</a>
-									<a clrVerticalNavLink style="margin-left: 45px;" [routerLink]="['aws-ec2-network']"
-										routerLinkActive="active">Network</a>
-								</clr-vertical-nav-group-children>
-							</clr-vertical-nav-group>
+							<a clrVerticalNavLink [routerLink]="['aws']" routerLinkActive="active"><span
+									style="margin-left: 35px;"><img src="assets/images/aws/ec2.png" height="20"
+										width="20" />EC2</span></a>
+							<a clrVerticalNavLink [routerLink]="['aws/rds']" routerLinkActive="active"><span
+									style="margin-left: 35px;"><img src="assets/images/aws/rds.png" height="20"
+										width="20" />RDS</span></a>
+						</clr-vertical-nav-group-children>
+					</clr-vertical-nav-group>
+					<clr-vertical-nav-group routerLinkActive="active">
+						<span style="margin-left: 25px"><img src="assets/images/azure/azure.png" height="20"
+								width="20" />&emsp;&emsp;Azure</span>
+						<clr-vertical-nav-group-children *clrIfExpanded="azureExpand">
+							<a clrVerticalNavLink [routerLink]="['azure']" routerLinkActive="active">
+								<span style="margin-left: 35px;"><img src="assets/images/azure/azure-vm.png" height="20"
+										width="20" />VirtualMachine</span></a>
 						</clr-vertical-nav-group-children>
 					</clr-vertical-nav-group>
 					<a clrVerticalNavLink>
@@ -77,15 +84,6 @@
 					</a>
 					<a clrVerticalNavLink>
 						<font color="#A9B6BE">Fork Bomb</font>
-					</a>
-					<a clrVerticalNavLink>
-						<font color="#A9B6BE">DB Connection Leak</font>
-					</a>
-					<a clrVerticalNavLink>
-						<font color="#A9B6BE">DB Transaction Error</font>
-					</a>
-					<a clrVerticalNavLink>
-						<font color="#A9B6BE">DB Transaction Latency</font>
 					</a>
 				</clr-vertical-nav-group-children>
 			</clr-vertical-nav-group>
@@ -115,6 +113,31 @@
 					<a clrVerticalNavLink>
 						<font color="#A9B6BE">Denial of Service Attack</font>
 					</a>
+				</clr-vertical-nav-group-children>
+			</clr-vertical-nav-group>
+			<clr-vertical-nav-group routerLinkActive="active">
+				<clr-icon shape="storage" clrVerticalNavIcon></clr-icon>Database Faults
+				<clr-vertical-nav-group-children *clrIfExpanded="dbExpand">
+					<a clrVerticalNavLink [routerLink]="['db-connection-leak']" routerLinkActive="active">Connection
+						Leak</a>
+					<a clrVerticalNavLink [routerLink]="['db-transaction-error']" routerLinkActive="active">Transaction
+						Error</a>
+					<a clrVerticalNavLink [routerLink]="['db-transaction-latency']"
+						routerLinkActive="active">Transaction Latency</a>
+					<clr-vertical-nav-group routerLinkActive="active">
+						<span style="margin-left: 24px"><img src="assets/images/redis.png" height="20"
+								width="20" />&emsp;&emsp;Redis</span>
+						<clr-vertical-nav-group-children *clrIfExpanded="redisExpand">
+							<a clrVerticalNavLink [routerLink]="['redis-db-delay']" routerLinkActive="active"><span
+									style="margin-left: 20px;">Delay</span></a>
+							<a clrVerticalNavLink [routerLink]="['redis-db-return-error']"
+								routerLinkActive="active"><span style="margin-left: 20px;">Return Error</span></a>
+							<a clrVerticalNavLink [routerLink]="['redis-db-return-empty']"
+								routerLinkActive="active"><span style="margin-left: 20px;">Return Empty</span></a>
+							<a clrVerticalNavLink [routerLink]="['redis-db-drop-connection']"
+								routerLinkActive="active"><span style="margin-left: 20px;">Drop Connection</span></a>
+						</clr-vertical-nav-group-children>
+					</clr-vertical-nav-group>
 				</clr-vertical-nav-group-children>
 			</clr-vertical-nav-group>
 			<a clrVerticalNavLink [routerLink]="['custom-fault']" routerLinkActive="active">

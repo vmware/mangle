@@ -1,0 +1,26 @@
+<app-alert [(alertMessage)]="alertMessage" [isErrorMessage]="isErrorMessage"
+    (alertMessageChange)="alertMessage = $event"></app-alert>
+<div>
+    <h3 class="modal-title">Execute/Schedule Stop Service Fault</h3>
+    <form #stopServiceForm="ngForm" (ngSubmit)="executeStopServiceFault(stopServiceForm.value);" ngNativeValidate>
+        <section class="form-block">
+            <fault-endpoint [faultFormData]="faultFormData" [supportedEpTypes]="supportedEpTypes" [endpoints]="endpoints" (displayEndpointFieldsEvent)="displayEndpointFields($event);"></fault-endpoint>
+            <fault-injectionhomedir [faultFormData]="faultFormData"></fault-injectionhomedir> 
+            <div class="form-group">
+                <label for="serviceName">Service Name</label>
+                <input type="text" name="serviceName"
+                [(ngModel)]="faultFormData.serviceName" required>
+            </div>
+            <fault-timeoutms [faultFormData]="faultFormData"></fault-timeoutms>
+            <fault-schedule [faultFormData]="faultFormData" (submitButtonChange)="setSubmitButton();" (setCronModal)="viewCronModal($event);"></fault-schedule>
+            <fault-tags [tagsData]="tagsData" (tagsModalEvent)="tagsModal=$event;"></fault-tags>
+            <fault-notifiers [notifiersData]="notifiersData" (notifiersModalEvent)="notifierModal=$event;"></fault-notifiers>
+        </section>
+        <button type="submit" class="btn btn-primary" [clrLoading]="runBtnState" [disabled]="disableSchedule">SCHEDULE FAULT</button>
+        <button type="submit" class="btn btn-primary" [clrLoading]="runBtnState" [disabled]="disableRun">RUN FAULT</button>
+    </form>
+</div>
+<app-cron [cronModal]="cronModal" [cronValOrig]="faultFormData.schedule.cronExpression"
+    (cronMessageEvent)="setScheduleCron($event);"></app-cron>
+<app-tags [tagsModal]="tagsModal" [tagsData]="tagsData" (updateTagsModal)="tagsModal=$event;"></app-tags>
+<app-notifiers [notifierModal]="notifierModal" [notifiersData]="notifiersData" (updateNotifiersModal)="notifierModal=$event;"></app-notifiers>

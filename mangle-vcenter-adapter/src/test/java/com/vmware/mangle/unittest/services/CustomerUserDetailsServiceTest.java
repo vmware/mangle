@@ -11,9 +11,9 @@
 
 package com.vmware.mangle.unittest.services;
 
-import org.mockito.InjectMocks;
-import org.mockito.MockitoAnnotations;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -26,19 +26,34 @@ import com.vmware.mangle.service.CustomerUserDetailsService;
 
 public class CustomerUserDetailsServiceTest {
 
-    @InjectMocks
     CustomerUserDetailsService customerUserDetailsService;
+
+    private PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    private static final String DUMMY_DEFAULT_ADMIN_PASSWORD = "admin";
+    private static final String CUSTOM__ADMIN_PASSWORD = "";
 
     private String ADMIN_USERNAME = "admin";
 
     @BeforeMethod
     public void initMocks() {
-        MockitoAnnotations.initMocks(this);
+        customerUserDetailsService =
+                new CustomerUserDetailsService(passwordEncoder, CUSTOM__ADMIN_PASSWORD, DUMMY_DEFAULT_ADMIN_PASSWORD);
     }
 
     @Test
     public void testLoadUserByUsername() {
         UserDetails userDetails = customerUserDetailsService.loadUserByUsername(ADMIN_USERNAME);
         Assert.assertEquals(userDetails.getUsername(), "admin");
+        Assert.assertEquals(userDetails.getPassword(), DUMMY_DEFAULT_ADMIN_PASSWORD);
+    }
+
+    @Test
+    public void testNonNullCustomAdminPasswordLoadUserByUsername() {
+        customerUserDetailsService = new CustomerUserDetailsService(passwordEncoder, DUMMY_DEFAULT_ADMIN_PASSWORD,
+                DUMMY_DEFAULT_ADMIN_PASSWORD);
+        UserDetails userDetails = customerUserDetailsService.loadUserByUsername(ADMIN_USERNAME);
+        Assert.assertEquals(userDetails.getUsername(), "admin");
+        Assert.assertNotEquals(userDetails.getPassword(), DUMMY_DEFAULT_ADMIN_PASSWORD);
+        Assert.assertTrue(passwordEncoder.matches(DUMMY_DEFAULT_ADMIN_PASSWORD, userDetails.getPassword()));
     }
 }

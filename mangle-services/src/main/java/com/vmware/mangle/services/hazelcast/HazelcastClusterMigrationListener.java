@@ -32,6 +32,9 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
+import com.vmware.mangle.cassandra.model.faults.specs.TaskSpec;
+import com.vmware.mangle.cassandra.model.tasks.Task;
+import com.vmware.mangle.services.TaskService;
 import com.vmware.mangle.services.enums.MangleQuorumStatus;
 import com.vmware.mangle.utils.constants.Constants;
 import com.vmware.mangle.utils.constants.HazelcastConstants;
@@ -75,6 +78,9 @@ public class HazelcastClusterMigrationListener implements MigrationListener, Haz
     private List<String> taskQueue = new ArrayList<>();
 
     private ThreadPoolTaskScheduler taskScheduler;
+
+    @Autowired
+    private TaskService taskService;
 
     @Autowired
     public void setTaskScheduler(ThreadPoolTaskScheduler threadPoolTaskScheduler) {
@@ -121,32 +127,37 @@ public class HazelcastClusterMigrationListener implements MigrationListener, Haz
 
             Set<Object> keys = map.localKeySet();
             synchronized (hazelcastTaskService) {
-                for (Object key : keys) {
-                    String taskId = String.valueOf(key);
-                    if (isTaskValidForTriggeringOnCurrentNode(migrationEvent, taskId)) {
-                        try {
-                            log.info("Triggering task {} execution on the node {}", taskId,
-                                    migrationEvent.getNewOwner().getAddress());
-                            if (hazelcastTaskService.isScheduledTask(taskId)) {
-                                hazelcastTaskService.triggerTask(taskId);
-                            } else {
-                                taskQueue.add(taskId);
-                            }
-                        } catch (MangleException | HazelcastInstanceNotActiveException e) {
-                            log.error("Triggering of the task {} failed with the exception: {}", taskId,
-                                    e.getStackTrace());
-                        }
-                    } else {
-                        log.debug("Task {} to be migrated is already re-triggered on the node {}", taskId,
-                                migrationEvent.getNewOwner());
-                    }
-                }
+                migrationTasks(migrationEvent, keys);
             }
         }
         log.trace("Migration of the partition {} to {} is completed", migrationEvent.getPartitionId(),
                 migrationEvent.getNewOwner().getAddress());
         this.taskScheduler.schedule(this::triggerTasks,
                 new Date(System.currentTimeMillis() + Constants.ONE_MINUTE_IN_MILLIS * 5));
+    }
+
+    private void migrationTasks(MigrationEvent migrationEvent, Set<Object> keys) {
+        for (Object key : keys) {
+            String taskId = String.valueOf(key);
+            if (isTaskValidForTriggeringOnCurrentNode(migrationEvent, taskId)) {
+                try {
+                    log.info("Triggering task {} execution on the node {}", taskId,
+                            migrationEvent.getNewOwner().getAddress());
+                    if (hazelcastTaskService.isScheduledTask(taskId)) {
+                        Task<TaskSpec> task = taskService.getTaskById(taskId);
+                        hazelcastTaskService.triggerTask(task);
+                    } else {
+                        taskQueue.add(taskId);
+                    }
+                } catch (MangleException | HazelcastInstanceNotActiveException e) {
+                    log.error("Triggering of the task {} failed with the exception: {}", taskId,
+                            e.getStackTrace());
+                }
+            } else {
+                log.debug("Task {} to be migrated is already re-triggered on the node {}", taskId,
+                        migrationEvent.getNewOwner());
+            }
+        }
     }
 
     private boolean isTaskInCurrentMigratedPartition(MigrationEvent migrationEvent, String taskId) {
@@ -211,7 +222,8 @@ public class HazelcastClusterMigrationListener implements MigrationListener, Haz
     private void triggerTasks() {
         for (String taskId : taskQueue) {
             try {
-                hazelcastTaskService.triggerTask(taskId);
+                Task<TaskSpec> task = taskService.getTaskById(taskId);
+                hazelcastTaskService.triggerTask(task);
             } catch (MangleException e) {
                 log.error("Failed to re-trigger the task {} because  of the exception {}", taskId, e.getMessage());
             }

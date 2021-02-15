@@ -1,0 +1,9 @@
+<clr-dg-action-bar>
+    <div class="btn-group">
+        <button type="button" class="btn btn-sm btn-secondary" [disabled]="addDisabled" (click)="callAdd();" data-tag='Add-Button'><clr-icon shape="plus"></clr-icon> Add</button>
+        <button type="button" class="btn btn-sm btn-secondary" [disabled]="editDisabled" (click)="callEdit();" data-tag='Edit-Button'><clr-icon shape="pencil"></clr-icon> Edit</button>
+        <button type="button" class="btn btn-sm btn-secondary" [disabled]="deleteDisabled" (click)="callDelete();" data-tag='Delete-Button'><clr-icon shape="trash"></clr-icon> Delete</button>
+        <button type="button" class="btn btn-sm btn-secondary" [disabled]="enableDisabled" (click)="callEnable();" data-tag='Enable-Button'><clr-icon shape="check"></clr-icon> Enable</button>
+        <button type="button" class="btn btn-sm btn-secondary" [disabled]="disabledDisabled" (click)="callDisable();" data-tag='Disable-Button'><clr-icon shape="ban"></clr-icon> Disable</button>
+    </div>
+</clr-dg-action-bar>

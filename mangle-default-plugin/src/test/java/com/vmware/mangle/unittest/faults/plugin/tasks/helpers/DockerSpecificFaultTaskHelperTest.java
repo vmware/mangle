@@ -13,7 +13,6 @@ package com.vmware.mangle.unittest.faults.plugin.tasks.helpers;
 
 
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 
 import java.util.ArrayList;
@@ -118,8 +117,9 @@ public class DockerSpecificFaultTaskHelperTest {
             injectionTask.setDockerFaultHelper(dockerFaultHelper1);
             Mockito.doNothing().when(publisher).publishEvent(Mockito.any());
             injectionTask.setEventPublisher(publisher);
-            doNothing().when(commandInfoExecutionHelper).runCommands(Mockito.any(), Mockito.any(), Mockito.any(),
-                    Mockito.any());
+            Mockito.when(
+                    commandInfoExecutionHelper.runCommands(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
+                    .thenReturn("");
             injectionTask.setCommandInfoExecutionHelper(commandInfoExecutionHelper);
             task = injectionTask.init(dockerPauseFaultSpec, null);
 
@@ -176,37 +176,28 @@ public class DockerSpecificFaultTaskHelperTest {
     }
 
     private List<CommandInfo> getDockerPauseInjectionCommandInfoList() {
-        List<CommandInfo> commandInfoList = new ArrayList<>();
-        CommandInfo injectionCommandInfo = new CommandInfo();
-        injectionCommandInfo.setCommand("DOCKER_PAUSE:--containerName testContainer");
-        injectionCommandInfo.setIgnoreExitValueCheck(false);
-        injectionCommandInfo.setNoOfRetries(0);
-        injectionCommandInfo.setRetryInterval(0);
-        injectionCommandInfo.setTimeout(0);
-        injectionCommandInfo.setExpectedCommandOutputList(Collections.emptyList());
-        injectionCommandInfo.setKnownFailureMap(KnownFailuresHelper.getKnownFailureOfDockerFaultInjectionRequest());
-        commandInfoList.add(injectionCommandInfo);
-
-
         List<CommandOutputProcessingInfo> commandOutputProcessingInfoList = new ArrayList<>();
         CommandOutputProcessingInfo commandOutputProcessingInfo = new CommandOutputProcessingInfo();
         commandOutputProcessingInfo.setExtractedPropertyName("containerId");
         commandOutputProcessingInfo.setRegExpression("^.*$");
         commandOutputProcessingInfoList.add(commandOutputProcessingInfo);
-        injectionCommandInfo.setCommandOutputProcessingInfoList(commandOutputProcessingInfoList);
+        CommandInfo injectionCommandInfo =
+                CommandInfo.builder("DOCKER_PAUSE:--containerName testContainer").ignoreExitValueCheck(false)
+                        .noOfRetries(0).retryInterval(0).timeout(0).expectedCommandOutputList(Collections.emptyList())
+                        .knownFailureMap(KnownFailuresHelper.getKnownFailureOfDockerFaultInjectionRequest())
+                        .commandOutputProcessingInfoList(commandOutputProcessingInfoList).build();
+
+        List<CommandInfo> commandInfoList = new ArrayList<>();
+        commandInfoList.add(injectionCommandInfo);
         return commandInfoList;
     }
 
     private List<CommandInfo> getDockerPauseRemediationCommandInfoList() {
         List<CommandInfo> list = new ArrayList<>();
-        CommandInfo remediationCommandInfo = new CommandInfo();
-        remediationCommandInfo.setCommand("DOCKER_UNPAUSE:--containerName testContainer");
-        remediationCommandInfo.setIgnoreExitValueCheck(false);
-        remediationCommandInfo.setNoOfRetries(0);
-        remediationCommandInfo.setRetryInterval(0);
-        remediationCommandInfo.setTimeout(0);
-        remediationCommandInfo.setExpectedCommandOutputList(Collections.emptyList());
-        remediationCommandInfo.setKnownFailureMap(KnownFailuresHelper.getKnownFailureOfDockerFaultRemediationRequest());
+        CommandInfo remediationCommandInfo =
+                CommandInfo.builder("DOCKER_UNPAUSE:--containerName testContainer").ignoreExitValueCheck(false)
+                        .noOfRetries(0).retryInterval(0).timeout(0).expectedCommandOutputList(Collections.emptyList())
+                        .knownFailureMap(KnownFailuresHelper.getKnownFailureOfDockerFaultRemediationRequest()).build();
         list.add(remediationCommandInfo);
         return list;
     }

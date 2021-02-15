@@ -3,9 +3,9 @@
     height:1200px;
 }
 .menu-height {
-    max-height: 15rem;
+    max-height: calc(10 * 1.5rem);
     overflow-y: scroll;
 }
 .option-height {
-    min-height: fit-content;
+    min-height: 1.5rem;
 }

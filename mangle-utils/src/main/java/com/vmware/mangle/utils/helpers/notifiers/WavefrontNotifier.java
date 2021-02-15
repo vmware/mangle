@@ -19,6 +19,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.CollectionUtils;
 
+import com.vmware.mangle.cassandra.model.tasks.TaskType;
 import com.vmware.mangle.model.notifier.WavefrontEventDetailsDto;
 import com.vmware.mangle.model.notifier.WavefrontEventDto;
 import com.vmware.mangle.model.notifier.WavefrontEventItemDto;
@@ -39,7 +40,7 @@ import com.vmware.mangle.utils.constants.MetricProviderConstants;
  */
 
 @Log4j2
-public class WavefrontNotifier implements Notifier {
+public class WavefrontNotifier implements MetricProviderNotifier {
 
     private WaveFrontServerClient wavefrontClient;
 
@@ -47,6 +48,8 @@ public class WavefrontNotifier implements Notifier {
         this.wavefrontClient = wavefrontClient;
     }
 
+    @SuppressWarnings("squid:S1066")
+    @Override
     public boolean sendEvent(FaultEventSpec faultEventInfo) {
         WavefrontEventDto eventSpec = getEventSpec(faultEventInfo);
         log.debug("Event Data constructed: " + eventSpec.toString());
@@ -87,17 +90,6 @@ public class WavefrontNotifier implements Notifier {
         return annotations;
     }
 
-    private String getEventDetails(FaultEventSpec faultEventInfo) {
-        StringBuilder details = new StringBuilder();
-        details.append(MetricProviderConstants.START_TIME_TEXT + faultEventInfo.getFaultStartTime());
-        details.append(MetricProviderConstants.SEPERATOR + MetricProviderConstants.END_TIME_TEXT
-                + faultEventInfo.getFaultEndTime());
-        details.append(MetricProviderConstants.SEPERATOR + faultEventInfo.getFaultDescription());
-        details.append(MetricProviderConstants.NEW_LINE + MetricProviderConstants.STATUS_TEXT
-                + faultEventInfo.getFaultStatus());
-        return details.toString();
-    }
-
     private ArrayList<String> getEventTags(FaultEventSpec faultEventInfo) {
         ArrayList<String> tags = new ArrayList<>();
         if (null == faultEventInfo.getTags() || faultEventInfo.getTags().isEmpty()) {
@@ -123,6 +115,7 @@ public class WavefrontNotifier implements Notifier {
         return true;
     }
 
+    @SuppressWarnings("unchecked")
     private boolean send(WavefrontEventDto eventSpec) {
         ResponseEntity<String> response =
                 (ResponseEntity<String>) wavefrontClient.post(MetricProviderConstants.WAVEFRONT_API_SEND_EVENT,
@@ -134,6 +127,7 @@ public class WavefrontNotifier implements Notifier {
         return ApiUtils.isResponseCodeSuccess(response.getStatusCode().value());
     }
 
+    @SuppressWarnings("unchecked")
     public WavefrontEventDetailsDto retrieveEvents(String eventName) {
         WavefrontEventSearchQueryDto query = new WavefrontEventSearchQueryDto();
         query.setKey("name");
@@ -156,8 +150,7 @@ public class WavefrontNotifier implements Notifier {
         if (null != apiResponse && ApiUtils.isResponseCodeSuccess(apiResponse.getStatusCode().value())) {
             log.debug("Response is : " + apiResponse.toString());
             WavefrontEventSearchResponse response = apiResponse.getBody();
-            WavefrontEventDetailsDto events = response.getResponse();
-            return events;
+            return response.getResponse();
         }
         log.error(" Request to retrieve events has failed. Returning null");
         return null;
@@ -168,17 +161,21 @@ public class WavefrontNotifier implements Notifier {
      *            Event with the specified event Name to be closed. Please provide the complete
      *
      */
-    public boolean closeEvent(String eventName) {
+    @SuppressWarnings("unchecked")
+    @Override
+    public boolean closeEvent(FaultEventSpec faultEventInfo, String taskId, String extension) {
+        String eventName = getFaultEventName(faultEventInfo.getFaultName(), TaskType.INJECTION, taskId);
         WavefrontEventDetailsDto eventDetails = retrieveEvents(eventName);
         if (null != eventDetails && !CollectionUtils.isEmpty(eventDetails.getItems())) {
             ArrayList<WavefrontEventItemDto> events = eventDetails.getItems();
             WavefrontEventItemDto firstEventInTheList = events.get(0);
 
-            if (firstEventInTheList.getRunningState().contains(MetricProviderConstants.WAVEFRONT_ONGOING_STATE)
+            if ((firstEventInTheList.getRunningState().contains(MetricProviderConstants.WAVEFRONT_ONGOING_STATE)
+                    || firstEventInTheList.getRunningState().contains(MetricProviderConstants.WAVEFRONT_ENDED_STATE))
                     && firstEventInTheList.getEndTime() > 0) {
                 log.debug(
-                        "The event is ONGoing with endtime is already set. The Event cannot be closed. Need to be recreated");
-                deleteAndReCreateEvent(firstEventInTheList);
+                        "The event is ONGoing/Ended with endtime is already set. The Event cannot be closed. Need to be recreated");
+                deleteAndReCreateEvent(firstEventInTheList, faultEventInfo);
                 return true;
             }
             if (firstEventInTheList.getRunningState().contains(MetricProviderConstants.WAVEFRONT_ONGOING_STATE)) {
@@ -200,14 +197,14 @@ public class WavefrontNotifier implements Notifier {
         return false;
     }
 
-    private void deleteAndReCreateEvent(WavefrontEventItemDto eventInfo) {
+    private void deleteAndReCreateEvent(WavefrontEventItemDto eventInfo, FaultEventSpec faultEventInfo) {
         if (deleteEvent(eventInfo.getId())) {
             log.debug("Recreating the event: " + eventInfo.getName());
             WavefrontEventDto event = new WavefrontEventDto();
             event.setName(eventInfo.getName());
             event.setStartTime(eventInfo.getStartTime());
             event.setTags(eventInfo.getTags());
-            event.setAnnotations(eventInfo.getAnnotations());
+            event.setAnnotations(getEventAnnotations(faultEventInfo));
             String endTime =
                     CommonUtils.getTime(System.currentTimeMillis() + MetricProviderConstants.ONE_SECOND_IN_MILLIS);
             event.setEndTime(CommonUtils.getDateObjectFor(endTime).getTime());
@@ -220,6 +217,7 @@ public class WavefrontNotifier implements Notifier {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private boolean deleteEvent(String eventId) {
         log.debug("Deleting the event with ID: " + eventId);
         String url = String.format(MetricProviderConstants.WAVEFRONT_DELETE_EVENT, eventId);
@@ -231,5 +229,15 @@ public class WavefrontNotifier implements Notifier {
         }
         log.warn("Deleting of the event has failed");
         return false;
+    }
+
+    private String getFaultEventName(String faultName, TaskType taskType, String taskId) {
+        StringBuilder eventName = new StringBuilder();
+        eventName.append(faultName.split(MetricProviderConstants.HYPHEN)[0]);
+        eventName.append(MetricProviderConstants.HYPHEN);
+        eventName.append(taskType);
+        eventName.append(MetricProviderConstants.HYPHEN);
+        eventName.append(taskId);
+        return eventName.toString();
     }
 }

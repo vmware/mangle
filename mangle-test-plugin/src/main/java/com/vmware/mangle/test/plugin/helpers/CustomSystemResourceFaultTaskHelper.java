@@ -111,7 +111,7 @@ public class CustomSystemResourceFaultTaskHelper<T extends CommandExecutionFault
 
 
     @Override
-    protected ICommandExecutor getExecutor(Task<T> task) throws MangleException {
+    public ICommandExecutor getExecutor(Task<T> task) throws MangleException {
         if (commandExecutor == null) {
             commandExecutor = systemResourceFaultHelper.getExecutor(task.getTaskData());
         }

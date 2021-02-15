@@ -25,9 +25,12 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.vmware.mangle.cassandra.model.endpoint.AWSCredentials;
+import com.vmware.mangle.cassandra.model.endpoint.AzureCredentials;
+import com.vmware.mangle.cassandra.model.endpoint.DatabaseCredentials;
 import com.vmware.mangle.cassandra.model.endpoint.K8SCredentials;
 import com.vmware.mangle.cassandra.model.endpoint.RemoteMachineCredentials;
 import com.vmware.mangle.cassandra.model.endpoint.VCenterCredentials;
+import com.vmware.mangle.model.enums.DatabaseType;
 import com.vmware.mangle.model.enums.EndpointType;
 import com.vmware.mangle.utils.ReadProperty;
 import com.vmware.mangle.utils.constants.Constants;
@@ -59,6 +62,13 @@ public class CredentialsSpecMockData {
     private String vcenterUsername;
     private String vcenterPassword;
 
+    //Azure Mock Data
+    private String azureDescription;
+    private String azureClientID;
+    private String azureClientKey;
+    private String azureSubscriptionId;
+    private String azureTenant;
+
     public CredentialsSpecMockData() {
         Properties properties = ReadProperty.readProperty(Constants.MOCKDATA_FILE);
         this.accessKeyId = properties.getProperty("awsAccessKeyID");
@@ -75,6 +85,12 @@ public class CredentialsSpecMockData {
 
         vcenterUsername = properties.getProperty("vcenter.username");
         vcenterPassword = properties.getProperty("vcenter.password");
+
+        this.azureClientID = properties.getProperty("azureClientID");
+        this.azureDescription = properties.getProperty("azureDescription");
+        this.azureClientKey = properties.getProperty("azureClientKey");
+        this.azureSubscriptionId = properties.getProperty("azureSubscriptionId");
+        this.azureTenant = properties.getProperty("azureTenant");
     }
 
     public AWSCredentials getAWSCredentialsData() {
@@ -83,6 +99,13 @@ public class CredentialsSpecMockData {
         awsCredentials.setAccessKeyId(accessKeyId);
         awsCredentials.setSecretKey(secretKey);
         return awsCredentials;
+    }
+
+    public AzureCredentials getAzureCredentialsData() {
+        AzureCredentials azureCredentials = new AzureCredentials();
+        azureCredentials.setAzureClientKey(azureClientKey);
+        azureCredentials.setAzureClientId(azureClientID);
+        return azureCredentials;
     }
 
     public K8SCredentials getk8SCredentialsData() {
@@ -139,5 +162,17 @@ public class CredentialsSpecMockData {
         if (file.exists()) {
             multiPartMap.add("kubeConfig", new FileSystemResource(file));
         }
+    }
+
+    public DatabaseCredentials getDatabaseCredentials() {
+        DatabaseCredentials credentials = new DatabaseCredentials();
+        credentials.setDbType(DatabaseType.POSTGRES);
+        credentials.setDbName("test");
+        credentials.setDbUserName("abc");
+        credentials.setDbPassword("xyz");
+        credentials.setDbSSLEnabled(false);
+        credentials.setDbPort(5432);
+        credentials.setName("database_test");
+        return credentials;
     }
 }

@@ -35,8 +35,6 @@ import com.vmware.mangle.utils.ConstantsUtils;
 import com.vmware.mangle.utils.ICommandExecutor;
 import com.vmware.mangle.utils.exceptions.MangleException;
 
-
-
 /**
  * Sample Custom Fault Implementation to help Mangle Custom Fault Plugin Developer. The Custom Fault
  * Developer needs to define an Implementation of

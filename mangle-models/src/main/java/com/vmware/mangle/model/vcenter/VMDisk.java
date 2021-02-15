@@ -11,55 +11,12 @@
 
 package com.vmware.mangle.model.vcenter;
 
-import java.io.Serializable;
-
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
-
-import com.vmware.mangle.model.MangleDto;
 
 /**
- * Serves as dto for the VM Disk related operations
- *
  * @author chetanc
- *
  */
 @Data
-@ToString
-@EqualsAndHashCode(callSuper = true)
-public class VMDisk extends MangleDto {
-    private String type;
-    private Backing backing;
-
-    public VMDisk() {
-    }
-
-    public VMDisk(String type, String backingType, String backingVmdkFile) {
-        Backing localBacking = new Backing();
-        localBacking.setVmdk_file(backingVmdkFile);
-        localBacking.setType(backingType);
-        this.type = type;
-        this.backing = localBacking;
-    }
-
-    public VMDisk(String type, Backing backing) {
-        this.type = type;
-        this.backing = backing;
-    }
-
-    /**
-     * Identifies the type of the disk that is backing VM
-     */
-
-    @Data
-    public class Backing implements Serializable {
-        private String type;
-        private String vmdk_file;
-    }
-
-    public String retrieveDiskInfo() {
-        return String.format("type: %s; backing_type: %s; vmdk_file: %s", this.type, this.backing.type,
-                this.backing.vmdk_file.replace(" ", "___"));
-    }
+public class VMDisk {
+    private String disk;
 }

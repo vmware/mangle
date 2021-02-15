@@ -477,83 +477,47 @@ public class K8sFaultHelperTest {
 
     public static List<CommandInfo> getExpectedInjectionCommandsForNonRandomResourceNotReadyFaultInjection() {
         List<CommandInfo> list = new ArrayList<>();
-        CommandInfo pod1VerifyReadinessProbeCommand = new CommandInfo();
-        pod1VerifyReadinessProbeCommand.setCommand(
-                " get pod app-inventory-service-243-0 -o template  --template=\"{{range .spec.containers}}{{if eq .name \\\"testContainer\\\"}}{{if .readinessProbe}}ReadinessProbe Configured{{else}}ReadinessProbe not Configured for container testContainer {{end}}{{end}}{{end}}\"");
-        pod1VerifyReadinessProbeCommand.setIgnoreExitValueCheck(false);
-        pod1VerifyReadinessProbeCommand.setNoOfRetries(0);
-        pod1VerifyReadinessProbeCommand.setRetryInterval(0);
-        pod1VerifyReadinessProbeCommand.setTimeout(0);
-        pod1VerifyReadinessProbeCommand.setExpectedCommandOutputList(Arrays.asList("ReadinessProbe Configured"));
+        CommandInfo pod1VerifyReadinessProbeCommand = CommandInfo.builder(
+                " get pod app-inventory-service-243-0 -o template  --template=\"{{range .spec.containers}}{{if eq .name \\\"testContainer\\\"}}{{if .readinessProbe}}ReadinessProbe Configured{{else}}ReadinessProbe not Configured for container testContainer {{end}}{{end}}{{end}}\"")
+                .ignoreExitValueCheck(false).noOfRetries(0).retryInterval(0).timeout(0)
+                .expectedCommandOutputList(Arrays.asList("ReadinessProbe Configured")).build();
 
-        CommandInfo pod1PatchCommand = new CommandInfo();
-        pod1PatchCommand.setCommand(
-                " patch pod  app-inventory-service-243-0 -p '{\"spec\":{\"containers\":[{\"name\":\"testContainer\",\"image\":\"nginx\"}]}}' ");
-        pod1PatchCommand.setIgnoreExitValueCheck(false);
-        pod1PatchCommand.setNoOfRetries(0);
-        pod1PatchCommand.setRetryInterval(0);
-        pod1PatchCommand.setTimeout(0);
+        CommandInfo pod1PatchCommand = CommandInfo.builder(
+                " patch pod  app-inventory-service-243-0 -p '{\"spec\":{\"containers\":[{\"name\":\"testContainer\",\"image\":\"nginx\"}]}}' ")
+                .ignoreExitValueCheck(false).noOfRetries(0).retryInterval(0).timeout(0).build();
 
-        CommandInfo pod1VerifyReadyStateCommand = new CommandInfo();
-        pod1VerifyReadyStateCommand.setCommand(
-                " get pod app-inventory-service-243-0 -o template  --template=\"{{range .status.containerStatuses}}{{if eq .name \\\"testContainer\\\"}}{{.ready}}{{end}}{{end}}\"");
-        pod1VerifyReadyStateCommand.setIgnoreExitValueCheck(false);
-        pod1VerifyReadyStateCommand.setNoOfRetries(30);
-        pod1VerifyReadyStateCommand.setRetryInterval(10);
-        pod1VerifyReadyStateCommand.setTimeout(0);
-        pod1VerifyReadyStateCommand.setExpectedCommandOutputList(Arrays.asList("false"));
+        CommandInfo pod1VerifyReadyStateCommand = CommandInfo.builder(
+                " get pod app-inventory-service-243-0 -o template  --template=\"{{range .status.containerStatuses}}{{if eq .name \\\"testContainer\\\"}}{{.ready}}{{end}}{{end}}\"")
+                .ignoreExitValueCheck(false).noOfRetries(30).retryInterval(10).timeout(0)
+                .expectedCommandOutputList(Arrays.asList("false")).build();
 
-        CommandInfo pod2VerifyReadinessProbeCommand = new CommandInfo();
-        pod2VerifyReadinessProbeCommand.setCommand(
-                " get pod app-inventory-service-243-1 -o template  --template=\"{{range .spec.containers}}{{if eq .name \\\"testContainer\\\"}}{{if .readinessProbe}}ReadinessProbe Configured{{else}}ReadinessProbe not Configured for container testContainer {{end}}{{end}}{{end}}\"");
-        pod2VerifyReadinessProbeCommand.setIgnoreExitValueCheck(false);
-        pod2VerifyReadinessProbeCommand.setNoOfRetries(0);
-        pod2VerifyReadinessProbeCommand.setRetryInterval(0);
-        pod2VerifyReadinessProbeCommand.setTimeout(0);
-        pod2VerifyReadinessProbeCommand.setExpectedCommandOutputList(Arrays.asList("ReadinessProbe Configured"));
+        CommandInfo pod2VerifyReadinessProbeCommand = CommandInfo.builder(
+                " get pod app-inventory-service-243-1 -o template  --template=\"{{range .spec.containers}}{{if eq .name \\\"testContainer\\\"}}{{if .readinessProbe}}ReadinessProbe Configured{{else}}ReadinessProbe not Configured for container testContainer {{end}}{{end}}{{end}}\"")
+                .ignoreExitValueCheck(false).noOfRetries(0).retryInterval(0).timeout(0)
+                .expectedCommandOutputList(Arrays.asList("ReadinessProbe Configured")).build();
 
-        CommandInfo pod2PatchCommand = new CommandInfo();
-        pod2PatchCommand.setCommand(
-                " patch pod  app-inventory-service-243-1 -p '{\"spec\":{\"containers\":[{\"name\":\"testContainer\",\"image\":\"nginx\"}]}}' ");
-        pod2PatchCommand.setIgnoreExitValueCheck(false);
-        pod2PatchCommand.setNoOfRetries(0);
-        pod2PatchCommand.setRetryInterval(0);
-        pod2PatchCommand.setTimeout(0);
+        CommandInfo pod2PatchCommand = CommandInfo.builder(
+                " patch pod  app-inventory-service-243-1 -p '{\"spec\":{\"containers\":[{\"name\":\"testContainer\",\"image\":\"nginx\"}]}}' ")
+                .ignoreExitValueCheck(false).noOfRetries(0).retryInterval(0).timeout(0).build();
 
-        CommandInfo pod2VerifyReadyStateCommand = new CommandInfo();
-        pod2VerifyReadyStateCommand.setCommand(
-                " get pod app-inventory-service-243-1 -o template  --template=\"{{range .status.containerStatuses}}{{if eq .name \\\"testContainer\\\"}}{{.ready}}{{end}}{{end}}\"");
-        pod2VerifyReadyStateCommand.setIgnoreExitValueCheck(false);
-        pod2VerifyReadyStateCommand.setNoOfRetries(30);
-        pod2VerifyReadyStateCommand.setRetryInterval(10);
-        pod2VerifyReadyStateCommand.setTimeout(0);
-        pod2VerifyReadyStateCommand.setExpectedCommandOutputList(Arrays.asList("false"));
+        CommandInfo pod2VerifyReadyStateCommand = CommandInfo.builder(
+                " get pod app-inventory-service-243-1 -o template  --template=\"{{range .status.containerStatuses}}{{if eq .name \\\"testContainer\\\"}}{{.ready}}{{end}}{{end}}\"")
+                .ignoreExitValueCheck(false).noOfRetries(30).retryInterval(10).timeout(0)
+                .expectedCommandOutputList(Arrays.asList("false")).build();
 
-        CommandInfo pod3VerifyReadinessProbeCommand = new CommandInfo();
-        pod3VerifyReadinessProbeCommand.setCommand(
-                " get pod app-inventory-service-243-2 -o template  --template=\"{{range .spec.containers}}{{if eq .name \\\"testContainer\\\"}}{{if .readinessProbe}}ReadinessProbe Configured{{else}}ReadinessProbe not Configured for container testContainer {{end}}{{end}}{{end}}\"");
-        pod3VerifyReadinessProbeCommand.setIgnoreExitValueCheck(false);
-        pod3VerifyReadinessProbeCommand.setNoOfRetries(0);
-        pod3VerifyReadinessProbeCommand.setRetryInterval(0);
-        pod3VerifyReadinessProbeCommand.setTimeout(0);
-        pod3VerifyReadinessProbeCommand.setExpectedCommandOutputList(Arrays.asList("ReadinessProbe Configured"));
+        CommandInfo pod3VerifyReadinessProbeCommand = CommandInfo.builder(
+                " get pod app-inventory-service-243-2 -o template  --template=\"{{range .spec.containers}}{{if eq .name \\\"testContainer\\\"}}{{if .readinessProbe}}ReadinessProbe Configured{{else}}ReadinessProbe not Configured for container testContainer {{end}}{{end}}{{end}}\"")
+                .ignoreExitValueCheck(false).noOfRetries(0).retryInterval(0).timeout(0)
+                .expectedCommandOutputList(Arrays.asList("ReadinessProbe Configured")).build();
 
-        CommandInfo pod3PatchCommand = new CommandInfo();
-        pod3PatchCommand.setCommand(
-                " patch pod  app-inventory-service-243-2 -p '{\"spec\":{\"containers\":[{\"name\":\"testContainer\",\"image\":\"nginx\"}]}}' ");
-        pod3PatchCommand.setIgnoreExitValueCheck(false);
-        pod3PatchCommand.setNoOfRetries(0);
-        pod3PatchCommand.setRetryInterval(0);
-        pod3PatchCommand.setTimeout(0);
+        CommandInfo pod3PatchCommand = CommandInfo.builder(
+                " patch pod  app-inventory-service-243-2 -p '{\"spec\":{\"containers\":[{\"name\":\"testContainer\",\"image\":\"nginx\"}]}}' ")
+                .ignoreExitValueCheck(false).noOfRetries(0).retryInterval(0).timeout(0).build();
 
-        CommandInfo pod3VerifyReadyStateCommand = new CommandInfo();
-        pod3VerifyReadyStateCommand.setCommand(
-                " get pod app-inventory-service-243-2 -o template  --template=\"{{range .status.containerStatuses}}{{if eq .name \\\"testContainer\\\"}}{{.ready}}{{end}}{{end}}\"");
-        pod3VerifyReadyStateCommand.setIgnoreExitValueCheck(false);
-        pod3VerifyReadyStateCommand.setNoOfRetries(30);
-        pod3VerifyReadyStateCommand.setRetryInterval(10);
-        pod3VerifyReadyStateCommand.setTimeout(0);
-        pod3VerifyReadyStateCommand.setExpectedCommandOutputList(Arrays.asList("false"));
+        CommandInfo pod3VerifyReadyStateCommand = CommandInfo.builder(
+                " get pod app-inventory-service-243-2 -o template  --template=\"{{range .status.containerStatuses}}{{if eq .name \\\"testContainer\\\"}}{{.ready}}{{end}}{{end}}\"")
+                .ignoreExitValueCheck(false).noOfRetries(30).retryInterval(10).timeout(0)
+                .expectedCommandOutputList(Arrays.asList("false")).build();
 
         list.add(pod1VerifyReadinessProbeCommand);
         list.add(pod1PatchCommand);
@@ -570,39 +534,23 @@ public class K8sFaultHelperTest {
     public static List<CommandInfo> getExpectedInjectionCommandsForNonRandomServiceUnavailableFaultInjection() {
         List<CommandInfo> list = new ArrayList<>();
 
-        CommandInfo service1PatchCommand = new CommandInfo();
-        service1PatchCommand.setCommand(
-                " patch service  app-inventory-service-0 -p '{\"spec\":{\"selector\":{\"app\":\"mangle\"}}}' ");
-        service1PatchCommand.setIgnoreExitValueCheck(false);
-        service1PatchCommand.setNoOfRetries(0);
-        service1PatchCommand.setRetryInterval(0);
-        service1PatchCommand.setTimeout(0);
+        CommandInfo service1PatchCommand = CommandInfo
+                .builder(" patch service  app-inventory-service-0 -p '{\"spec\":{\"selector\":{\"app\":\"mangle\"}}}' ")
+                .ignoreExitValueCheck(false).noOfRetries(0).retryInterval(0).timeout(0).build();
 
-        CommandInfo service1VerifyEndpointsCommand = new CommandInfo();
-        service1VerifyEndpointsCommand
-                .setCommand(" get endpoints app-inventory-service-0 -o template  --template=\"{{.subsets}}\"");
-        service1VerifyEndpointsCommand.setIgnoreExitValueCheck(false);
-        service1VerifyEndpointsCommand.setNoOfRetries(30);
-        service1VerifyEndpointsCommand.setRetryInterval(10);
-        service1VerifyEndpointsCommand.setTimeout(0);
-        service1VerifyEndpointsCommand.setExpectedCommandOutputList(Arrays.asList("<no value>"));
+        CommandInfo service1VerifyEndpointsCommand =
+                CommandInfo.builder(" get endpoints app-inventory-service-0 -o template  --template=\"{{.subsets}}\"")
+                        .ignoreExitValueCheck(false).noOfRetries(30).retryInterval(10).timeout(0)
+                        .expectedCommandOutputList(Arrays.asList("<no value>")).build();
 
-        CommandInfo service2PatchCommand = new CommandInfo();
-        service2PatchCommand.setCommand(
-                " patch service  app-inventory-service-1 -p '{\"spec\":{\"selector\":{\"app\":\"mangle\"}}}' ");
-        service2PatchCommand.setIgnoreExitValueCheck(false);
-        service2PatchCommand.setNoOfRetries(0);
-        service2PatchCommand.setRetryInterval(0);
-        service2PatchCommand.setTimeout(0);
+        CommandInfo service2PatchCommand = CommandInfo
+                .builder(" patch service  app-inventory-service-1 -p '{\"spec\":{\"selector\":{\"app\":\"mangle\"}}}' ")
+                .ignoreExitValueCheck(false).noOfRetries(0).retryInterval(0).timeout(0).build();
 
-        CommandInfo service2VerifyEndpointsCommand = new CommandInfo();
-        service2VerifyEndpointsCommand
-                .setCommand(" get endpoints app-inventory-service-1 -o template  --template=\"{{.subsets}}\"");
-        service2VerifyEndpointsCommand.setIgnoreExitValueCheck(false);
-        service2VerifyEndpointsCommand.setNoOfRetries(30);
-        service2VerifyEndpointsCommand.setRetryInterval(10);
-        service2VerifyEndpointsCommand.setTimeout(0);
-        service2VerifyEndpointsCommand.setExpectedCommandOutputList(Arrays.asList("<no value>"));
+        CommandInfo service2VerifyEndpointsCommand =
+                CommandInfo.builder(" get endpoints app-inventory-service-1 -o template  --template=\"{{.subsets}}\"")
+                        .ignoreExitValueCheck(false).noOfRetries(30).retryInterval(10).timeout(0)
+                        .expectedCommandOutputList(Arrays.asList("<no value>")).build();
 
         list.add(service1PatchCommand);
         list.add(service1VerifyEndpointsCommand);
@@ -614,39 +562,23 @@ public class K8sFaultHelperTest {
     public static List<CommandInfo> getExpectedRemediationCommandsForServiceUnavailableFaultInjection() {
         List<CommandInfo> list = new ArrayList<>();
 
-        CommandInfo service1PatchCommand = new CommandInfo();
-        service1PatchCommand.setCommand(
-                " patch service  app-inventory-service-0 -p '{\"spec\":{\"selector\":\"app\":\"app-inventory-service\"}}' ");
-        service1PatchCommand.setIgnoreExitValueCheck(false);
-        service1PatchCommand.setNoOfRetries(0);
-        service1PatchCommand.setRetryInterval(0);
-        service1PatchCommand.setTimeout(0);
+        CommandInfo service1PatchCommand = CommandInfo.builder(
+                " patch service  app-inventory-service-0 -p '{\"spec\":{\"selector\":\"app\":\"app-inventory-service\"}}' ")
+                .ignoreExitValueCheck(false).noOfRetries(0).retryInterval(0).timeout(0).build();
 
-        CommandInfo service1VerifyEndpointsCommand = new CommandInfo();
-        service1VerifyEndpointsCommand
-                .setCommand(" get endpoints app-inventory-service-0 -o template  --template=\"{{.subsets}}\"");
-        service1VerifyEndpointsCommand.setIgnoreExitValueCheck(false);
-        service1VerifyEndpointsCommand.setNoOfRetries(30);
-        service1VerifyEndpointsCommand.setRetryInterval(10);
-        service1VerifyEndpointsCommand.setTimeout(0);
-        service1VerifyEndpointsCommand.setExpectedCommandOutputList(Arrays.asList("addresses"));
+        CommandInfo service1VerifyEndpointsCommand =
+                CommandInfo.builder(" get endpoints app-inventory-service-0 -o template  --template=\"{{.subsets}}\"")
+                        .ignoreExitValueCheck(false).noOfRetries(30).retryInterval(10).timeout(0)
+                        .expectedCommandOutputList(Arrays.asList("addresses")).build();
 
-        CommandInfo service2PatchCommand = new CommandInfo();
-        service2PatchCommand.setCommand(
-                " patch service  app-inventory-service-1 -p '{\"spec\":{\"selector\":\"app\":\"app-inventory-service\"}}' ");
-        service2PatchCommand.setIgnoreExitValueCheck(false);
-        service2PatchCommand.setNoOfRetries(0);
-        service2PatchCommand.setRetryInterval(0);
-        service2PatchCommand.setTimeout(0);
+        CommandInfo service2PatchCommand = CommandInfo.builder(
+                " patch service  app-inventory-service-1 -p '{\"spec\":{\"selector\":\"app\":\"app-inventory-service\"}}' ")
+                .ignoreExitValueCheck(false).noOfRetries(0).retryInterval(0).timeout(0).build();
 
-        CommandInfo service2VerifyEndpointsCommand = new CommandInfo();
-        service2VerifyEndpointsCommand
-                .setCommand(" get endpoints app-inventory-service-1 -o template  --template=\"{{.subsets}}\"");
-        service2VerifyEndpointsCommand.setIgnoreExitValueCheck(false);
-        service2VerifyEndpointsCommand.setNoOfRetries(30);
-        service2VerifyEndpointsCommand.setRetryInterval(10);
-        service2VerifyEndpointsCommand.setTimeout(0);
-        service2VerifyEndpointsCommand.setExpectedCommandOutputList(Arrays.asList("addresses"));
+        CommandInfo service2VerifyEndpointsCommand =
+                CommandInfo.builder(" get endpoints app-inventory-service-1 -o template  --template=\"{{.subsets}}\"")
+                        .ignoreExitValueCheck(false).noOfRetries(30).retryInterval(10).timeout(0)
+                        .expectedCommandOutputList(Arrays.asList("addresses")).build();
 
         list.add(service1PatchCommand);
         list.add(service1VerifyEndpointsCommand);
@@ -657,56 +589,32 @@ public class K8sFaultHelperTest {
 
     public static List<CommandInfo> getExpectedRemediationCommandsForNonRandomResourceNotReadyFaultRemediation() {
         List<CommandInfo> list = new ArrayList<>();
-        CommandInfo pod1PatchCommand = new CommandInfo();
-        pod1PatchCommand.setCommand(
-                " patch pod  app-inventory-service-243-0 -p '{\"spec\":{\"containers\":[{\"name\":\"testContainer\",\"image\":\"app-inventory-service-243-0 app-inventory-service-243-1 app-inventory-service-243-2\"}]}}' ");
-        pod1PatchCommand.setIgnoreExitValueCheck(false);
-        pod1PatchCommand.setNoOfRetries(0);
-        pod1PatchCommand.setRetryInterval(0);
-        pod1PatchCommand.setTimeout(0);
+        CommandInfo pod1PatchCommand = CommandInfo.builder(
+                " patch pod  app-inventory-service-243-0 -p '{\"spec\":{\"containers\":[{\"name\":\"testContainer\",\"image\":\"app-inventory-service-243-0 app-inventory-service-243-1 app-inventory-service-243-2\"}]}}' ")
+                .ignoreExitValueCheck(false).noOfRetries(0).retryInterval(0).timeout(0).build();
 
-        CommandInfo pod1VerifyReadyStateCommand = new CommandInfo();
-        pod1VerifyReadyStateCommand.setCommand(
-                " get pod app-inventory-service-243-0 -o template  --template=\"{{range .status.containerStatuses}}{{if eq .name \\\"testContainer\\\"}}{{.ready}}{{end}}{{end}}\"");
-        pod1VerifyReadyStateCommand.setIgnoreExitValueCheck(false);
-        pod1VerifyReadyStateCommand.setNoOfRetries(30);
-        pod1VerifyReadyStateCommand.setRetryInterval(10);
-        pod1VerifyReadyStateCommand.setTimeout(0);
-        pod1VerifyReadyStateCommand.setExpectedCommandOutputList(Arrays.asList("true"));
+        CommandInfo pod1VerifyReadyStateCommand = CommandInfo.builder(
+                " get pod app-inventory-service-243-0 -o template  --template=\"{{range .status.containerStatuses}}{{if eq .name \\\"testContainer\\\"}}{{.ready}}{{end}}{{end}}\"")
+                .ignoreExitValueCheck(false).noOfRetries(30).retryInterval(10).timeout(0)
+                .expectedCommandOutputList(Arrays.asList("true")).build();
 
-        CommandInfo pod2PatchCommand = new CommandInfo();
-        pod2PatchCommand.setCommand(
-                " patch pod  app-inventory-service-243-1 -p '{\"spec\":{\"containers\":[{\"name\":\"testContainer\",\"image\":\"app-inventory-service-243-0 app-inventory-service-243-1 app-inventory-service-243-2\"}]}}' ");
-        pod2PatchCommand.setIgnoreExitValueCheck(false);
-        pod2PatchCommand.setNoOfRetries(0);
-        pod2PatchCommand.setRetryInterval(0);
-        pod2PatchCommand.setTimeout(0);
+        CommandInfo pod2PatchCommand = CommandInfo.builder(
+                " patch pod  app-inventory-service-243-1 -p '{\"spec\":{\"containers\":[{\"name\":\"testContainer\",\"image\":\"app-inventory-service-243-0 app-inventory-service-243-1 app-inventory-service-243-2\"}]}}' ")
+                .ignoreExitValueCheck(false).noOfRetries(0).retryInterval(0).timeout(0).build();
 
-        CommandInfo pod2VerifyReadyStateCommand = new CommandInfo();
-        pod2VerifyReadyStateCommand.setCommand(
-                " get pod app-inventory-service-243-1 -o template  --template=\"{{range .status.containerStatuses}}{{if eq .name \\\"testContainer\\\"}}{{.ready}}{{end}}{{end}}\"");
-        pod2VerifyReadyStateCommand.setIgnoreExitValueCheck(false);
-        pod2VerifyReadyStateCommand.setNoOfRetries(30);
-        pod2VerifyReadyStateCommand.setRetryInterval(10);
-        pod2VerifyReadyStateCommand.setTimeout(0);
-        pod2VerifyReadyStateCommand.setExpectedCommandOutputList(Arrays.asList("true"));
+        CommandInfo pod2VerifyReadyStateCommand = CommandInfo.builder(
+                " get pod app-inventory-service-243-1 -o template  --template=\"{{range .status.containerStatuses}}{{if eq .name \\\"testContainer\\\"}}{{.ready}}{{end}}{{end}}\"")
+                .ignoreExitValueCheck(false).noOfRetries(30).retryInterval(10).timeout(0)
+                .expectedCommandOutputList(Arrays.asList("true")).build();
 
-        CommandInfo pod3PatchCommand = new CommandInfo();
-        pod3PatchCommand.setCommand(
-                " patch pod  app-inventory-service-243-2 -p '{\"spec\":{\"containers\":[{\"name\":\"testContainer\",\"image\":\"app-inventory-service-243-0 app-inventory-service-243-1 app-inventory-service-243-2\"}]}}' ");
-        pod3PatchCommand.setIgnoreExitValueCheck(false);
-        pod3PatchCommand.setNoOfRetries(0);
-        pod3PatchCommand.setRetryInterval(0);
-        pod3PatchCommand.setTimeout(0);
+        CommandInfo pod3PatchCommand = CommandInfo.builder(
+                " patch pod  app-inventory-service-243-2 -p '{\"spec\":{\"containers\":[{\"name\":\"testContainer\",\"image\":\"app-inventory-service-243-0 app-inventory-service-243-1 app-inventory-service-243-2\"}]}}' ")
+                .ignoreExitValueCheck(false).noOfRetries(0).retryInterval(0).timeout(0).build();
 
-        CommandInfo pod3VerifyReadyStateCommand = new CommandInfo();
-        pod3VerifyReadyStateCommand.setCommand(
-                " get pod app-inventory-service-243-2 -o template  --template=\"{{range .status.containerStatuses}}{{if eq .name \\\"testContainer\\\"}}{{.ready}}{{end}}{{end}}\"");
-        pod3VerifyReadyStateCommand.setIgnoreExitValueCheck(false);
-        pod3VerifyReadyStateCommand.setNoOfRetries(30);
-        pod3VerifyReadyStateCommand.setRetryInterval(10);
-        pod3VerifyReadyStateCommand.setTimeout(0);
-        pod3VerifyReadyStateCommand.setExpectedCommandOutputList(Arrays.asList("true"));
+        CommandInfo pod3VerifyReadyStateCommand = CommandInfo.builder(
+                " get pod app-inventory-service-243-2 -o template  --template=\"{{range .status.containerStatuses}}{{if eq .name \\\"testContainer\\\"}}{{.ready}}{{end}}{{end}}\"")
+                .ignoreExitValueCheck(false).noOfRetries(30).retryInterval(10).timeout(0)
+                .expectedCommandOutputList(Arrays.asList("true")).build();
 
         list.add(pod1PatchCommand);
         list.add(pod1VerifyReadyStateCommand);
@@ -718,12 +626,8 @@ public class K8sFaultHelperTest {
     }
 
     private CommandInfo getInjectionCommand(String command) {
-        CommandInfo commandInfo = new CommandInfo();
-        commandInfo.setCommand(command);
-        commandInfo.setIgnoreExitValueCheck(false);
-        commandInfo.setNoOfRetries(0);
-        commandInfo.setRetryInterval(0);
-        commandInfo.setTimeout(0);
+        CommandInfo commandInfo = CommandInfo.builder(command).ignoreExitValueCheck(false).noOfRetries(0)
+                .retryInterval(0).timeout(0).build();
         return commandInfo;
     }
 

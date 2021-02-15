@@ -1,0 +1,25 @@
+<div [hidden]="k8sHidden">
+    <div class="form-group">
+        <label><b>K8S Arguments</b></label>
+    </div>
+    <br />
+    <fieldset ngModelGroup="k8sArguments">
+        <div class="form-group">
+            <label for="containerName">Container Name</label>
+            <input type="text" name="containerName" [(ngModel)]="faultFormData.k8sArguments.containerName" [required]="!k8sHidden">
+        </div>
+        <div class="form-group">
+            <label for="podLabels">Pod Labels</label>
+            <input type="text" name="podLabels" [(ngModel)]="faultFormData.k8sArguments.podLabels" [required]="!k8sHidden">
+        </div>
+        <div class="form-group">
+            <label for="enableRandomInjection">Random Injection</label>
+            <div class="select">
+                <select name="enableRandomInjection" [(ngModel)]="faultFormData.k8sArguments.enableRandomInjection" [required]="!k8sHidden">
+                    <option [ngValue]="true">true</option>
+                    <option [ngValue]="false">false</option>
+                </select>
+            </div>
+        </div>
+    </fieldset>
+</div>

@@ -13,6 +13,8 @@ package com.vmware.mangle.services.tasks.executor;
 
 import static com.vmware.mangle.utils.constants.URLConstants.MANGLE_CURRENT_STATUS_MESSAGE;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Map;
@@ -176,40 +178,59 @@ public class TaskExecutor<T extends Task<? extends TaskSpec>> implements TaskRun
         }
         runningTasksLock.lock();
         try {
-            ITaskHelper<? extends TaskSpec> itask = pluginService.getExtension(task.getExtensionName());
+            ITaskHelper<TaskSpec> itask = pluginService.getExtension(task.getExtensionName());
             itask.setEventPublisher(publisher);
-            final Runnable runnable = () -> {
-                runTask(itask, task);
-            };
+            final Runnable runnable = () -> runTask(itask, task);
             runningTasks.put(task.getId(), task);
             threadPool.execute(runnable);
             taskStartCondition.await();
-            handleChildTasks(task);
+            if (task instanceof FaultTriggeringTask && task.getTaskData() instanceof MultiTaskSpec) {
+                handleChildTasks((FaultTriggeringTask) task);
+            }
         } finally {
             runningTasksLock.unlock();
         }
     }
 
-    private void handleChildTasks(T task) {
+    private void handleChildTasks(FaultTriggeringTask task) {
         final Runnable runnable = () -> {
-            if (task instanceof FaultTriggeringTask) {
-                log.info("Waiting for Child Tasks Initialization...");
-                while ((!((MultiTaskSpec) task.getTaskData()).isReadyForChildExecution()
-                        || CollectionUtils.isEmpty(((FaultTriggeringTask) task).getTaskObjmap()))
-                        && task.getTaskStatus() == TaskStatus.IN_PROGRESS) {
-                    CommonUtils.delayInSecondsWithDebugLog(1);
-                }
-                for (Object childTask : ((FaultTriggeringTask) task).getTaskObjmap().values()) {
-                    try {
-                        log.info("Submitting Child Task {} for Execution...", ((FaultTask) childTask).getId());
-                        faultInjectionHelper.saveTask((Task<? extends TaskSpec>) childTask);
-                    } catch (MangleException e) {
-                        log.error("", e);
-                    }
-                }
+            log.info("Waiting for Child Tasks Initialization...");
+            //Wait for data of child Tasks gets prepared within 6 mins
+            //Condition 1: Not ready for Child Execution
+            //Condition 2: The Object Map should not be Empty
+            //Condition 3: The TaskStatus should not be IN_PROGRESS
+            LocalDateTime startTime = LocalDateTime.now();
+            while ((!((MultiTaskSpec) task.getTaskData()).isReadyForChildExecution()
+                    || CollectionUtils.isEmpty(task.getTaskObjmap())) && task.getTaskStatus() == TaskStatus.IN_PROGRESS
+                    && Duration.between(startTime, LocalDateTime.now()).getSeconds() <= 360) {
+                CommonUtils.delayInSecondsWithDebugLog(1);
             }
+
+            triggerChildTasks(task);
+            cleanUpTask(task);
         };
         threadPool.execute(runnable);
+    }
+
+    private void triggerChildTasks(FaultTriggeringTask task) {
+        task.getTaskObjmap().values().forEach(childTask -> {
+            try {
+                log.info("Submitting Child Task {} for Execution...", ((FaultTask) childTask).getId());
+                faultInjectionHelper.saveTask((Task<? extends TaskSpec>) childTask);
+            } catch (MangleException e) {
+                log.error("", e);
+            }
+        });
+    }
+
+    private void cleanUpTask(FaultTriggeringTask task) {
+        task.getTaskObjmap().clear();
+        ((MultiTaskSpec) task.getTaskData()).setReadyForChildExecution(false);
+        try {
+            taskService.addOrUpdateTask(task);
+        } catch (MangleException e) {
+            log.error(customErrorMessage.getErrorMessage(e), e);
+        }
     }
 
     private void runTask(final ITaskHelper itask, T task) {
@@ -234,12 +255,13 @@ public class TaskExecutor<T extends Task<? extends TaskSpec>> implements TaskRun
             log.error(TaskExecutionMessages.TASK_EXECUTION_FAILED_MESSAGE, e);
             updateTaskInfo(task, TaskStatus.FAILED, e.getMessage(), 100);
         } finally {
+            task.updateTaskDescription(itask.getDescription(task));
             complete(task);
-            if (task.getTaskStatus() == TaskStatus.COMPLETED || task.getTaskStatus() == TaskStatus.FAILED) {
+            if (task.getTaskStatus() == TaskStatus.COMPLETED || task.getTaskStatus() == TaskStatus.FAILED
+                    || task.getTaskStatus() == TaskStatus.INJECTED) {
                 publisher.publishEvent(new TaskCompletedEvent(task));
             }
         }
-
     }
 
     @Override
@@ -342,14 +364,24 @@ public class TaskExecutor<T extends Task<? extends TaskSpec>> implements TaskRun
         try {
             TaskTrigger trigger = task.getTriggers().peek();
             if (trigger.getTaskStatus() == TaskStatus.IN_PROGRESS) {
-                updateTaskInfo(task, TaskStatus.COMPLETED, null, 100);
+                if (task.getTaskType() == TaskType.INJECTION && !(task instanceof FaultTriggeringTask)
+                        && (task.getExtensionName().equals(
+                                "com.vmware.mangle.faults.plugin.tasks.helpers.SystemResourceFaultTaskHelper2"))) {
+                    updateTaskInfo(task, TaskStatus.INJECTED, null, 0);
+                } else {
+                    updateTaskInfo(task, TaskStatus.COMPLETED, null, 100);
+                }
             } else {
                 updateTaskInfo(task, trigger.getTaskStatus(), trigger.getTaskFailureReason(), 100);
             }
             if (task.getTaskType() == TaskType.REMEDIATION && (trigger.getTaskStatus() == TaskStatus.COMPLETED
                     || (trigger.getTaskStatus() == TaskStatus.FAILED && trigger.getTaskFailureReason()
                             .contains(KnownFailureConstants.FAULT_ALREADY_REMEDIATED)))) {
-                updateRemediationFieldOfTask(task);
+                if (!(task.getExtensionName()
+                        .equals("com.vmware.mangle.faults.plugin.tasks.helpers.SystemResourceFaultTaskHelper2"))) {
+                    updateRemediationFieldOfTask(task);
+                    updateTaskStatusFieldOfTask(task, TaskStatus.COMPLETED);
+                }
             }
 
             if (task.isScheduledTask()
@@ -379,26 +411,33 @@ public class TaskExecutor<T extends Task<? extends TaskSpec>> implements TaskRun
         }
     }
 
+    private void updateTaskStatusFieldOfTask(T task, TaskStatus status) {
+        try {
+            taskService.updateTaskStatusFieldOfTaskById(((RemediableTask) task).getInjectionTaskId(), status);
+        } catch (MangleException e) {
+            log.error(customErrorMessage.getErrorMessage(e), e);
+        }
+    }
+
     @SuppressWarnings("deprecation")
     protected void updateTaskInfo(T task, TaskStatus taskStatus, String taskFailureReason, double percentageCompleted) {
 
-        TaskTrigger trigger = task.getTriggers().peek();
         if (taskStatus == TaskStatus.IN_PROGRESS || taskStatus == TaskStatus.TASK_SKIPPED) {
-            trigger.setStartTime(new Date(System.currentTimeMillis()).toGMTString());
+            task.getTriggers().peek().setStartTime(new Date(System.currentTimeMillis()).toGMTString());
         }
         if (taskStatus == TaskStatus.FAILED || taskStatus == TaskStatus.COMPLETED
                 || taskStatus == TaskStatus.TASK_SKIPPED) {
-            trigger.setEndTime(new Date(System.currentTimeMillis()).toGMTString());
+            task.getTriggers().peek().setEndTime(new Date(System.currentTimeMillis()).toGMTString());
             if (task instanceof RemediableTask && !(task instanceof FaultTriggeringTask)) {
                 ((RemediableTask) task).setRemediated(false);
             }
         }
-        trigger.setTaskStatus(taskStatus);
+        task.getTriggers().peek().setTaskStatus(taskStatus);
         TaskInfo taskInfo = new TaskInfo();
         taskInfo.setPercentageCompleted(percentageCompleted);
         taskInfo.setTaskStatus(taskStatus);
-        trigger.setMangleTaskInfo(taskInfo);
-        trigger.setTaskFailureReason(taskFailureReason);
+        task.getTriggers().peek().setMangleTaskInfo(taskInfo);
+        task.getTriggers().peek().setTaskFailureReason(taskFailureReason);
         log.info("Updating Task. Current task status: " + taskStatus);
         try {
             taskService.addOrUpdateTask(task);

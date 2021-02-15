@@ -1,42 +1,27 @@
-import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
-import { ClrLoadingState } from '@clr/angular';
-import { DataService } from 'src/app/shared/data.service';
-import { FaultService } from '../fault.service';
-import { EndpointService } from '../../endpoint/endpoint.service';
+import {Component, OnInit} from "@angular/core";
+import {Router} from "@angular/router";
+import {ClrLoadingState} from "@clr/angular";
+import {DataService} from "src/app/shared/data.service";
+import {FaultService} from "../fault.service";
+import {EndpointService} from "../../endpoint/endpoint.service";
+import {CommonConstants} from "src/app/common/common.constants";
+import {FaultCommons} from "../fault.commons";
+import {CommonUtils} from "src/app/shared/commonUtils";
 
 @Component({
-  selector: 'app-custom-fault',
-  templateUrl: './custom-fault.component.html'
+  selector: "app-custom-fault",
+  templateUrl: "./custom-fault.component.html"
 })
-export class CustomFaultComponent implements OnInit {
-
-  public alertMessage: string;
-  public isErrorMessage: boolean;
-
-  public runBtnState: ClrLoadingState = ClrLoadingState.DEFAULT;
+export class CustomFaultComponent extends FaultCommons implements OnInit {
 
   public pluginList: any;
-
   public searchedPlugins: any = [];
   public faultNameMaps: any = [];
-  public endpoints: any = [];
-  public dockerHidden: boolean = true;
-  public k8sHidden: boolean = true;
-  public faultParamHidden: boolean = true;
+  public faultParamHidden = true;
   public faultParams: any = {};
 
-  public searchedEndpoints: any = [];
-  public tagsData: any = {};
-  public cronModal: boolean = false;
-  public timeInMillisecondsHidden: boolean = true;
-  public cronExpressionHidden: boolean = true;
-  public descriptionHidden: boolean = true;
-  public selectedSchedulePrev: string = "";
-  public disableSchedule: boolean = true;
-  public disableRun: boolean = false;
-  public dockerContainers: any = [];
-  public searchedContainers: any = [];
+  public supportedEpTypes: any = [CommonConstants.MACHINE, CommonConstants.K8S_CLUSTER,
+    CommonConstants.DOCKER, CommonConstants.VCENTER, CommonConstants.AWS];
 
   public faultFormData: any = {
     "pluginId": null,
@@ -58,18 +43,22 @@ export class CustomFaultComponent implements OnInit {
     }
   };
 
-  constructor(private faultService: FaultService, private router: Router, private dataService: DataService, private endpointService: EndpointService) { }
+  constructor(private faultService: FaultService, private router: Router, private dataService: DataService,
+              endpointService: EndpointService, commonUtils: CommonUtils) {
+    super(endpointService, commonUtils);
+  }
 
   ngOnInit() {
     this.getPluginDetails();
+    this.getAllEndpoints();
   }
 
   public getPluginDetails() {
     this.faultService.getPluginDetails().subscribe(
       res => {
-        this.pluginList = res;
+        this.pluginList = res.content;
       }, err => {
-        this.isErrorMessage= true;
+        this.isErrorMessage = true;
         this.alertMessage = err.error.description;
         this.pluginList = [];
       });
@@ -82,11 +71,14 @@ export class CustomFaultComponent implements OnInit {
     this.faultParamHidden = true;
     this.faultFormData.pluginId = this.dataService.sharedData.pluginMetaInfo.pluginId;
     this.faultFormData.faultName = this.dataService.sharedData.pluginMetaInfo.faultName;
-    this.faultNameMaps.push({ "faultName": this.dataService.sharedData.pluginMetaInfo.faultName });
+    this.faultNameMaps.push({"faultName": this.dataService.sharedData.pluginMetaInfo.faultName});
     this.faultFormData.endpointName = this.dataService.sharedData.endpointName;
     this.faultFormData.faultParameters = this.dataService.sharedData.faultParameters;
     this.faultParams = this.dataService.sharedData.faultParameters;
     this.faultParamHidden = false;
+    if (this.dataService.sharedData.randomEndpoint != null) {
+      this.faultFormData.randomEndpoint = this.dataService.sharedData.randomEndpoint;
+    }
     if (this.dataService.sharedData.dockerArguments != null) {
       this.faultFormData.dockerArguments = this.dataService.sharedData.dockerArguments;
       this.dockerHidden = false;
@@ -94,16 +86,17 @@ export class CustomFaultComponent implements OnInit {
     if (this.dataService.sharedData.k8sArguments != null) {
       this.faultFormData.k8sArguments = this.dataService.sharedData.k8sArguments;
       this.k8sHidden = false;
-    }    
+    }
     if (this.dataService.sharedData.tags != null) {
       this.tagsData = this.dataService.sharedData.tags;
     }
+    this.populateFaultNotifiers(this.dataService);
     this.dataService.sharedData = null;
   }
 
   public searchPlugin(searchKeyWord) {
     this.searchedPlugins = [];
-    for (var i = 0; i < this.pluginList.length; i++) {
+    for (let i = 0; i < this.pluginList.length; i++) {
       if (this.pluginList[i].pluginId.indexOf(searchKeyWord) > -1) {
         this.searchedPlugins.push(this.pluginList[i]);
       }
@@ -112,51 +105,11 @@ export class CustomFaultComponent implements OnInit {
 
   public populateFaultNameMaps(pluginIdVal) {
     this.faultFormData.pluginId = pluginIdVal;
-    for (var j = 0; j < this.pluginList.length; j++) {
-      if (this.pluginList[j].pluginId == pluginIdVal) {
+    for (let j = 0; j < this.pluginList.length; j++) {
+      if (this.pluginList[j].pluginId === pluginIdVal) {
         this.faultNameMaps = this.pluginList[j].customFaultDescriptorMap;
       }
     }
-  }
-
-  public searchEndpoint(searchKeyWord) {
-    this.searchedEndpoints = [];
-    for (var i = 0; i < this.endpoints.length; i++) {
-      if (this.endpoints[i].name.indexOf(searchKeyWord) > -1) {
-        this.searchedEndpoints.push(this.endpoints[i]);
-      }
-    }
-  }
-
-  public searchContainer(searchKeyWord) {
-    this.searchedContainers = [];
-    for (var i = 0; i < this.dockerContainers.length; i++) {
-      if (this.dockerContainers[i].indexOf(searchKeyWord) > -1) {
-        this.searchedContainers.push(this.dockerContainers[i]);
-      }
-    }
-  }
-
-  public getDockerContainers(epType, epName) {
-    if (epType == "DOCKER") {
-      this.endpointService.getDockerContainers(epName).subscribe(
-        res => {
-          if (res.code) {
-            this.dockerContainers = [];
-          } else {
-            this.dockerContainers = res;
-          }
-        }, err => {
-          this.dockerContainers = [];
-          this.isErrorMessage= true;
-          this.alertMessage = err.error.description;
-        }
-      );
-    }
-  }
-
-  public setEndpointVal(endpointVal) {
-    this.faultFormData.endpointName = endpointVal;
   }
 
   public setContainerVal(containerVal) {
@@ -168,47 +121,30 @@ export class CustomFaultComponent implements OnInit {
     this.faultService.getCustomFaultJson(this.faultFormData.pluginId, faultNameVal).subscribe(
       res => {
         this.faultParams = res.faultParameters;
-        this.getEndpoints(res.supportedEndpoints);
+        this.supportedEpTypes = res.supportedEndpoints;
         this.faultParamHidden = false;
       }, err => {
         this.faultParams = {};
-        this.isErrorMessage= true;
+        this.isErrorMessage = true;
         this.alertMessage = err.error.description;
-      });
-  }
-
-  public getEndpoints(supportedEndpoints) {
-    this.endpoints=[];
-    this.endpointService.getAllEndpoints().subscribe(
-      res => {
-        for (var s_ep = 0; s_ep < supportedEndpoints.length; s_ep++) {
-          for (var g_ep = 0; g_ep < res.length; g_ep++) {
-            if (supportedEndpoints[s_ep] == res[g_ep].endPointType) {
-              this.endpoints.push(res[g_ep]);
-            }
-          }
-        }
-      }, err => {
-        this.isErrorMessage= true;
-        this.alertMessage = err.error.description;
-        this.endpoints = [];
       });
   }
 
   public executeCustomFault(faultData) {
     this.runBtnState = ClrLoadingState.LOADING;
-        if (this.tagsData != {}) {
+    if (this.tagsData !== {}) {
       faultData.tags = this.tagsData;
     }
+    this.addNotifiersInFault(faultData);
     this.faultService.executeCustomFault(faultData).subscribe(
       res => {
         if (res.taskData.schedule == null) {
-          this.router.navigateByUrl('core/requests/processed');
+          this.router.navigateByUrl(CommonConstants.REQUESTS_PROCESSED_URL);
         } else {
-          this.router.navigateByUrl('core/requests/scheduled');
+          this.router.navigateByUrl(CommonConstants.REQUESTS_SCHEDULED_URL);
         }
       }, err => {
-        this.isErrorMessage= true;
+        this.isErrorMessage = true;
         this.alertMessage = err.error.description;
         if (this.alertMessage === undefined) {
           this.alertMessage = err.error.error;
@@ -216,16 +152,10 @@ export class CustomFaultComponent implements OnInit {
         this.runBtnState = ClrLoadingState.DEFAULT;
       });
   }
-  public updateTags(tagsVal) {
-    this.tagsData[tagsVal.tagKey] = tagsVal.tagValue;
-  }
-
-  public removeTag(tagKeyToRemove) {
-    delete this.tagsData[tagKeyToRemove];
-  }
 
   public setSubmitButton() {
-    if ((this.faultFormData.schedule.cronExpression != "" && this.faultFormData.schedule.cronExpression != null) || (this.faultFormData.schedule.timeInMilliseconds != null && this.faultFormData.schedule.timeInMilliseconds != 0)) {
+    if ((this.faultFormData.schedule.cronExpression !== "" && this.faultFormData.schedule.cronExpression != null)
+      || (this.faultFormData.schedule.timeInMilliseconds != null && this.faultFormData.schedule.timeInMilliseconds !== 0)) {
       this.disableSchedule = false;
       this.disableRun = true;
     } else {
@@ -240,45 +170,4 @@ export class CustomFaultComponent implements OnInit {
     this.cronModal = false;
   }
 
-  public displayEndpointFields(endpointNameVal) {
-    this.dockerHidden = true;
-    this.k8sHidden = true;
-    for (var i = 0; i < this.endpoints.length; i++) {
-      if (endpointNameVal == this.endpoints[i].name) {
-        if (this.endpoints[i].tags != null) {
-          this.tagsData = this.endpoints[i].tags;
-        } else {
-          this.tagsData = {};
-        }
-        if (this.endpoints[i].endPointType == 'DOCKER') {
-          this.dockerHidden = false;
-        }
-        if (this.endpoints[i].endPointType == 'K8S_CLUSTER') {
-          this.k8sHidden = false;
-        }
-      }
-    }
-  }
-
-  public setScheduleVal(selectedSchedule) {
-    if (this.selectedSchedulePrev == selectedSchedule.value) {
-      selectedSchedule.checked = false;
-      this.timeInMillisecondsHidden = true;
-      this.cronExpressionHidden = true;
-      this.descriptionHidden = true;
-    } else {
-      this.timeInMillisecondsHidden = true;
-      this.cronExpressionHidden = true;
-      this.descriptionHidden = true;
-      if (selectedSchedule.value == "timeInMilliseconds") {
-        this.timeInMillisecondsHidden = false;
-        this.descriptionHidden = false;
-      }
-      if (selectedSchedule.value == "cronExpression") {
-        this.cronExpressionHidden = false;
-        this.descriptionHidden = false;
-      }
-      this.selectedSchedulePrev = selectedSchedule.value;
-    }
-  }
 }

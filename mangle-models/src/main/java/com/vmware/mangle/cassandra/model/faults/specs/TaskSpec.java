@@ -12,10 +12,12 @@
 package com.vmware.mangle.cassandra.model.faults.specs;
 
 import java.io.Serializable;
+import java.util.Set;
 
 import javax.validation.Valid;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.springframework.data.cassandra.core.mapping.Indexed;
@@ -41,6 +43,10 @@ public class TaskSpec extends MangleDto implements Serializable {
     @Indexed
     private String taskName;
 
+    @ApiModelProperty(notes = "Notifier names to be used while sending the notification.", required = false, example = "[\"mangle-test\"]")
+    @JsonProperty(required = false)
+    private Set<String> notifierNames;
+
     public TaskSpec() {
         this.id = super.generateId();
     }
@@ -49,5 +55,4 @@ public class TaskSpec extends MangleDto implements Serializable {
     public String getPrimaryKey() {
         return id;
     }
-
 }

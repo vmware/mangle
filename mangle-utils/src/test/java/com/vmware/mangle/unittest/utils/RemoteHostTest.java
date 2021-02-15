@@ -32,6 +32,7 @@ import ch.ethz.ssh2.Session;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.testng.PowerMockTestCase;
 import org.testng.Assert;
@@ -46,6 +47,7 @@ import com.vmware.mangle.utils.RemoteHost;
  * @author chetanc
  */
 @PrepareForTest(value = { RemoteHost.class })
+@PowerMockIgnore({ "com.sun.org.apache.xalan.internal.xsltc.trax.*" })
 public class RemoteHostTest extends PowerMockTestCase {
 
 

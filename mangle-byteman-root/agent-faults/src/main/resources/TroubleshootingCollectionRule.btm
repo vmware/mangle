@@ -1,0 +1,9 @@
+RULE Trace - Capture Troubleshooting bundle.
+CLASS java.lang.Thread
+METHOD getUncaughtExceptionHandler
+HELPER com.vmware.mangle.java.agent.faults.helpers.BytemanRuleHelper
+AT ENTRY
+BIND filePath:java.lang.String="TrobleshootingInfo"
+IF true
+DO captureTroubleshootingInfoForFaults(filePath);
+ENDRULE

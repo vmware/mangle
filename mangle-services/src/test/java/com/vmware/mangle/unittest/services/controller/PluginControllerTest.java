@@ -13,8 +13,10 @@ package com.vmware.mangle.unittest.services.controller;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -24,18 +26,22 @@ import static org.testng.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.pf4j.spring.SpringPluginManager;
 import org.springframework.core.io.Resource;
+import org.springframework.hateoas.Link;
+import org.springframework.hateoas.Resources;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletRequest;
+import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -45,6 +51,7 @@ import com.vmware.mangle.services.FileStorageService;
 import com.vmware.mangle.services.PluginDetailsService;
 import com.vmware.mangle.services.PluginService;
 import com.vmware.mangle.services.controller.PluginController;
+import com.vmware.mangle.services.events.web.CustomEventPublisher;
 import com.vmware.mangle.services.helpers.CustomFaultInjectionHelper;
 import com.vmware.mangle.services.mockdata.CustomFaultMockData;
 import com.vmware.mangle.utils.exceptions.MangleException;
@@ -65,14 +72,22 @@ public class PluginControllerTest {
     private CustomFaultInjectionHelper customFaultInjectionHelper;
     @Mock
     private PluginDetailsService pluginDetailsService;
-    @InjectMocks
+    @Mock
+    private SpringPluginManager pluginManager;
+    @Mock
+    private CustomEventPublisher eventPublisher;
     private PluginController pluginController;
+
     private CustomFaultMockData customFaultMockData;
     private String pluginId = "plugin-test";
 
     @BeforeMethod
     public void setUpBeforeClass() {
         MockitoAnnotations.initMocks(this);
+        pluginController = spy(new PluginController(pluginService, storageService, customFaultInjectionHelper,
+                pluginDetailsService, pluginManager, eventPublisher));
+        Link link = mock(Link.class);
+        doReturn(link).when(pluginController).getSelfLink();
         this.customFaultMockData = new CustomFaultMockData();
     }
 
@@ -87,7 +102,8 @@ public class PluginControllerTest {
         Map<String, Object> extMap = new HashMap<>();
         extMap.put("extensions", extNames);
         when(pluginService.getExtensions(anyString(), any(ExtensionType.class))).thenReturn(extMap);
-        ResponseEntity<Map<String, Object>> response = pluginController.getPlugins(pluginId, ExtensionType.TASK);
+        ResponseEntity<org.springframework.hateoas.Resource<Map<String, Object>>>
+                response = pluginController.getPlugins(pluginId, ExtensionType.TASK);
         assertEquals(response.getStatusCode(), HttpStatus.OK);
         assertNotNull(response.getBody());
         verify(pluginService, times(1)).getExtensions(anyString(), any(ExtensionType.class));
@@ -101,10 +117,13 @@ public class PluginControllerTest {
      */
     @Test
     public void testGetPluginFiles() throws MangleException {
-        when(storageService.getFiles()).thenReturn(Arrays.asList("mangle-test-plgin"));
-        ResponseEntity<List<String>> response = pluginController.getFiles();
+        when(storageService.getFiles()).thenReturn(Collections.singletonList("mangle-test-plgin"));
+        ResponseEntity<Resources<String>> response = pluginController.getFiles();
         assertEquals(response.getStatusCode(), HttpStatus.OK);
-        assertEquals(response.getBody().get(0), "mangle-test-plgin");
+        Resources<String> resources = response.getBody();
+        Assert.assertNotNull(resources);
+        Collection<String> pluginFiles = resources.getContent();
+        assertEquals(pluginFiles.iterator().next(), "mangle-test-plgin");
         verify(storageService, times(1)).getFiles();
     }
 
@@ -115,7 +134,7 @@ public class PluginControllerTest {
     @Test
     public void testGetExtensions() {
         when(pluginService.getExtension(anyString())).thenReturn(null);
-        ResponseEntity<String> response = pluginController.getExtensions(pluginId);
+        ResponseEntity<org.springframework.hateoas.Resource<String>> response = pluginController.getExtensions(pluginId);
         assertEquals(response.getStatusCode(), HttpStatus.OK);
         verify(pluginService, times(1)).getExtension(anyString());
     }
@@ -146,7 +165,7 @@ public class PluginControllerTest {
     public void testGetPluginDetailsByPluginId() {
         PluginDetails pluginDetails = customFaultMockData.getPluginDetails();
         when(pluginDetailsService.findPluginDetailsByPluginId(anyString())).thenReturn(pluginDetails);
-        ResponseEntity<List<PluginDetails>> response = pluginController.getPluginDetails(pluginDetails.getPluginId());
+        ResponseEntity<Resources<PluginDetails>> response = pluginController.getPluginDetails(pluginDetails.getPluginId());
         assertEquals(response.getStatusCode(), HttpStatus.OK);
         verify(pluginDetailsService, times(1)).findPluginDetailsByPluginId(anyString());
     }
@@ -161,7 +180,7 @@ public class PluginControllerTest {
         List<PluginDetails> list = new ArrayList<>();
         list.add(pluginDetails);
         when(pluginDetailsService.findAllPluginDetails()).thenReturn(list);
-        ResponseEntity<List<PluginDetails>> response = pluginController.getPluginDetails(null);
+        ResponseEntity<Resources<PluginDetails>> response = pluginController.getPluginDetails(null);
         assertEquals(response.getStatusCode(), HttpStatus.OK);
         verify(pluginDetailsService, times(1)).findAllPluginDetails();
     }

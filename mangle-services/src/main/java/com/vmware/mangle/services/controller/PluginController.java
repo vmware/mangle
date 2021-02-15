@@ -11,6 +11,9 @@
 
 package com.vmware.mangle.services.controller;
 
+import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
+import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -18,7 +21,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotBlank;
 
@@ -28,6 +30,8 @@ import org.pf4j.PluginWrapper;
 import org.pf4j.spring.SpringPluginManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
+import org.springframework.hateoas.Link;
+import org.springframework.hateoas.Resources;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -44,6 +48,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.vmware.mangle.cassandra.model.custom.faults.CustomFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.PluginFaultSpec;
@@ -53,15 +58,21 @@ import com.vmware.mangle.cassandra.model.plugin.CustomFaultDescriptorResponse;
 import com.vmware.mangle.cassandra.model.plugin.CustomFaultExecutionRequest;
 import com.vmware.mangle.cassandra.model.plugin.PluginDetails;
 import com.vmware.mangle.cassandra.model.tasks.Task;
+import com.vmware.mangle.model.enums.HateoasOperations;
 import com.vmware.mangle.model.plugin.ExtensionType;
 import com.vmware.mangle.model.plugin.PluginAction;
 import com.vmware.mangle.model.plugin.PluginInfo;
 import com.vmware.mangle.services.FileStorageService;
 import com.vmware.mangle.services.PluginDetailsService;
 import com.vmware.mangle.services.PluginService;
+import com.vmware.mangle.services.cassandra.model.events.basic.EntityCreatedEvent;
+import com.vmware.mangle.services.cassandra.model.events.basic.EntityDeletedEvent;
+import com.vmware.mangle.services.cassandra.model.events.basic.EntityUpdatedEvent;
+import com.vmware.mangle.services.events.web.CustomEventPublisher;
 import com.vmware.mangle.services.helpers.CustomFaultInjectionHelper;
 import com.vmware.mangle.task.framework.helpers.faults.AbstractCustomFault;
 import com.vmware.mangle.task.framework.skeletons.ITaskHelper;
+import com.vmware.mangle.utils.constants.MetricProviderConstants;
 import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.MangleRuntimeException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
@@ -77,76 +88,116 @@ import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 @Log4j2
 public class PluginController {
 
+    private final PluginService pluginService;
+    private final FileStorageService storageService;
+    private final SpringPluginManager pluginManager;
+    private final CustomEventPublisher eventPublisher;
+    private final PluginDetailsService pluginDetailsService;
+    private final CustomFaultInjectionHelper customFaultInjectionHelper;
+
     @Autowired
-    private PluginService pluginService;
-    @Autowired
-    private FileStorageService storageService;
-    @Autowired
-    private CustomFaultInjectionHelper customFaultInjectionHelper;
-    @Autowired
-    private PluginDetailsService pluginDetailsService;
-    @Autowired
-    private SpringPluginManager pluginManager;
+    public PluginController(PluginService pluginService, FileStorageService storageService,
+            CustomFaultInjectionHelper customFaultInjectionHelper, PluginDetailsService pluginDetailsService,
+            SpringPluginManager pluginManager, CustomEventPublisher eventPublisher) {
+        this.pluginService = pluginService;
+        this.pluginManager = pluginManager;
+        this.eventPublisher = eventPublisher;
+        this.storageService = storageService;
+        this.pluginDetailsService = pluginDetailsService;
+        this.customFaultInjectionHelper = customFaultInjectionHelper;
+    }
 
     @ApiOperation(value = "API to get plugin details", nickname = "getPlugins")
     @GetMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Map<String, Object>> getPlugins(
+    public ResponseEntity<org.springframework.hateoas.Resource<Map<String, Object>>> getPlugins(
             @RequestParam(value = "pluginId", required = false) String pluginId,
             @RequestParam(value = "extensionType", required = false) ExtensionType extensionType) {
         log.info("PluginController getPlugins() Start.............");
+        org.springframework.hateoas.Resource<Map<String, Object>> resource;
         if (StringUtils.hasLength(pluginId)) {
-            return new ResponseEntity<>(pluginService.getExtensions(pluginId, extensionType), HttpStatus.OK);
+            resource = new org.springframework.hateoas.Resource<>(pluginService.getExtensions(pluginId, extensionType));
+            resource.add(getSelfLink(), getPluginsHateoasLink(), getExtensionHateoasLink(),
+                    performPluginActionsHateoasLink(), deletePluginHateoasLink());
+            return new ResponseEntity<>(resource, HttpStatus.OK);
         }
-        return new ResponseEntity<>(pluginService.getExtensions(), HttpStatus.OK);
+        resource = new org.springframework.hateoas.Resource<>(pluginService.getExtensions());
+        resource.add(getSelfLink(), getPluginDetailsHateoasLink(), getExtensionHateoasLink(),
+                performPluginActionsHateoasLink(), deletePluginHateoasLink());
+        return new ResponseEntity<>(resource, HttpStatus.OK);
     }
 
     @ApiOperation(value = "API to get extension", nickname = "getExtension")
     @GetMapping(value = "/{extensionName:.+}")
-    public ResponseEntity<String> getExtensions(@PathVariable("extensionName") String extensionName) {
+    public ResponseEntity<org.springframework.hateoas.Resource<String>> getExtensions(
+            @PathVariable("extensionName") String extensionName) {
         log.info("PluginController getExtensions(" + extensionName + ") Start.............");
         ITaskHelper<?> ext = pluginService.getExtension(extensionName);
+
+        org.springframework.hateoas.Resource<String> resource;
         if (ext != null) {
-            return new ResponseEntity<>("Extension Found with msg " + ext.getClass().getName(), HttpStatus.OK);
+            resource =
+                    new org.springframework.hateoas.Resource<>("Extension Found with msg " + ext.getClass().getName());
         } else {
-            return new ResponseEntity<>("Extension Not Found with Name: " + extensionName, HttpStatus.OK);
+            resource = new org.springframework.hateoas.Resource<>("Extension Not Found with Name: " + extensionName);
+
         }
+        resource.add(getSelfLink(), getPluginDetailsHateoasLink(), getPluginsHateoasLink(),
+                performPluginActionsHateoasLink(), deletePluginHateoasLink());
+        return new ResponseEntity<>(resource, HttpStatus.OK);
     }
 
     @ApiOperation(value = "API to perform plugin actions", nickname = "performPluginActions")
     @PutMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<String>> performPluginActions(@Validated @RequestBody PluginInfo pluginInfo) {
+    public ResponseEntity<Resources<String>> performPluginActions(@Validated @RequestBody PluginInfo pluginInfo) {
         log.info("PluginController performPluginActions() Start............");
         performPluginAction(pluginInfo);
-        return new ResponseEntity<>(pluginService.getExtensionNames(), HttpStatus.OK);
+        Resources<String> resources = new Resources<>(pluginService.getExtensionNames());
+        resources.add(getSelfLink(), getPluginsHateoasLink(), getExtensionHateoasLink(), getPluginDetailsHateoasLink(),
+                deletePluginHateoasLink());
+        return new ResponseEntity<>(resources, HttpStatus.OK);
     }
 
     @ApiOperation(value = "API to delete plugin", nickname = "deletePlugin")
     @DeleteMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<String>> deletePlugin(@RequestParam("pluginId") @NotBlank String pluginId) {
+    public ResponseEntity<Resources<String>> deletePlugin(@RequestParam("pluginId") @NotBlank String pluginId) {
         log.info("PluginController deletePlugin() Start..................");
         pluginService.deletePlugin(pluginId);
         pluginDetailsService.deletePluginDetailsForDeletePlugin(pluginId);
         pluginDetailsService.triggerMultiNodeResync(pluginId);
-        return new ResponseEntity<>(pluginService.getExtensionNames(), HttpStatus.OK);
+        eventPublisher.publishAnEvent(new EntityDeletedEvent(pluginId, PluginDetails.class.getName()));
+        Resources<String> resources = new Resources<>(pluginService.getExtensionNames());
+        resources.add(getSelfLink(), getPluginsHateoasLink(), getExtensionHateoasLink(), getPluginDetailsHateoasLink(),
+                performPluginActionsHateoasLink());
+        return new ResponseEntity<>(resources, HttpStatus.OK);
     }
 
     @ApiOperation(value = "API to get plugin file", nickname = "getAllTheAvailablePluginFiles")
     @GetMapping(value = "/files", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<String>> getFiles() throws MangleException {
+    public ResponseEntity<Resources<String>> getFiles() throws MangleException {
         log.info("Start execution of getPluginFiles()...");
-        return new ResponseEntity<>(storageService.getFiles(), HttpStatus.OK);
+        Resources<String> resources = new Resources<>(storageService.getFiles());
+        resources.add(getSelfLink(), uploadFileHateoasLink(), downloadFileHateoasLink(), deleteFileHateoasLink());
+        return new ResponseEntity<>(resources, HttpStatus.OK);
     }
 
     @ApiOperation(value = "API to upload plugin file", nickname = "uploadFile")
     @PostMapping(value = "/files", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Map<String, Object>> uploadFile(@RequestParam("file") MultipartFile file)
-            throws MangleException {
+    public ResponseEntity<org.springframework.hateoas.Resource<Map<String, Object>>> uploadFile(
+            @RequestParam("file") MultipartFile file) throws MangleException {
         log.info("Start execution of uploadFile()...");
         storageService.storeFile(file);
         Map<String, Object> response = new HashMap<>();
         response.put("fileName", file.getOriginalFilename());
         response.put("message", "Your file successfully uploaded!");
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        eventPublisher
+                .publishAnEvent(new EntityCreatedEvent(file.getOriginalFilename(), PluginDetails.class.getName()));
+
+        org.springframework.hateoas.Resource<Map<String, Object>> resource =
+                new org.springframework.hateoas.Resource<>(response);
+        resource.add(getSelfLink(), uploadFileHateoasLink(), downloadFileHateoasLink(), deleteFileHateoasLink(),
+                getFilesHateoasLink());
+
+        return new ResponseEntity<>(resource, HttpStatus.OK);
     }
 
     @ApiOperation(value = "API to download plugin file", nickname = "downloadFile")
@@ -176,17 +227,24 @@ public class PluginController {
 
     @ApiOperation(value = "API to delete plugin file", nickname = "deleteFile")
     @DeleteMapping(value = "/files")
-    public ResponseEntity<Map<String, Object>> deleteFile(@RequestParam @NotBlank String fileName) {
+    public ResponseEntity<org.springframework.hateoas.Resource<Map<String, Object>>> deleteFile(
+            @RequestParam @NotBlank String fileName) throws MangleException {
         log.info("Start execution of deleteFile()...");
         storageService.deleteFile(fileName);
         Map<String, Object> response = new HashMap<>();
         response.put("fileName", fileName);
         response.put("message", "Your file successfully deleted!");
-        return new ResponseEntity<>(response, HttpStatus.OK);
+
+        org.springframework.hateoas.Resource<Map<String, Object>> resource =
+                new org.springframework.hateoas.Resource<>(response);
+        resource.add(getSelfLink(), uploadFileHateoasLink(), downloadFileHateoasLink(), deleteFileHateoasLink(),
+                getFilesHateoasLink());
+
+        return new ResponseEntity<>(resource, HttpStatus.OK);
     }
 
     @ApiOperation(value = "API to inject Custom fault on Endpoint", nickname = "injectCustomFault")
-    @PostMapping(value = "/custom-fault", produces = "application/json")
+    @PostMapping(value = "/custom-fault", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Task<TaskSpec>> injectCustomFault(
             @Validated @RequestBody CustomFaultExecutionRequest customFaultExecutionRequest) throws MangleException {
         CustomFaultSpec customFaultSpec = buildCustomFaultSpec(customFaultExecutionRequest);
@@ -194,7 +252,7 @@ public class PluginController {
         PluginFaultSpec faultSpec = customFaultInjectionHelper.getFaultSpec(customFaultSpec, abstractCustomFault);
         customFaultInjectionHelper.validateFields(faultSpec, abstractCustomFault);
         return new ResponseEntity<>(customFaultInjectionHelper.invokeFault(faultSpec,
-                (String) customFaultSpec.getExtensionDetails().getTaskExtensionName()), HttpStatus.OK);
+                customFaultSpec.getExtensionDetails().getTaskExtensionName()), HttpStatus.OK);
     }
 
     private CustomFaultSpec buildCustomFaultSpec(CustomFaultExecutionRequest customFaultExecutionRequest)
@@ -210,6 +268,7 @@ public class PluginController {
         customFaultSpec.setTags(customFaultExecutionRequest.getTags());
         customFaultSpec.setDockerArguments(customFaultExecutionRequest.getDockerArguments());
         customFaultSpec.setK8sArguments(customFaultExecutionRequest.getK8sArguments());
+        customFaultSpec.setNotifierNames(customFaultExecutionRequest.getNotifierNames());
         return customFaultSpec;
 
     }
@@ -236,7 +295,7 @@ public class PluginController {
 
     @ApiOperation(value = "API to get plugin details", nickname = "getPluginDetails")
     @GetMapping(value = "/plugin-details", produces = "application/json")
-    public ResponseEntity<List<PluginDetails>> getPluginDetails(
+    public ResponseEntity<Resources<PluginDetails>> getPluginDetails(
             @RequestParam(value = "pluginId", required = false) String pluginId) {
         List<PluginDetails> detailsList = new ArrayList<>();
         if (StringUtils.hasLength(pluginId)) {
@@ -247,7 +306,11 @@ public class PluginController {
         } else {
             detailsList = pluginDetailsService.findAllPluginDetails();
         }
-        return new ResponseEntity<>(detailsList, HttpStatus.OK);
+
+        Resources<PluginDetails> resources = new Resources<>(detailsList);
+        resources.add(getSelfLink(), getPluginsHateoasLink(), getExtensionHateoasLink(),
+                performPluginActionsHateoasLink(), deletePluginHateoasLink());
+        return new ResponseEntity<>(resources, HttpStatus.OK);
     }
 
     /**
@@ -277,6 +340,7 @@ public class PluginController {
                 pluginService.postValidatePlugin(pluginName, pluginPath);
                 PluginDetails pluginDetails = pluginDetailsService
                         .createPluginDetailsForLoadPlugin(pluginService.getIdForPluginName(pluginName));
+                publishUpdateEvent(pluginName, pluginInfo.getPluginAction().name());
                 pluginDetailsService.triggerMultiNodeResync(pluginDetails.getPluginId());
             }
             break;
@@ -285,6 +349,7 @@ public class PluginController {
             pluginId = pluginService.getIdForPluginName(pluginName);
             pluginService.unloadPlugin(pluginId);
             pluginDetailsService.updatePluginDetailsForUnLoadPlugin(pluginId);
+            publishUpdateEvent(pluginName, pluginInfo.getPluginAction().name());
             pluginDetailsService.triggerMultiNodeResync(pluginId);
             break;
         case ENABLE:
@@ -292,6 +357,7 @@ public class PluginController {
             pluginId = pluginService.getIdForPluginName(pluginName);
             pluginService.enablePlugin(pluginId);
             pluginDetailsService.updatePluginDetailsForEnablePlugin(pluginId);
+            publishUpdateEvent(pluginName, pluginInfo.getPluginAction().name());
             pluginDetailsService.triggerMultiNodeResync(pluginId);
             break;
         case DISABLE:
@@ -299,11 +365,60 @@ public class PluginController {
             pluginId = pluginService.getIdForPluginName(pluginName);
             pluginService.disablePlugin(pluginId);
             pluginDetailsService.updatePluginDetailsForDisablePlugin(pluginId);
+            publishUpdateEvent(pluginName, pluginInfo.getPluginAction().name());
             pluginDetailsService.triggerMultiNodeResync(pluginId);
             break;
         default:
             log.error("Plugin action not found, please pass the action in following : {}",
                     Arrays.toString(PluginAction.values()));
         }
+    }
+
+    private void publishUpdateEvent(String pluginName, String status) {
+        EntityUpdatedEvent event = new EntityUpdatedEvent(pluginName, PluginDetails.class.getName());
+        event.addToMessage(String.format("Plugin %s on the node %s", status,
+                System.getProperty(MetricProviderConstants.NODE_ADDRESS)));
+        eventPublisher.publishAnEvent(event);
+    }
+
+    public Link getSelfLink() {
+        return new Link(ServletUriComponentsBuilder.fromCurrentRequestUri().build().toUri().toASCIIString())
+                .withSelfRel();
+    }
+
+    private Link getPluginsHateoasLink() {
+        return linkTo(methodOn(PluginController.class).getPlugins("", ExtensionType.TASK)).withRel("GET-ALL");
+    }
+
+    private Link getPluginDetailsHateoasLink() {
+        return linkTo(methodOn(PluginController.class).getPluginDetails("")).withRel("GET-PLUGIN-DETAILS");
+    }
+
+    private Link getExtensionHateoasLink() {
+        return linkTo(methodOn(PluginController.class).getExtensions("")).withRel("GET-EXTENSION");
+    }
+
+    private Link performPluginActionsHateoasLink() {
+        return linkTo(methodOn(PluginController.class).performPluginActions(new PluginInfo())).withRel("PLUGIN-ACTION");
+    }
+
+    private Link deletePluginHateoasLink() {
+        return linkTo(methodOn(PluginController.class).deletePlugin("")).withRel(HateoasOperations.DELETE.name());
+    }
+
+    private Link getFilesHateoasLink() throws MangleException {
+        return linkTo(methodOn(PluginController.class).getFiles()).withRel("GET-PLUGIN-FILES");
+    }
+
+    private Link uploadFileHateoasLink() throws MangleException {
+        return linkTo(methodOn(PluginController.class).uploadFile(null)).withRel("UPLOAD-FILE");
+    }
+
+    private Link downloadFileHateoasLink() {
+        return linkTo(methodOn(PluginController.class).downloadFile("", null)).withRel("DOWNLOAD-PLUGIN-FILE");
+    }
+
+    private Link deleteFileHateoasLink() {
+        return linkTo(methodOn(PluginController.class).downloadFile("", null)).withRel("DELETE-PLUGIN-FILE");
     }
 }

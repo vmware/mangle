@@ -16,15 +16,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
+import com.vmware.mangle.cassandra.model.tasks.TaskType;
 import com.vmware.mangle.model.enums.SchedulerStatus;
 import com.vmware.mangle.services.events.schedule.ScheduleCreatedEvent;
 import com.vmware.mangle.services.events.schedule.ScheduleUpdatedEvent;
 import com.vmware.mangle.services.hazelcast.HazelcastTaskCache;
+import com.vmware.mangle.services.hazelcast.resiliencyscore.HazelcastResiliencyScoreTaskCache;
+import com.vmware.mangle.services.helpers.TaskHelper;
+import com.vmware.mangle.utils.exceptions.MangleException;
+
 
 /**
  *
  *
- * @author chetanc
+ * @author chetanc, dbhat
  */
 @Component
 @Log4j2
@@ -32,6 +37,10 @@ public class ScheduleEventListener {
 
     @Autowired
     private HazelcastTaskCache taskCache;
+    @Autowired
+    private TaskHelper taskHelper;
+    @Autowired
+    private HazelcastResiliencyScoreTaskCache resiliencyScoreTaskCache;
 
     @EventListener
     public void handleSchedulerUpdatedEvent(ScheduleUpdatedEvent scheduleUpdatedEvent) {
@@ -39,18 +48,57 @@ public class ScheduleEventListener {
         if (scheduleUpdatedEvent.getScheduleStatus().equals(SchedulerStatus.CANCELLED.name())
                 || scheduleUpdatedEvent.getScheduleStatus().equals(SchedulerStatus.PAUSED.name())
                 || scheduleUpdatedEvent.getScheduleStatus().equals(SchedulerStatus.FINISHED.name())) {
-            taskCache.deleteFromTaskCache(scheduleUpdatedEvent.getScheduleID());
+            deleteFromTaskCache(scheduleUpdatedEvent);
         } else {
-            taskCache.updateTaskCache(scheduleUpdatedEvent.getScheduleID(),
-                    scheduleUpdatedEvent.getScheduleStatus());
+            updateTaskCache(scheduleUpdatedEvent);
         }
     }
 
     @EventListener
     public void handleSchedulerCreatedEvent(ScheduleCreatedEvent scheduleCreatedEvent) {
         log.debug("Scheduler create event listener is triggered");
-        taskCache.addTaskToCache(scheduleCreatedEvent.getScheduleID(),
-                scheduleCreatedEvent.getScheduleStatus().name());
+        addTaskToCache(scheduleCreatedEvent);
+    }
+
+    private void deleteFromTaskCache(ScheduleUpdatedEvent scheduleUpdatedEvent) {
+        try {
+            if (taskHelper.getTaskType(scheduleUpdatedEvent.getScheduleID()) == TaskType.RESILIENCY_SCORE) {
+                resiliencyScoreTaskCache.deleteFromTaskCache(scheduleUpdatedEvent.getScheduleID());
+            } else {
+                taskCache.deleteFromTaskCache(scheduleUpdatedEvent.getScheduleID());
+            }
+        } catch (MangleException mangleException) {
+            log.error(mangleException.getMessage());
+        }
+    }
+
+    private void updateTaskCache(ScheduleUpdatedEvent scheduleUpdatedEvent) {
+        try {
+            if (taskHelper.getTaskType(scheduleUpdatedEvent.getScheduleID()) == TaskType.RESILIENCY_SCORE) {
+                resiliencyScoreTaskCache.updateHazelcastTaskCache(scheduleUpdatedEvent.getScheduleID(),
+                        scheduleUpdatedEvent.getScheduleStatus());
+            } else {
+                taskCache.updateTaskCache(scheduleUpdatedEvent.getScheduleID(),
+                        scheduleUpdatedEvent.getScheduleStatus());
+            }
+
+        } catch (MangleException mangleException) {
+            log.error(mangleException.getMessage());
+        }
+    }
+
+    private void addTaskToCache(ScheduleCreatedEvent scheduleCreatedEvent) {
+        try {
+            if (taskHelper.getTaskType(scheduleCreatedEvent.getScheduleID()) == TaskType.RESILIENCY_SCORE) {
+                resiliencyScoreTaskCache.addTaskToCache(scheduleCreatedEvent.getScheduleID(),
+                        scheduleCreatedEvent.getScheduleStatus().name());
+            } else {
+                taskCache.addTaskToCache(scheduleCreatedEvent.getScheduleID(),
+                        scheduleCreatedEvent.getScheduleStatus().name());
+            }
+        } catch (MangleException mangleException) {
+            log.error(mangleException.getMessage());
+        }
     }
 
 }

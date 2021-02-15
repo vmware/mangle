@@ -22,10 +22,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import com.vmware.mangle.service.CustomerUserDetailsService;
 
 /**
- * @author Chethan C(chetanc)
- */
-
-/**
  * @author chetanc
  *
  *         Configures security for the current application, defines the

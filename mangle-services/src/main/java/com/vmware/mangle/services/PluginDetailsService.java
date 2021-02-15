@@ -19,7 +19,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
 import javax.validation.Valid;
 
 import lombok.extern.log4j.Log4j2;
@@ -37,11 +36,14 @@ import com.vmware.mangle.cassandra.model.plugin.ExtensionDetails;
 import com.vmware.mangle.cassandra.model.plugin.ManglePluginDescriptor;
 import com.vmware.mangle.cassandra.model.plugin.PluginDetails;
 import com.vmware.mangle.cassandra.model.plugin.PluginMetaInfo;
+import com.vmware.mangle.services.cassandra.model.events.basic.EntityUpdatedEvent;
 import com.vmware.mangle.services.constants.CommonConstants;
+import com.vmware.mangle.services.events.web.CustomEventPublisher;
 import com.vmware.mangle.services.hazelcast.HazelcastClusterSyncAware;
 import com.vmware.mangle.services.repository.PluginDetailsRepository;
 import com.vmware.mangle.utils.clients.restclient.RestTemplateWrapper;
 import com.vmware.mangle.utils.constants.ErrorConstants;
+import com.vmware.mangle.utils.constants.MetricProviderConstants;
 import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.MangleRuntimeException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
@@ -56,18 +58,25 @@ import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 @Log4j2
 public class PluginDetailsService implements HazelcastClusterSyncAware {
 
+    private final PluginDetailsRepository pluginDetailsRepository;
+    private final PluginService pluginService;
+    private final SpringPluginManager pluginManager;
+    private final FileStorageService storageService;
+    private final CustomEventPublisher eventPublisher;
+
     @Autowired
-    private PluginDetailsRepository pluginDetailsRepository;
-    @Autowired
-    private PluginService pluginService;
-    @Autowired
-    private SpringPluginManager pluginManager;
-    @Autowired
-    private FileStorageService storageService;
+    public PluginDetailsService(PluginDetailsRepository pluginDetailsRepository, PluginService pluginService,
+            SpringPluginManager pluginManager, FileStorageService storageService, CustomEventPublisher eventPublisher) {
+        this.pluginDetailsRepository = pluginDetailsRepository;
+        this.pluginService = pluginService;
+        this.pluginManager = pluginManager;
+        this.storageService = storageService;
+        this.eventPublisher = eventPublisher;
+    }
 
     /**
-     * Method is used to sync the plugins details from db to local plugin repo and load in context,
-     * if plugin details dosn't exist in local plugin repo.
+     * Method is used to sync the plugins details from db to local plugin repo and load in context, if
+     * plugin details dosn't exist in local plugin repo.
      *
      * @param pluginWrappers
      */
@@ -76,8 +85,8 @@ public class PluginDetailsService implements HazelcastClusterSyncAware {
     }
 
     /**
-     * Method is used to sync the plugins details from db to local plugin repo and load in context,
-     * if plugins details dosn't exist in local plugin repo.
+     * Method is used to sync the plugins details from db to local plugin repo and load in context, if
+     * plugins details dosn't exist in local plugin repo.
      *
      * @param pluginWrappers
      */
@@ -281,7 +290,7 @@ public class PluginDetailsService implements HazelcastClusterSyncAware {
     }
 
     /**
-     * @param pluginId
+     * @param customFaultSpec
      * @param faultSpec
      */
     public void updatePluginInformationInFaultSpec(CustomFaultSpec customFaultSpec,
@@ -343,8 +352,8 @@ public class PluginDetailsService implements HazelcastClusterSyncAware {
     }
 
     /**
-     * Handles re-sync on the current node, called only if the resync is not triggered on the
-     * current node
+     * Handles re-sync on the current node, called only if the resync is not triggered on the current
+     * node
      *
      * According to the status of the plugin saved in the db, the plugin is
      *
@@ -373,9 +382,11 @@ public class PluginDetailsService implements HazelcastClusterSyncAware {
                 } else if (!pluginDetails.getIsLoaded() && !pluginDetails.getIsActive()) {
                     log.trace("Unloading plugin {} on the the current node", pluginDetails.getPluginName());
                     pluginService.unloadPlugin(pluginDetails.getPluginId());
+                    publishUpdateEvent(pluginDetails.getPluginName(), "unloaded");
                 } else {
                     log.trace("Disabling plugin {} on the the current node", pluginDetails.getPluginName());
                     pluginService.disablePlugin(pluginDetails.getPluginId());
+                    publishUpdateEvent(pluginDetails.getPluginName(), "disabled");
                 }
             } else {
                 pluginService.deletePlugin(objectIdentifier);
@@ -405,10 +416,12 @@ public class PluginDetailsService implements HazelcastClusterSyncAware {
 
         try {
             pluginService.enablePlugin(pluginService.getIdForPluginName(pluginDetails.getPluginName()));
+            publishUpdateEvent(pluginDetails.getPluginName(), "enabled");
             log.trace("Enabled plugin with name {} is on the current node", pluginDetails.getPluginName());
         } catch (MangleRuntimeException e) {
             log.trace("Loading plugin with name {} is on the current node", pluginDetails.getPluginName());
             pluginService.loadPlugin(getPluginFilePath(pluginDetails.getPluginName()));
+            publishUpdateEvent(pluginDetails.getPluginName(), "loaded");
         }
     }
 
@@ -422,5 +435,12 @@ public class PluginDetailsService implements HazelcastClusterSyncAware {
                 (pluginDetails != null && pluginDetails.getIsLoaded() && pluginDetails.getIsActive()) ? pluginDetails
                         : null;
         return pluginDetails;
+    }
+
+    private void publishUpdateEvent(String pluginName, String status) {
+        EntityUpdatedEvent event = new EntityUpdatedEvent(pluginName, PluginDetails.class.getName());
+        event.addToMessage(String.format("Plugin %s on the node %s", status,
+                System.getProperty(MetricProviderConstants.NODE_ADDRESS)));
+        eventPublisher.publishAnEvent(event);
     }
 }

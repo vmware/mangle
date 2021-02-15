@@ -1,0 +1,22 @@
+<div class="form-group">
+    <label><b>JVM Properties</b></label>
+</div>
+<br />
+<fieldset ngModelGroup="jvmProperties">
+    <div class="form-group">
+        <label for="javaHomePath">Java Home</label>
+        <input type="text" name="javaHomePath" [(ngModel)]="faultFormData.jvmProperties.javaHomePath">
+    </div>
+    <div class="form-group">
+        <label for="jvmprocess">JVM Process</label>
+        <input type="text" name="jvmprocess" [(ngModel)]="faultFormData.jvmProperties.jvmprocess" required>
+    </div>
+    <div class="form-group">
+        <label for="port">Free Port</label>
+        <input type="number" name="port" [(ngModel)]="faultFormData.jvmProperties.port" min="0" max="65535" required>
+    </div>
+    <div class="form-group" [hidden]="!k8sHidden || !dockerHidden">
+        <label for="user">Logon User</label>
+        <input type="text" name="user" [(ngModel)]="faultFormData.jvmProperties.user">
+    </div>
+</fieldset>

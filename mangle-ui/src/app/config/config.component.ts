@@ -6,16 +6,18 @@ import { MessageConstants } from '../common/message.constants';
 
 @Component({
   selector: 'app-config',
-  templateUrl: './config.component.html'
+  templateUrl: './config.component.html',
+  styleUrls: ["./config.component.css"]
 })
 export class ConfigComponent implements OnInit {
 
   public errorFlag = false;
+  public showNewPassword = false;
+  public showRetypePassword = false;
   public alertMessage: string;
   public submitBtnState: ClrLoadingState = ClrLoadingState.DEFAULT;
   public name: string = "admin@mangle.local";
-  public oldPassword: string;
-  public userFormData: any = { "name": this.name, "oldPassword": null, "password": null, "rePassword": null };
+  public userFormData: any = { "name": this.name, "password": null, "rePassword": null };
   public barLabel: string = '';
   public barColors = ['#DD2C00', '#FF6D00', '#FFD600', '#AEEA00', '#00C853'];
   public baseColor = '#DDD';
@@ -34,11 +36,10 @@ export class ConfigComponent implements OnInit {
       this.errorFlag = true;
       this.submitBtnState = ClrLoadingState.DEFAULT;
     } else {
-      this.oldPassword = userFormValue.oldPassword;
       delete userFormValue["oldPassword"];
       delete userFormValue["rePassword"];
       userFormValue.roleNames = ["ROLE_ADMIN"];
-      this.configService.updateLocalUserConfig(userFormValue, this.oldPassword).subscribe(
+        this.configService.updateLocalUserConfig(userFormValue).subscribe(
         res => {
           if (res.status === 200) {
             this.router.navigateByUrl('login');
@@ -58,4 +59,11 @@ export class ConfigComponent implements OnInit {
     }
   }
 
+  public negateShowRetypePassword() {
+    this.showRetypePassword = !this.showRetypePassword;
+  }
+
+  public negateShowNewPassword() {
+    this.showNewPassword = !this.showNewPassword;
+  }
 }

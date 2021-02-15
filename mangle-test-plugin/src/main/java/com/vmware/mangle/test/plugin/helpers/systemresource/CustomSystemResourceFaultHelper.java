@@ -24,7 +24,7 @@ import com.vmware.mangle.utils.exceptions.MangleException;
  *
  */
 
-public abstract class CustomSystemResourceFaultHelper {
+public interface CustomSystemResourceFaultHelper {
 
 
     public abstract ICommandExecutor getExecutor(CommandExecutionFaultSpec faultSpec) throws MangleException;

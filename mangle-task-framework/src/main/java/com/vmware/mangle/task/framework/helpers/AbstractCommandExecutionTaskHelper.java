@@ -57,6 +57,10 @@ public abstract class AbstractCommandExecutionTaskHelper<T extends CommandExecut
         return task.getTaskData().getRemediationCommandInfoList();
     }
 
+    public List<CommandInfo> getStatusExecutionInfo(Task<T> task) {
+        return task.getTaskData().getStatusCommandInfoList();
+    }
+
     public List<SupportScriptInfo> listFaultInjectionScripts(Task<T> task) {
         return task.getTaskData().getSupportScriptInfo();
     }
@@ -82,14 +86,7 @@ public abstract class AbstractCommandExecutionTaskHelper<T extends CommandExecut
     }
 
     public enum SubStage {
-        INITIALISED,
-        PREREQUISITES_CHECK,
-        PREPARE_TARGET_MACHINE,
-        TRIGGER_INJECTION,
-        REMEDIATION_PREREQUISITES_CHECK,
-        TRIGGER_REMEDIATION,
-        CLEANUP_EXECUTION_INFO,
-        COMPLETED
+        INITIALISED, PREREQUISITES_CHECK, PREPARE_TARGET_MACHINE, TRIGGER_INJECTION, REMEDIATION_PREREQUISITES_CHECK, TRIGGER_REMEDIATION, CLEANUP_EXECUTION_INFO, COMPLETED
     }
 
     private void handleSubstages(Task<T> task) throws MangleException {
@@ -141,6 +138,7 @@ public abstract class AbstractCommandExecutionTaskHelper<T extends CommandExecut
     private void prepareTestmachineStage(Task<T> task) throws MangleException {
         // Verify if the Task is running for First time in the Target
         // Machine.
+        @SuppressWarnings("squid:S1149")
         Stack<TaskTrigger> triggers = task.getTriggers();
         if (triggers.isEmpty() || !TaskStatus.COMPLETED.equals(triggers.peek().getTaskStatus())) {
             // Prepare Target Machine if it is getting executed for the
@@ -192,11 +190,6 @@ public abstract class AbstractCommandExecutionTaskHelper<T extends CommandExecut
         updateSubstage(task, SubStage.COMPLETED);
         this.getPublisher().publishEvent(new TaskSubstageEvent(task));
     }
-
-    private void updateSubstage(Task<T> task, SubStage stage) {
-        task.updateTaskSubstage(stage.name());
-    }
-
 
     protected Map<String, String> getArgs(Task<T> task) {
         return ((CommandExecutionFaultSpec) task.getTaskData()).getArgs();

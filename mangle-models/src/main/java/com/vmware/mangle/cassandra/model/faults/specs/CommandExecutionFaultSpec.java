@@ -35,15 +35,19 @@ import com.vmware.mangle.cassandra.model.tasks.commands.CommandInfo;
  *
  */
 @Data
-@ToString(exclude = { "injectionCommandInfoList", "remediationCommandInfoList", "testMachinePreperationCommandInfoList",
-        "cleanUpCommandInfoList", "supportScriptInfo", "endpoint", "credentials" }, callSuper = true)
+@ToString(exclude = { "injectionCommandInfoList", "remediationCommandInfoList", "statusCommandInfoList",
+        "testMachinePreperationCommandInfoList", "cleanUpCommandInfoList", "supportScriptInfo", "endpoint",
+        "credentials", "childEndpoint", "childCredentials" }, callSuper = true)
 @EqualsAndHashCode(callSuper = true)
-public class CommandExecutionFaultSpec extends AutoRemediatedFaultSpec  {
+@SuppressWarnings("squid:S1948")
+public class CommandExecutionFaultSpec extends AutoRemediatedFaultSpec {
     private static final long serialVersionUID = 1L;
     @JsonIgnore
     protected List<CommandInfo> injectionCommandInfoList;
     @JsonIgnore
     protected List<CommandInfo> remediationCommandInfoList;
+    @JsonIgnore
+    protected List<CommandInfo> statusCommandInfoList;
     @JsonIgnore
     protected List<CommandInfo> testMachinePreperationCommandInfoList;
     @JsonIgnore
@@ -62,6 +66,12 @@ public class CommandExecutionFaultSpec extends AutoRemediatedFaultSpec  {
     @JsonIgnore
     @Transient
     protected transient CredentialsSpec credentials;
+    @JsonIgnore
+    @Transient
+    protected transient EndpointSpec childEndpoint;
+    @JsonIgnore
+    @Transient
+    protected transient CredentialsSpec childCredentials;
 
     public String getInjectionHomeDir() {
         return injectionHomeDir;

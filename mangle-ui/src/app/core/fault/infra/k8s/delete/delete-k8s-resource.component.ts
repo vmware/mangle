@@ -1,33 +1,28 @@
-import { Component, OnInit, Inject } from '@angular/core';
-import { Router } from '@angular/router';
-import { EndpointService } from 'src/app/core/endpoint/endpoint.service';
-import { FaultService } from '../../../fault.service';
-import { MessageConstants } from 'src/app/common/message.constants';
-import { ClrLoadingState } from '@clr/angular';
-import { DataService } from 'src/app/shared/data.service';
-import { DOCUMENT } from '@angular/common';
-import { CommonUtils } from 'src/app/shared/commonUtils';
+import {Component, Inject, OnInit} from "@angular/core";
+import {Router} from "@angular/router";
+import {EndpointService} from "src/app/core/endpoint/endpoint.service";
+import {FaultService} from "../../../fault.service";
+import {MessageConstants} from "src/app/common/message.constants";
+import {ClrLoadingState} from "@clr/angular";
+import {DataService} from "src/app/shared/data.service";
+import {DOCUMENT} from "@angular/common";
+import {CommonUtils} from "src/app/shared/commonUtils";
+import {CommonConstants} from "src/app/common/common.constants";
+import {FaultCommons} from "../../../fault.commons";
 
 @Component({
-  selector: 'app-delete-k8s-resource',
-  templateUrl: './delete-k8s-resource.component.html'
+  selector: "app-delete-k8s-resource",
+  templateUrl: "./delete-k8s-resource.component.html"
 })
-export class DeleteK8SResourceComponent implements OnInit {
+export class DeleteK8SResourceComponent extends FaultCommons implements OnInit {
 
-  public alertMessage: string;
-  public isErrorMessage: boolean;
-
-  public resourceNameHidden: boolean = true;
-  public resourceLabelsHidden: boolean = true;
+  public resourceNameHidden = true;
+  public resourceLabelsHidden = true;
   public resourceLabelsData: any = {};
-
-  public tagsData: any = {};
-  public originalTagsData: any = {};
-
-  public endpoints: any = [];
-  public k8sResourceTypes: any = ["POD", "NODE", "SERVICE", "DEPLOYMENT", "STATEFULSET", "SECRET", "DAEMONSET", "CONFIGMAP", "JOB", "REPLICASET", "REPLICATIONCONTROLLER", "PV", "PVC"];
-
-  public runBtnState: ClrLoadingState = ClrLoadingState.DEFAULT;
+  public supportedEpTypes: any = [CommonConstants.K8S_CLUSTER];
+  public k8sResourceTypes: any = ["POD", "NODE", "SERVICE", "DEPLOYMENT", "STATEFULSET",
+    "SECRET", "DAEMONSET", "CONFIGMAP", "JOB", "REPLICASET", "REPLICATIONCONTROLLER", "PV", "PVC"];
+  public resourceLabelsModal: boolean;
 
   public faultFormData: any = {
     "endpointName": null,
@@ -35,28 +30,21 @@ export class DeleteK8SResourceComponent implements OnInit {
     "resourceName": null,
     "resourceLabels": {},
     "randomInjection": false,
-    "injectionHomeDir": null
+    "injectionHomeDir": null,
+    "schedule": {
+      "cronExpression": null,
+      "timeInMilliseconds": null,
+      "description": null
+    }
   };
 
-  public searchedEndpoints: any = [];
-
-  constructor(private faultService: FaultService, private endpointService: EndpointService, private router: Router, private dataService: DataService, @Inject(DOCUMENT) document, private commonUtils: CommonUtils) {
-
+  constructor(private faultService: FaultService, endpointService: EndpointService, private router: Router,
+              private dataService: DataService, @Inject(DOCUMENT) document, commonUtils: CommonUtils) {
+    super(endpointService, commonUtils);
   }
 
   ngOnInit() {
-    this.endpointService.getAllEndpoints().subscribe(
-      res => {
-        if (res.code) {
-          this.endpoints = [];
-        } else {
-          this.endpoints = res;
-        }
-      }, err => {
-        this.endpoints = [];
-        this.isErrorMessage= true;
-        this.alertMessage = err.error.description;
-      });
+    this.getAllEndpoints();
     if (this.dataService.sharedData != null) {
       this.populateFaultData();
     }
@@ -79,45 +67,17 @@ export class DeleteK8SResourceComponent implements OnInit {
       this.tagsData = this.dataService.sharedData.tags;
       this.originalTagsData = JSON.parse(JSON.stringify(this.dataService.sharedData.tags));
     }
+    this.populateFaultNotifiers(this.dataService);
     this.dataService.sharedData = null;
-  }
-
-  public searchEndpoint(searchKeyWord) {
-    this.searchedEndpoints = [];
-    for (var i = 0; i < this.endpoints.length; i++) {
-      if (this.endpoints[i].name.indexOf(searchKeyWord) > -1) {
-        this.searchedEndpoints.push(this.endpoints[i]);
-      }
-    }
-  }
-
-  public setEndpointVal(endpointVal) {
-    this.faultFormData.endpointName = endpointVal;
-  }
-
-  public updateTags(tagsVal) {
-    this.tagsData[tagsVal.tagKey] = tagsVal.tagValue;
-  }
-
-  public removeTag(tagKeyToRemove) {
-    delete this.tagsData[tagKeyToRemove];
-  }
-
-  public displayEndpointFields(endpointNameVal) {
-    for (var i = 0; i < this.endpoints.length; i++) {
-      if (endpointNameVal == this.endpoints[i].name) {
-        this.tagsData = this.commonUtils.getTagsData(this.originalTagsData,this.endpoints[i].tags);
-      }
-    }
   }
 
   public setResourceVal(selectedResource) {
     this.resourceNameHidden = true;
     this.resourceLabelsHidden = true;
-    if (selectedResource == "resourceName") {
+    if (selectedResource === "resourceName") {
       this.resourceNameHidden = false;
     }
-    if (selectedResource == "resourceLabels") {
+    if (selectedResource === "resourceLabels") {
       this.resourceLabelsHidden = false;
     }
   }
@@ -137,28 +97,46 @@ export class DeleteK8SResourceComponent implements OnInit {
     } else {
       faultData.resourceLabels = this.resourceLabelsData;
       if (JSON.stringify(faultData.resourceLabels) === JSON.stringify({})) {
-        this.isErrorMessage= true;
+        this.isErrorMessage = true;
         this.alertMessage = MessageConstants.RESOURCE_LABEL_REQUIRED;
         return false;
       }
       delete faultData["resourceName"];
     }
-    if (this.tagsData != {}) {
+    if (this.tagsData !== {}) {
       faultData.tags = this.tagsData;
     }
+    this.addNotifiersInFault(faultData);
     this.runBtnState = ClrLoadingState.LOADING;
     this.faultService.executeK8SDeleteResourceFault(faultData).subscribe(
       res => {
         this.tagsData = {};
-        this.router.navigateByUrl('core/requests');
+        this.router.navigateByUrl(CommonConstants.REQUESTS_PROCESSED_URL);
       }, err => {
-        this.isErrorMessage= true;
+        this.isErrorMessage = true;
         this.alertMessage = err.error.description;
         if (this.alertMessage === undefined) {
           this.alertMessage = err.error.error;
         }
         this.runBtnState = ClrLoadingState.DEFAULT;
       });
+  }
+  
+  public setScheduleCron(eventVal) {
+    this.faultFormData.schedule.cronExpression = eventVal;
+    this.setSubmitButton();
+    this.cronModal = false;
+  }
+  
+  public setSubmitButton() {
+    if ((this.faultFormData.schedule.cronExpression !== "" && this.faultFormData.schedule.cronExpression != null)
+      || (this.faultFormData.schedule.timeInMilliseconds != null && this.faultFormData.schedule.timeInMilliseconds !== 0)) {
+      this.disableSchedule = false;
+      this.disableRun = true;
+    } else {
+      this.disableSchedule = true;
+      this.disableRun = false;
+    }
   }
 
 }

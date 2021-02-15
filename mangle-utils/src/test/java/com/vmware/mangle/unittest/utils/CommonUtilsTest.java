@@ -62,7 +62,7 @@ import com.vmware.mangle.utils.mockdata.CommandResultUtils;
  */
 @PrepareForTest(value = { CommonUtils.class })
 @PowerMockIgnore({ "javax.net.ssl.*", "javax.xml.parsers.*", "com.sun.org.apache.xerces.internal.jaxp.*",
-        "org.apache.logging.log4j.*" })
+        "org.apache.logging.log4j.*", "com.sun.org.apache.xalan.internal.xsltc.trax.*" })
 public class CommonUtilsTest extends PowerMockTestCase {
 
     Double value = 234.1341361234132;
@@ -270,6 +270,22 @@ public class CommonUtilsTest extends PowerMockTestCase {
         verify(httpServletResponse, times(2)).setHeader(anyString(), anyString());
     }
 
+    @Test(priority = 28)
+    public void testStringKeyValuePairToMap() {
+        Map<String, String> expectedMap = new HashMap<>();
+        expectedMap.put("app", "mangle");
+        expectedMap.put("version", "3.0");
+        Map<String, String> returnMap = CommonUtils.stringKeyValuePairToMap("app=mangle,version=3.0");
+        Assert.assertEquals(returnMap, expectedMap,
+                "testStringKeyValuePairToMap with input string \"app=mangle,version=3.0\" failed");
+        returnMap = CommonUtils.stringKeyValuePairToMap(" ");
+        Assert.assertTrue(returnMap.isEmpty(), "testStringKeyValuePairToMap with empty failed");
+        returnMap = CommonUtils.stringKeyValuePairToMap("app=,version=");
+        Assert.assertTrue(returnMap.isEmpty(),
+                "testStringKeyValuePairToMap with input string \"app=,version=\" failed");
+
+    }
+
     @Test(description = "Test to verify the sendFileDownloadResponse method when the file provided is null", priority = 28)
     public void testSendFileDownloadResponse1() throws IOException {
         HttpServletResponse httpServletResponse = Mockito.mock(HttpServletResponse.class);
@@ -304,10 +320,20 @@ public class CommonUtilsTest extends PowerMockTestCase {
         Assert.assertEquals(timeStamp, expectedTimeStamp);
     }
 
-    @Test
+    @Test(priority = 30)
     public void testValidateName() {
         Assert.assertTrue(CommonUtils.validateName("dummy_name-test.com"));
         Assert.assertFalse(CommonUtils.validateName("^#test@test.com$"));
         Assert.assertFalse(CommonUtils.validateName(null));
+    }
+
+    @Test(priority = 31)
+    public void testGetDateInCurrentTimeZone() {
+        Date timeNow = new Date();
+        DateFormat formatter = new SimpleDateFormat(Constants.GMT_DATE_FORMAT);
+        formatter.setTimeZone(TimeZone.getTimeZone(Constants.GMT));
+        String expectedTimeStamp = formatter.format(timeNow);
+
+        Assert.assertNotNull(CommonUtils.getDateInCurrentTimeZone(expectedTimeStamp));
     }
 }

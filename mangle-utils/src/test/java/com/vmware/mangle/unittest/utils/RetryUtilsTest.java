@@ -51,14 +51,14 @@ public class RetryUtilsTest {
         }
     }
 
-    private void incrementCounterWithException() throws Exception {
+    private void incrementCounterWithException() throws MangleException {
         incrementCounterWithException("retrytest");
     }
 
-    private void incrementCounterWithException(String exceptionMessage) throws Exception {
+    private void incrementCounterWithException(String exceptionMessage) throws MangleException {
         log.info("Incrementing Counter");
         counter++;
-        throw new Exception(exceptionMessage);
+        throw new MangleException(exceptionMessage, ErrorCode.RETRY_LOGICS_FAILED, exceptionMessage);
     }
 
     private void incrementCounter() {

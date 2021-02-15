@@ -18,8 +18,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import com.hazelcast.config.Config;
@@ -46,8 +48,11 @@ import com.vmware.mangle.services.SchedulerService;
 import com.vmware.mangle.services.TaskService;
 import com.vmware.mangle.services.config.MangleBootInitializer;
 import com.vmware.mangle.services.enums.MangleQuorumStatus;
+import com.vmware.mangle.services.events.web.CustomEventPublisher;
 import com.vmware.mangle.services.hazelcast.HazelcastTaskCache;
 import com.vmware.mangle.services.mockdata.HazelcastMockData;
+import com.vmware.mangle.services.poll.PollingService;
+import com.vmware.mangle.utils.constants.Constants;
 import com.vmware.mangle.utils.constants.HazelcastConstants;
 import com.vmware.mangle.utils.exceptions.MangleException;
 
@@ -76,14 +81,22 @@ public class MangleBootInitializerTest {
     @Mock
     private ThreadPoolTaskScheduler taskScheduler;
 
+    @Mock
+    private CustomEventPublisher eventPublisher;
+
     private MangleBootInitializer bootInitializer;
 
-    private HazelcastMockData mockData = new HazelcastMockData();
+    private HazelcastMockData mockData;
+
+    @Mock
+    private PollingService<?> pollingService;
 
     @BeforeMethod
     public void initMocks() {
         MockitoAnnotations.initMocks(this);
-        bootInitializer = new MangleBootInitializer(taskService, taskCache, schedulerService, configService);
+        bootInitializer = new MangleBootInitializer(taskService, taskCache, schedulerService, configService,
+                eventPublisher, pollingService);
+        mockData = new HazelcastMockData();
         bootInitializer.setTaskScheduler(taskScheduler);
         bootInitializer.setHazelcastInstance(hazelcastInstance);
         HazelcastConstants.setMangleQourumStatus(MangleQuorumStatus.PRESENT);
@@ -97,6 +110,58 @@ public class MangleBootInitializerTest {
         HazelcastClusterConfig clusterConfig = mockData.getClusterConfig();
         Config config = new Config();
         config.setProperty(HazelcastConstants.HAZELCAST_PROPERTY_DEPLOYMENT_MODE, MangleDeploymentMode.CLUSTER.name());
+        Address address = new Address("127.0.0.1", 90000);
+
+        when(hazelcastInstance.getCluster()).thenReturn(cluster);
+        when(cluster.getMembers()).thenReturn(members);
+        when(configService.getClusterConfiguration()).thenReturn(clusterConfig);
+        when(configService.updateClusterConfiguration(clusterConfig)).thenReturn(clusterConfig);
+        when(clusterMember.getAddress()).thenReturn(address);
+        when(hazelcastInstance.getConfig()).thenReturn(config);
+
+        bootInitializer.updateClusterConfigObject();
+
+        verify(hazelcastInstance, times(1)).getCluster();
+        verify(cluster, times(1)).getMembers();
+        verify(configService, times(1)).getClusterConfiguration();
+        verify(configService, times(1)).updateClusterConfiguration(any());
+    }
+
+    @Test
+    public void testUpdateClusterConfigObjectWithQuorumAsNull() throws UnknownHostException {
+        Member clusterMember = mock(Member.class);
+        Cluster cluster = mock(Cluster.class);
+        Set<Member> members = new HashSet<>(Collections.singletonList(clusterMember));
+        HazelcastClusterConfig clusterConfig = mockData.getClusterConfig();
+        Config config = new Config();
+        config.setProperty(HazelcastConstants.HAZELCAST_PROPERTY_DEPLOYMENT_MODE, MangleDeploymentMode.CLUSTER.name());
+        Address address = new Address("127.0.0.1", 90000);
+        clusterConfig.setQuorum(0);
+
+        when(hazelcastInstance.getCluster()).thenReturn(cluster);
+        when(cluster.getMembers()).thenReturn(members);
+        when(configService.getClusterConfiguration()).thenReturn(clusterConfig);
+        when(configService.updateClusterConfiguration(clusterConfig)).thenReturn(clusterConfig);
+        when(clusterMember.getAddress()).thenReturn(address);
+        when(hazelcastInstance.getConfig()).thenReturn(config);
+
+        bootInitializer.updateClusterConfigObject();
+
+        verify(hazelcastInstance, times(1)).getCluster();
+        verify(cluster, times(1)).getMembers();
+        verify(configService, times(1)).getClusterConfiguration();
+        verify(configService, times(1)).updateClusterConfiguration(any());
+    }
+
+    @Test
+    public void testUpdateClusterConfigObjectWithClusterAsStandAlone() throws UnknownHostException {
+        Member clusterMember = mock(Member.class);
+        Cluster cluster = mock(Cluster.class);
+        Set<Member> members = new HashSet<>(Collections.singletonList(clusterMember));
+        HazelcastClusterConfig clusterConfig = mockData.getClusterConfig();
+        Config config = new Config();
+        config.setProperty(HazelcastConstants.HAZELCAST_PROPERTY_DEPLOYMENT_MODE,
+                MangleDeploymentMode.STANDALONE.name());
         Address address = new Address("127.0.0.1", 90000);
 
         when(hazelcastInstance.getCluster()).thenReturn(cluster);
@@ -180,7 +245,6 @@ public class MangleBootInitializerTest {
         verify(cluster, times(1)).getLocalMember();
         verify(clusterMember, times(2)).getAddress();
         verify(schedulerService, times(1)).getAllScheduledJobByStatus(SchedulerStatus.SCHEDULED);
-        verify(taskCache, times(1)).addTaskToCache(schedulerSpec.getId(), schedulerSpec.getStatus().name());
     }
 
     @Test
@@ -264,5 +328,98 @@ public class MangleBootInitializerTest {
         verify(taskService, times(1)).addOrUpdateTask(task);
     }
 
+    @Test
+    public void testInitializeApplicationTasksNonScheduledTaskFailed() throws UnknownHostException, MangleException {
+        Member clusterMember = mock(Member.class);
+        Cluster cluster = mock(Cluster.class);
+        Set<Member> members = new HashSet<>(Collections.singletonList(clusterMember));
+        Address address = new Address("127.0.0.1", 90000);
+        Task<TaskSpec> task = mockData.getMockTask();
+        task.setScheduledTask(false);
+        SimpleDateFormat sdf = new SimpleDateFormat(Constants.DEFAULT_DATE_FORMAT);
+        task.getTriggers().peek().setStartTime(sdf.format(System.currentTimeMillis() - 3600000));
 
+        when(hazelcastInstance.getCluster()).thenReturn(cluster);
+        when(cluster.getMembers()).thenReturn(members);
+        when(cluster.getLocalMember()).thenReturn(clusterMember);
+        when(clusterMember.getAddress()).thenReturn(address);
+        when(taskService.getInProgressTasks()).thenReturn(Collections.singletonList(task));
+        when(taskService.addOrUpdateTask(task)).thenReturn(task);
+
+        bootInitializer.initializeApplicationTasks();
+
+        Assert.assertEquals(task.getTaskStatus(), TaskStatus.FAILED);
+
+        verify(hazelcastInstance, times(2)).getCluster();
+        verify(cluster, times(1)).getMembers();
+        verify(cluster, times(1)).getLocalMember();
+        verify(clusterMember, times(2)).getAddress();
+        verify(schedulerService, times(1)).getAllScheduledJobByStatus(SchedulerStatus.SCHEDULED);
+        verify(taskService, times(1)).getInProgressTasks();
+        verify(taskService, times(1)).addOrUpdateTask(task);
+    }
+
+    @Test
+    public void testInitializeApplicationTasksParseException() throws UnknownHostException, MangleException {
+        Member clusterMember = mock(Member.class);
+        Cluster cluster = mock(Cluster.class);
+        Set<Member> members = new HashSet<>(Collections.singletonList(clusterMember));
+        Address address = new Address("127.0.0.1", 90000);
+        Task<TaskSpec> task = mockData.getMockTask();
+        task.setScheduledTask(false);
+        task.getTriggers().peek().setStartTime(String.valueOf(System.currentTimeMillis() - 3600000));
+
+        when(hazelcastInstance.getCluster()).thenReturn(cluster);
+        when(cluster.getMembers()).thenReturn(members);
+        when(cluster.getLocalMember()).thenReturn(clusterMember);
+        when(clusterMember.getAddress()).thenReturn(address);
+        when(taskService.getInProgressTasks()).thenReturn(Collections.singletonList(task));
+        when(taskService.addOrUpdateTask(task)).thenReturn(task);
+
+        bootInitializer.initializeApplicationTasks();
+
+        verify(hazelcastInstance, times(2)).getCluster();
+        verify(cluster, times(1)).getMembers();
+        verify(cluster, times(1)).getLocalMember();
+        verify(clusterMember, times(2)).getAddress();
+        verify(schedulerService, times(1)).getAllScheduledJobByStatus(SchedulerStatus.SCHEDULED);
+        verify(taskService, times(1)).getInProgressTasks();
+        verify(taskService, times(0)).addOrUpdateTask(task);
+    }
+
+    @Test
+    public void testRemoveCurrentClusterNodesFromClusterConfig() throws UnknownHostException {
+        Member clusterMember = mock(Member.class);
+        Member clusterMember1 = mock(Member.class);
+        Cluster cluster = mock(Cluster.class);
+        Set<Member> members = new LinkedHashSet<>();
+        members.add(clusterMember);
+        members.add(clusterMember1);
+        HazelcastClusterConfig clusterConfig = mockData.getClusterConfig();
+        Config config = new Config();
+        config.setProperty(HazelcastConstants.HAZELCAST_PROPERTY_DEPLOYMENT_MODE, MangleDeploymentMode.CLUSTER.name());
+        Address address = new Address("127.0.0.1", 90000);
+        Address address1 = new Address("10.196.173.33", 90000);
+        Set<String> member = new LinkedHashSet<>();
+        member.add(address.getHost());
+        member.add(address1.getHost());
+        clusterConfig.setMembers(member);
+        clusterConfig.setMaster(address.getHost());
+
+        when(hazelcastInstance.getCluster()).thenReturn(cluster);
+        when(cluster.getMembers()).thenReturn(members);
+        when(cluster.getLocalMember()).thenReturn(clusterMember);
+        when(configService.getClusterConfiguration()).thenReturn(clusterConfig);
+        when(configService.updateClusterConfiguration(clusterConfig)).thenReturn(clusterConfig);
+        when(clusterMember.getAddress()).thenReturn(address);
+        when(clusterMember1.getAddress()).thenReturn(address1);
+        when(hazelcastInstance.getConfig()).thenReturn(config);
+
+        bootInitializer.removeCurrentClusterNodesFromClusterConfig();
+
+        verify(hazelcastInstance, times(4)).getCluster();
+        verify(cluster, times(2)).getMembers();
+        verify(configService, times(1)).getClusterConfiguration();
+        verify(configService, times(1)).updateClusterConfiguration(any());
+    }
 }

@@ -1,0 +1,44 @@
+<app-alert [(alertMessage)]="alertMessage" [isErrorMessage]="isErrorMessage"
+    (alertMessageChange)="alertMessage = $event"></app-alert>
+<div>
+    <clr-alert [clrAlertClosable]="false">
+        <clr-alert-item>
+            <span class="alert-text">
+                Experimental Feature: The Resiliency Score calculation feature is currently supported only for Wavefront
+                monitoring data source.
+            </span>
+        </clr-alert-item>
+    </clr-alert>
+    <h3 class="modal-title"></h3>
+    <h3 class="modal-title">Calculate/Schedule ResiliencyScore for Service</h3>
+    <form data-tag="resiliencyscore" #resiliencyscoreForm="ngForm" data-tag="resiliencyscore"
+        (ngSubmit)="calculateResiliencyScore(resiliencyscoreForm.value);" ngNativeValidate>
+        <section class="form-block">
+            <div class="form-group">
+                <label for="serviceName">Service Name
+                    <a href="javascript://" role="tooltip" aria-haspopup="true"
+                        class="tooltip tooltip-md tooltip-bottom-right">
+                        <clr-icon shape="info-circle" size="24"></clr-icon>
+                        <span class="tooltip-content">Select service for which the Resiliency Score need to be
+                            calculated.</span>
+                    </a>
+                </label>
+                <div class="select">
+                    <select name="serviceName" id="serviceName" [(ngModel)]="rscoreData.serviceName" required>
+                        <ng-container *ngFor="let serviceName of services">
+                            <option [value]="serviceName.name">{{serviceName.name}}</option>
+                        </ng-container>
+                    </select>
+                </div>
+            </div>
+            <fault-schedule [faultFormData]="rscoreData" (submitButtonChange)="setSubmitButton();"
+                (setCronModal)="viewCronModal($event);"></fault-schedule>
+        </section>
+        <button type="submit" data-tag="ResiliencyScore" class="btn btn-primary" [clrLoading]="runBtnState"
+            [disabled]="disableRun">SUBMIT</button>
+        <button type="submit" data-tag="ScheduleResiliencyScore" class="btn btn-primary" [clrLoading]="runBtnState"
+            [disabled]="disableSchedule">SCHEDULE</button>
+    </form>
+</div>
+<app-cron [cronModal]="cronModal" [cronValOrig]="rscoreData.schedule.cronExpression"
+    (cronMessageEvent)="setScheduleCron($event);"></app-cron>

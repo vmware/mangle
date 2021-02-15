@@ -12,10 +12,13 @@
 package com.vmware.mangle.cassandra.model.scheduler;
 
 import java.io.Serializable;
+import java.util.Set;
 
 import com.datastax.driver.core.DataType.Name;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.springframework.data.cassandra.core.cql.Ordering;
@@ -51,8 +54,14 @@ public class SchedulerSpec extends MangleDto implements Serializable {
     private SchedulerStatus status;
     private String description;
 
+    @ApiModelProperty(notes = "Notifier names to be used while sending the notification.", required = false, example = "[\"mangle-test\"]")
+    @JsonProperty(required = false)
+    private Set<String> notifierNames;
+
     public SchedulerSpec() {
-        this.id = super.generateId();
+        if (null == this.id) {
+            this.id = super.generateId();
+        }
     }
 
     @JsonIgnore

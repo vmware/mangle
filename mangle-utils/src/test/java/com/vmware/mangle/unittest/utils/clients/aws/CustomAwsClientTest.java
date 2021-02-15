@@ -11,10 +11,13 @@
 
 package com.vmware.mangle.unittest.utils.clients.aws;
 
+import com.amazonaws.services.ec2.model.AmazonEC2Exception;
+import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import com.vmware.mangle.utils.clients.aws.CustomAwsClient;
+import com.vmware.mangle.utils.constants.ErrorConstants;
 import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
@@ -31,7 +34,7 @@ public class CustomAwsClientTest {
     private CustomAwsClient customAwsClient;
 
     @Test
-    public void testVcenterClientInstantiation() throws Exception {
+    public void testAwsClientInstantiation() throws Exception {
         customAwsClient = new CustomAwsClient(AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY);
         Assert.assertEquals(System.getProperty("aws.accessKeyId"), AWS_ACCESS_KEY_ID);
         Assert.assertEquals(System.getProperty("aws.secretKey"), AWS_SECRET_ACCESS_KEY);
@@ -52,9 +55,11 @@ public class CustomAwsClientTest {
     @Test
     public void testTestConnectionWithValidRegion() throws Exception {
         customAwsClient = new CustomAwsClient("us-west-1", AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY);
+        CustomAwsClient mockcustomAwsClient = Mockito.spy(customAwsClient);
+        Mockito.doThrow(new AmazonEC2Exception(ErrorConstants.AWS_INVALID_CREDS)).when(mockcustomAwsClient).ec2Client();
         boolean result = false;
         try {
-            result = customAwsClient.testConnection();
+            result = mockcustomAwsClient.testConnection();
         } catch (MangleException exception) {
             Assert.assertEquals(exception.getErrorCode(), ErrorCode.AWS_INVALID_CREDENTIALS);
         }

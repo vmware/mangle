@@ -31,6 +31,7 @@ import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
 /**
  * Abstract class for any Mangle Fault
+ *
  * @author bkaranam
  */
 @Data
@@ -56,7 +57,9 @@ public abstract class AbstractFault {
         if (getTaskType().equals(TaskType.INJECTION)) {
             List<EndpointType> supportedEndpointTypes = Arrays
                     .asList(AnnotationUtils.findAnnotation(this.getClass(), SupportedEndpoints.class).endPoints());
-            if (!supportedEndpointTypes.contains(getFaultSpec().getEndpoint().getEndPointType())) {
+            if (!supportedEndpointTypes.contains(getFaultSpec().getEndpoint().getEndPointType())
+                    && (null == getFaultSpec().getEndpoint().getEndpointGroupType() || !supportedEndpointTypes.contains(
+                            EndpointType.valueOf(getFaultSpec().getEndpoint().getEndpointGroupType().name())))) {
                 throw new MangleException(ErrorCode.UNSUPPORTED_ENDPOINT, getFaultSpec().getClass().getSimpleName(),
                         supportedEndpointTypes);
             }
@@ -66,6 +69,7 @@ public abstract class AbstractFault {
 
     /**
      * Method to call triggetTask method in FaultTaskFactory class
+     *
      * @throws MangleException
      */
     @SuppressWarnings("unchecked")

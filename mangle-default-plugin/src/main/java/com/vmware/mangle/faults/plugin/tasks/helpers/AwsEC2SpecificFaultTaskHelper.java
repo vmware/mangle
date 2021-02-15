@@ -59,7 +59,7 @@ public class AwsEC2SpecificFaultTaskHelper<T extends AwsEC2FaultSpec> extends Ab
     }
 
     @Override
-    protected ICommandExecutor getExecutor(Task<T> task) throws MangleException {
+    public ICommandExecutor getExecutor(Task<T> task) throws MangleException {
         return awsEC2FaultHelper.getExecutor(task.getTaskData());
     }
 

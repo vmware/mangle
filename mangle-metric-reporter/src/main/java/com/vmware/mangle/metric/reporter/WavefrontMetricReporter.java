@@ -12,7 +12,6 @@
 package com.vmware.mangle.metric.reporter;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -34,14 +33,14 @@ public class WavefrontMetricReporter implements MetricReporter {
     private String wavefrontProxy;
     private Integer wavefrontProxyPort;
     private String metricSource;
-    private HashMap<String, String> staticTags;
+    private Map<String, String> staticTags;
 
     public WavefrontMetricReporter(String wavefrontProxy, Integer wavefrontProxyPort, String metricSource,
             Map<String, String> staticTags) {
         this.wavefrontProxy = wavefrontProxy;
         this.wavefrontProxyPort = wavefrontProxyPort;
         this.metricSource = metricSource;
-        this.staticTags = (HashMap<String, String>) staticTags;
+        this.staticTags = staticTags;
         wavefrontReporter = new Wavefront(wavefrontProxy, wavefrontProxyPort);
     }
 
@@ -60,7 +59,7 @@ public class WavefrontMetricReporter implements MetricReporter {
      * @return
      */
     @Override
-    public Boolean sendMetric(String metricName, double metricValue, HashMap<String, String> tags) {
+    public Boolean sendMetric(String metricName, double metricValue, Map<String, String> tags) {
         log.trace(" Sending the Metric " + metricName + " with assosicated value: " + metricValue);
         if (null == wavefrontReporter) {
             return false;
@@ -69,8 +68,7 @@ public class WavefrontMetricReporter implements MetricReporter {
             log.trace("Sending the metric to wavefront Proxy");
             try {
                 double doubleEqMetricValue = MetricsHelper.getDoubleEquivalent(metricValue);
-                HashMap<String, String> allTags =
-                        (HashMap<String, String>) WavefrontMetricHelper.constructTags(tags, this.staticTags);
+                Map<String, String> allTags = WavefrontMetricHelper.constructTags(tags, this.staticTags);
                 wavefrontReporter.send(metricName, doubleEqMetricValue, metricSource, allTags);
                 wavefrontReporter.flush();
             } catch (IOException e) {
@@ -101,8 +99,7 @@ public class WavefrontMetricReporter implements MetricReporter {
             log.trace("Metric details: " + metric.toString());
             try {
                 double metricValue = MetricsHelper.getDoubleEquivalent(metric.getMetricValue());
-                HashMap<String, String> allTags = (HashMap<String, String>) WavefrontMetricHelper
-                        .constructTags(metric.getTags(), this.staticTags);
+                Map<String, String> allTags = WavefrontMetricHelper.constructTags(metric.getTags(), this.staticTags);
                 wavefrontReporter.send(metric.getMetricName(), metricValue, metric.getMetricTimeStamp(),
                         metric.getSource(), allTags);
                 wavefrontReporter.flush();

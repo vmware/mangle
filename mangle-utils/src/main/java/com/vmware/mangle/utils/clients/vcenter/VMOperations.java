@@ -12,17 +12,30 @@
 package com.vmware.mangle.utils.clients.vcenter;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 
 import com.vmware.mangle.cassandra.model.tasks.commands.CommandExecutionResult;
 import com.vmware.mangle.model.response.VCenterAdapterResponse;
 import com.vmware.mangle.model.response.VCenterOperationTaskQueryResponse;
+import com.vmware.mangle.model.vcenter.VCenterAdapterErrorObj;
 import com.vmware.mangle.model.vcenter.VCenterSpec;
+import com.vmware.mangle.model.vcenter.VM;
 import com.vmware.mangle.model.vcenter.VMDisk;
+import com.vmware.mangle.model.vcenter.VMDiskObj;
+import com.vmware.mangle.model.vcenter.VMNic;
+import com.vmware.mangle.utils.InventoryHelperUtil;
 import com.vmware.mangle.utils.constants.ErrorConstants;
 import com.vmware.mangle.utils.constants.VCenterConstants;
 import com.vmware.mangle.utils.exceptions.MangleException;
@@ -34,6 +47,8 @@ import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
  *         Provides methods for orchestrating different operations on VM identified by vmName, of a
  *         VCenter identified by the VCenterClient object
  */
+@SuppressWarnings("squid:S2142")
+@Log4j2
 public class VMOperations {
     private static ObjectMapper mapper = new ObjectMapper();
 
@@ -68,30 +83,141 @@ public class VMOperations {
         return returnValue;
     }
 
+    public static List<String> getVMsList(VCenterClient client, boolean random, Map<String, String> filters)
+            throws MangleException {
+        String filter = constructFilters(filters);
+        String urlSuffix = VCenterConstants.VMS_LIST_QUERY;
+        List<String> response = getVMS(client, urlSuffix, filter);
+
+        if (random) {
+            Random rand = new Random();
+            return Collections.singletonList(response.get(rand.nextInt(response.size())));
+        }
+
+        return response;
+    }
+
+    public static List<String> getVMsList(VCenterClient client, String vmName, Map<String, String> filters)
+            throws MangleException {
+        String filter = constructFilters(filters);
+        String urlSuffix = String.format(VCenterConstants.VMS_LIST_QUERY_BY_VM, vmName);
+        return getVMS(client, urlSuffix, filter);
+    }
+
+    private static List<String> getVMS(VCenterClient client, String urlSuffix, String filter) throws MangleException {
+        VCenterAdapterClient adapterClient = client.getVCenterAdapterClient();
+        if (StringUtils.hasText(filter)) {
+            urlSuffix += "?" + filter;
+        }
+        List<String> response = new ArrayList<>();
+        client.testConnection();
+        ResponseEntity<Object> responseEntity = (ResponseEntity<Object>) adapterClient.post(urlSuffix,
+                VCenterAdapterClient.objectToJson(client.getVCenterSpec()), Object.class);
+
+        if (responseEntity != null && responseEntity.getStatusCode().equals(HttpStatus.OK)) {
+            if (responseEntity.getBody() != null) {
+                List<VM> vms = InventoryHelperUtil.convertLinkedHashMapToObjectList(responseEntity.getBody(), VM.class);
+                response = vms.stream().map(VM::getVm).collect(Collectors.toList());
+            }
+        } else if (responseEntity != null && responseEntity.getStatusCode().equals(HttpStatus.INTERNAL_SERVER_ERROR)) {
+            VCenterAdapterErrorObj errorObj = InventoryHelperUtil.convertLinkedHashMapToObject(responseEntity.getBody(),
+                    VCenterAdapterErrorObj.class);
+            throw new MangleException(errorObj.getMessage(), ErrorCode.VCENTER_VM_NOT_FOUND);
+        } else {
+            throw new MangleException(ErrorCode.VCENTER_VM_NOT_FOUND);
+        }
+        return response;
+    }
+
+    public static List<String> getVMNicList(VCenterClient client, String vmId, boolean random) throws MangleException {
+        VCenterAdapterClient adapterClient = client.getVCenterAdapterClient();
+        String urlSuffix = String.format(VCenterConstants.VM_NIC, vmId);
+        List<String> response = new ArrayList<>();
+        adapterClient.testConnection();
+        ResponseEntity<List<Object>> responseEntity = (ResponseEntity<List<Object>>) adapterClient.post(urlSuffix,
+                VCenterAdapterClient.objectToJson(client.getVCenterSpec()), Object.class);
+
+        if (responseEntity != null && responseEntity.getStatusCode().equals(HttpStatus.OK)) {
+            if (responseEntity.getBody() != null) {
+                List<VMNic> vms =
+                        InventoryHelperUtil.convertLinkedHashMapToObjectList(responseEntity.getBody(), VMNic.class);
+                response = vms.stream().map(VMNic::getNic).collect(Collectors.toList());
+            }
+        } else if (responseEntity != null && responseEntity.getStatusCode().equals(HttpStatus.INTERNAL_SERVER_ERROR)) {
+            VCenterAdapterErrorObj errorObj = InventoryHelperUtil.convertLinkedHashMapToObject(responseEntity.getBody(),
+                    VCenterAdapterErrorObj.class);
+            throw new MangleException(errorObj.getMessage(), ErrorCode.VCENTER_VM_NIC_NOT_FOUND);
+        }
+
+        if (random) {
+            Random rand = new Random();
+            return Collections.singletonList(response.get(rand.nextInt(response.size())));
+        }
+
+        return response;
+    }
+
+    public static List<String> getVMDiskList(VCenterClient client, String vmId, boolean random) throws MangleException {
+        VCenterAdapterClient adapterClient = client.getVCenterAdapterClient();
+        String urlSuffix = String.format(VCenterConstants.VM_DISK, vmId);
+        List<String> response = new ArrayList<>();
+        adapterClient.testConnection();
+        ResponseEntity<List<Object>> responseEntity = (ResponseEntity<List<Object>>) adapterClient.post(urlSuffix,
+                VCenterAdapterClient.objectToJson(client.getVCenterSpec()), Object.class);
+
+        if (responseEntity != null && responseEntity.getStatusCode().equals(HttpStatus.OK)) {
+            if (responseEntity.getBody() != null) {
+                List<VMDisk> vms =
+                        InventoryHelperUtil.convertLinkedHashMapToObjectList(responseEntity.getBody(), VMDisk.class);
+                response = vms.stream().map(VMDisk::getDisk).collect(Collectors.toList());
+            }
+        } else if (responseEntity != null && responseEntity.getStatusCode().equals(HttpStatus.INTERNAL_SERVER_ERROR)) {
+            VCenterAdapterErrorObj errorObj = InventoryHelperUtil.convertLinkedHashMapToObject(responseEntity.getBody(),
+                    VCenterAdapterErrorObj.class);
+            throw new MangleException(errorObj.getMessage(), ErrorCode.VCENTER_VM_DISK_NOT_FOUND);
+        }
+
+        if (random) {
+            Random rand = new Random();
+            return Collections.singletonList(response.get(rand.nextInt(response.size())));
+        }
+
+        return response;
+    }
+
+    private static String constructFilters(Map<String, String> filters) {
+        StringBuilder filter = new StringBuilder();
+        for (Map.Entry<String, String> entry : filters.entrySet()) {
+            filter.append(entry.getKey()).append("=").append(entry.getValue()).append("&");
+        }
+        return filter.toString().replaceAll("&+$", "");
+    }
+
     /**
      * Turns off the VM on the remote VCenter
      *
      * @param client
-     * @param vmName
+     * @param vmId
      * @return CommandExecutionResult object with exit code set to 0 if power off is successful,
      *         else sets it to 1
      */
     @SuppressWarnings({ "unchecked", "unused" })
-    public static CommandExecutionResult powerOffVM(VCenterClient client, String vmName) {
+    public static CommandExecutionResult powerOffVM(VCenterClient client, String vmId) {
         CommandExecutionResult commandExecutionResult = new CommandExecutionResult();
         VCenterAdapterClient clientAdapter = client.getVCenterAdapterClient();
         try {
             testAdapterClientConnection(clientAdapter);
             ResponseEntity<VCenterAdapterResponse> responseEntity =
                     (ResponseEntity<VCenterAdapterResponse>) clientAdapter.post(
-                            String.format(VCenterConstants.POWER_OFF, vmName),
+                            String.format(VCenterConstants.POWER_OFF, vmId),
                             mapper.writeValueAsString(client.getVCenterSpec()), VCenterAdapterResponse.class);
             pollForTaskStatusChange(clientAdapter, responseEntity.getBody().getTaskId());
-            commandExecutionResult
-                    .setCommandOutput(String.format("Power off operation on VM %s is successful", vmName));
+            commandExecutionResult.setCommandOutput(String.format("Power off operation on VM %s is successful", vmId));
             commandExecutionResult.setExitCode(0);
         } catch (IOException | MangleException e) {
-            commandExecutionResult.setCommandOutput(e.getMessage());
+            log.error(e);
+            commandExecutionResult.setCommandOutput(
+                    String.format("Power off of VM with id %s failed with error ", vmId) + e.getMessage());
             commandExecutionResult.setExitCode(1);
         }
         return commandExecutionResult;
@@ -101,25 +227,27 @@ public class VMOperations {
      * Turns off the VM on the remote Vcenter
      *
      * @param client
-     * @param vmName
+     * @param vmId
      * @return CommandExecutionResult object with exit code set to 0 if power on is successful, else
      *         sets it to 1
      */
     @SuppressWarnings("unchecked")
-    public static CommandExecutionResult powerOnVM(VCenterClient client, String vmName) {
+    public static CommandExecutionResult powerOnVM(VCenterClient client, String vmId) {
         VCenterAdapterClient clientAdapter = client.getVCenterAdapterClient();
         CommandExecutionResult commandExecutionResult = new CommandExecutionResult();
         try {
             testAdapterClientConnection(clientAdapter);
             ResponseEntity<VCenterAdapterResponse> responseEntity =
                     (ResponseEntity<VCenterAdapterResponse>) clientAdapter.post(
-                            String.format(VCenterConstants.POWER_ON, vmName),
+                            String.format(VCenterConstants.POWER_ON, vmId),
                             mapper.writeValueAsString(client.getVCenterSpec()), VCenterAdapterResponse.class);
             pollForTaskStatusChange(clientAdapter, responseEntity.getBody().getTaskId());
-            commandExecutionResult.setCommandOutput(String.format("Power On operation on VM %s is successful", vmName));
+            commandExecutionResult.setCommandOutput(String.format("Power On operation on VM %s is successful", vmId));
             commandExecutionResult.setExitCode(0);
         } catch (IOException | MangleException e) {
-            commandExecutionResult.setCommandOutput(e.getMessage());
+            log.error(e);
+            commandExecutionResult.setCommandOutput(
+                    String.format("Power on of VM with id %s failed with error ", vmId) + e.getMessage());
             commandExecutionResult.setExitCode(1);
         }
         return commandExecutionResult;
@@ -129,27 +257,28 @@ public class VMOperations {
      * Suspends VM on the remote VCenter
      *
      * @param client
-     * @param vmName
+     * @param vmId
      * @return CommandExecutionResult object with exit code set to 0 if suspend is successful, else
      *         sets it to 1
      */
     @SuppressWarnings("unchecked")
-    public static CommandExecutionResult suspendVM(VCenterClient client, String vmName) {
+    public static CommandExecutionResult suspendVM(VCenterClient client, String vmId) {
         VCenterAdapterClient clientAdapter = client.getVCenterAdapterClient();
         CommandExecutionResult commandExecutionResult = new CommandExecutionResult();
         try {
             testAdapterClientConnection(clientAdapter);
             ResponseEntity<VCenterAdapterResponse> responseEntity =
                     (ResponseEntity<VCenterAdapterResponse>) clientAdapter.post(
-                            String.format(VCenterConstants.SUSPEND_VM, vmName),
+                            String.format(VCenterConstants.SUSPEND_VM, vmId),
                             mapper.writeValueAsString(client.getVCenterSpec()), VCenterAdapterResponse.class);
             pollForTaskStatusChange(clientAdapter, responseEntity.getBody().getTaskId());
             commandExecutionResult
-                    .setCommandOutput(String.format("Suspend VM operation of VM %s is successful", vmName));
+                    .setCommandOutput(String.format("Suspend VM operation of VM with Id %s is successful", vmId));
             commandExecutionResult.setExitCode(0);
         } catch (IOException | MangleException e) {
+            log.error(e);
             commandExecutionResult.setCommandOutput(
-                    String.format("Suspend VM %s Failed with the exception: %s", vmName, e.getMessage()));
+                    String.format("Suspend VM with Id %s Failed with the exception: %s", vmId, e.getMessage()));
             commandExecutionResult.setExitCode(1);
         }
         return commandExecutionResult;
@@ -174,9 +303,11 @@ public class VMOperations {
                             String.format(VCenterConstants.RESET_VM, vmName),
                             mapper.writeValueAsString(client.getVCenterSpec()), VCenterAdapterResponse.class);
             pollForTaskStatusChange(clientAdapter, responseEntity.getBody().getTaskId());
-            commandExecutionResult.setCommandOutput(String.format("Reset operation of VM %s is successful", vmName));
+            commandExecutionResult
+                    .setCommandOutput(String.format("Reset operation of VM with Id %s is successful", vmName));
             commandExecutionResult.setExitCode(0);
         } catch (IOException | MangleException e) {
+            log.error(e);
             commandExecutionResult.setCommandOutput(e.getMessage());
             commandExecutionResult.setExitCode(1);
         }
@@ -188,26 +319,27 @@ public class VMOperations {
      * Disconnects NIC from the VM on the remote Vcenter
      *
      * @param client
-     * @param vmName
-     * @param vmNic
+     * @param vmId
+     * @param vmNicId
      * @return CommandExecutionResult object with exit code set to 0 if disconnect is successful,
      *         else sets it to 1
      */
     @SuppressWarnings("unchecked")
-    public static CommandExecutionResult disconnectNicFromVM(VCenterClient client, String vmName, String vmNic) {
+    public static CommandExecutionResult disconnectNicFromVM(VCenterClient client, String vmId, String vmNicId) {
         VCenterAdapterClient clientAdapter = client.getVCenterAdapterClient();
         CommandExecutionResult commandExecutionResult = new CommandExecutionResult();
         try {
             testAdapterClientConnection(clientAdapter);
             ResponseEntity<VCenterAdapterResponse> responseEntity =
                     (ResponseEntity<VCenterAdapterResponse>) clientAdapter.post(
-                            String.format(VCenterConstants.DISCONNECT_NIC, vmName, vmNic),
+                            String.format(VCenterConstants.DISCONNECT_NIC_WITH_ID, vmId, vmNicId),
                             mapper.writeValueAsString(client.getVCenterSpec()), VCenterAdapterResponse.class);
             pollForTaskStatusChange(clientAdapter, responseEntity.getBody().getTaskId());
             commandExecutionResult.setCommandOutput(
-                    String.format("Disconnect Nic operation of NIC %s on VM %s is successful", vmNic, vmName));
+                    String.format("Disconnect Nic operation of NIC %s on VM %s is successful", vmNicId, vmId));
             commandExecutionResult.setExitCode(0);
         } catch (IOException | MangleException e) {
+            log.error(e);
             commandExecutionResult.setCommandOutput(e.getMessage());
             commandExecutionResult.setExitCode(1);
         }
@@ -218,26 +350,27 @@ public class VMOperations {
      * Connects NIC to the VM on the remote VCenter
      *
      * @param client
-     * @param vmName
-     * @param vmNic
+     * @param vmId
+     * @param vmNicId
      * @return CommandExecutionResult object with exit code set to 0 if connect NIC is successful,
      *         else sets it to 1
      */
     @SuppressWarnings("unchecked")
-    public static CommandExecutionResult addNicFromVM(VCenterClient client, String vmName, String vmNic) {
+    public static CommandExecutionResult addNicFromVM(VCenterClient client, String vmId, String vmNicId) {
         VCenterAdapterClient clientAdapter = client.getVCenterAdapterClient();
         CommandExecutionResult commandExecutionResult = new CommandExecutionResult();
         try {
             testAdapterClientConnection(clientAdapter);
             ResponseEntity<VCenterAdapterResponse> responseEntity =
                     (ResponseEntity<VCenterAdapterResponse>) clientAdapter.post(
-                            String.format(VCenterConstants.CONNECT_NIC, vmName, vmNic),
+                            String.format(VCenterConstants.CONNECT_NIC_WITH_ID, vmId, vmNicId),
                             mapper.writeValueAsString(client.getVCenterSpec()), VCenterAdapterResponse.class);
             pollForTaskStatusChange(clientAdapter, responseEntity.getBody().getTaskId());
             commandExecutionResult.setCommandOutput(
-                    String.format("Connect Nic operation of NIC %s on VM %s is successful", vmNic, vmName));
+                    String.format("Connect Nic operation of NIC %s on VM %s is successful", vmNicId, vmId));
             commandExecutionResult.setExitCode(0);
         } catch (IOException | MangleException e) {
+            log.error(e);
             commandExecutionResult.setCommandOutput(e.getMessage());
             commandExecutionResult.setExitCode(1);
         }
@@ -248,27 +381,28 @@ public class VMOperations {
      * Disconnects Disk from VM on the remote VCenter
      *
      * @param client
-     * @param vmName
+     * @param vmId
      * @param vmDiskId
      * @return CommandExecutionResult object with exit code set to 0 if disconnect DISK is
      *         successful, else sets it to 1
      */
     @SuppressWarnings("unchecked")
-    public static CommandExecutionResult disconnectDiskFromVM(VCenterClient client, String vmName, String vmDiskId) {
+    public static CommandExecutionResult disconnectDiskFromVM(VCenterClient client, String vmId, String vmDiskId) {
         VCenterAdapterClient clientAdapter = client.getVCenterAdapterClient();
         CommandExecutionResult commandExecutionResult = new CommandExecutionResult();
         try {
             testAdapterClientConnection(clientAdapter);
             ResponseEntity<VCenterAdapterResponse> responseEntity =
                     (ResponseEntity<VCenterAdapterResponse>) clientAdapter.post(
-                            String.format(VCenterConstants.DISCONNECT_DISK, vmName, vmDiskId),
+                            String.format(VCenterConstants.DISCONNECT_DISK_WITH_ID, vmId, vmDiskId),
                             mapper.writeValueAsString(client.getVCenterSpec()), VCenterAdapterResponse.class);
             String result = pollForDiskDisconnect(clientAdapter, responseEntity.getBody().getTaskId());
             commandExecutionResult.setCommandOutput(
                     String.format("Disconnect disk operation of disk %s on VM %s is successful with output: %s",
-                            vmDiskId, vmName, result));
+                            vmDiskId, vmId, result));
             commandExecutionResult.setExitCode(0);
         } catch (IOException | MangleException e) {
+            log.error(e);
             commandExecutionResult.setCommandOutput(e.getMessage());
             commandExecutionResult.setExitCode(1);
         }
@@ -279,7 +413,7 @@ public class VMOperations {
      * Connects the disconnected Disk to the VM on the remote VCenter
      *
      * @param client
-     * @param vmName
+     * @param vmId
      * @param vmDiskId
      * @param vmDiskType
      * @param vmDiskBackingType
@@ -289,15 +423,15 @@ public class VMOperations {
      * @throws MangleException
      */
     @SuppressWarnings({ "unchecked" })
-    public static CommandExecutionResult addDiskFromVM(VCenterClient client, String vmName, String vmDiskId,
+    public static CommandExecutionResult addDiskFromVM(VCenterClient client, String vmId, String vmDiskId,
             String vmDiskType, String vmDiskBackingType, String vmDiskBackingFile) throws MangleException {
 
         String request = "{\"vcenterspec\":  %s , \"diskspec\":  %s }";
         CommandExecutionResult commandExecutionResult = new CommandExecutionResult();
 
-        VMDisk vmDisk = new VMDisk(vmDiskType, vmDiskBackingType, vmDiskBackingFile.replace("___", " "));
+        VMDiskObj vmDiskObj = new VMDiskObj(vmDiskType, vmDiskBackingType, vmDiskBackingFile.replace("___", " "));
         try {
-            String diskSpec = mapper.writeValueAsString(vmDisk);
+            String diskSpec = mapper.writeValueAsString(vmDiskObj);
             String vSpec = mapper.writeValueAsString(client.getVCenterSpec());
             request = String.format(request, vSpec, diskSpec);
         } catch (JsonProcessingException e) {
@@ -309,13 +443,15 @@ public class VMOperations {
             testAdapterClientConnection(clientAdapter);
             ResponseEntity<VCenterAdapterResponse> responseEntity =
                     (ResponseEntity<VCenterAdapterResponse>) clientAdapter.post(
-                            String.format(VCenterConstants.CONNECT_DISK, vmName, vmDiskId), request,
+                            String.format(VCenterConstants.CONNECT_DISK_WITH_ID, vmId, vmDiskId), request,
                             VCenterAdapterResponse.class);
+            Thread.sleep(10000);
             pollForTaskStatusChange(clientAdapter, responseEntity.getBody().getTaskId());
             commandExecutionResult.setCommandOutput(
-                    String.format("Connect disk operation of disk %s on VM %s is successful", vmDiskId, vmName));
+                    String.format("Connect disk operation of disk %s on VM %s is successful", vmDiskId, vmId));
             commandExecutionResult.setExitCode(0);
-        } catch (MangleException e) {
+        } catch (MangleException | InterruptedException e) {
+            log.error(e);
             commandExecutionResult.setCommandOutput(e.getMessage());
             commandExecutionResult.setExitCode(1);
         }
@@ -334,23 +470,10 @@ public class VMOperations {
     @SuppressWarnings("unchecked")
     public static String pollForTaskStatusChange(VCenterAdapterClient clientAdapter, String taskId)
             throws MangleException {
-        ResponseEntity<VCenterOperationTaskQueryResponse> responeEntity = null;
-        do {
-            try {
-                responeEntity = (ResponseEntity<VCenterOperationTaskQueryResponse>) clientAdapter.get(
-                        String.format(VCenterConstants.TASK_STATUS, taskId), VCenterOperationTaskQueryResponse.class);
-                Thread.sleep(5000);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new MangleException(e.getMessage(), ErrorCode.GENERIC_ERROR);
-            }
+        ResponseEntity<VCenterOperationTaskQueryResponse> responeEntity =
+                VCenterTaskUtils.getTaskStatus(clientAdapter, taskId);
 
-        } while (responeEntity.getBody().getTaskStatus().equals(VCenterConstants.TASK_STATUS_TRIGGERED));
-
-        if (!responeEntity.getStatusCode().equals(HttpStatus.OK)
-                || !VCenterConstants.TASK_STATUS_COMPLETED.equals(responeEntity.getBody().getTaskStatus())) {
-            throw new MangleException(responeEntity.getBody().getResponseMessage(), ErrorCode.GENERIC_ERROR);
-        }
+        handleTaskNotCompleted(responeEntity);
 
         return responeEntity.getBody().getTaskStatus();
     }
@@ -367,26 +490,13 @@ public class VMOperations {
     @SuppressWarnings("unchecked")
     public static String pollForDiskDisconnect(VCenterAdapterClient clientAdapter, String taskId)
             throws MangleException {
-        ResponseEntity<VCenterOperationTaskQueryResponse> responeEntity = null;
-        do {
-            try {
-                responeEntity = (ResponseEntity<VCenterOperationTaskQueryResponse>) clientAdapter.get(
-                        String.format(VCenterConstants.TASK_STATUS, taskId), VCenterOperationTaskQueryResponse.class);
-                Thread.sleep(5000);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new MangleException(e.getMessage(), ErrorCode.GENERIC_ERROR);
-            }
+        ResponseEntity<VCenterOperationTaskQueryResponse> responeEntity =
+                VCenterTaskUtils.getTaskStatus(clientAdapter, taskId);
 
-        } while (responeEntity.getBody().getTaskStatus().equals(VCenterConstants.TASK_STATUS_TRIGGERED));
+        handleTaskNotCompleted(responeEntity);
 
-        if (!responeEntity.getStatusCode().equals(HttpStatus.OK)
-                || !VCenterConstants.TASK_STATUS_COMPLETED.equals(responeEntity.getBody().getTaskStatus())) {
-            throw new MangleException(responeEntity.getBody().getResponseMessage(), ErrorCode.GENERIC_ERROR, "NA");
-        }
-
-        VMDisk vmDisk = mapper.convertValue(responeEntity.getBody().getVCenterVMObject(), VMDisk.class);
-        return vmDisk.retrieveDiskInfo();
+        VMDiskObj vmDiskObj = mapper.convertValue(responeEntity.getBody().getVCenterVMObject(), VMDiskObj.class);
+        return vmDiskObj.retrieveDiskInfo();
     }
 
     private static boolean testAdapterClientConnection(VCenterAdapterClient vCenterAdapterClient)
@@ -396,6 +506,14 @@ public class VMOperations {
         } else {
             throw new MangleException(ErrorConstants.VCENTER_ADAPTER_CLIENT_UNREACHABLE,
                     ErrorCode.VCENTER_ADAPTER_CLIENT_UNREACHABLE);
+        }
+    }
+
+    public static void handleTaskNotCompleted(ResponseEntity<VCenterOperationTaskQueryResponse> responseEntity)
+            throws MangleException {
+        if (!responseEntity.getStatusCode().equals(HttpStatus.OK)
+                || !VCenterConstants.TASK_STATUS_COMPLETED.equals(responseEntity.getBody().getTaskStatus())) {
+            throw new MangleException(responseEntity.getBody().getResponseMessage(), ErrorCode.GENERIC_ERROR);
         }
     }
 }

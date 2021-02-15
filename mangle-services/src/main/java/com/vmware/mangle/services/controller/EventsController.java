@@ -36,20 +36,24 @@ import com.vmware.mangle.services.cassandra.model.events.basic.Event;
 @Log4j2
 public class EventsController {
 
+    final EventService service;
+
     @Autowired
-    EventService service;
+    public EventsController(EventService service) {
+        this.service = service;
+    }
 
     @ApiOperation(value = "API to get all events", nickname = "retrieveAllEvents")
     @GetMapping
     public ResponseEntity<MangleResponseResource<List<Event>>> retrieveAllEvents() {
         log.debug("Retrieving all events");
-        return new ResponseEntity<>(new MangleResponseResource<List<Event>>(service.findAll()), HttpStatus.OK);
+        return new ResponseEntity<>(new MangleResponseResource<>(service.findAll()), HttpStatus.OK);
     }
 
     @ApiOperation(value = "API to get event by its id", nickname = "retrieveEvent")
     @GetMapping("/{id}")
     public ResponseEntity<MangleResponseResource<Event>> retrieveEvent(@PathVariable String id) {
         log.debug("Finding event with ID: " + id);
-        return new ResponseEntity<>(new MangleResponseResource<Event>(service.findById(id)), HttpStatus.OK);
+        return new ResponseEntity<>(new MangleResponseResource<>(service.findById(id)), HttpStatus.OK);
     }
 }

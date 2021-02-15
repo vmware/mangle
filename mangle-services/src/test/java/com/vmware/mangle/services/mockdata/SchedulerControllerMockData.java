@@ -20,6 +20,7 @@ import java.util.Properties;
 import com.vmware.mangle.cassandra.model.scheduler.SchedulerInfo;
 import com.vmware.mangle.cassandra.model.scheduler.SchedulerRequestStatus;
 import com.vmware.mangle.cassandra.model.scheduler.SchedulerSpec;
+import com.vmware.mangle.model.enums.SchedulerJobType;
 import com.vmware.mangle.model.enums.SchedulerStatus;
 import com.vmware.mangle.utils.ReadProperty;
 import com.vmware.mangle.utils.constants.Constants;
@@ -35,11 +36,10 @@ public class SchedulerControllerMockData {
 
     private String cronExpression;
     private String description;
-    private String taskClass;
-    private String taskInfoJson;
     private String jobId1;
     private String jobId2;
     private List<String> jobIds;
+    private String simpleTime;
     private static final String JOB_CANCELLED_MESSAGE = "Cancelled Successfully";
     private static final String JOB_PAUSED_MESSAGE = "Paused Successfully";
     private static final String JOB_RESUMED_MESSAGE = "resumed Successfully";
@@ -47,9 +47,8 @@ public class SchedulerControllerMockData {
     public SchedulerControllerMockData() {
         Properties properties = ReadProperty.readProperty(Constants.MOCKDATA_FILE);
         this.cronExpression = properties.getProperty("scheduler.cronExpression");
+        this.simpleTime = properties.getProperty("scheduler.scheduledTime");
         this.description = properties.getProperty("scheduler.description");
-        this.taskClass = properties.getProperty("scheduler.taskClass");
-        this.taskInfoJson = properties.getProperty("scheduler.taskInfoJson");
         this.jobId1 = properties.getProperty("sheduler.jobid1");
         this.jobId2 = properties.getProperty("sheduler.jobid2");
         this.jobIds = getJobIds();
@@ -108,6 +107,36 @@ public class SchedulerControllerMockData {
         schedulerSpec.setCronExpression(this.cronExpression);
         schedulerSpec.setDescription(this.description);
         schedulerSpec.setStatus(SchedulerStatus.SCHEDULED);
+        schedulerSpec.setId("1");
+        return schedulerSpec;
+    }
+
+    public SchedulerSpec getMangleSchedulerSpecScheduledCron() {
+        SchedulerSpec schedulerSpec = new SchedulerSpec();
+        schedulerSpec.setCronExpression(this.cronExpression);
+        schedulerSpec.setDescription(this.description);
+        schedulerSpec.setStatus(SchedulerStatus.SCHEDULED);
+        schedulerSpec.setJobType(SchedulerJobType.CRON);
+        schedulerSpec.setId("1");
+        return schedulerSpec;
+    }
+
+    public SchedulerSpec getMangleSchedulerSpecScheduledSimple() {
+        SchedulerSpec schedulerSpec = new SchedulerSpec();
+        schedulerSpec.setScheduledTime(Long.parseLong(this.simpleTime));
+        schedulerSpec.setDescription(this.description);
+        schedulerSpec.setStatus(SchedulerStatus.SCHEDULED);
+        schedulerSpec.setJobType(SchedulerJobType.SIMPLE);
+        schedulerSpec.setId("1");
+        return schedulerSpec;
+    }
+
+    public SchedulerSpec getMangleSchedulerSpecScheduledCronWrong() {
+        SchedulerSpec schedulerSpec = new SchedulerSpec();
+        schedulerSpec.setCronExpression(null);
+        schedulerSpec.setDescription(this.description);
+        schedulerSpec.setStatus(SchedulerStatus.SCHEDULED);
+        schedulerSpec.setJobType(SchedulerJobType.CRON);
         schedulerSpec.setId("1");
         return schedulerSpec;
     }

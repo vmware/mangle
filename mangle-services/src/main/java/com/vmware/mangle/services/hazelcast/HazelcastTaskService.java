@@ -21,6 +21,7 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceAware;
 import com.hazelcast.core.IMap;
 import com.hazelcast.core.Member;
+import lombok.NonNull;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -90,48 +91,44 @@ public class HazelcastTaskService implements HazelcastInstanceAware {
      * If a task is is not completed/failed, or if it is a scheduled task verify it's status is
      * still scheduled, then will re-trigger it on the new node
      *
-     * @param taskId
-     *            Id of the task that has to be retriggered on the different cluster node
+     * @param task
+     *            task that has to be retriggered on the different cluster node
      * @throws MangleException
      *             If the endpoint/credentials for the task to be executed is not found
      */
-    public void triggerTask(String taskId) throws MangleException {
-        log.trace("Re-triggering the fault with the id: {} on the current node", taskId);
-
-        Task<?> persistedData = taskService.getTaskById(taskId);
+    public void triggerTask(@NonNull Task<TaskSpec> task) throws MangleException {
+        log.trace("Re-triggering the fault with the name : {} and id: {} on the current node", task.getTaskName(), task.getId());
         boolean triggerTask = true;
 
-        if (persistedData == null) {
-            triggerTask = false;
-        } else if (!CollectionUtils.isEmpty(persistedData.getTriggers())
-                && (!persistedData.isScheduledTask()
-                        && (persistedData.getTaskStatus() == TaskStatus.COMPLETED
-                                || persistedData.getTaskStatus() == TaskStatus.FAILED)
-                        && !persistedData.isTaskRetriggered())) {
+        if (!CollectionUtils.isEmpty(task.getTriggers())
+                && (!task.isScheduledTask()
+                        && (task.getTaskStatus() == TaskStatus.COMPLETED
+                                || task.getTaskStatus() == TaskStatus.FAILED)
+                        && !task.isTaskRetriggered())) {
             log.debug("Task {} has completed execution with the status {}, will be removing from the cluster cache",
-                    taskId, persistedData.getTaskStatus());
+                    task.getId(), task.getTaskStatus());
             triggerTask = false;
-        } else if (persistedData.isScheduledTask()) {
-            SchedulerSpec schedularSpec = schedulerService.getSchedulerDetailsById(persistedData.getId());
+        } else if (task.isScheduledTask()) {
+            SchedulerSpec schedularSpec = schedulerService.getSchedulerDetailsById(task.getId());
             if (!(schedularSpec.getStatus() == SchedulerStatus.SCHEDULED
                     || schedularSpec.getStatus() == SchedulerStatus.INITIALIZING)
-                    && !scheduler.isTaskAlreadyScheduled(taskId)) {
+                    && !scheduler.isTaskAlreadyScheduled(task.getId())) {
                 log.debug(
                         "Scheduled task {} has finished execution with the status {}, will be removed from the cluster cache",
-                        taskId, schedularSpec.getStatus().name());
+                        task.getId(), schedularSpec.getStatus().name());
                 triggerTask = false;
             }
         }
 
         if (triggerTask) {
-            submitTask(persistedData);
+            submitTask(task);
         } else {
             IMap<String, Set<String>> taskMap = hazelcastInstance.getMap(HAZELCAST_TASKS_MAP);
-            taskMap.remove(taskId);
+            taskMap.remove(task.getId());
         }
     }
 
-    private void submitTask(Task<?> task) throws MangleException {
+    private void submitTask(Task<TaskSpec> task) throws MangleException {
         String taskId = task.getId();
         try {
             if (!(task.getTaskData() instanceof MangleNodeStatusDto)) {
@@ -161,12 +158,12 @@ public class HazelcastTaskService implements HazelcastInstanceAware {
         return persistedData.isScheduledTask();
     }
 
-    public void cleanUpTask(String taskId, String taskStatus) throws MangleException {
-        Task<TaskSpec> task = taskService.getTaskById(taskId);
+    public void cleanUpTask(@NonNull Task<TaskSpec> task, String taskStatus) throws MangleException {
         if (task.isScheduledTask()) {
-            log.debug("Triggering cleanup for the schedule job {}", taskId);
-            scheduler.removeScheduleFromCurrentNode(taskId, taskStatus);
-            removeTaskFromClusterNodeCache(taskId);
+            log.debug("Triggering cleanup for the schedule job {}", task.getId());
+            if (scheduler.removeScheduleFromCurrentNode(task.getId(), taskStatus)) {
+                removeTaskFromClusterNodeCache(task.getId());
+            }
         }
     }
 

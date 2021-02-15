@@ -15,6 +15,10 @@ export class RequestsService {
         return this.http.get(ServiceConstants.TASKS);
     }
 
+    public getAllTasksBasedOnIndex(filterOn): Observable<any> {
+        return this.http.post(ServiceConstants.TASKS_PAGE, filterOn);
+    }
+
     public getTaskById(id): Observable<any> {
         return this.http.get(ServiceConstants.TASKS + ServiceConstants.FILE_SEPARATOR + id);
     }
@@ -37,6 +41,10 @@ export class RequestsService {
 
     public pauseSchedule(id) {
         return this.http.post(ServiceConstants.SCHEDULER_PAUSE + id, null);
+    }
+
+    public modifySchedule(scheduleTask) {
+        return this.http.put(ServiceConstants.SCHEDULER, scheduleTask);
     }
 
     public resumeSchedule(id) {

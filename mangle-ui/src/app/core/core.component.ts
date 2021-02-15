@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import {AfterViewInit, Component, OnInit} from '@angular/core';
 import { CoreService } from './core.service';
 import { AuthService } from '../auth/auth.service';
 import { Router } from '@angular/router';
@@ -8,7 +8,7 @@ import { Router } from '@angular/router';
   templateUrl: './core.component.html',
   styleUrls: [ './core.component.css' ]
 })
-export class CoreComponent implements OnInit {
+export class CoreComponent implements AfterViewInit {
 
   constructor(private coreService: CoreService, private authService: AuthService, private router: Router) { }
 
@@ -18,7 +18,7 @@ export class CoreComponent implements OnInit {
   public showAboutModal: boolean;
   public mangleVersion: number;
 
-  ngOnInit() {
+  ngAfterViewInit() {
     this.getMyDetails();
     this.getMangleDetails();
   }
@@ -54,7 +54,7 @@ export class CoreComponent implements OnInit {
   public getMyRolesAndPrivileges(roleQueryString) {
     this.coreService.getMyRolesAndPrivileges(roleQueryString).subscribe(
       res => {
-        var roleListData = res._embedded.roleList;
+        var roleListData = res.content;
         for (var i = 0; i < roleListData.length; i++) {
           for (var j = 0; j < roleListData[i].privilegeNames.length; j++) {
             if (roleListData[i].privilegeNames[j] == 'ADMIN_READ_WRITE') {

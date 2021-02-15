@@ -13,6 +13,7 @@ package com.vmware.mangle.cassandra.model.plugin;
 
 import java.io.Serializable;
 import java.util.List;
+import javax.validation.constraints.NotNull;
 
 import lombok.Data;
 
@@ -24,9 +25,9 @@ import lombok.Data;
 public class ManglePluginDescriptor implements Serializable {
 
     private static final long serialVersionUID = 1L;
-
+    @NotNull
     private String pluginId;
-
+    @NotNull
     private List<CustomFaultDescriptor> faults;
 
 }

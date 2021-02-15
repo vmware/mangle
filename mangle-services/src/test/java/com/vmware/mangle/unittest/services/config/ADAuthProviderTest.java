@@ -27,11 +27,14 @@ import java.util.List;
 import lombok.extern.log4j.Log4j2;
 import org.mockito.Mock;
 import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
+import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.testng.PowerMockTestCase;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import com.vmware.mangle.cassandra.model.security.ADAuthProviderDto;
@@ -50,6 +53,9 @@ import com.vmware.mangle.services.mockdata.AuthProviderMockData;
  */
 
 @Log4j2
+@PrepareForTest(value = ADAuthProvider.class)
+@PowerMockIgnore(value = {"com.sun.org.apache.xerces.*", "javax.xml.parsers.*", "javax.xml.parsers"
+        + ".DocumentBuilder.*", "org.apache.logging.log4j.*" })
 public class ADAuthProviderTest extends PowerMockTestCase {
     private ADAuthProvider adAuthProvider;
     private UserService userService;
@@ -61,6 +67,11 @@ public class ADAuthProviderTest extends PowerMockTestCase {
     private UserLoginAttemptsService userLoginAttemptsService;
 
     private AuthProviderMockData dataProvider = new AuthProviderMockData();
+
+    @BeforeMethod
+    public void initMocks() {
+        PowerMockito.mockStatic(ADAuthProvider.class);
+    }
 
     @BeforeClass
     public void initAuthProvider() throws Exception {
@@ -86,7 +97,8 @@ public class ADAuthProviderTest extends PowerMockTestCase {
         when(provider.supports(UsernamePasswordAuthenticationToken.class)).thenReturn(true);
         adAuthProvider.init();
         boolean result = adAuthProvider.supports(UsernamePasswordAuthenticationToken.class);
-        Assert.assertTrue(result);
+        Assert.assertTrue(result,
+                "Testcase for ADAuthProvider.init() failed when the provider is UsernamePasswordAuthenticationToken");
     }
 
     /**
@@ -99,37 +111,58 @@ public class ADAuthProviderTest extends PowerMockTestCase {
         when(provider.authenticate(any())).thenReturn(token);
         Authentication result = adAuthProvider.authenticate(token);
 
-        Assert.assertTrue(result instanceof UsernamePasswordAuthenticationToken);
+        Assert.assertTrue(result instanceof UsernamePasswordAuthenticationToken,
+                "Testcase for ADAuthProvider.authenticate(Authentication) failed when the expected provider is UsernamePasswordAuthenticationToken");
     }
 
     /**
-     * Test method for {@link ADAuthProvider#supports(Class)}
+     * Test method for {@link ADAuthProvider#authenticate(Authentication) for BadCredentials}
      */
     @Test(priority = 3)
-    public void supportTestTrue() {
-        log.info("Executing supportTestTrue on method: ADAuthProvider#supports(Class)");
-        PowerMockito.when(provider.supports(any())).thenReturn(true);
-        boolean result = adAuthProvider.supports(UsernamePasswordAuthenticationToken.class);
-
-        Assert.assertTrue(result);
+    public void authenticateTestForBadCredentials() {
+        log.info("Executing authenticateTest on method: ADAuthProvider#authenticate(Authentication)");
+        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken("admintest.local", "");
+        when(provider.authenticate(any())).thenReturn(token);
+        boolean actualResult = false;
+        try {
+            Authentication result = adAuthProvider.authenticate(token);
+        } catch (Exception e) {
+            actualResult = true;
+        }
+        Assert.assertTrue(actualResult,
+                "Testcase for ADAuthProvider.authenticate(Authentication) failed when BadCredentials Exception expected like extraction of user and domain from username");
     }
 
     /**
      * Test method for {@link ADAuthProvider#supports(Class)}
      */
     @Test(priority = 4)
+    public void supportTestTrue() {
+        log.info("Executing supportTestTrue on method: ADAuthProvider#supports(Class)");
+        PowerMockito.when(provider.supports(any())).thenReturn(true);
+        boolean result = adAuthProvider.supports(UsernamePasswordAuthenticationToken.class);
+
+        Assert.assertTrue(result,
+                "Testcase for ADAuthProvider.supports(Class) failed when the expected provider is UsernamePasswordAuthenticationToken");
+    }
+
+    /**
+     * Test method for {@link ADAuthProvider#supports(Class)}
+     */
+    @Test(priority = 5)
     public void supportTestFalse() {
         log.info("Executing supportTestFalse on method: ADAuthProvider#supports(Class)");
         when(provider.supports(any())).thenReturn(false);
         boolean result = adAuthProvider.supports(UsernamePasswordAuthenticationToken.class);
 
-        Assert.assertFalse(result);
+        Assert.assertFalse(result,
+                "Testcase for ADAuthProvider.supports(Class) failed when it returns the UsernamePasswordAuthenticationToken");
     }
 
     /**
      * Test method for {@link ADAuthProvider#setAdAuthProvider(String, String)}
      */
-    @Test(priority = 5)
+    @Test(priority = 6)
     public void setAdAuthProviderTestFailure() throws Exception {
         log.info(
                 "Executing setAdAuthProviderTestFailure on method: ADAuthProvider#setAdAuthProvider(String, String, String)");
@@ -138,13 +171,14 @@ public class ADAuthProviderTest extends PowerMockTestCase {
                 .withArguments(any(), any(), any(), anyString(), anyString()).thenReturn(provider);
         ADAuthProviderDto auth = dataProvider.getNewADAuthProviderDto();
         boolean result = adAuthProvider.setAdAuthProvider(auth.getAdUrl(), auth.getAdDomain());
-        Assert.assertFalse(result);
+        Assert.assertFalse(result,
+                "Testcase for ADAuthProvider#setAdAuthProvider(String, String, String) failed when the testconnection returns true");
     }
 
     /**
      * Test method for {@link ADAuthProvider#setAdAuthProvider(String, String)}
      */
-    @Test(priority = 6)
+    @Test(priority = 7)
     public void setAdAuthProviderTestSuccessful() throws Exception {
         log.info(
                 "Executing setAdAuthProviderTestSuccessful on method: ADAuthProvider#setAdAuthProvider(String, String, String)");
@@ -154,31 +188,68 @@ public class ADAuthProviderTest extends PowerMockTestCase {
         ADAuthProviderDto auth = dataProvider.getNewADAuthProviderDto();
         boolean result = adAuthProvider.setAdAuthProvider(auth.getAdUrl(), auth.getAdDomain());
         log.info("result from the method setAdAuthProviderTestSuccessful is: " + result);
-        Assert.assertTrue(result);
+        Assert.assertTrue(result,
+                "Testcase for ADAuthProvider#setAdAuthProvider(String, String, String) failed when the testconnection returns false");
     }
 
     /**
      * Test method for {@link ADAuthProvider#removeAdAuthProvider(String)}
      */
-    @Test(priority = 7)
+    @Test(priority = 8)
     public void removeAdAuthProviderTest() {
         log.info("Executing removeAdAuthProviderTest on method: ADAuthProvider#removeAdAuthProvider(String)");
         ADAuthProviderDto auth = dataProvider.getNewADAuthProviderDto();
         adAuthProvider.removeAdAuthProvider(auth.getId());
     }
 
-    @Test(priority = 8)
+    @Test(priority = 9)
     public void testResyncWithEmptyIdentifier() {
         doNothing().when(adAuthProvider).init();
         adAuthProvider.resync("");
         verify(adAuthProvider, times(2)).init();
     }
 
-    @Test(priority = 9)
+    @Test(priority = 10)
     public void testResyncWithDomain() {
         ADAuthProviderDto auth = dataProvider.getNewADAuthProviderDto();
         doNothing().when(adAuthProvider).refreshAdAuthProviderForDomain(auth.getAdDomain());
         adAuthProvider.resync(auth.getAdDomain());
         verify(adAuthProvider, times(1)).refreshAdAuthProviderForDomain(auth.getAdDomain());
     }
+
+    /**
+     * Test method for {@link ADAuthProvider#refreshAdAuthProviderForDomain(String)}
+     */
+    @Test(priority = 11)
+    public void testRefreshAdAuthProviderForDomainWithInvalidDomain() {
+        ADAuthProviderDto auth = dataProvider.getNewADAuthProviderDto();
+        adAuthProvider.refreshAdAuthProviderForDomain("");
+        verify(adAuthProvider, times(0)).activeDirectoryLdapAuthenticationProvider("", "");
+    }
+
+    @Test(priority = 12)
+    public void testTestConnection() throws Exception {
+        ADAuthProviderDto adAuthProviderDto = dataProvider.getDummyAuthProvider();
+
+        PowerMockito.whenNew(CustomActiveDirectoryLdapAuthenticationProvider.class).withAnyArguments().thenReturn(provider);
+        when(provider.testConnection(anyString(), anyString())).thenReturn(true);
+
+        boolean result = adAuthProvider.testConnection(adAuthProviderDto);
+
+        Assert.assertTrue(result);
+        verify(provider, times(1)).testConnection(anyString(), anyString());
+    }
+
+    @Test(priority = 13)
+    public void testRefreshAdAuthProviderForDomain() throws Exception {
+        ADAuthProviderDto adAuthProviderDto = dataProvider.getDummyAuthProvider();
+
+        when(adAuthProviderService.getADAuthProviderByAdDomain(anyString())).thenReturn(adAuthProviderDto);
+        PowerMockito.whenNew(CustomActiveDirectoryLdapAuthenticationProvider.class).withAnyArguments().thenReturn(provider);
+
+        adAuthProvider.refreshAdAuthProviderForDomain(adAuthProviderDto.getAdDomain());
+
+        verify(adAuthProviderService, times(2)).getADAuthProviderByAdDomain(anyString());
+    }
+
 }

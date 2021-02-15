@@ -17,7 +17,7 @@ package com.vmware.mangle.model.aws;
  *         AWS EC2 Instance fault remediations
  */
 public enum AwsEC2FaultRemediation {
-    START_INSTANCES,UNBLOCK_ALL_NETWORK_TRAFFIC;
+    START_INSTANCES,UNBLOCK_ALL_NETWORK_TRAFFIC,ATTACH_VOLUMES;
 
     @Override
     public String toString() {

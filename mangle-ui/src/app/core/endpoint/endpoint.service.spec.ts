@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 
 import { EndpointService } from './endpoint.service';
-import { HttpClientModule, HttpClient } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 
 describe('EndpointService', () => {
   let endpointService: EndpointService;
@@ -10,7 +11,7 @@ describe('EndpointService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [
-        HttpClientModule
+        HttpClientTestingModule
       ]
     });
     endpointService = TestBed.get(EndpointService);
@@ -70,6 +71,16 @@ describe('EndpointService', () => {
     expect(http.post).toHaveBeenCalled();
   });
 
+  it('should add aws credential', () => {
+    endpointService.addAwsCredential({ "accessKey": "name1", "secretKey": "key1" });
+    expect(http.post).toHaveBeenCalled();
+  });
+
+  it('should add azure credential', () => {
+    endpointService.addAzureCredential({ "azureClientId": "clientID1", "azureClientKey": "clientKey1" });
+    expect(http.post).toHaveBeenCalled();
+  });
+
   it('should add remote machine credential', () => {
     endpointService.addRemoteMachineCredential({ "name": "name1", "username": "user1", "password": "" }, null);
     expect(http.post).toHaveBeenCalled();
@@ -95,6 +106,16 @@ describe('EndpointService', () => {
     expect(http.put).toHaveBeenCalled();
   });
 
+  it('should update aws credential', () => {
+    endpointService.updateAwsCredential({ "name": "name1" });
+    expect(http.post).toHaveBeenCalled();
+  });
+
+  it('should update azure credential', () => {
+    endpointService.updateAzureCredential({ "name": "name1" });
+    expect(http.post).toHaveBeenCalled();
+  });
+
   it('should update remote machine credential', () => {
     endpointService.updateRemoteMachineCredential({ "name": "name1", "username": "user1", "password": "" }, null);
     expect(http.put).toHaveBeenCalled();
@@ -118,6 +139,16 @@ describe('EndpointService', () => {
   it('should test endpoint connection', () => {
     endpointService.testEndpointConnection({});
     expect(http.post).toHaveBeenCalled();
+  });
+
+  it('should add db credential', () => {
+    endpointService.addDatabaseCredential({});
+    expect(http.post).toHaveBeenCalled();
+  });
+
+  it('should update db credential', () => {
+    endpointService.updateDatabaseCredential({});
+    expect(http.put).toHaveBeenCalled();
   });
 
 });

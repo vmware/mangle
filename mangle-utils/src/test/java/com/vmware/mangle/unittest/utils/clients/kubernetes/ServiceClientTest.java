@@ -17,6 +17,7 @@ import java.util.List;
 
 import org.junit.Assert;
 import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.testng.PowerMockTestCase;
 import org.testng.annotations.Test;
@@ -33,6 +34,7 @@ import com.vmware.mangle.utils.mockdata.CommandResultUtils;
  * @author chetanc
  */
 @PrepareForTest(value = { KubernetesCommandLineClient.class, CommandUtils.class })
+@PowerMockIgnore({ "com.sun.org.apache.xalan.internal.xsltc.trax.*" })
 public class ServiceClientTest extends PowerMockTestCase {
 
     private String namespace = "kubeconfig-namespace";

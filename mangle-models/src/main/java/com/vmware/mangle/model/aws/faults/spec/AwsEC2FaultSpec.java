@@ -11,7 +11,10 @@
 
 package com.vmware.mangle.model.aws.faults.spec;
 
+import java.util.HashMap;
 import java.util.List;
+
+import javax.validation.constraints.NotEmpty;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
@@ -32,5 +35,11 @@ public class AwsEC2FaultSpec extends AwsFaultSpec {
 
     public AwsEC2FaultSpec() {
         setSpecType(this.getClass().getName());
+    }
+
+    @NotEmpty
+    @Override
+    public HashMap<String, String> getAwsTags() {
+        return super.getAwsTags();
     }
 }

@@ -1,17 +1,21 @@
-import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
-import { Observable } from "rxjs";
-import { ServiceConstants } from '../common/service.constants';
+import {Injectable} from '@angular/core';
+import {HttpClient, HttpHeaders, HttpResponse} from '@angular/common/http';
+import {Observable} from 'rxjs';
+import {ServiceConstants} from '../common/service.constants';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {
+  }
 
   public login(loginData): Observable<HttpResponse<any>> {
-    return this.http.get<HttpResponse<any>>(ServiceConstants.USER_MANAGEMENT_USER, { observe: 'response', headers: new HttpHeaders().set('Content-Type', 'application/json').set('Authorization', 'Basic ' + btoa(loginData.username + '@' + loginData.authSource + ':' + loginData.password)) });
+    return this.http.post<HttpResponse<any>>(ServiceConstants.USER_MANAGEMENT_USERS_LOGIN, {}, {
+      observe: 'response',
+      headers: new HttpHeaders().set('Content-Type', 'application/json').set('Authorization', 'Basic ' + btoa(loginData.username + '@' + loginData.authSource + ':' + loginData.password))
+    });
   }
 
   public logout() {

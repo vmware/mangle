@@ -3,7 +3,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AWSComponent } from './aws.component';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { HttpClientModule } from '@angular/common/http';
 import { RouterTestingModule } from '@angular/router/testing';
 import { EndpointService } from '../endpoint.service';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -11,6 +10,7 @@ import { BrowserModule } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
 import { ClarityModule } from '@clr/angular';
 import { of } from 'rxjs';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 
 describe('AWSComponent', () => {
   let component: AWSComponent;
@@ -27,7 +27,7 @@ describe('AWSComponent', () => {
         BrowserAnimationsModule,
         BrowserModule,
         FormsModule,
-        HttpClientModule,
+        HttpClientTestingModule,
         CommonModule,
         ClarityModule,
         RouterTestingModule.withRoutes([{ path: 'aws', component: AWSComponent }])
@@ -40,8 +40,8 @@ describe('AWSComponent', () => {
     })
       .compileComponents();
     endpointService = TestBed.get(EndpointService);
-    spyOn(endpointService, 'getEndpoints').and.returnValue(of([ep_data]));
-    spyOn(endpointService, 'getCredentials').and.returnValue(of([cred_data]));
+    spyOn(endpointService, 'getEndpoints').and.returnValue(of({ "content" : [ep_data]}));
+    spyOn(endpointService, 'getCredentials').and.returnValue(of({ "content" : [cred_data] }));
     fixture = TestBed.createComponent(AWSComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
@@ -91,16 +91,6 @@ describe('AWSComponent', () => {
     component.deleteEndpoint(ep_data.name);
     expect(component.alertMessage).toBeTruthy();
     expect(endpointService.deleteEndpoint).toHaveBeenCalled();
-  });
-
-  it('should add aws credential', () => {
-    spyOn(endpointService, 'addAwsCredential').and.returnValue(of(cred_data));
-    component.populateEndpointForm(ep_data);
-    component.addAwsCredential(cred_data);
-    expect(component.alertMessage).toBeTruthy();
-    expect(endpointService.addAwsCredential).toHaveBeenCalled();
-    expect(component.credentials[0].name).toBe("aws_cred");
-    expect(endpointService.getCredentials).toHaveBeenCalled();
   });
 
   it('should test endpoint connection', () => {

@@ -49,7 +49,7 @@ public class ReadPropertyTest {
     public void testReadProperties() {
         Map<String, String> map = new HashMap<>();
         ReadProperty.readPropertiesAsMap(map, filename1);
-        Assert.assertEquals(8, map.size());
+        Assert.assertEquals(10, map.size());
     }
 
     @Test(description = "Test to verify the failure to retrieve a properties from a file when the file name is invalid")

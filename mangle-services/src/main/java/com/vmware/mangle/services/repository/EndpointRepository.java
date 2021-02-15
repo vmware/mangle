@@ -47,8 +47,7 @@ public interface EndpointRepository extends CassandraRepository<EndpointSpec, St
     @AllowFiltering
     List<EndpointSpec> findByEndPointType(EndpointType endPointType);
 
-    @SuppressWarnings("unchecked")
-    EndpointSpec save(EndpointSpec endpointSpec);
+    @SuppressWarnings("unchecked") EndpointSpec save(EndpointSpec endpointSpec);
 
     @Query("DELETE from EndPointSpec WHERE name IN ?0")
     void deleteByNameIn(Collection<String> endpointNames);

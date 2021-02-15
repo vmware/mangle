@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 
 import { CoreService } from './core.service';
-import { HttpClientModule, HttpClient } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 
 describe('CoreService', () => {
   let coreService: CoreService;
@@ -10,7 +11,7 @@ describe('CoreService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [
-        HttpClientModule
+        HttpClientTestingModule
       ]
     });
     coreService = TestBed.get(CoreService);

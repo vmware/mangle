@@ -151,7 +151,7 @@ public class K8sBytemanFaultHelperTest extends PowerMockTestCase {
     }
 
     @Test
-    public void testGetJVMAgentRemediationCommandInfoListForCPUFault() {
+    public void testGetJVMAgentRemediationCommandInfoListForCPUFault() throws MangleException {
         CommandExecutionFaultSpec cpuFaultSpec = getTestFaultSpecForCPUFault();
 
         Mockito.when(endpointClientFactory.getEndPointClient(cpuFaultSpec.getCredentials(), cpuFaultSpec.getEndpoint()))
@@ -168,7 +168,7 @@ public class K8sBytemanFaultHelperTest extends PowerMockTestCase {
     }
 
     @Test
-    public void testGetJVMAgentRemediationCommandInfoListforFileHandler() {
+    public void testGetJVMAgentRemediationCommandInfoListforFileHandler() throws MangleException {
         CommandExecutionFaultSpec fileHandlerFaultSpec = faultsMockData.getFilehandlerLeakFaultSpec();
         Mockito.when(endpointClientFactory.getEndPointClient(null, fileHandlerFaultSpec.getEndpoint()))
                 .thenReturn(kubernetesCommandLineClient);
@@ -205,7 +205,7 @@ public class K8sBytemanFaultHelperTest extends PowerMockTestCase {
 
 
     @Test
-    public void testGetJVMCodeLevelFaultCommandInfoListForSpringExceptionFault() {
+    public void testGetJVMCodeLevelFaultCommandInfoListForSpringExceptionFault() throws MangleException {
         CommandExecutionFaultSpec cpuFaultSpec = getK8sSpringExceptionJVMCodeLevelFaultSpec();
 
         Mockito.when(endpointClientFactory.getEndPointClient(cpuFaultSpec.getCredentials(), cpuFaultSpec.getEndpoint()))
@@ -244,45 +244,39 @@ public class K8sBytemanFaultHelperTest extends PowerMockTestCase {
 
     private List<CommandInfo> getExpectedRemediationCommandsforCPUFault() {
         List<CommandInfo> list = new ArrayList<>();
-        CommandInfo remediationCommand = new CommandInfo();
-        remediationCommand.setCommand("exec -it testPod -c testContainer -- /bin/sh /testDirectory/" + AGENT_NAME
-                + "/bin/bmsubmit.sh -p 9091 -rf $FI_ADD_INFO_faultId");
-        remediationCommand.setIgnoreExitValueCheck(false);
-        remediationCommand
-                .setExpectedCommandOutputList(Arrays.asList(new String("Received Remediation Request Successfully")));
-        remediationCommand.setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentFaultRemediationRequest());
-        remediationCommand.setNoOfRetries(0);
-        remediationCommand.setRetryInterval(0);
-        remediationCommand.setTimeout(0);
+        CommandInfo remediationCommand = CommandInfo
+                .builder("exec -it testPod -c testContainer -- /bin/sh /testDirectory/" + AGENT_NAME
+                        + "/bin/bmsubmit.sh -p 9091 -rf $FI_ADD_INFO_faultId")
+                .ignoreExitValueCheck(false)
+                .expectedCommandOutputList(Arrays.asList(new String("Received Remediation Request Successfully")))
+                .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentFaultRemediationRequest()).noOfRetries(0)
+                .retryInterval(0).timeout(0).build();
         list.add(remediationCommand);
 
-        CommandInfo remediationVerificationCommand = new CommandInfo();
-        remediationVerificationCommand.setCommand("exec -it testPod -c testContainer -- /bin/sh /testDirectory/"
-                + AGENT_NAME + "/bin/bmsubmit.sh -p 9091 -gf $FI_ADD_INFO_faultId");
-        remediationVerificationCommand.setIgnoreExitValueCheck(true);
-        remediationVerificationCommand.setExpectedCommandOutputList(Arrays.asList("\"faultStatus\":\"COMPLETED\"",
-                "Failed to process request: java.net.ConnectException: Connection refused"));
-        remediationVerificationCommand.setNoOfRetries(6);
-        remediationVerificationCommand.setRetryInterval(10);
-        remediationVerificationCommand.setTimeout(0);
+        CommandInfo remediationVerificationCommand =
+                CommandInfo
+                        .builder("exec -it testPod -c testContainer -- /bin/sh /testDirectory/"
+                                + AGENT_NAME + "/bin/bmsubmit.sh -p 9091 -gf $FI_ADD_INFO_faultId")
+                        .ignoreExitValueCheck(true)
+                        .expectedCommandOutputList(Arrays.asList("\"faultStatus\":\"COMPLETED\"",
+                                "Failed to process request: java.net.ConnectException: Connection refused"))
+                        .noOfRetries(6).retryInterval(10).timeout(0).build();
         list.add(remediationVerificationCommand);
         return list;
     }
 
     private List<CommandInfo> getExpectedRemediationCommandsforSpringLatency() {
         List<CommandInfo> list = new ArrayList<>();
-        CommandInfo remediationCommand = new CommandInfo();
-        remediationCommand.setCommand("exec -it testPod -c testContainer -- /bin/sh /tmp/" + AGENT_NAME
-                + "/bin/bmsubmit.sh -p 9091 -u /tmp/" + AGENT_NAME + "/123456.btm ");
-        remediationCommand.setIgnoreExitValueCheck(true);
-        remediationCommand.setExpectedCommandOutputList(Arrays.asList(new String("uninstall RULE 123456")));
-        remediationCommand.setNoOfRetries(0);
-        remediationCommand.setRetryInterval(0);
-        remediationCommand.setTimeout(0);
+        CommandInfo remediationCommand = CommandInfo
+                .builder("exec -it testPod -c testContainer -- /bin/sh /tmp/" + AGENT_NAME
+                        + "/bin/bmsubmit.sh -p 9091 -u /tmp/" + AGENT_NAME + "/123456.btm ")
+                .ignoreExitValueCheck(true)
+                .expectedCommandOutputList(Arrays.asList(new String("uninstall RULE 123456"))).noOfRetries(0)
+                .retryInterval(0).timeout(0).build();
 
-        CommandInfo deleteBytemanRuleCommand = new CommandInfo();
-        deleteBytemanRuleCommand.setCommand("rm -rf /tmp/" + AGENT_NAME + "/123456.btm");
-        deleteBytemanRuleCommand.setIgnoreExitValueCheck(true);
+        CommandInfo deleteBytemanRuleCommand =
+                CommandInfo.builder("rm -rf /tmp/" + AGENT_NAME + "/123456.btm").ignoreExitValueCheck(true).build();
+
         list.add(remediationCommand);
         list.add(deleteBytemanRuleCommand);
         return list;
@@ -290,51 +284,45 @@ public class K8sBytemanFaultHelperTest extends PowerMockTestCase {
 
     private List<CommandInfo> getExpectedInjectionCommands() {
         List<CommandInfo> list = new ArrayList<>();
-        CommandInfo copyAgentCommand = new CommandInfo();
-        copyAgentCommand.setCommand("cp " + ConstantsUtils.getMangleSupportScriptDirectory() + AGENT_NAME
-                + " testPod:/testDirectory/" + AGENT_NAME + " -c testContainer");
-        copyAgentCommand.setIgnoreExitValueCheck(false);
-        copyAgentCommand.setNoOfRetries(0);
-        copyAgentCommand.setRetryInterval(0);
-        copyAgentCommand.setTimeout(0);
-        copyAgentCommand.setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentCopyOnK8sPod());
+        CommandInfo copyAgentCommand = CommandInfo
+                .builder("cp " + ConstantsUtils.getMangleSupportScriptDirectory() + AGENT_NAME
+                        + " testPod:/testDirectory/" + AGENT_NAME + " -c testContainer")
+                .ignoreExitValueCheck(false).noOfRetries(0).retryInterval(0).timeout(0)
+                .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentCopyOnK8sPod()).build();
 
-        CommandInfo installAgentCommand = new CommandInfo();
-        installAgentCommand.setCommand("exec -it testPod -c testContainer -- /bin/sh /testDirectory/" + AGENT_NAME
-                + "/bin/bminstall.sh -p 9091 -s -b null");
-        installAgentCommand.setIgnoreExitValueCheck(true);
-        installAgentCommand.setExpectedCommandOutputList(Arrays.asList(new String[] {
-                "Started Byteman Listener Successfully", "Agent is already running on requested process" }));
-        installAgentCommand.setNoOfRetries(10);
-        installAgentCommand.setRetryInterval(5);
-        installAgentCommand.setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentInstallationRequest());
-        installAgentCommand.setTimeout(0);
+        CommandInfo installAgentCommand =
+                CommandInfo
+                        .builder(
+                                "exec -it testPod -c testContainer -- /bin/sh /testDirectory/"
+                                        + AGENT_NAME + "/bin/bminstall.sh -p 9091 -s -b null")
+                        .ignoreExitValueCheck(true)
+                        .expectedCommandOutputList(Arrays.asList(new String[] { "Started Byteman Listener Successfully",
+                                "Agent is already running on requested process" }))
+                        .noOfRetries(10).retryInterval(5)
+                        .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentInstallationRequest()).timeout(0)
+                        .build();
 
-        CommandInfo enableTroubleshootingCommand = new CommandInfo();
-        enableTroubleshootingCommand.setCommand("exec -it testPod -c testContainer -- /bin/sh /testDirectory/"
-                + AGENT_NAME + "/bin/bmsubmit.sh -p 9091 -enableTroubleshooting");
-        enableTroubleshootingCommand.setIgnoreExitValueCheck(true);
-        enableTroubleshootingCommand.setExpectedCommandOutputList(Arrays.asList(new String[] {
-                "install rule Trace - Capture Troubleshooting bundle.", "Troubleshooting Already Enabled." }));
-        enableTroubleshootingCommand.setNoOfRetries(10);
-        enableTroubleshootingCommand.setRetryInterval(5);
-        enableTroubleshootingCommand.setTimeout(0);
+        CommandInfo enableTroubleshootingCommand = CommandInfo
+                .builder(
+                        "exec -it testPod -c testContainer -- /bin/sh /testDirectory/"
+                                + AGENT_NAME + "/bin/bmsubmit.sh -p 9091 -enableTroubleshooting")
+                .ignoreExitValueCheck(true)
+                .expectedCommandOutputList(Arrays.asList(new String[] {
+                        "install rule Trace - Capture Troubleshooting bundle.", "Troubleshooting Already Enabled." }))
+                .noOfRetries(10).retryInterval(5).timeout(0).build();
 
-        CommandInfo injectionCommand = new CommandInfo();
-        injectionCommand.setCommand("exec -it testPod -c testContainer -- /bin/sh /testDirectory/" + AGENT_NAME
-                + "/bin/bmsubmit.sh -p 9091 -if __faultName cpuFault __load 80 __timeOutInMilliSeconds 20000");
-        injectionCommand.setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentFaultInjectionRequest());
-        injectionCommand.setIgnoreExitValueCheck(false);
-        injectionCommand.setExpectedCommandOutputList(Arrays.asList(new String[] { "Created Fault Successfully" }));
-        injectionCommand.setNoOfRetries(10);
-        injectionCommand.setRetryInterval(5);
-        injectionCommand.setTimeout(0);
         List<CommandOutputProcessingInfo> commandOutputProcessingInfoList = new ArrayList<>();
         CommandOutputProcessingInfo commandOutputProcessingInfo = new CommandOutputProcessingInfo();
         commandOutputProcessingInfo.setRegExpression("[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}");
         commandOutputProcessingInfo.setExtractedPropertyName("faultId");
         commandOutputProcessingInfoList.add(commandOutputProcessingInfo);
-        injectionCommand.setCommandOutputProcessingInfoList(commandOutputProcessingInfoList);
+        CommandInfo injectionCommand = CommandInfo
+                .builder("exec -it testPod -c testContainer -- /bin/sh /testDirectory/" + AGENT_NAME
+                        + "/bin/bmsubmit.sh -p 9091 -if __faultName cpuFault __load 80 __timeOutInMilliSeconds 20000")
+                .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentFaultInjectionRequest())
+                .ignoreExitValueCheck(false)
+                .expectedCommandOutputList(Arrays.asList(new String[] { "Created Fault Successfully" })).noOfRetries(10)
+                .retryInterval(5).timeout(0).commandOutputProcessingInfoList(commandOutputProcessingInfoList).build();
 
         list.add(copyAgentCommand);
         list.add(installAgentCommand);
@@ -345,53 +333,43 @@ public class K8sBytemanFaultHelperTest extends PowerMockTestCase {
 
     private List<CommandInfo> getExpectedInjectionCommandsForJavaHomePath() {
         List<CommandInfo> list = new ArrayList<>();
-        CommandInfo copyAgentCommand = new CommandInfo();
-        copyAgentCommand.setCommand("cp " + ConstantsUtils.getMangleSupportScriptDirectory() + AGENT_NAME
-                + " testPod:/testDirectory/" + AGENT_NAME + " -c testContainer");
-        copyAgentCommand.setIgnoreExitValueCheck(false);
-        copyAgentCommand.setNoOfRetries(0);
-        copyAgentCommand.setRetryInterval(0);
-        copyAgentCommand.setTimeout(0);
-        copyAgentCommand.setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentCopyOnK8sPod());
+        CommandInfo copyAgentCommand = CommandInfo
+                .builder("cp " + ConstantsUtils.getMangleSupportScriptDirectory() + AGENT_NAME
+                        + " testPod:/testDirectory/" + AGENT_NAME + " -c testContainer")
+                .ignoreExitValueCheck(false).noOfRetries(0).retryInterval(0).timeout(0)
+                .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentCopyOnK8sPod()).build();
 
-        CommandInfo installAgentCommand = new CommandInfo();
-        //exec -it testPod -c testContainer -- /bin/sh -c "export JAVA_HOME=/usr/bin && /testDirectory/mangle-java-agent-2.0.0/bin/bminstall.sh -p 9091 -s -b null"
-        installAgentCommand.setCommand(
-                "exec -it testPod -c testContainer -- /bin/sh -c \"export JAVA_HOME=/usr/bin && /testDirectory/"
-                        + AGENT_NAME + "/bin/bminstall.sh -p 9091 -s -b null\"");
-        installAgentCommand.setIgnoreExitValueCheck(true);
-        installAgentCommand.setExpectedCommandOutputList(Arrays.asList(new String[] {
-                "Started Byteman Listener Successfully", "Agent is already running on requested process" }));
-        installAgentCommand.setNoOfRetries(10);
-        installAgentCommand.setRetryInterval(5);
-        installAgentCommand.setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentInstallationRequest());
-        installAgentCommand.setTimeout(0);
+        CommandInfo installAgentCommand = CommandInfo
+                .builder(
+                        "exec -it testPod -c testContainer -- /bin/sh -c \"export JAVA_HOME=/usr/bin && /testDirectory/"
+                                + AGENT_NAME + "/bin/bminstall.sh -p 9091 -s -b null\"")
+                .ignoreExitValueCheck(true)
+                .expectedCommandOutputList(Arrays.asList(new String[] { "Started Byteman Listener Successfully",
+                        "Agent is already running on requested process" }))
+                .noOfRetries(10).retryInterval(5)
+                .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentInstallationRequest()).timeout(0).build();
 
-        CommandInfo enableTroubleshootingCommand = new CommandInfo();
-        enableTroubleshootingCommand.setCommand("exec -it testPod -c testContainer -- /bin/sh /testDirectory/"
-                + AGENT_NAME + "/bin/bmsubmit.sh -p 9091 -enableTroubleshooting");
-        enableTroubleshootingCommand.setIgnoreExitValueCheck(true);
-        enableTroubleshootingCommand.setExpectedCommandOutputList(Arrays.asList(new String[] {
-                "install rule Trace - Capture Troubleshooting bundle.", "Troubleshooting Already Enabled." }));
-        enableTroubleshootingCommand.setNoOfRetries(10);
-        enableTroubleshootingCommand.setRetryInterval(5);
-        enableTroubleshootingCommand.setTimeout(0);
+        CommandInfo enableTroubleshootingCommand = CommandInfo
+                .builder(
+                        "exec -it testPod -c testContainer -- /bin/sh /testDirectory/"
+                                + AGENT_NAME + "/bin/bmsubmit.sh -p 9091 -enableTroubleshooting")
+                .ignoreExitValueCheck(true)
+                .expectedCommandOutputList(Arrays.asList(new String[] {
+                        "install rule Trace - Capture Troubleshooting bundle.", "Troubleshooting Already Enabled." }))
+                .noOfRetries(10).retryInterval(5).timeout(0).build();
 
-        CommandInfo injectionCommand = new CommandInfo();
-        injectionCommand.setCommand("exec -it testPod -c testContainer -- /bin/sh /testDirectory/" + AGENT_NAME
-                + "/bin/bmsubmit.sh -p 9091 -if javaHomePath /usr/bin __faultName cpuFault __load 80 __timeOutInMilliSeconds 20000");
-        injectionCommand.setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentFaultInjectionRequest());
-        injectionCommand.setIgnoreExitValueCheck(false);
-        injectionCommand.setExpectedCommandOutputList(Arrays.asList(new String[] { "Created Fault Successfully" }));
-        injectionCommand.setNoOfRetries(10);
-        injectionCommand.setRetryInterval(5);
-        injectionCommand.setTimeout(0);
         List<CommandOutputProcessingInfo> commandOutputProcessingInfoList = new ArrayList<>();
         CommandOutputProcessingInfo commandOutputProcessingInfo = new CommandOutputProcessingInfo();
         commandOutputProcessingInfo.setRegExpression("[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}");
         commandOutputProcessingInfo.setExtractedPropertyName("faultId");
         commandOutputProcessingInfoList.add(commandOutputProcessingInfo);
-        injectionCommand.setCommandOutputProcessingInfoList(commandOutputProcessingInfoList);
+        CommandInfo injectionCommand = CommandInfo
+                .builder("exec -it testPod -c testContainer -- /bin/sh /testDirectory/" + AGENT_NAME
+                        + "/bin/bmsubmit.sh -p 9091 -if javaHomePath /usr/bin __faultName cpuFault __load 80 __timeOutInMilliSeconds 20000")
+                .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentFaultInjectionRequest())
+                .ignoreExitValueCheck(false)
+                .expectedCommandOutputList(Arrays.asList(new String[] { "Created Fault Successfully" })).noOfRetries(10)
+                .retryInterval(5).timeout(0).commandOutputProcessingInfoList(commandOutputProcessingInfoList).build();
 
         list.add(copyAgentCommand);
         list.add(installAgentCommand);
@@ -402,50 +380,45 @@ public class K8sBytemanFaultHelperTest extends PowerMockTestCase {
 
     private List<CommandInfo> getExpectedInjectionCommandsForSpringException() {
         List<CommandInfo> list = new ArrayList<>();
-        CommandInfo copyAgentCommand = new CommandInfo();
-        copyAgentCommand.setCommand("cp " + ConstantsUtils.getMangleSupportScriptDirectory() + AGENT_NAME
-                + " testPod:/tmp/" + AGENT_NAME + " -c testContainer");
-        copyAgentCommand.setIgnoreExitValueCheck(false);
-        copyAgentCommand.setNoOfRetries(0);
-        copyAgentCommand.setRetryInterval(0);
-        copyAgentCommand.setTimeout(0);
-        copyAgentCommand.setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentCopyOnK8sPod());
+        CommandInfo copyAgentCommand = CommandInfo
+                .builder("cp " + ConstantsUtils.getMangleSupportScriptDirectory() + AGENT_NAME + " testPod:/tmp/"
+                        + AGENT_NAME + " -c testContainer")
+                .ignoreExitValueCheck(false).noOfRetries(0).retryInterval(0).timeout(0)
+                .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentCopyOnK8sPod()).build();
 
-        CommandInfo installAgentCommand = new CommandInfo();
-        installAgentCommand.setCommand("exec -it testPod -c testContainer -- /bin/sh /tmp/" + AGENT_NAME
-                + "/bin/bminstall.sh -p 9091 -s -b null");
-        installAgentCommand.setIgnoreExitValueCheck(true);
-        installAgentCommand.setExpectedCommandOutputList(Arrays.asList(new String[] {
-                "Started Byteman Listener Successfully", "Agent is already running on requested process" }));
-        installAgentCommand.setNoOfRetries(10);
-        installAgentCommand.setRetryInterval(5);
-        installAgentCommand.setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentInstallationRequest());
-        installAgentCommand.setTimeout(0);
+        CommandInfo installAgentCommand =
+                CommandInfo
+                        .builder(
+                                "exec -it testPod -c testContainer -- /bin/sh /tmp/"
+                                        + AGENT_NAME + "/bin/bminstall.sh -p 9091 -s -b null")
+                        .ignoreExitValueCheck(true)
+                        .expectedCommandOutputList(Arrays.asList(new String[] { "Started Byteman Listener Successfully",
+                                "Agent is already running on requested process" }))
+                        .noOfRetries(10).retryInterval(5)
+                        .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentInstallationRequest()).timeout(0)
+                        .build();
 
-        CommandInfo k8sCopyBytemanRuleFileCommandInfo = new CommandInfo();
-        k8sCopyBytemanRuleFileCommandInfo.setCommand("cp " + ConstantsUtils.getMangleSupportScriptDirectory()
-                + "123456.btm" + " testPod:/tmp/" + AGENT_NAME + "/123456.btm -c testContainer");
-        k8sCopyBytemanRuleFileCommandInfo.setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentCopyOnK8sPod());
+        CommandInfo k8sCopyBytemanRuleFileCommandInfo = CommandInfo
+                .builder("cp " + ConstantsUtils.getMangleSupportScriptDirectory() + "123456.btm" + " testPod:/tmp/"
+                        + AGENT_NAME + "/123456.btm -c testContainer")
+                .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentCopyOnK8sPod()).build();
 
-        CommandInfo enableTroubleshootingCommand = new CommandInfo();
-        enableTroubleshootingCommand.setCommand("exec -it testPod -c testContainer -- /bin/sh /tmp/" + AGENT_NAME
-                + "/bin/bmsubmit.sh -p 9091 -enableTroubleshooting");
-        enableTroubleshootingCommand.setIgnoreExitValueCheck(true);
-        enableTroubleshootingCommand.setExpectedCommandOutputList(Arrays.asList(new String[] {
-                "install rule Trace - Capture Troubleshooting bundle.", "Troubleshooting Already Enabled." }));
-        enableTroubleshootingCommand.setNoOfRetries(10);
-        enableTroubleshootingCommand.setRetryInterval(5);
-        enableTroubleshootingCommand.setTimeout(0);
+        CommandInfo enableTroubleshootingCommand = CommandInfo
+                .builder(
+                        "exec -it testPod -c testContainer -- /bin/sh /tmp/"
+                                + AGENT_NAME + "/bin/bmsubmit.sh -p 9091 -enableTroubleshooting")
+                .ignoreExitValueCheck(true)
+                .expectedCommandOutputList(Arrays.asList(new String[] {
+                        "install rule Trace - Capture Troubleshooting bundle.", "Troubleshooting Already Enabled." }))
+                .noOfRetries(10).retryInterval(5).timeout(0).build();
 
-        CommandInfo injectionCommand = new CommandInfo();
-        injectionCommand.setCommand("exec -it testPod -c testContainer -- /bin/sh /tmp/" + AGENT_NAME
-                + "/bin/bmsubmit.sh -p 9091 /tmp/" + AGENT_NAME + "/123456.btm");
-        injectionCommand.setIgnoreExitValueCheck(false);
-        injectionCommand.setExpectedCommandOutputList(
-                Arrays.asList(new String[] { "install rule 123456", "redefine rule 123456" }));
-        injectionCommand.setNoOfRetries(10);
-        injectionCommand.setRetryInterval(5);
-        injectionCommand.setTimeout(0);
+        CommandInfo injectionCommand = CommandInfo
+                .builder("exec -it testPod -c testContainer -- /bin/sh /tmp/"
+                        + AGENT_NAME + "/bin/bmsubmit.sh -p 9091 /tmp/" + AGENT_NAME + "/123456.btm")
+                .ignoreExitValueCheck(false)
+                .expectedCommandOutputList(
+                        Arrays.asList(new String[] { "install rule 123456", "redefine rule 123456" }))
+                .noOfRetries(10).retryInterval(5).timeout(0).build();
 
         list.add(copyAgentCommand);
         list.add(installAgentCommand);

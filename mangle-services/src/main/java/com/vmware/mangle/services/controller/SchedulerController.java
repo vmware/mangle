@@ -11,6 +11,10 @@
 
 package com.vmware.mangle.services.controller;
 
+import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
+import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
+
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -18,22 +22,34 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.hateoas.Link;
+import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.Resources;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.vmware.mangle.cassandra.model.scheduler.SchedulerRequestStatus;
 import com.vmware.mangle.cassandra.model.scheduler.SchedulerSpec;
+import com.vmware.mangle.model.enums.SchedulerJobType;
 import com.vmware.mangle.model.enums.SchedulerStatus;
 import com.vmware.mangle.services.constants.CommonConstants;
 import com.vmware.mangle.services.scheduler.Scheduler;
+import com.vmware.mangle.utils.constants.ErrorConstants;
 import com.vmware.mangle.utils.exceptions.MangleException;
+import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
 /**
  * Mangle Scheduling Services
@@ -55,66 +71,105 @@ public class SchedulerController {
     }
 
     @ApiOperation(value = "API to  cancel scheduled task/job(s) ", nickname = "cancelScheduledJobs")
-    @RequestMapping(value = "/cancel/{jobIds}", method = RequestMethod.POST, produces = "application/json")
-    public ResponseEntity<SchedulerRequestStatus> cancelScheduledJobs(@PathVariable("jobIds") List<String> jobIds)
-            throws MangleException {
+    @PostMapping(value = "/cancel/{jobIds}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Resource<SchedulerRequestStatus>> cancelScheduledJobs(
+            @PathVariable("jobIds") List<String> jobIds) throws MangleException {
         log.info("Received request to cancel schedules with the schedule id: {}", jobIds.toString());
         Set<String> processedJobs = scheduler.cancelScheduledJobs(jobIds);
-        return new ResponseEntity<>(
-                new SchedulerRequestStatus(
-                        String.format("Received request to cancel the schedules %s", processedJobs.toString())),
-                HttpStatus.OK);
+
+        Resource<SchedulerRequestStatus> requestStatusResource = new Resource<>(new SchedulerRequestStatus(
+                String.format("Received request to cancel the schedules %s", processedJobs.toString())));
+        requestStatusResource.add(getSelfLink(), cancelAllScheduledJobsHateoasLink(), pauseScheduledJobsHateoasLink(),
+                resumeScheduledJobsHateoasLink(), modifyScheduledJobHateoasLink(), cancelScheduledJobsHateoasLink(),
+                deleteScheduledJobHateoasLink());
+        return new ResponseEntity<>(requestStatusResource, HttpStatus.OK);
     }
 
     @ApiOperation(value = "API to  pause scheduled task/job(s) ", nickname = "pauseScheduledJobs")
-    @RequestMapping(value = "/pause/{jobIds}", method = RequestMethod.POST, produces = "application/json")
-    public ResponseEntity<SchedulerRequestStatus> pauseScheduledJobs(@PathVariable("jobIds") List<String> jobIds)
-            throws MangleException {
+    @PostMapping(value = "/pause/{jobIds}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Resource<SchedulerRequestStatus>> pauseScheduledJobs(
+            @PathVariable("jobIds") List<String> jobIds) throws MangleException {
         log.info("Received request to pause schedules with the schedule id: {}", jobIds.toString());
         Set<String> processedJobs = scheduler.pauseScheduledJobs(jobIds);
-        return new ResponseEntity<>(
-                new SchedulerRequestStatus(
-                        String.format("Received request to pause the schedules %s", processedJobs.toString())),
-                HttpStatus.OK);
+
+        Resource<SchedulerRequestStatus> requestStatusResource = new Resource<>(new SchedulerRequestStatus(
+                String.format("Received request to pause the schedules %s", processedJobs.toString())));
+        requestStatusResource.add(getSelfLink(), cancelAllScheduledJobsHateoasLink(), resumeScheduledJobsHateoasLink(),
+                modifyScheduledJobHateoasLink(), deleteScheduledJobHateoasLink(), cancelScheduledJobsHateoasLink());
+        return new ResponseEntity<>(requestStatusResource, HttpStatus.OK);
     }
 
     @ApiOperation(value = "API to  resume scheduled task/job(s) ", nickname = "resumeScheduledJobs")
-    @RequestMapping(value = "/resume/{jobIds}", method = RequestMethod.POST, produces = "application/json")
-    public ResponseEntity<SchedulerRequestStatus> resumeScheduledJobs(@PathVariable("jobIds") List<String> jobIds)
-            throws MangleException {
+    @PostMapping(value = "/resume/{jobIds}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Resource<SchedulerRequestStatus>> resumeScheduledJobs(
+            @PathVariable("jobIds") List<String> jobIds) throws MangleException {
         log.info("Received request to resume schedules with the schedule id: {}", jobIds.toString());
         Set<String> processedJobs = scheduler.resumeJobs(jobIds);
-        return new ResponseEntity<>(
-                new SchedulerRequestStatus(
-                        String.format("Received request to resume the schedules %s", processedJobs.toString())),
-                HttpStatus.OK);
+
+        Resource<SchedulerRequestStatus> requestStatusResource = new Resource<>(new SchedulerRequestStatus(
+                String.format("Received request to resume the schedules %s", processedJobs.toString())));
+        requestStatusResource.add(getSelfLink(), cancelAllScheduledJobsHateoasLink(), pauseScheduledJobsHateoasLink(),
+                modifyScheduledJobHateoasLink(), cancelScheduledJobsHateoasLink(), deleteScheduledJobHateoasLink());
+        return new ResponseEntity<>(requestStatusResource, HttpStatus.OK);
+    }
+
+
+    @ApiOperation(value = "API to modify scheduled task/job", nickname = "modifyScheduledJob")
+    @PutMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Resource<SchedulerRequestStatus>> modifyScheduledJob(
+            @Validated @RequestBody SchedulerSpec schedulerSpec) throws MangleException {
+        log.info("Received request to modify schedules with the schedule id: {}", schedulerSpec.getId());
+        if (schedulerSpec.getJobType().equals(SchedulerJobType.CRON) && null != schedulerSpec.getCronExpression()
+                || schedulerSpec.getJobType().equals(SchedulerJobType.SIMPLE)
+                        && null != schedulerSpec.getScheduledTime()) {
+            scheduler.modifyJob(schedulerSpec);
+
+            Resource<SchedulerRequestStatus> requestStatusResource = new Resource<>(new SchedulerRequestStatus(
+                    String.format("Received request to modify the schedules %s", schedulerSpec.getId())));
+            requestStatusResource.add(getSelfLink(), cancelAllScheduledJobsHateoasLink(),
+                    pauseScheduledJobsHateoasLink(), resumeScheduledJobsHateoasLink(), cancelScheduledJobsHateoasLink(),
+                    cancelAllScheduledJobsHateoasLink(), deleteScheduledJobHateoasLink());
+            return new ResponseEntity<>(requestStatusResource, HttpStatus.OK);
+        } else {
+            throw new MangleException(ErrorConstants.INVALID_SCHEDULE_INPUTS, ErrorCode.INVALID_SCHEDULE_INPUTS,
+                    schedulerSpec.getId());
+        }
     }
 
     @ApiOperation(value = "API to  cancel all the scheduled jobs ", nickname = "cancelAllScheduledJobs")
-    @RequestMapping(value = "/cancel/all-jobs", method = RequestMethod.POST, produces = "application/json")
-    public ResponseEntity<SchedulerRequestStatus> cancelAllScheduledJobs() throws MangleException {
+    @PostMapping(value = "/cancel/all-jobs", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Resource<SchedulerRequestStatus>> cancelAllScheduledJobs() throws MangleException {
         log.info("Received request to cancel all the schedules");
         scheduler.cancelAllScheduledJobs();
-        return new ResponseEntity<>(new SchedulerRequestStatus("Received request to cancel all the schedules"),
-                HttpStatus.OK);
+
+        Resource<SchedulerRequestStatus> requestStatusResource =
+                new Resource<>(new SchedulerRequestStatus("Received request to cancel all the schedules"));
+        requestStatusResource.add(getSelfLink(), cancelAllScheduledJobsHateoasLink(), pauseScheduledJobsHateoasLink(),
+                resumeScheduledJobsHateoasLink(), modifyScheduledJobHateoasLink(), cancelScheduledJobsHateoasLink(),
+                deleteScheduledJobHateoasLink());
+        return new ResponseEntity<>(requestStatusResource, HttpStatus.OK);
     }
 
     @ApiOperation(value = "API to delete scheduled jobs from Mangle", nickname = "deleteTasks")
-    @RequestMapping(value = "", method = RequestMethod.DELETE, produces = "application/json")
-    public ResponseEntity<SchedulerRequestStatus> deleteScheduledJob(@RequestParam("jobIds") List<String> jobIds, @RequestParam(value = "delete-associated-tasks", required = false) boolean deleteAssociatedTasks)
+    @DeleteMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Resource<SchedulerRequestStatus>> deleteScheduledJob(
+            @RequestParam("jobIds") List<String> jobIds,
+            @RequestParam(value = "delete-associated-tasks", required = false) boolean deleteAssociatedTasks)
             throws MangleException {
         log.info("Received request to delete schedules: {}", jobIds.toString());
         Set<String> processedJobs = scheduler.deleteScheduledJobs(jobIds, deleteAssociatedTasks);
-        return new ResponseEntity<>(
-                new SchedulerRequestStatus(
-                        String.format("Received request to delete the schedules %s", processedJobs.toString())),
-                HttpStatus.OK);
+
+        Resource<SchedulerRequestStatus> requestStatusResource = new Resource<>(new SchedulerRequestStatus(
+                String.format("Received request to delete the schedules %s", processedJobs.toString())));
+        requestStatusResource.add(getSelfLink(), cancelAllScheduledJobsHateoasLink(), pauseScheduledJobsHateoasLink(),
+                resumeScheduledJobsHateoasLink(), modifyScheduledJobHateoasLink(), cancelScheduledJobsHateoasLink());
+        return new ResponseEntity<>(requestStatusResource, HttpStatus.OK);
     }
 
     @ApiOperation(value = "API to get all Scheduled jobs in Mangle with a Filter on Scheduler Status", nickname = "getAllScheduledJobs")
-    @GetMapping(value = "", produces = "application/json")
-    public ResponseEntity<List<SchedulerSpec>> getAllScheduledJobs(
-            @RequestParam(name = "status", required = false) SchedulerStatus status) {
+    @GetMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Resources<SchedulerSpec>> getAllScheduledJobs(
+            @RequestParam(name = "status", required = false) SchedulerStatus status) throws MangleException {
         log.info("Received request to retrieve all the schedules");
         List<SchedulerSpec> listOfDAOs;
         HttpHeaders headers = new HttpHeaders();
@@ -125,6 +180,42 @@ public class SchedulerController {
             listOfDAOs = scheduler.getAllScheduledJobs();
         }
 
-        return new ResponseEntity<>(listOfDAOs, headers, HttpStatus.OK);
+        Resources<SchedulerSpec> requestStatusResources = new Resources<>(listOfDAOs);
+        requestStatusResources.add(getSelfLink(), cancelAllScheduledJobsHateoasLink(), pauseScheduledJobsHateoasLink(),
+                resumeScheduledJobsHateoasLink(), modifyScheduledJobHateoasLink(), cancelScheduledJobsHateoasLink(),
+                deleteScheduledJobHateoasLink());
+        return new ResponseEntity<>(requestStatusResources, HttpStatus.OK);
+    }
+
+    public Link getSelfLink() {
+        return new Link(ServletUriComponentsBuilder.fromCurrentRequestUri().build().toUri().toASCIIString())
+                .withSelfRel();
+    }
+
+    public Link cancelScheduledJobsHateoasLink() throws MangleException {
+        return linkTo(methodOn(SchedulerController.class).cancelScheduledJobs(Collections.emptyList()))
+                .withRel("CANCEL");
+    }
+
+    public Link pauseScheduledJobsHateoasLink() throws MangleException {
+        return linkTo(methodOn(SchedulerController.class).pauseScheduledJobs(Collections.emptyList())).withRel("PAUSE");
+    }
+
+    public Link resumeScheduledJobsHateoasLink() throws MangleException {
+        return linkTo(methodOn(SchedulerController.class).resumeScheduledJobs(Collections.emptyList()))
+                .withRel("RESUME");
+    }
+
+    public Link modifyScheduledJobHateoasLink() throws MangleException {
+        return linkTo(methodOn(SchedulerController.class).modifyScheduledJob(new SchedulerSpec())).withRel("MODIFY");
+    }
+
+    public Link cancelAllScheduledJobsHateoasLink() throws MangleException {
+        return linkTo(methodOn(SchedulerController.class).cancelAllScheduledJobs()).withRel("CANCEL-ALL");
+    }
+
+    public Link deleteScheduledJobHateoasLink() throws MangleException {
+        return linkTo(methodOn(SchedulerController.class).deleteScheduledJob(Collections.emptyList(), false))
+                .withRel("DELETE");
     }
 }

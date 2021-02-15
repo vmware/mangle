@@ -18,7 +18,7 @@ import org.springframework.http.ResponseEntity;
 
 import com.vmware.mangle.model.Message;
 import com.vmware.mangle.model.Messages;
-import com.vmware.mangle.model.response.VMOperationsRepsonse;
+import com.vmware.mangle.model.resource.VMOperationsRepsonse;
 
 /**
  * @author Chethan C(chetanc)

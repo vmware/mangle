@@ -24,7 +24,7 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.vmware.mangle.cassandra.model.endpoint.VCenterAdapterProperties;
+import com.vmware.mangle.cassandra.model.endpoint.VCenterAdapterDetails;
 import com.vmware.mangle.utils.clients.vcenter.VCenterAdapterClient;
 import com.vmware.mangle.utils.clients.vcenter.VCenterClient;
 import com.vmware.mangle.utils.clients.vcenter.VMOperations;
@@ -40,7 +40,7 @@ public class VCenterClientTest extends PowerMockTestCase {
     @Mock
     private VCenterAdapterClient vCenterAdapterClient;
 
-    private VCenterAdapterProperties vCenterAdapterProperties = new VCenterAdapterProperties();
+    private VCenterAdapterDetails vCenterAdapterDetails = new VCenterAdapterDetails();
 
     private VCenterClient vCenterClient;
 
@@ -52,7 +52,7 @@ public class VCenterClientTest extends PowerMockTestCase {
     @Test
     public void testVcenterClientInstantiation() throws Exception {
         whenNew(VCenterAdapterClient.class).withAnyArguments().thenReturn(vCenterAdapterClient);
-        vCenterClient = new VCenterClient("", "", "", vCenterAdapterProperties);
+        vCenterClient = new VCenterClient("", "", "", vCenterAdapterDetails);
         Assert.assertEquals(vCenterClient.getVCenterSpec().getVcUsername(), "");
         Assert.assertEquals(vCenterClient.getVCenterSpec().getVcPassword(), "");
         Assert.assertEquals(vCenterClient.getVCenterSpec().getVcServerUrl(), "");
@@ -67,7 +67,7 @@ public class VCenterClientTest extends PowerMockTestCase {
         when(vCenterAdapterClient.testConnection()).thenReturn(true);
         when(VMOperations.testConnection(any(), any())).thenReturn(true);
         whenNew(VCenterAdapterClient.class).withAnyArguments().thenReturn(vCenterAdapterClient);
-        vCenterClient = new VCenterClient("", "", "", vCenterAdapterProperties);
+        vCenterClient = new VCenterClient("", "", "", vCenterAdapterDetails);
 
         boolean result = vCenterClient.testConnection();
         Assert.assertTrue(result);

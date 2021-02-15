@@ -14,12 +14,18 @@ package com.vmware.mangle.services.helpers.faults.vcenter;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
+
 import com.vmware.mangle.cassandra.model.faults.specs.VMNicFaultSpec;
 import com.vmware.mangle.cassandra.model.tasks.TaskType;
 import com.vmware.mangle.model.enums.EndpointType;
 import com.vmware.mangle.services.helpers.faults.AbstractFault;
 import com.vmware.mangle.task.framework.helpers.faults.SupportedEndpoints;
+import com.vmware.mangle.utils.constants.Constants;
 import com.vmware.mangle.utils.exceptions.MangleException;
+import com.vmware.mangle.utils.exceptions.MangleRuntimeException;
+import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
 /**
  * @author chetanc
@@ -38,9 +44,12 @@ public class VMNicFault extends AbstractFault {
     @Override
     protected Map<String, String> getFaultSpecificArgs() {
         VMNicFaultSpec localFaultSpec = (VMNicFaultSpec) faultSpec;
+        if (StringUtils.isEmpty(localFaultSpec.getVmName()) && CollectionUtils.isEmpty(localFaultSpec.getFilters())) {
+            throw new MangleRuntimeException(ErrorCode.VCENTER_VM_NAME_FILTERS_EMPTY);
+        }
         Map<String, String> specificArgs = new LinkedHashMap<>();
-        specificArgs.put("--vmName", localFaultSpec.getVmName());
-        specificArgs.put("--vmNic", localFaultSpec.getVmNicId());
+        specificArgs.put(Constants.VM_NAME_ARG, localFaultSpec.getVmName());
+        specificArgs.put(Constants.VM_NIC_ARG, localFaultSpec.getVmNicId());
         return specificArgs;
     }
 }

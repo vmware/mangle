@@ -23,6 +23,7 @@ import com.vmware.mangle.cassandra.model.tasks.commands.CommandInfo;
 import com.vmware.mangle.cassandra.model.tasks.commands.CommandOutputProcessingInfo;
 import com.vmware.mangle.faults.plugin.helpers.KnownFailuresHelper;
 import com.vmware.mangle.services.enums.VCenterDiskFaults;
+import com.vmware.mangle.services.enums.VCenterHostFaults;
 import com.vmware.mangle.services.enums.VCenterNicFaults;
 import com.vmware.mangle.services.enums.VCenterStateFaults;
 import com.vmware.mangle.task.framework.endpoint.EndpointClientFactory;
@@ -31,6 +32,7 @@ import com.vmware.mangle.utils.CommonUtils;
 import com.vmware.mangle.utils.ICommandExecutor;
 import com.vmware.mangle.utils.clients.vcenter.VCenterClient;
 import com.vmware.mangle.utils.clients.vcenter.VCenterCommandExecutor;
+import com.vmware.mangle.utils.exceptions.MangleException;
 
 /**
  * @author chetanc
@@ -53,7 +55,7 @@ public class VCenterFaultHelper implements ICommandExecutionFaultHelper {
     }
 
     @Override
-    public ICommandExecutor getExecutor(CommandExecutionFaultSpec vmFaultSpec) {
+    public ICommandExecutor getExecutor(CommandExecutionFaultSpec vmFaultSpec) throws MangleException {
         return new VCenterCommandExecutor((VCenterClient) endpointClientFactory
                 .getEndPointClient(vmFaultSpec.getCredentials(), vmFaultSpec.getEndpoint()));
     }
@@ -66,20 +68,15 @@ public class VCenterFaultHelper implements ICommandExecutionFaultHelper {
     @Override
     public List<CommandInfo> getInjectionCommandInfoList(ICommandExecutor executor,
             CommandExecutionFaultSpec vmFaultSpec) {
-        List<CommandInfo> commandInfoList = new ArrayList<>();
-        CommandInfo commandInfo = new CommandInfo();
-        commandInfo.setCommand(buildInjectionCommand(vmFaultSpec));
-        commandInfo.setKnownFailureMap(KnownFailuresHelper.getKnownFailureOfVCenterFaultInjectionRequest());
-        commandInfo.setIgnoreExitValueCheck(false);
-        commandInfoList.add(commandInfo);
-
-
+        List<CommandOutputProcessingInfo> commandOutputProcessingInfoList = null;
         if (VCenterDiskFaults.DISCONNECT_DISK.name().equalsIgnoreCase(vmFaultSpec.getFaultName())) {
-            List<CommandOutputProcessingInfo> commandOutputProcessingInfoList =
-                    createDisconnectDiskOutputProcessingInfo();
-            commandInfo.setCommandOutputProcessingInfoList(commandOutputProcessingInfoList);
+            commandOutputProcessingInfoList = createDisconnectDiskOutputProcessingInfo();
         }
-
+        CommandInfo commandInfo = CommandInfo.builder(buildInjectionCommand(vmFaultSpec))
+                .knownFailureMap(KnownFailuresHelper.getKnownFailureOfVCenterFaultInjectionRequest())
+                .ignoreExitValueCheck(false).commandOutputProcessingInfoList(commandOutputProcessingInfoList).build();
+        List<CommandInfo> commandInfoList = new ArrayList<>();
+        commandInfoList.add(commandInfo);
         return commandInfoList;
     }
 
@@ -89,10 +86,9 @@ public class VCenterFaultHelper implements ICommandExecutionFaultHelper {
         List<CommandInfo> commandInfoList = new ArrayList<>();
         String remediationCommand = buildRemediationCommand(vmFaultSpec);
         if (remediationCommand != null) {
-            CommandInfo commandInfo = new CommandInfo();
-            commandInfo.setCommand(remediationCommand);
-            commandInfo.setKnownFailureMap(KnownFailuresHelper.getKnownFailureOfVCenterFaultRemediationRequest());
-            commandInfo.setIgnoreExitValueCheck(false);
+            CommandInfo commandInfo = CommandInfo.builder(remediationCommand)
+                    .knownFailureMap(KnownFailuresHelper.getKnownFailureOfVCenterFaultRemediationRequest())
+                    .ignoreExitValueCheck(false).build();
             commandInfoList.add(commandInfo);
         }
 
@@ -142,8 +138,10 @@ public class VCenterFaultHelper implements ICommandExecutionFaultHelper {
         } else if (VCenterNicFaults.DISCONNECT_NIC.name().equalsIgnoreCase(vmFaultSpec.getFaultName())) {
             return VCenterNicFaults.DISCONNECT_NIC.getRemediation().name() + ":"
                     + CommonUtils.convertMaptoDelimitedString(vmFaultSpec.getArgs(), " ");
+        } else if (VCenterHostFaults.DISCONNECT_HOST.name().equalsIgnoreCase(vmFaultSpec.getFaultName())) {
+            return VCenterHostFaults.DISCONNECT_HOST.getRemediation().name() + ":"
+                    + CommonUtils.convertMaptoDelimitedString(vmFaultSpec.getArgs(), " ");
         }
         return null;
     }
-
 }

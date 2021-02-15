@@ -25,7 +25,6 @@ import org.springframework.stereotype.Service;
 import com.vmware.mangle.cassandra.model.security.Privilege;
 import com.vmware.mangle.cassandra.model.security.User;
 import com.vmware.mangle.cassandra.model.security.UserLoginAttempts;
-import com.vmware.mangle.utils.constants.Constants;
 
 /**
  *
@@ -95,8 +94,8 @@ public class CustomUserDetailsService implements UserDetailsService {
      */
     private UserDetails buildUserForAuthentication(User user, List<GrantedAuthority> authorities) {
         String password = user.getPassword() != null ? user.getPassword() : "";
-        return new org.springframework.security.core.userdetails.User(user.getName(), password, true, true,
-                true, !getAccountLockedStatus(user), authorities);
+        return new org.springframework.security.core.userdetails.User(user.getName(), password, true, true, true,
+                !getAccountLockedStatus(user), authorities);
     }
 
     /**
@@ -110,8 +109,9 @@ public class CustomUserDetailsService implements UserDetailsService {
         if (null != user && user.getAccountLocked() != null && user.getAccountLocked()) {
             UserLoginAttempts loginAttempts = userLoginAttemptsService.getUserAttemptsForUser(user.getName());
             if (null != loginAttempts) {
-                return System.currentTimeMillis() - loginAttempts.getLastAttempt()
-                        .getTime() <= Constants.USER_ACCOUNT_LOCK_RELEASE_TIME_IN_MINS * Constants.ONE_MINUTE_IN_MILLIS;
+                int numberOfAttempts = loginAttempts.getAttempts();
+                double timeOutForLock = Math.pow(2, numberOfAttempts) * 1000;
+                return System.currentTimeMillis() - loginAttempts.getLastAttempt().getTime() <= timeOutForLock;
             }
             return true;
         }

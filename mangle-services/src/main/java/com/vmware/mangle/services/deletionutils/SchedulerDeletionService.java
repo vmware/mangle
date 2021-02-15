@@ -22,6 +22,8 @@ import org.springframework.util.CollectionUtils;
 
 import com.vmware.mangle.cassandra.model.scheduler.SchedulerSpec;
 import com.vmware.mangle.model.enums.OperationStatus;
+import com.vmware.mangle.services.cassandra.model.events.basic.EntityDeletedEvent;
+import com.vmware.mangle.services.events.web.CustomEventPublisher;
 import com.vmware.mangle.services.repository.SchedulerRepository;
 import com.vmware.mangle.utils.constants.ErrorConstants;
 import com.vmware.mangle.utils.exceptions.MangleException;
@@ -37,11 +39,14 @@ public class SchedulerDeletionService {
 
     private SchedulerRepository schedulerRepository;
     private TaskDeletionService taskDeletionService;
+    private CustomEventPublisher eventPublisher;
 
     @Autowired
-    public SchedulerDeletionService(SchedulerRepository schedulerRepository, TaskDeletionService taskDeletionService) {
+    public SchedulerDeletionService(SchedulerRepository schedulerRepository,
+            TaskDeletionService taskDeletionService, CustomEventPublisher eventPublisher) {
         this.schedulerRepository = schedulerRepository;
         this.taskDeletionService = taskDeletionService;
+        this.eventPublisher = eventPublisher;
     }
 
     public List<String> verifyDeletionPrecheck(List<String> jobIds) throws MangleException {
@@ -60,6 +65,8 @@ public class SchedulerDeletionService {
         if (!CollectionUtils.isEmpty(jobIds)) {
             List<String> persistedSpecIds = verifyDeletionPrecheck(jobIds);
             schedulerRepository.deleteByIdIn(persistedSpecIds);
+            persistedSpecIds.forEach(s -> eventPublisher.publishAnEvent(new EntityDeletedEvent(s,
+                    SchedulerSpec.class.getName())));
             if (deleteAssociatedTask) {
                 taskDeletionService.deleteTasksByIds(persistedSpecIds);
             }
@@ -69,6 +76,7 @@ public class SchedulerDeletionService {
     public OperationStatus deleteSchedulerDetailsByJobId(String jobId) throws MangleException {
         if (schedulerRepository.findById(jobId).isPresent()) {
             schedulerRepository.deleteByIdIn(Collections.singletonList(jobId));
+            eventPublisher.publishAnEvent(new EntityDeletedEvent(jobId, SchedulerSpec.class.getName()));
             return OperationStatus.SUCCESS;
         } else {
             throw new MangleException(ErrorCode.NO_RECORD_FOUND, ErrorConstants.SCHEDULE, jobId);

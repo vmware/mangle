@@ -122,7 +122,6 @@ public class HazelcastClusterMembershipListenerTest {
         verify(member, times(1)).getAddress();
     }
 
-
     @Test
     public void testMemberRemoved() throws UnknownHostException, MangleException {
         Member newOwner = mock(Member.class);
@@ -154,11 +153,12 @@ public class HazelcastClusterMembershipListenerTest {
         when(nodeTask.get(newMemberId)).thenReturn(null);
         when(partitionService.getPartition(anyString())).thenReturn(partition);
         when(partition.getOwner()).thenReturn(newOwner);
-        doNothing().when(taskService).triggerTask(anyString());
+        doNothing().when(taskService).triggerTask(any());
         when(configService.getClusterConfiguration()).thenReturn(clusterConfig);
         when(configService.updateClusterConfiguration(any())).thenReturn(clusterConfig);
         when(event.getMembers()).thenReturn(members);
-        when(hazelcastInstance.getReplicatedMap(HazelcastConstants.MANGLE_APPLICATION_STATUS_MAP)).thenReturn(replicatedMap);
+        when(hazelcastInstance.getReplicatedMap(HazelcastConstants.MANGLE_APPLICATION_STATUS_MAP))
+                .thenReturn(replicatedMap);
         when(replicatedMap.remove(anyString())).thenReturn(true);
 
         listener.memberRemoved(event);
@@ -166,7 +166,7 @@ public class HazelcastClusterMembershipListenerTest {
         verify(event, times(5)).getMember();
         verify(newOwner, times(2)).getUuid();
         verify(cluster, times(1)).getLocalMember();
-        verify(hazelcastInstance, times(2)).getCluster();
+        verify(hazelcastInstance, times(3)).getCluster();
         verify(hazelcastInstance, times(1)).getMap("nodeTasks");
         verify(hazelcastInstance, times(1)).getPartitionService();
         verify(partitionService, times(2)).getPartition(anyString());
@@ -206,11 +206,12 @@ public class HazelcastClusterMembershipListenerTest {
         when(nodeTask.get(newMemberId)).thenReturn(null);
         when(partitionService.getPartition(anyString())).thenReturn(partition);
         when(partition.getOwner()).thenReturn(newOwner);
-        doThrow(new MangleException(ErrorCode.GENERIC_ERROR)).when(taskService).triggerTask(anyString());
+        doThrow(new MangleException(ErrorCode.GENERIC_ERROR)).when(taskService).triggerTask(any());
         when(configService.getClusterConfiguration()).thenReturn(clusterConfig);
         when(configService.updateClusterConfiguration(any())).thenReturn(clusterConfig);
         when(event.getMembers()).thenReturn(members);
-        when(hazelcastInstance.getReplicatedMap(HazelcastConstants.MANGLE_APPLICATION_STATUS_MAP)).thenReturn(replicatedMap);
+        when(hazelcastInstance.getReplicatedMap(HazelcastConstants.MANGLE_APPLICATION_STATUS_MAP))
+                .thenReturn(replicatedMap);
         when(replicatedMap.remove(anyString())).thenReturn(true);
 
         listener.memberRemoved(event);
@@ -218,7 +219,7 @@ public class HazelcastClusterMembershipListenerTest {
         verify(event, times(5)).getMember();
         verify(newOwner, times(2)).getUuid();
         verify(cluster, times(1)).getLocalMember();
-        verify(hazelcastInstance, times(2)).getCluster();
+        verify(hazelcastInstance, times(3)).getCluster();
         verify(hazelcastInstance, times(1)).getMap("nodeTasks");
         verify(hazelcastInstance, times(1)).getPartitionService();
         verify(partitionService, times(2)).getPartition(anyString());
@@ -258,7 +259,8 @@ public class HazelcastClusterMembershipListenerTest {
         when(configService.getClusterConfiguration()).thenReturn(clusterConfig);
         when(configService.updateClusterConfiguration(any())).thenReturn(clusterConfig);
         when(event.getMembers()).thenReturn(members);
-        when(hazelcastInstance.getReplicatedMap(HazelcastConstants.MANGLE_APPLICATION_STATUS_MAP)).thenReturn(replicatedMap);
+        when(hazelcastInstance.getReplicatedMap(HazelcastConstants.MANGLE_APPLICATION_STATUS_MAP))
+                .thenReturn(replicatedMap);
         when(replicatedMap.remove(anyString())).thenReturn(true);
 
         listener.memberRemoved(event);
@@ -266,12 +268,12 @@ public class HazelcastClusterMembershipListenerTest {
         verify(event, times(4)).getMember();
         verify(newOwner, times(1)).getUuid();
         verify(cluster, times(1)).getLocalMember();
-        verify(hazelcastInstance, times(2)).getCluster();
+        verify(hazelcastInstance, times(3)).getCluster();
         verify(hazelcastInstance, times(1)).getMap("nodeTasks");
         verify(hazelcastInstance, times(1)).getPartitionService();
         verify(partitionService, times(0)).getPartition(anyString());
         verify(partition, times(0)).getOwner();
-        verify(taskService, times(0)).triggerTask(anyString());
+        verify(taskService, times(0)).triggerTask(any());
     }
 
     @Test
@@ -305,7 +307,8 @@ public class HazelcastClusterMembershipListenerTest {
         when(configService.getClusterConfiguration()).thenReturn(clusterConfig);
         when(configService.updateClusterConfiguration(any())).thenReturn(clusterConfig);
         when(event.getMembers()).thenReturn(members);
-        when(hazelcastInstance.getReplicatedMap(HazelcastConstants.MANGLE_APPLICATION_STATUS_MAP)).thenReturn(replicatedMap);
+        when(hazelcastInstance.getReplicatedMap(HazelcastConstants.MANGLE_APPLICATION_STATUS_MAP))
+                .thenReturn(replicatedMap);
         when(replicatedMap.remove(anyString())).thenReturn(true);
 
         listener.memberRemoved(event);
@@ -313,11 +316,11 @@ public class HazelcastClusterMembershipListenerTest {
         verify(event, times(4)).getMember();
         verify(newOwner, times(1)).getUuid();
         verify(cluster, times(1)).getLocalMember();
-        verify(hazelcastInstance, times(2)).getCluster();
+        verify(hazelcastInstance, times(3)).getCluster();
         verify(hazelcastInstance, times(1)).getMap("nodeTasks");
         verify(hazelcastInstance, times(1)).getPartitionService();
         verify(partitionService, times(0)).getPartition(anyString());
         verify(partition, times(0)).getOwner();
-        verify(taskService, times(0)).triggerTask(anyString());
+        verify(taskService, times(0)).triggerTask(any());
     }
 }

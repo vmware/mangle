@@ -1,0 +1,48 @@
+<app-alert [(alertMessage)]="alertMessage" [isErrorMessage]="isErrorMessage" (alertMessageChange)="alertMessage = $event"></app-alert>
+<clr-dg-action-bar>
+  <div class="btn-group">
+    <button type="button" class="btn btn-sm btn-secondary" (click)="onCreateTrigger()">CREATE <clr-icon shape="plus"></clr-icon></button>
+    <button type="button" class="btn btn-sm btn-secondary" (click)="onDeleteTrigger()">Delete <clr-icon shape="trash"></clr-icon></button>
+    <button type="button" class="btn btn-sm btn-secondary" (click)="onEditTrigger()" [disabled]="selected.length !== 1">Edit <clr-icon shape="pencil"></clr-icon></button>
+  </div>
+</clr-dg-action-bar>
+<clr-datagrid [clrDgLoading]="isLoading" [(clrDgSelected)]="selected">
+  <clr-dg-column>Name</clr-dg-column>
+  <clr-dg-column>Adapter URL</clr-dg-column>
+  <clr-dg-column>Username</clr-dg-column>
+  <clr-dg-row *clrDgItems="let vca of vcenterAdapterDetailsList" [clrDgItem]="vca">
+    <clr-dg-cell>{{vca.name}}</clr-dg-cell>
+    <clr-dg-cell>{{vca.adapterUrl}}</clr-dg-cell>
+    <clr-dg-cell>{{vca.username}}</clr-dg-cell>
+  </clr-dg-row>
+</clr-datagrid>
+
+<clr-modal [(clrModalOpen)]="editModal" [clrModalClosable]="false">
+  <h3 class="modal-title">{{addEdit}} VCenter Adapter</h3>
+  <div class="modal-body">
+    <app-alert [(alertMessage)]="testConnectionAlertMessage" [isErrorMessage]="isTestConnectionErrorMessage" (alertMessageChange)="testConnectionAlertMessage = $event"></app-alert>
+    <form #vcAdapterForm="ngForm" #nativeVCAdapterForm (ngSubmit)="addOrUpdateVCenterAdapterDetails(vcAdapterForm);" *ngIf="vCenterAdapterDetails" ngNativeValidate>
+      <section class="form-block">
+        <div class="form-group">
+          <label for="name">Name</label>
+          <input type="text" name="name" pattern="^[A-Za-z0-9-_.]+$" title="alphanumeric and special characters (_ - .) are allowed" [(ngModel)]="vCenterAdapterDetails.name" [required]="addEdit == 'Add'" [readonly]="addEdit == 'Edit'">
+        </div>
+        <div class="form-group">
+          <label for="vcAdapterURL">VCenter Adapter URL</label>
+          <input type="text" name="vcAdapterURL" [(ngModel)]="vCenterAdapterDetails.adapterUrl" required placeholder="https://0.0.0.0:8443/">
+        </div>
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input type="text" name="username" [(ngModel)]="vCenterAdapterDetails.username" required>
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" name="password" [(ngModel)]="vCenterAdapterDetails.password" [required]="addEdit == 'Add'">
+        </div>
+      </section>
+      <button type="submit" class="btn btn-primary" [clrLoading]="submitBtnState" [disabled]="!isTestConnectionSuccessful">SUBMIT</button>
+      <button type="button" class="btn btn-primary" (click)="testConnection(nativeVCAdapterForm.reportValidity())">TEST CONNECTION</button>
+      <button type="button" class="btn btn-outline" (click)="editModal=false;vcAdapterForm.reset();ngOnInit();">CANCEL</button>
+    </form>
+  </div>
+</clr-modal>

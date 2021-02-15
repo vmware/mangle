@@ -59,31 +59,29 @@ public class DockerFaultHelper implements ICommandExecutionFaultHelper {
     @Override
     public List<CommandInfo> getInjectionCommandInfoList(ICommandExecutor executor,
             CommandExecutionFaultSpec dockerFaultSpec) throws MangleException {
-        List<CommandInfo> commandInfoList = new ArrayList<>();
-        CommandInfo dockerCmdInfo = new CommandInfo();
-        dockerCmdInfo.setCommand(buildInjectionCommand((DockerFaultSpec) dockerFaultSpec));
-        dockerCmdInfo.setIgnoreExitValueCheck(false);
-        dockerCmdInfo.setExpectedCommandOutputList(Collections.emptyList());
-        dockerCmdInfo.setKnownFailureMap(KnownFailuresHelper.getKnownFailureOfDockerFaultInjectionRequest());
-        commandInfoList.add(dockerCmdInfo);
 
         List<CommandOutputProcessingInfo> commandOutputProcessingInfoList = new ArrayList<>();
         CommandOutputProcessingInfo commandOutputProcessingInfo = new CommandOutputProcessingInfo();
         commandOutputProcessingInfo.setExtractedPropertyName("containerId");
         commandOutputProcessingInfo.setRegExpression("^.*$");
         commandOutputProcessingInfoList.add(commandOutputProcessingInfo);
-        dockerCmdInfo.setCommandOutputProcessingInfoList(commandOutputProcessingInfoList);
+        CommandInfo dockerCmdInfo = CommandInfo.builder(buildInjectionCommand((DockerFaultSpec) dockerFaultSpec))
+                .ignoreExitValueCheck(false).expectedCommandOutputList(Collections.emptyList())
+                .knownFailureMap(KnownFailuresHelper.getKnownFailureOfDockerFaultInjectionRequest())
+                .commandOutputProcessingInfoList(commandOutputProcessingInfoList).build();
+        List<CommandInfo> commandInfoList = new ArrayList<>();
+        commandInfoList.add(dockerCmdInfo);
         return commandInfoList;
     }
 
     @Override
     public List<CommandInfo> getRemediationCommandInfoList(ICommandExecutor executor,
             CommandExecutionFaultSpec dockerFaultSpec) throws MangleException {
-        CommandInfo remediationCommand = new CommandInfo();
+        CommandInfo remediationCommand =
+                CommandInfo.builder(buildRemediationsCommand((DockerFaultSpec) dockerFaultSpec))
+                        .expectedCommandOutputList(Collections.emptyList())
+                        .knownFailureMap(KnownFailuresHelper.getKnownFailureOfDockerFaultRemediationRequest()).build();
         List<CommandInfo> commandInfoList = new ArrayList<>();
-        remediationCommand.setCommand(buildRemediationsCommand((DockerFaultSpec) dockerFaultSpec));
-        remediationCommand.setExpectedCommandOutputList(Collections.emptyList());
-        remediationCommand.setKnownFailureMap(KnownFailuresHelper.getKnownFailureOfDockerFaultRemediationRequest());
         commandInfoList.add(remediationCommand);
         return commandInfoList;
     }

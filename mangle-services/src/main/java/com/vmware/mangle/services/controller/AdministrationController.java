@@ -11,9 +11,14 @@
 
 package com.vmware.mangle.services.controller;
 
+import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
+import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
+
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.hateoas.Resource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -41,9 +46,17 @@ public class AdministrationController {
     }
 
     @ApiOperation(value = "API to update mangle node status", nickname = "updateMangleNodeStatus")
-    @PostMapping("node-status")
-    public ResponseEntity<Task<MangleNodeStatusDto>> updateMangleNodeStatus(
+    @PostMapping(value = "node-status", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Resource<Task<MangleNodeStatusDto>>> updateMangleNodeStatus(
             @RequestBody MangleNodeStatusDto nodeStatusUpdateDto) throws MangleException {
-        return new ResponseEntity<>(administrationService.updateMangleNodeStatus(nodeStatusUpdateDto), HttpStatus.OK);
+
+        Task<MangleNodeStatusDto> persisted = administrationService.updateMangleNodeStatus(nodeStatusUpdateDto);
+
+        Resource<Task<MangleNodeStatusDto>> mangleNodeStatusDtoResource = new Resource<>(persisted);
+
+        mangleNodeStatusDtoResource
+                .add(linkTo(methodOn(AuthProviderController.class).getAllADAuthProviders()).withSelfRel());
+
+        return new ResponseEntity<>(mangleNodeStatusDtoResource, HttpStatus.OK);
     }
 }

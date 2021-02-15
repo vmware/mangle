@@ -20,7 +20,7 @@ import lombok.Getter;
 public enum EventType {
 
     ENTITY_CREATED_EVENT("EntityCreatedEvent"), ENTITY_UPDATED_EVENT("EntityUpdatedEvent"), ENTITY_DELETED_EVENT(
-            "EntityDeletedEvent");
+            "EntityDeletedEvent"), ENTITY_OPERATION_FAILED_EVENT("EntityOperationFailedEvent");
 
     @Getter
     private String name;

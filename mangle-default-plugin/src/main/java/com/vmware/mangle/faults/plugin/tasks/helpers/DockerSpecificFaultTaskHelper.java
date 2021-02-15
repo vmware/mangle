@@ -77,7 +77,7 @@ public class DockerSpecificFaultTaskHelper<T extends DockerFaultSpec> extends Ab
      * @throws MangleException
      */
     @Override
-    protected ICommandExecutor getExecutor(Task<T> task) throws MangleException {
+    public ICommandExecutor getExecutor(Task<T> task) throws MangleException {
         return dockerFaultHelper.getExecutor(task.getTaskData());
     }
 

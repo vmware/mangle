@@ -1,0 +1,33 @@
+<app-alert [(alertMessage)]="alertMessage" [(isErrorMessage)]="isErrorMessage"
+    (alertMessageChange)="alertMessage = $event"></app-alert>
+<div>
+    <h3 class="modal-title">Execute Redis Db Delay Fault</h3>
+    <form data-tag="db-redis-delay" #redisDelayForm="ngForm" (ngSubmit)="executeRedisDelayFault(redisDelayForm.value);"
+        ngNativeValidate>
+        <section class="form-block">
+            <fault-endpoint [faultFormData]="faultFormData" [supportedEpTypes]="supportedEpTypes"
+                [endpoints]="endpoints" (displayEndpointFieldsEvent)="displayEndpointFields($event);">
+            </fault-endpoint>
+
+            <div class="form-group">
+                <label for="delay">Delay Milliseconds</label>
+                <input type="number" name="delay" id="delay" [(ngModel)]="faultFormData.delay" min="1" max="2147483647"
+                    required>
+            </div>
+            <div class="form-group">
+                <label for="percentage">Percentage (%)</label>
+                <input type="number" name="percentage" id="percentage" [(ngModel)]="faultFormData.percentage" min="1"
+                    max="100" required>
+            </div>
+            <fault-tags [tagsData]="tagsData" (tagsModalEvent)="tagsModal=$event;"></fault-tags>
+            <fault-notifiers [notifiersData]="notifiersData" (notifiersModalEvent)="notifierModal=$event;">
+            </fault-notifiers>
+        </section>
+
+        <button type="submit" data-tag="RunRedisDelayFault" class="btn btn-primary" [clrLoading]="runBtnState"
+            [disabled]="disableRun">RUN FAULT</button>
+    </form>
+</div>
+<app-tags [tagsModal]="tagsModal" [tagsData]="tagsData" (updateTagsModal)="tagsModal=$event;"></app-tags>
+<app-notifiers [notifierModal]="notifierModal" [notifiersData]="notifiersData"
+    (updateNotifiersModal)="notifierModal=$event;"></app-notifiers>

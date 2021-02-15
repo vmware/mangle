@@ -25,6 +25,7 @@ fi
 if [ "$operation" = "inject" ]
 then
     preRequisitescheck
+    isSudoPresent
     injectFault
     exit 0
 fi
@@ -132,6 +133,25 @@ checkWritePermissionOfInjectionDir()
     fi
 }
 
+isSudoPresent()
+{
+    sudo -nv > /dev/null 2>&1
+    sudoRetVal=$?
+    if [ $sudoRetVal -eq 0 ]; then
+        sudoCommand="sudo"
+    fi
+}
+
+#Function to check whether euid is null or not, If it is null then assigned it to 1 (other than 0)
+euidCheck(){
+    euid=$EUID
+    echo "EUID value from euidCheck function: $euid"
+    if [ -z "$euid" ]
+    then
+        euid=1
+    fi
+}
+
 status(){
     pgrep -f "killprocess.sh" > /dev/null 2>&1
     mainProcessRetVal=$?
@@ -175,7 +195,8 @@ injectFault(){
         actualProcessIdsToKill=$processId
     else
         currentProcessId=$(pgrep -f "killprocess")
-        if [ $EUID -eq 0 ]
+        euidCheck
+        if [ $euid -eq 0 -o $sudoCommand = "sudo" ]
             then
                 allProcessIds=$(pgrep -f $processIdentifier)
             else
@@ -208,7 +229,7 @@ injectFault(){
     echo "Process ID to kill: ($1)" >> $basedir/killprocess.log
     sleep 5s
     for process in $1; do
-        killOutput=$(kill -9 $process >&1 2>&1)
+        killOutput=$($sudoCommand kill -9 $process >&1 2>&1)
         retCode=$?
         if [ $retCode -eq 0 ]
         then
@@ -236,7 +257,7 @@ injectFault(){
     else
     sleep 5s
     for process in $actualProcessIdsToKill; do
-        killOutput=$(kill -9 $process >&1 2>&1)
+        killOutput=$($sudoCommand kill -9 $process >&1 2>&1)
         retCode=$?
         if [ $retCode -eq 0 ]
         then

@@ -40,7 +40,6 @@ public class ReadProperty {
                 : ReadProperty.class.getClassLoader().getResourceAsStream(configPropFileName)) {
             prop = new Properties();
             prop.load(fileInput);
-            fileInput.close();
         } catch (IOException e) {
             log.error(e);
         }
@@ -58,8 +57,7 @@ public class ReadProperty {
     }
 
     public static void readPropertiesAsMap(Map<String, String> propertymap, String filePath) {
-        Properties prop = new Properties();
-        prop = readProperties(prop, new File(filePath));
+        Properties prop = readProperties(new Properties(), new File(filePath));
         for (String key : prop.stringPropertyNames()) {
             String value = prop.getProperty(key);
             propertymap.put(key, value);

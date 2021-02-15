@@ -1,5 +1,5 @@
 <div class="login-wrapper">
-  <form class="login" #loginForm="ngForm" (ngSubmit)="login(loginForm.value);" *ngIf="authData" ngNativeValidate>
+  <form id="login" data-tag="login-datatag" class="login" #loginForm="ngForm" (ngSubmit)="login(loginForm.value);" *ngIf="authData" ngNativeValidate>
     <label class="title">
       <h3 class="welcome">Welcome to Mangle</h3>
       <h5 class="hint">
@@ -8,15 +8,15 @@
     </label>
     <div class="login-group">
       <div class="auth-source select">
-        <select name="authSource" [(ngModel)]="authData.authSource" class="login-element" required>
+        <select name="authSource" id="authSource" [(ngModel)]="authData.authSource" class="login-element" required>
           <option *ngIf="!loginForm.value.authSource" [value]="null" selected disabled></option>
           <option [value]="sourceAuth" *ngFor="let sourceAuth of authSources">{{sourceAuth}}</option>
         </select>
       </div>
-      <input class="username login-element" type="text" id="username" name="username" placeholder="User Id"
+      <input class="username login-element" type="text" id="username" data-tag="username" name="username"  placeholder="User Id"
              [(ngModel)]="authData.username" required>
       <div>
-        <input class="password login-element" [type]="showPassword?'text': 'password'" id="password" name="password" placeholder="Password"
+        <input class="password login-element" [type]="showPassword?'text': 'password'" id="password" data-tag="password" name="password"  placeholder="Password"
                   [(ngModel)]="authData.password" required>
         <clr-icon shape="eye" class="is-solid show-password" (click)="negateShowPassword()" *ngIf="showPassword"></clr-icon>
         <clr-icon shape="eye-hide" class="is-solid show-password" (click)="negateShowPassword()" *ngIf="!showPassword"></clr-icon>

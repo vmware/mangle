@@ -30,7 +30,6 @@ import com.vmware.mangle.utils.exceptions.MangleException;
 @Log4j2
 public class UserLoginAttemptsService {
 
-    private static final int MAX_ATTEMPTS = 5;
     private UserLoginAttemptsRepository repository;
     private UserService userService;
 
@@ -51,17 +50,15 @@ public class UserLoginAttemptsService {
         } else {
             userAttempts.setAttempts(userAttempts.getAttempts() + 1);
             userAttempts.setLastAttempt(new Date());
-            if (userAttempts.getAttempts() >= MAX_ATTEMPTS) {
-                User user = userService.getUserByName(username);
-                if (null != user) {
-                    user.setAccountLocked(true);
-                    userService.terminateUserSession(username);
-                    try {
-                        userService.updateUser(user);
-                    } catch (MangleException e) {
-                        log.error("Failed to update user, exception {}", e.getMessage());
-                    }
-                }
+        }
+        User user = userService.getUserByName(username);
+        if (null != user) {
+            user.setAccountLocked(true);
+            userService.terminateUserSession(username);
+            try {
+                userService.updateUser(user);
+            } catch (MangleException e) {
+                log.error("Failed to update user, exception {}", e.getMessage());
             }
         }
         repository.save(userAttempts);

@@ -32,7 +32,7 @@ import com.vmware.mangle.utils.exceptions.MangleException;
  *
  */
 
-public class CustomLinuxSystemResourceFaultHelper extends CustomSystemResourceFaultHelper {
+public class CustomLinuxSystemResourceFaultHelper implements CustomSystemResourceFaultHelper {
 
     private EndpointClientFactory endpointClientFactory;
 
@@ -53,14 +53,13 @@ public class CustomLinuxSystemResourceFaultHelper extends CustomSystemResourceFa
 
     @Override
     public List<CommandInfo> getInjectionCommandInfoList(CommandExecutionFaultSpec faultSpec) throws MangleException {
+        CommandInfo injectFaultCommandInfo = CommandInfo
+                .builder(systemResourceFaultUtils.buildInjectionCommand(faultSpec.getArgs(),
+                        faultSpec.getInjectionHomeDir()))
+                .ignoreExitValueCheck(false)
+                .knownFailureMap(CustomKnownFailuresHelper.getKnownFailuresOfSystemResourceFaultInjectionRequest())
+                .expectedCommandOutputList(Collections.emptyList()).build();
         List<CommandInfo> commandInfoList = new ArrayList<>();
-        CommandInfo injectFaultCommandInfo = new CommandInfo();
-        injectFaultCommandInfo.setCommand(
-                systemResourceFaultUtils.buildInjectionCommand(faultSpec.getArgs(), faultSpec.getInjectionHomeDir()));
-        injectFaultCommandInfo.setIgnoreExitValueCheck(false);
-        injectFaultCommandInfo
-                .setKnownFailureMap(CustomKnownFailuresHelper.getKnownFailuresOfSystemResourceFaultInjectionRequest());
-        injectFaultCommandInfo.setExpectedCommandOutputList(Collections.emptyList());
         commandInfoList.add(injectFaultCommandInfo);
         return commandInfoList;
     }
@@ -71,12 +70,11 @@ public class CustomLinuxSystemResourceFaultHelper extends CustomSystemResourceFa
         String remediationCommand =
                 systemResourceFaultUtils.buildRemediationCommand(faultSpec.getArgs(), faultSpec.getInjectionHomeDir());
         if (!StringUtils.isEmpty(remediationCommand)) {
-            CommandInfo commandInfo = new CommandInfo();
-            commandInfo.setCommand(remediationCommand);
-            commandInfo.setIgnoreExitValueCheck(false);
-            commandInfo.setExpectedCommandOutputList(Collections.emptyList());
-            commandInfo
-                    .setKnownFailureMap(CustomKnownFailuresHelper.getKnownFailuresOfSystemResourceFaultRemediationRequest());
+            CommandInfo commandInfo = CommandInfo.builder(remediationCommand).ignoreExitValueCheck(false)
+                    .expectedCommandOutputList(Collections.emptyList())
+                    .knownFailureMap(
+                            CustomKnownFailuresHelper.getKnownFailuresOfSystemResourceFaultRemediationRequest())
+                    .build();
             commandInfoList.add(commandInfo);
         }
         return commandInfoList;

@@ -1,0 +1,18 @@
+<h2 class="modal-title">VCenter VM Faults</h2><br>
+<ul class="nav-vcenter">
+    <li class="nav-item">
+        <a class="nav-link" [routerLink]="['vm-state']" routerLinkActive="active"><span
+                class="nav-text-vcenter">State</span></a>
+    </li>
+    <li class="nav-item" >
+        <a class="nav-link" [routerLink]="['vm-network']" routerLinkActive="active"><span
+                class="nav-text-vcenter">Network</span></a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" [routerLink]="['vm-storage']" routerLinkActive="active"><span
+                class="nav-text-vcenter">Storage</span></a>
+    </li>
+</ul>
+<div class="content-area-vcenter">
+    <router-outlet></router-outlet>
+</div>

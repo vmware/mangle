@@ -11,19 +11,35 @@
 
 package com.vmware.mangle.faults.plugin.helpers.systemresource;
 
+import static com.vmware.mangle.utils.constants.FaultConstants.AGENT_PORT;
 import static com.vmware.mangle.utils.constants.FaultConstants.BLOCK_SIZE_SCRIPT_ARG;
+import static com.vmware.mangle.utils.constants.FaultConstants.CLOCK_SKEW_INJECTION_COMMAND_WITH_ARGS;
+import static com.vmware.mangle.utils.constants.FaultConstants.CLOCK_SKEW_INJECTION_COMMAND_WITH_ARGS_AND_PORT;
+import static com.vmware.mangle.utils.constants.FaultConstants.CLOCK_TYPE;
+import static com.vmware.mangle.utils.constants.FaultConstants.CLOCK_TYPE_SCRIPT_ARG;
 import static com.vmware.mangle.utils.constants.FaultConstants.CPU_INJECTION_COMMAND_WITH_ARGS;
+import static com.vmware.mangle.utils.constants.FaultConstants.CPU_INJECTION_COMMAND_WITH_ARGS_AND_PORT;
+import static com.vmware.mangle.utils.constants.FaultConstants.DAYS;
+import static com.vmware.mangle.utils.constants.FaultConstants.DAYS_SCRIPT_ARG;
 import static com.vmware.mangle.utils.constants.FaultConstants.DIRECTORY_PATH;
+import static com.vmware.mangle.utils.constants.FaultConstants.DIRECTORY_PATH_SCRIPT_ARG;
 import static com.vmware.mangle.utils.constants.FaultConstants.DISK_FILL_SIZE;
 import static com.vmware.mangle.utils.constants.FaultConstants.DISK_FILL_SIZE_SCRIPT_ARG;
 import static com.vmware.mangle.utils.constants.FaultConstants.DISK_IO_INJECTION_COMMAND_WITH_ARGS;
+import static com.vmware.mangle.utils.constants.FaultConstants.DISK_IO_INJECTION_COMMAND_WITH_ARGS_AND_PORT;
 import static com.vmware.mangle.utils.constants.FaultConstants.DISK_SPACE_INJECTION_COMMAND_WITH_ARGS;
 import static com.vmware.mangle.utils.constants.FaultConstants.DISK_SPACE_REMEDIATION_COMMAND_WITH_ARGS;
+import static com.vmware.mangle.utils.constants.FaultConstants.EXTRACT_AGENT_COMMAND;
 import static com.vmware.mangle.utils.constants.FaultConstants.FAULT_NAME;
 import static com.vmware.mangle.utils.constants.FaultConstants.FAULT_OPERATION;
 import static com.vmware.mangle.utils.constants.FaultConstants.FAULT_OPERATION_SCRIPT_ARG;
 import static com.vmware.mangle.utils.constants.FaultConstants.FILEHANDLER_INJECTION_COMMAND_WITH_ARGS;
 import static com.vmware.mangle.utils.constants.FaultConstants.FORWARD_SLASH;
+import static com.vmware.mangle.utils.constants.FaultConstants.HOSTS_KEY;
+import static com.vmware.mangle.utils.constants.FaultConstants.HOURS;
+import static com.vmware.mangle.utils.constants.FaultConstants.HOURS_SCRIPT_ARG;
+import static com.vmware.mangle.utils.constants.FaultConstants.INFRA_AGENT_NAME;
+import static com.vmware.mangle.utils.constants.FaultConstants.INFRA_SUBMIT;
 import static com.vmware.mangle.utils.constants.FaultConstants.IO_SIZE;
 import static com.vmware.mangle.utils.constants.FaultConstants.KERNELPANIC_INJECTION_COMMAND_WITH_ARGS;
 import static com.vmware.mangle.utils.constants.FaultConstants.KILL_ALL;
@@ -34,20 +50,33 @@ import static com.vmware.mangle.utils.constants.FaultConstants.LATENCY_SCRIPT_AR
 import static com.vmware.mangle.utils.constants.FaultConstants.LOAD;
 import static com.vmware.mangle.utils.constants.FaultConstants.LOAD_SCRIPT_ARG;
 import static com.vmware.mangle.utils.constants.FaultConstants.MEMORY_INJECTION_COMMAND_WITH_ARGS;
+import static com.vmware.mangle.utils.constants.FaultConstants.MEMORY_INJECTION_COMMAND_WITH_ARGS_AND_PORT;
+import static com.vmware.mangle.utils.constants.FaultConstants.MINUTES;
+import static com.vmware.mangle.utils.constants.FaultConstants.MINUTES_SCRIPT_ARG;
 import static com.vmware.mangle.utils.constants.FaultConstants.NETWORK_FAULT_INJECTION_COMMAND_WITH_ARGS;
+import static com.vmware.mangle.utils.constants.FaultConstants.NETWORK_PARTITION_INJECTION_COMMAND_WITH_ARGS;
+import static com.vmware.mangle.utils.constants.FaultConstants.NETWORK_PARTITION_REMEDIATION_COMMAND_WITH_ARGS;
 import static com.vmware.mangle.utils.constants.FaultConstants.NIC_NAME;
 import static com.vmware.mangle.utils.constants.FaultConstants.NIC_NAME_SCRIPT_ARG;
 import static com.vmware.mangle.utils.constants.FaultConstants.OPERATION_REMEDIATE;
+import static com.vmware.mangle.utils.constants.FaultConstants.OPERATION_STATUS;
 import static com.vmware.mangle.utils.constants.FaultConstants.PERCENTAGE;
 import static com.vmware.mangle.utils.constants.FaultConstants.PERCENTAGE_SCRIPT_ARG;
+import static com.vmware.mangle.utils.constants.FaultConstants.PORT_SCRIPT_ARGUEMENT;
 import static com.vmware.mangle.utils.constants.FaultConstants.PROCESS_ID;
 import static com.vmware.mangle.utils.constants.FaultConstants.PROCESS_IDENTIFIER;
+import static com.vmware.mangle.utils.constants.FaultConstants.SECONDS;
+import static com.vmware.mangle.utils.constants.FaultConstants.SECONDS_SCRIPT_ARG;
+import static com.vmware.mangle.utils.constants.FaultConstants.SERVICE_NAME;
+import static com.vmware.mangle.utils.constants.FaultConstants.STOP_SERVICE_INJECTION_COMMAND_WITH_ARGS1;
+import static com.vmware.mangle.utils.constants.FaultConstants.STOP_SERVICE_REMEDIATION_COMMAND_WITH_ARGS1;
 import static com.vmware.mangle.utils.constants.FaultConstants.TARGET_DIRECTORY;
 import static com.vmware.mangle.utils.constants.FaultConstants.TARGET_DIRECTORY_SCRIPT_ARG;
 import static com.vmware.mangle.utils.constants.FaultConstants.TIMEOUT_IN_MILLI_SEC;
 import static com.vmware.mangle.utils.constants.FaultConstants.TIMEOUT_SCRIPT_ARG;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -58,7 +87,9 @@ import org.springframework.util.StringUtils;
 
 import com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec;
 import com.vmware.mangle.cassandra.model.tasks.SupportScriptInfo;
+import com.vmware.mangle.cassandra.model.tasks.commands.CommandInfo;
 import com.vmware.mangle.faults.plugin.helpers.FaultConstants;
+import com.vmware.mangle.faults.plugin.helpers.KnownFailuresHelper;
 import com.vmware.mangle.services.enums.FaultName;
 import com.vmware.mangle.task.framework.helpers.faults.FaultsHelper;
 import com.vmware.mangle.utils.CommonUtils;
@@ -90,28 +121,52 @@ public class SystemResourceFaultUtils {
         try {
             switch (FaultName.valueOf(faultName.toUpperCase())) {
             case CPUFAULT:
-                command = getCpuInjectionCommand(faultArgs, scriptBasePath);
+                command = getCpuInjectionCommand(faultArgs);
                 break;
             case MEMORYFAULT:
-                command = getMemoryInjectionCommand(faultArgs, scriptBasePath);
+                command = getMemoryInjectionCommand(faultArgs);
                 break;
             case DISKFAULT:
-                command = getdiskIOInjectionCommand(faultArgs, scriptBasePath);
+                command = getdiskIOInjectionCommand(faultArgs);
                 break;
             case KILLPROCESSFAULT:
-                command = getKillServiceInjectionCommand(faultArgs, scriptBasePath);
+                command = getKillServiceInjectionCommand(faultArgs);
+                break;
+            case STOPSERVICEFAULT:
+                command = getStopServiceInjectionCommand(faultArgs);
                 break;
             case NETWORKFAULT:
-                command = getNetworkFaultInjectionCommand(faultArgs, scriptBasePath);
+                command = getNetworkFaultInjectionCommand(faultArgs);
                 break;
             case FILEHANDLERFAULT:
-                command = getFilehandlerFaultnjectionCommand(faultArgs, scriptBasePath);
+                command = getFilehandlerFaultnjectionCommand(faultArgs);
                 break;
             case DISKSPACEFAULT:
-                command = getDiskSpaceInjectionCommand(faultArgs, scriptBasePath);
+                command = getDiskSpaceInjectionCommand(faultArgs);
                 break;
             case KERNELPANICFAULT:
-                command = getKernelPanicInjectionCommand(scriptBasePath);
+                command = getKernelPanicInjectionCommand(faultArgs);
+                break;
+            case CLOCKSKEWFAULT:
+                command = getClockSkewInjectionCommand(faultArgs);
+                break;
+            case DBCONNECTIONLEAKFAULT_POSTGRES:
+                command = DbFaultUtils2.getDbConnectionLeakInjectionCommand(faultArgs);
+                break;
+            case DBTRANSACTIONERRORFAULT_POSTGRES:
+                command = DbFaultUtils2.getDbTransactionErrorInjectionCommand(faultArgs);
+                break;
+            case DBTRANSACTIONLATENCYFAULT_POSTGRES:
+                command = DbFaultUtils2.getDbTransactionLatencyInjectionCommand(faultArgs);
+                break;
+            case DBCONNECTIONLEAKFAULT_MONGODB:
+                command = DbFaultUtils2.getDbConnectionLeakInjectionCommand(faultArgs);
+                break;
+            case DBCONNECTIONLEAKFAULT_CASSANDRA:
+                command = DbFaultUtils2.getDbConnectionLeakInjectionCommand(faultArgs);
+                break;
+            case NETWORKPARTITIONFAULT:
+                command = getNetworkPartitionInjectionCommand(faultArgs);
                 break;
             default:
                 command = "";
@@ -122,48 +177,120 @@ public class SystemResourceFaultUtils {
         return command;
     }
 
-    private String getMemoryInjectionCommand(Map<String, String> faultArgs, String scriptBasePath) {
-        return new StringBuilder(scriptBasePath).append(String.format(MEMORY_INJECTION_COMMAND_WITH_ARGS,
-                LOAD_SCRIPT_ARG, faultArgs.get(LOAD), TIMEOUT_SCRIPT_ARG, faultArgs.get(TIMEOUT_IN_MILLI_SEC)))
-                .toString();
+    private String getClockSkewInjectionCommand(Map<String, String> faultArgs) {
+        if (faultArgs.containsKey(AGENT_PORT)) {
+            return new StringBuilder()
+                    .append(String.format(CLOCK_SKEW_INJECTION_COMMAND_WITH_ARGS_AND_PORT,
+                            FaultName.CLOCKSKEWFAULT.getValue(), SECONDS_SCRIPT_ARG, faultArgs.get(SECONDS),
+                            MINUTES_SCRIPT_ARG, faultArgs.get(MINUTES), HOURS_SCRIPT_ARG, faultArgs.get(HOURS),
+                            DAYS_SCRIPT_ARG, faultArgs.get(DAYS), CLOCK_TYPE_SCRIPT_ARG, faultArgs.get(CLOCK_TYPE),
+                            TIMEOUT_SCRIPT_ARG, faultArgs.get(TIMEOUT_IN_MILLI_SEC)))
+                    .toString();
+        } else {
+            return new StringBuilder().append(String.format(CLOCK_SKEW_INJECTION_COMMAND_WITH_ARGS,
+                    FaultName.CLOCKSKEWFAULT.getValue(), SECONDS_SCRIPT_ARG, faultArgs.get(SECONDS), MINUTES_SCRIPT_ARG,
+                    faultArgs.get(MINUTES), HOURS_SCRIPT_ARG, faultArgs.get(HOURS), DAYS_SCRIPT_ARG,
+                    faultArgs.get(DAYS), CLOCK_TYPE_SCRIPT_ARG, faultArgs.get(CLOCK_TYPE), TIMEOUT_SCRIPT_ARG,
+                    faultArgs.get(TIMEOUT_IN_MILLI_SEC))).toString();
+        }
     }
 
-    private String getdiskIOInjectionCommand(Map<String, String> faultArgs, String scriptBasePath) {
-        return new StringBuilder(scriptBasePath).append(String.format(DISK_IO_INJECTION_COMMAND_WITH_ARGS,
-                TARGET_DIRECTORY_SCRIPT_ARG, faultArgs.get(TARGET_DIRECTORY), BLOCK_SIZE_SCRIPT_ARG,
-                faultArgs.get(IO_SIZE), TIMEOUT_SCRIPT_ARG, faultArgs.get(TIMEOUT_IN_MILLI_SEC))).toString();
+    private String getMemoryInjectionCommand(Map<String, String> faultArgs) {
+        if (faultArgs.containsKey(AGENT_PORT)) {
+            return new StringBuilder().append(String.format(MEMORY_INJECTION_COMMAND_WITH_ARGS_AND_PORT,
+                    FaultName.MEMORYFAULT.getValue(), LOAD_SCRIPT_ARG, faultArgs.get(LOAD), TIMEOUT_SCRIPT_ARG,
+                    faultArgs.get(TIMEOUT_IN_MILLI_SEC), PORT_SCRIPT_ARGUEMENT, faultArgs.get(AGENT_PORT))).toString();
+        } else {
+            return new StringBuilder().append(
+                    String.format(MEMORY_INJECTION_COMMAND_WITH_ARGS, FaultName.MEMORYFAULT.getValue(), LOAD_SCRIPT_ARG,
+                            faultArgs.get(LOAD), TIMEOUT_SCRIPT_ARG, faultArgs.get(TIMEOUT_IN_MILLI_SEC)))
+                    .toString();
+        }
     }
 
-    private String getCpuInjectionCommand(Map<String, String> faultArgs, String scriptBasePath) {
-        return new StringBuilder(scriptBasePath).append(String.format(CPU_INJECTION_COMMAND_WITH_ARGS, LOAD_SCRIPT_ARG,
-                faultArgs.get(LOAD), TIMEOUT_SCRIPT_ARG, faultArgs.get(TIMEOUT_IN_MILLI_SEC))).toString();
+    private String getdiskIOInjectionCommand(Map<String, String> faultArgs) {
+        if (faultArgs.containsKey(AGENT_PORT)) {
+            return new StringBuilder().append(String.format(DISK_IO_INJECTION_COMMAND_WITH_ARGS_AND_PORT,
+                    FaultName.DISKFAULT.getValue(), TARGET_DIRECTORY_SCRIPT_ARG, faultArgs.get(TARGET_DIRECTORY),
+                    BLOCK_SIZE_SCRIPT_ARG, faultArgs.get(IO_SIZE), TIMEOUT_SCRIPT_ARG,
+                    faultArgs.get(TIMEOUT_IN_MILLI_SEC), PORT_SCRIPT_ARGUEMENT, faultArgs.get(AGENT_PORT))).toString();
+        } else {
+            return new StringBuilder()
+                    .append(String.format(DISK_IO_INJECTION_COMMAND_WITH_ARGS, FaultName.DISKFAULT.getValue(),
+                            TARGET_DIRECTORY_SCRIPT_ARG, faultArgs.get(TARGET_DIRECTORY), BLOCK_SIZE_SCRIPT_ARG,
+                            faultArgs.get(IO_SIZE), TIMEOUT_SCRIPT_ARG, faultArgs.get(TIMEOUT_IN_MILLI_SEC)))
+                    .toString();
+        }
     }
 
-    private String getKillServiceInjectionCommand(Map<String, String> faultArgs, String scriptBasePath) {
-        return new StringBuilder(scriptBasePath).append(String.format(KILL_SERVICE_INJECTION_COMMAND_WITH_ARGS,
-                faultArgs.get(PROCESS_IDENTIFIER), faultArgs.get(KILL_ALL), faultArgs.get(PROCESS_ID))).toString();
+    private String getCpuInjectionCommand(Map<String, String> faultArgs) {
+        if (faultArgs.containsKey(AGENT_PORT)) {
+            return new StringBuilder().append(String.format(CPU_INJECTION_COMMAND_WITH_ARGS_AND_PORT,
+                    FaultName.CPUFAULT.getValue(), LOAD_SCRIPT_ARG, faultArgs.get(LOAD), TIMEOUT_SCRIPT_ARG,
+                    faultArgs.get(TIMEOUT_IN_MILLI_SEC))).toString();
+        } else {
+            return new StringBuilder().append(String.format(CPU_INJECTION_COMMAND_WITH_ARGS,
+                    FaultName.CPUFAULT.getValue(), LOAD_SCRIPT_ARG, faultArgs.get(LOAD), TIMEOUT_SCRIPT_ARG,
+                    faultArgs.get(TIMEOUT_IN_MILLI_SEC), PORT_SCRIPT_ARGUEMENT, faultArgs.get(AGENT_PORT))).toString();
+        }
     }
 
-    private String getNetworkFaultInjectionCommand(Map<String, String> faultArgs, String scriptBasePath) {
-        return new StringBuilder(scriptBasePath).append(String.format(NETWORK_FAULT_INJECTION_COMMAND_WITH_ARGS,
-                FAULT_OPERATION_SCRIPT_ARG, faultArgs.get(FAULT_OPERATION), LATENCY_SCRIPT_ARG, faultArgs.get(LATENCY),
-                PERCENTAGE_SCRIPT_ARG, faultArgs.get(PERCENTAGE), NIC_NAME_SCRIPT_ARG, faultArgs.get(NIC_NAME),
-                TIMEOUT_SCRIPT_ARG, faultArgs.get(TIMEOUT_IN_MILLI_SEC))).toString();
+    //sample injection command: infra_submit --operation inject --faultname killProcessFault --processIdentifier "processIdentifier" --killAll yes --processId ""
+    //  --remediationCommand  remediationCommand
+    private String getKillServiceInjectionCommand(Map<String, String> faultArgs) {
+        return new StringBuilder(String.format(KILL_SERVICE_INJECTION_COMMAND_WITH_ARGS,
+                FaultName.KILLPROCESSFAULT.getValue(), faultArgs.get(PROCESS_IDENTIFIER), faultArgs.get(KILL_ALL),
+                faultArgs.get(PROCESS_ID)))
+                        .append(StringUtils.hasLength(faultArgs.get(KILL_PROCESS_REMEDIATION_COMMAND))
+                                ? " --remediationCommand \"" + faultArgs.get(KILL_PROCESS_REMEDIATION_COMMAND) + "\""
+                                : "")
+                        .append(StringUtils.hasLength(faultArgs.get(AGENT_PORT))
+                                ? " " + PORT_SCRIPT_ARGUEMENT + " " + faultArgs.get(AGENT_PORT) : "")
+                        .toString();
     }
 
-
-    private static String getFilehandlerFaultnjectionCommand(Map<String, String> faultArgs, String scriptBasePath) {
-        return new StringBuilder(scriptBasePath).append(String.format(FILEHANDLER_INJECTION_COMMAND_WITH_ARGS,
-                TIMEOUT_SCRIPT_ARG, faultArgs.get(TIMEOUT_IN_MILLI_SEC))).toString();
+    private String getStopServiceInjectionCommand(Map<String, String> faultArgs) {
+        return new StringBuilder(String.format(STOP_SERVICE_INJECTION_COMMAND_WITH_ARGS1, faultArgs.get(SERVICE_NAME),
+                faultArgs.get(TIMEOUT_IN_MILLI_SEC)))
+                        .append(StringUtils.hasLength(faultArgs.get(AGENT_PORT))
+                                ? " " + PORT_SCRIPT_ARGUEMENT + " " + faultArgs.get(AGENT_PORT) : "")
+                        .toString();
     }
 
-    public String getDiskSpaceInjectionCommand(Map<String, String> faultArgs, String scriptBasePath) {
-        return scriptBasePath
-                + String.format(DISK_SPACE_INJECTION_COMMAND_WITH_ARGS, faultArgs.get(DIRECTORY_PATH),
-                        faultArgs.get(TIMEOUT_IN_MILLI_SEC))
-                + (StringUtils.hasLength(faultArgs.get(DISK_FILL_SIZE))
-                        ? " " + DISK_FILL_SIZE_SCRIPT_ARG + "=" + faultArgs.get(DISK_FILL_SIZE)
-                        : "");
+    private String getNetworkFaultInjectionCommand(Map<String, String> faultArgs) {
+        return new StringBuilder(String.format(NETWORK_FAULT_INJECTION_COMMAND_WITH_ARGS,
+                FaultName.NETWORKFAULT.getValue(), FAULT_OPERATION_SCRIPT_ARG, faultArgs.get(FAULT_OPERATION),
+                LATENCY_SCRIPT_ARG, faultArgs.get(LATENCY), PERCENTAGE_SCRIPT_ARG, faultArgs.get(PERCENTAGE),
+                NIC_NAME_SCRIPT_ARG, faultArgs.get(NIC_NAME), TIMEOUT_SCRIPT_ARG, faultArgs.get(TIMEOUT_IN_MILLI_SEC)))
+                        .append(StringUtils.hasLength(faultArgs.get(AGENT_PORT))
+                                ? " " + PORT_SCRIPT_ARGUEMENT + " " + faultArgs.get(AGENT_PORT) : "")
+                        .toString();
+    }
+
+    private static String getFilehandlerFaultnjectionCommand(Map<String, String> faultArgs) {
+        return new StringBuilder(String.format(FILEHANDLER_INJECTION_COMMAND_WITH_ARGS,
+                FaultName.FILEHANDLERFAULT.getValue(), TIMEOUT_SCRIPT_ARG, faultArgs.get(TIMEOUT_IN_MILLI_SEC)))
+                        .append(StringUtils.hasLength(faultArgs.get(AGENT_PORT))
+                                ? " " + PORT_SCRIPT_ARGUEMENT + " " + faultArgs.get(AGENT_PORT) : "")
+                        .toString();
+    }
+
+    public String getDiskSpaceInjectionCommand(Map<String, String> faultArgs) {
+        if (faultArgs.containsKey(AGENT_PORT)) {
+            return new StringBuilder()
+                    .append(String.format(DISK_SPACE_INJECTION_COMMAND_WITH_ARGS, FaultName.DISKSPACEFAULT.getValue(),
+                            DIRECTORY_PATH_SCRIPT_ARG, faultArgs.get(DIRECTORY_PATH), TIMEOUT_SCRIPT_ARG,
+                            faultArgs.get(TIMEOUT_IN_MILLI_SEC), PORT_SCRIPT_ARGUEMENT, faultArgs.get(AGENT_PORT)))
+                    .toString()
+                    + (StringUtils.hasLength(faultArgs.get(DISK_FILL_SIZE))
+                            ? " " + DISK_FILL_SIZE_SCRIPT_ARG + " " + faultArgs.get(DISK_FILL_SIZE) : "");
+        } else {
+            return new StringBuilder().append(String.format(DISK_SPACE_INJECTION_COMMAND_WITH_ARGS,
+                    FaultName.DISKSPACEFAULT.getValue(), DIRECTORY_PATH_SCRIPT_ARG, faultArgs.get(DIRECTORY_PATH),
+                    TIMEOUT_SCRIPT_ARG, faultArgs.get(TIMEOUT_IN_MILLI_SEC))).toString()
+                    + (StringUtils.hasLength(faultArgs.get(DISK_FILL_SIZE))
+                            ? " " + DISK_FILL_SIZE_SCRIPT_ARG + " " + faultArgs.get(DISK_FILL_SIZE) : "");
+        }
     }
 
     /**
@@ -171,12 +298,34 @@ public class SystemResourceFaultUtils {
      * @param scriptBasePath
      * @return
      */
-    private String getKernelPanicInjectionCommand(String scriptBasePath) {
-        return new StringBuilder(scriptBasePath).append(KERNELPANIC_INJECTION_COMMAND_WITH_ARGS).toString();
+    private String getKernelPanicInjectionCommand(Map<String, String> faultArgs) {
+        return new StringBuilder(KERNELPANIC_INJECTION_COMMAND_WITH_ARGS)
+                .append(StringUtils.hasLength(faultArgs.get(AGENT_PORT))
+                        ? " " + PORT_SCRIPT_ARGUEMENT + " " + faultArgs.get(AGENT_PORT) : "")
+                .toString();
     }
 
-    private String getRemediationCommand(String scriptFileName, String scriptBasePath) {
-        return new StringBuilder(scriptBasePath).append(scriptFileName).append(OPERATION_REMEDIATE).toString();
+    private String getNetworkPartitionInjectionCommand(Map<String, String> faultArgs) {
+        return new StringBuilder(String.format(NETWORK_PARTITION_INJECTION_COMMAND_WITH_ARGS,
+                getHosts(faultArgs.get(HOSTS_KEY)), faultArgs.get(TIMEOUT_IN_MILLI_SEC)))
+                        .append(StringUtils.hasLength(faultArgs.get(AGENT_PORT))
+                                ? " " + PORT_SCRIPT_ARGUEMENT + " " + faultArgs.get(AGENT_PORT) : "")
+                        .toString();
+    }
+
+    private String getRemediationCommand(Map<String, String> faultArgs) {
+        return new StringBuilder(INFRA_SUBMIT).append(OPERATION_REMEDIATE)
+                .append(StringUtils.hasLength(faultArgs.get(AGENT_PORT))
+                        ? " " + PORT_SCRIPT_ARGUEMENT + " " + faultArgs.get(AGENT_PORT) : "")
+                .toString();
+    }
+
+
+    private String getStatusCommand(Map<String, String> faultArgs) {
+        return new StringBuilder().append(INFRA_SUBMIT).append(OPERATION_STATUS)
+                .append(StringUtils.hasLength(faultArgs.get(AGENT_PORT))
+                        ? " " + PORT_SCRIPT_ARGUEMENT + " " + faultArgs.get(AGENT_PORT) : "")
+                .toString();
     }
 
     public String buildRemediationCommand(Map<String, String> args, String scriptBasePath) {
@@ -189,28 +338,49 @@ public class SystemResourceFaultUtils {
         try {
             switch (FaultName.valueOf(faultName.toUpperCase())) {
             case CPUFAULT:
-                command = getRemediationCommand(getScriptNameforFault(FaultName.CPUFAULT), scriptBasePath);
+                command = getRemediationCommand(faultArgs);
                 break;
             case MEMORYFAULT:
-                command = getRemediationCommand(getScriptNameforFault(FaultName.MEMORYFAULT), scriptBasePath);
+                command = getRemediationCommand(faultArgs);
                 break;
             case DISKFAULT:
-                command = getRemediationCommand(getScriptNameforFault(FaultName.DISKFAULT), scriptBasePath);
+                command = getRemediationCommand(faultArgs);
                 break;
             case KILLPROCESSFAULT:
                 if (!StringUtils.isEmpty(faultArgs.get(KILL_PROCESS_REMEDIATION_COMMAND))) {
-                    command = new StringBuilder(
-                            getRemediationCommand(FaultName.KILLPROCESSFAULT.getScriptFileName(), scriptBasePath))
-                                    .append(" --remediationCommand=\"")
-                                    .append(faultArgs.get(KILL_PROCESS_REMEDIATION_COMMAND)).append("\"").toString();
+                    command = new StringBuilder(getRemediationCommand(faultArgs)).append(" --remediationCommand \"")
+                            .append(faultArgs.get(KILL_PROCESS_REMEDIATION_COMMAND)).append("\"").toString();
                 }
                 break;
+            case STOPSERVICEFAULT:
+                command = getStopServiceRemediationCommand(faultArgs);
+                break;
             case NETWORKFAULT:
-                command = getRemediationCommand(getScriptNameforFault(FaultName.NETWORKFAULT), scriptBasePath);
+                command = getRemediationCommand(faultArgs);
                 break;
             case DISKSPACEFAULT:
-                command = getDiskSpaceRemediationCommand(getScriptNameforFault(FaultName.DISKSPACEFAULT),
-                        scriptBasePath, faultArgs);
+                command = getDiskSpaceRemediationCommand(faultArgs);
+                break;
+            case CLOCKSKEWFAULT:
+                command = getRemediationCommand(faultArgs);
+                break;
+            case DBCONNECTIONLEAKFAULT_POSTGRES:
+                command = DbFaultUtils2.getDbConnectionLeakRemediationCommand(faultArgs);
+                break;
+            case DBTRANSACTIONERRORFAULT_POSTGRES:
+                command = DbFaultUtils2.getDbTransactionErrorRemediationCommand(faultArgs);
+                break;
+            case DBTRANSACTIONLATENCYFAULT_POSTGRES:
+                command = DbFaultUtils2.getDbTransactionLatencyRemediationCommand(faultArgs);
+                break;
+            case DBCONNECTIONLEAKFAULT_MONGODB:
+                command = DbFaultUtils2.getDbConnectionLeakRemediationCommand(faultArgs);
+                break;
+            case DBCONNECTIONLEAKFAULT_CASSANDRA:
+                command = DbFaultUtils2.getDbConnectionLeakRemediationCommand(faultArgs);
+                break;
+            case NETWORKPARTITIONFAULT:
+                command = getNetworkPartitionRemediationCommand(faultArgs);
                 break;
             default:
                 command = "";
@@ -222,10 +392,40 @@ public class SystemResourceFaultUtils {
 
     }
 
-    private String getDiskSpaceRemediationCommand(String scriptFileName, String scriptBasePath,
-            Map<String, String> faultArgs) {
-        return new StringBuilder(scriptBasePath).append(scriptFileName)
+    public String buildStatusCommand(Map<String, String> args) {
+        Map<String, String> faultArgs = FaultsHelper.parseArgs(CommonUtils.convertMaptoDelimitedString(args, ","));
+        String command = "";
+        String faultName = faultArgs.get(FAULT_NAME);
+        if (faultName == null || faultName.isEmpty()) {
+            throw new MangleRuntimeException(ErrorCode.FAULT_NAME_NOT_NULL);
+        }
+        command = getStatusCommand(faultArgs);
+        return command;
+    }
+
+
+    private String getDiskSpaceRemediationCommand(Map<String, String> faultArgs) {
+        return new StringBuilder(INFRA_SUBMIT)
                 .append(String.format(DISK_SPACE_REMEDIATION_COMMAND_WITH_ARGS, faultArgs.get(DIRECTORY_PATH)))
+                .append(StringUtils.hasLength(faultArgs.get(AGENT_PORT))
+                        ? " " + PORT_SCRIPT_ARGUEMENT + " " + faultArgs.get(AGENT_PORT) : "")
+                .toString();
+    }
+
+    private String getStopServiceRemediationCommand(Map<String, String> faultArgs) {
+        return new StringBuilder(INFRA_SUBMIT)
+                .append(String.format(STOP_SERVICE_REMEDIATION_COMMAND_WITH_ARGS1, faultArgs.get(SERVICE_NAME)))
+                .append(StringUtils.hasLength(faultArgs.get(AGENT_PORT))
+                        ? " " + PORT_SCRIPT_ARGUEMENT + " " + faultArgs.get(AGENT_PORT) : "")
+                .toString();
+    }
+
+    private String getNetworkPartitionRemediationCommand(Map<String, String> faultArgs) {
+        return new StringBuilder(INFRA_SUBMIT)
+                .append(String.format(NETWORK_PARTITION_REMEDIATION_COMMAND_WITH_ARGS,
+                        getHosts(faultArgs.get(HOSTS_KEY))))
+                .append(StringUtils.hasLength(faultArgs.get(AGENT_PORT))
+                        ? " " + PORT_SCRIPT_ARGUEMENT + " " + faultArgs.get(AGENT_PORT) : "")
                 .toString();
     }
 
@@ -240,6 +440,18 @@ public class SystemResourceFaultUtils {
             faultInjectionScriptInfo1.setExecutable(true);
             agentFaultInjectionScripts.add(faultInjectionScriptInfo1);
         }
+        return agentFaultInjectionScripts;
+    }
+
+    public List<SupportScriptInfo> getAgentFaultScriptsPython(String targetDir) {
+        ArrayList<SupportScriptInfo> agentFaultInjectionScripts = new ArrayList<>();
+
+        SupportScriptInfo faultInjectionScriptInfo = new SupportScriptInfo();
+        faultInjectionScriptInfo.setScriptFileName(FaultConstants.INFRA_AGENT_NAME);
+        faultInjectionScriptInfo.setTargetDirectoryPath(targetDir);
+        faultInjectionScriptInfo.setClassPathResource(true);
+        faultInjectionScriptInfo.setExecutable(false);
+        agentFaultInjectionScripts.add(faultInjectionScriptInfo);
         return agentFaultInjectionScripts;
     }
 
@@ -266,5 +478,47 @@ public class SystemResourceFaultUtils {
         faultNames.add(FaultName.FILEHANDLERFAULT.getValue());
         faultNames.add(FaultName.KERNELPANICFAULT.getValue());
         return faultNames;
+    }
+
+    private String getHosts(String hosts) {
+        return hosts.replace(';', ',');
+    }
+
+    public CommandInfo getLinuxPythonAgentExtractCommandInfo(CommandExecutionFaultSpec faultSpec) {
+        // Tar extraction command
+        return CommandInfo
+                .builder(String.format(EXTRACT_AGENT_COMMAND, faultSpec.getInjectionHomeDir(), INFRA_AGENT_NAME))
+                .ignoreExitValueCheck(true).expectedCommandOutputList(Arrays.asList("")).build();
+
+    }
+
+    public CommandInfo getLinuxPythonAgentScriptsPermissionsUpdateCommandInfo(CommandExecutionFaultSpec faultSpec) {
+        String agentPathInTargetMachine = faultSpec.getInjectionHomeDir() + INFRA_AGENT_NAME;
+        // change permission command
+        return CommandInfo
+                .builder(
+                        "chmod -R 777 " + agentPathInTargetMachine + ";chmod -R 777 " + agentPathInTargetMachine + "/*")
+                .ignoreExitValueCheck(true).expectedCommandOutputList(Arrays.asList("")).build();
+    }
+
+    public CommandInfo getPythonAgentInstallCommandInfo(CommandExecutionFaultSpec faultSpec) {
+        CommandInfo.CommandInfoBuilder builder = CommandInfo.builder(getLinuxPythonAgentInstallationCommand(faultSpec));
+        getBasePythonAgentInstallationCommandInfo(builder);
+        return builder.build();
+    }
+
+    private CommandInfo.CommandInfoBuilder getBasePythonAgentInstallationCommandInfo(
+            CommandInfo.CommandInfoBuilder builder) {
+        return builder.ignoreExitValueCheck(true).expectedCommandOutputList(Arrays.asList(""))
+                .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentInstallationRequest());
+    }
+
+    private static String getLinuxPythonAgentInstallationCommand(CommandExecutionFaultSpec faultSpec) {
+        String installationCommand = "cd %s;%s";
+        String agentStartCommand = String.format(installationCommand,
+                faultSpec.getInjectionHomeDir() + FaultConstants.INFRA_AGENT_NAME_FOLDER,
+                "./infra_agent > /dev/null 2>&1 &");
+        log.debug("infraagent start command:", agentStartCommand);
+        return agentStartCommand;
     }
 }

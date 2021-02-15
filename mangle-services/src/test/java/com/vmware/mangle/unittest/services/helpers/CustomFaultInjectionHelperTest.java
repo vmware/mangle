@@ -82,7 +82,7 @@ public class CustomFaultInjectionHelperTest {
 
     /**
      * Test method for
-     * {@link com.vmware.mangle.services.helpers.CustomFaultInjectionHelper#getCustomFault(com.vmware.mangle.cassandra.model.custom.faults.CustomFaultSpec)}.
+     * {@link CustomFaultInjectionHelper#getCustomFault(CustomFaultSpec)}.
      *
      * @throws MangleException
      */
@@ -97,7 +97,7 @@ public class CustomFaultInjectionHelperTest {
 
     /**
      * Test method for
-     * {@link com.vmware.mangle.services.helpers.CustomFaultInjectionHelper#getFaultSpec(com.vmware.mangle.cassandra.model.custom.faults.CustomFaultSpec, com.vmware.mangle.task.framework.helpers.faults.AbstractCustomFault)}.
+     * {@link CustomFaultInjectionHelper#getFaultSpec(CustomFaultSpec, AbstractCustomFault)}.
      */
     @Test
     public void testGetFaultSpec() {
@@ -107,7 +107,7 @@ public class CustomFaultInjectionHelperTest {
 
     /**
      * Test method for
-     * {@link com.vmware.mangle.services.helpers.CustomFaultInjectionHelper#validateFields(com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec, com.vmware.mangle.task.framework.helpers.faults.AbstractCustomFault)}.
+     * {@link CustomFaultInjectionHelper#validateFields(CommandExecutionFaultSpec, AbstractCustomFault)}.
      *
      * @throws MangleException
      */
@@ -123,7 +123,7 @@ public class CustomFaultInjectionHelperTest {
 
     /**
      * Test method for
-     * {@link com.vmware.mangle.services.helpers.CustomFaultInjectionHelper#invokeFault(com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec, java.lang.String)}.
+     * {@link CustomFaultInjectionHelper#invokeFault(CommandExecutionFaultSpec, String)}.
      *
      * @throws MangleException
      */
@@ -134,7 +134,7 @@ public class CustomFaultInjectionHelperTest {
         PluginFaultSpec requestJson = customFaultInjectionHelper.getFaultSpec(customFaultSpec, customFault);
         requestJson.setEndpoint(endpointMockData.rmEndpointMockData());
         requestJson.setCredentials(credentialsSpecMockData.getRMCredentialsData());
-        Task<TaskSpec> task = tasksMockData.getDummyTask();
+        Task<TaskSpec> task = tasksMockData.getDummy1Task();
         when(faultInjectionHelper.saveTask(any(Task.class))).thenReturn(task);
         AbstractTaskHelper<TaskSpec> taskHelper = mock(AbstractTaskHelper.class);
         when(pluginService.getExtension(anyString())).thenReturn(taskHelper);
@@ -145,7 +145,7 @@ public class CustomFaultInjectionHelperTest {
 
     /**
      * Test method for
-     * {@link com.vmware.mangle.services.helpers.CustomFaultInjectionHelper#invokeFault(com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec, java.lang.String)}.
+     * {@link CustomFaultInjectionHelper#invokeFault(CommandExecutionFaultSpec, String)}.
      *
      * @throws MangleException
      */
@@ -156,7 +156,7 @@ public class CustomFaultInjectionHelperTest {
         PluginFaultSpec requestJson = customFaultInjectionHelper.getFaultSpec(customFaultSpec, customFault);
         requestJson.setEndpoint(endpointMockData.rmEndpointMockData());
         requestJson.setCredentials(credentialsSpecMockData.getRMCredentialsData());
-        Task<TaskSpec> task = tasksMockData.getDummyTask();
+        Task<TaskSpec> task = tasksMockData.getDummy1Task();
         when(faultInjectionHelper.saveTask(any(Task.class))).thenReturn(task);
         AbstractTaskHelper<TaskSpec> taskHelper = mock(AbstractTaskHelper.class);
         when(pluginService.getExtension(anyString())).thenReturn(null);

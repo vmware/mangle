@@ -27,12 +27,14 @@ import java.util.Map;
 import java.util.Properties;
 
 import com.vmware.mangle.cassandra.model.endpoint.AWSCredentials;
+import com.vmware.mangle.cassandra.model.endpoint.AzureCredentials;
 import com.vmware.mangle.cassandra.model.endpoint.EndpointSpec;
 import com.vmware.mangle.cassandra.model.endpoint.K8SCredentials;
 import com.vmware.mangle.cassandra.model.endpoint.RemoteMachineCredentials;
 import com.vmware.mangle.cassandra.model.endpoint.VCenterCredentials;
 import com.vmware.mangle.cassandra.model.faults.specs.CpuFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.DockerFaultSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.EndpointGroupFaultTriggerSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.FilehandlerLeakFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.JVMAgentFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.JVMCodeLevelFaultSpec;
@@ -42,14 +44,24 @@ import com.vmware.mangle.cassandra.model.faults.specs.K8SFaultTriggerSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.K8SResourceNotReadyFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.K8SServiceUnavailableFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.ThreadLeakFaultSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.VCenterFaultTriggerSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.VMDiskFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.VMNicFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.VMStateFaultSpec;
+import com.vmware.mangle.cassandra.model.redis.faults.specs.RedisDelayFaultSpec;
+import com.vmware.mangle.cassandra.model.redis.faults.specs.RedisDropConnectionFaultSpec;
+import com.vmware.mangle.cassandra.model.redis.faults.specs.RedisFaultSpec;
+import com.vmware.mangle.cassandra.model.redis.faults.specs.RedisReturnErrorFaultSpec;
 import com.vmware.mangle.cassandra.model.tasks.DockerSpecificArguments;
 import com.vmware.mangle.cassandra.model.tasks.K8SSpecificArguments;
 import com.vmware.mangle.cassandra.model.tasks.SupportScriptInfo;
 import com.vmware.mangle.model.aws.AwsEC2StateFaults;
+import com.vmware.mangle.model.aws.AwsRDSFaults;
+import com.vmware.mangle.model.aws.AwsRDSInstance;
 import com.vmware.mangle.model.aws.faults.spec.AwsEC2InstanceStateFaultSpec;
+import com.vmware.mangle.model.aws.faults.spec.AwsRDSFaultSpec;
+import com.vmware.mangle.model.azure.AzureVMStateFaults;
+import com.vmware.mangle.model.azure.faults.spec.AzureVMStateFaultSpec;
 import com.vmware.mangle.services.enums.AgentFaultName;
 import com.vmware.mangle.services.enums.BytemanFaultType;
 import com.vmware.mangle.services.enums.DockerFaultName;
@@ -58,8 +70,10 @@ import com.vmware.mangle.services.enums.K8SResource;
 import com.vmware.mangle.services.enums.VCenterDiskFaults;
 import com.vmware.mangle.services.enums.VCenterNicFaults;
 import com.vmware.mangle.services.enums.VCenterStateFaults;
+import com.vmware.mangle.utils.CommonUtils;
 import com.vmware.mangle.utils.ReadProperty;
 import com.vmware.mangle.utils.constants.Constants;
+import com.vmware.mangle.utils.constants.FaultConstants;
 
 /**
  * Faults Mock Data.
@@ -123,6 +137,37 @@ public class FaultsMockData {
 
         k8SFaultSpec.setFaultSpec(cpuFaultSpec);
         k8SFaultSpec.setSchedule(cpuFaultSpec.getSchedule());
+        return k8SFaultSpec;
+    }
+
+    public EndpointGroupFaultTriggerSpec getEndpointGroupCPUFaultTriggerSpec() {
+        EndpointGroupFaultTriggerSpec endpointGroupFaultSpec = new EndpointGroupFaultTriggerSpec();
+        CpuFaultSpec cpuFaultSpec = getLinuxCpuFaultSpec();
+        endpointGroupFaultSpec.setFaultSpec(cpuFaultSpec);
+        endpointGroupFaultSpec.setSchedule(cpuFaultSpec.getSchedule());
+        return endpointGroupFaultSpec;
+    }
+
+    public EndpointGroupFaultTriggerSpec getEndpointGroupBytemanCPUFaultTriggerSpec() {
+        EndpointGroupFaultTriggerSpec endpointGroupFaultSpec = new EndpointGroupFaultTriggerSpec();
+        CpuFaultSpec cpuFaultSpec = getLinuxCpuJvmAgentFaultSpec();
+        endpointGroupFaultSpec.setFaultSpec(cpuFaultSpec);
+        endpointGroupFaultSpec.setSchedule(cpuFaultSpec.getSchedule());
+        return endpointGroupFaultSpec;
+    }
+
+    public EndpointGroupFaultTriggerSpec getEndpointGroupCodeLevelFaultTriggerSpec() {
+        EndpointGroupFaultTriggerSpec endpointGroupFaultSpec = new EndpointGroupFaultTriggerSpec();
+        JVMCodeLevelFaultSpec cpuFaultSpec = getLinuxJvmCodelevelFaultSpec();
+        endpointGroupFaultSpec.setFaultSpec(cpuFaultSpec);
+        endpointGroupFaultSpec.setSchedule(cpuFaultSpec.getSchedule());
+        return endpointGroupFaultSpec;
+    }
+
+    public K8SFaultTriggerSpec getK8SCPUFaultTriggerSpecWithDisabledRsourceLabels() {
+        K8SFaultTriggerSpec k8SFaultSpec = getK8SCPUFaultTriggerSpec();
+        k8SFaultSpec.getFaultSpec().getEndpoint().getK8sConnectionProperties()
+                .setDisabledResourceLabels(CommonUtils.stringKeyValuePairToMap(testPodLabels));
         return k8SFaultSpec;
     }
 
@@ -207,6 +252,12 @@ public class FaultsMockData {
     }
 
     public CpuFaultSpec getLinuxCpuJvmAgentFaultSpec() {
+        CpuFaultSpec cpuFaultSpec = getLinuxCpuFaultSpec();
+        cpuFaultSpec.setJvmProperties(getJVMProperties());
+        return cpuFaultSpec;
+    }
+
+    public CpuFaultSpec getLinuxCpuFaultSpec() {
         RemoteMachineCredentials credentialsSpec = credentialsSpecMockData.getRMCredentialsData();
         EndpointSpec endpointSpec = endpointMockData.rmEndpointMockData();
         CpuFaultSpec cpuFaultSpec = new CpuFaultSpec();
@@ -215,7 +266,6 @@ public class FaultsMockData {
         cpuFaultSpec.setCpuLoad(faultLoad);
         args.put(LOAD_ARG, String.valueOf(faultLoad));
         cpuFaultSpec.setArgs(args);
-        cpuFaultSpec.setJvmProperties(getJVMProperties());
         cpuFaultSpec.setTimeoutInMilliseconds(faultExecutionTimeout);
         List<SupportScriptInfo> listSupportScript = new ArrayList<>();
         listSupportScript.add(getSupportScriptInfo());
@@ -238,8 +288,9 @@ public class FaultsMockData {
         cpuFaultSpec.setTimeoutInMilliseconds(faultExecutionTimeout);
         cpuFaultSpec.setEndpointName(endpointSpec.getName());
         cpuFaultSpec.setEndpoint(endpointSpec);
+        cpuFaultSpec.setId("cpuid");
         SupportScriptInfo supportScript = new SupportScriptInfo();
-        supportScript.setScriptFileName("cpuburn.sh");
+        supportScript.setScriptFileName(FaultConstants.INFRA_AGENT_NAME);
         supportScript.setTargetDirectoryPath("/tmp/");
         supportScript.setClassPathResource(true);
         supportScript.setExecutable(true);
@@ -440,7 +491,7 @@ public class FaultsMockData {
     public VMStateFaultSpec getVMStateFaultSpec() {
         VMStateFaultSpec faultSpec = new VMStateFaultSpec();
         Map<String, String> specificArgs = new LinkedHashMap<>();
-        specificArgs.put("--vmname", "vm");
+        specificArgs.put(Constants.VM_NAME_ARG, "vm");
         faultSpec.setArgs(specificArgs);
         VCenterCredentials creds = credentialsSpecMockData.getVCenterCredentialsData();
         EndpointSpec endpointSpec = endpointMockData.vCenterEndpointSpecMock();
@@ -448,6 +499,7 @@ public class FaultsMockData {
         faultSpec.setEndpoint(endpointSpec);
         faultSpec.setFault(VCenterStateFaults.POWEROFF_VM);
         faultSpec.setFaultName(faultSpec.getFault().name());
+        faultSpec.setVmName("vm");
 
         return faultSpec;
     }
@@ -455,7 +507,7 @@ public class FaultsMockData {
     public VMDiskFaultSpec getVMDiskFaultSpec() {
         VMDiskFaultSpec faultSpec = new VMDiskFaultSpec();
         Map<String, String> specificArgs = new LinkedHashMap<>();
-        specificArgs.put("--vmname", "vm");
+        specificArgs.put(Constants.VM_NAME_ARG, "vm");
         faultSpec.setArgs(specificArgs);
         VCenterCredentials creds = credentialsSpecMockData.getVCenterCredentialsData();
         EndpointSpec endpointSpec = endpointMockData.vCenterEndpointSpecMock();
@@ -463,14 +515,14 @@ public class FaultsMockData {
         faultSpec.setEndpoint(endpointSpec);
         faultSpec.setFault(VCenterDiskFaults.DISCONNECT_DISK);
         faultSpec.setFaultName(VCenterDiskFaults.DISCONNECT_DISK.name());
-
+        faultSpec.setVmName("vm");
         return faultSpec;
     }
 
     public VMNicFaultSpec getVMNicFaultSpec() {
         VMNicFaultSpec faultSpec = new VMNicFaultSpec();
         Map<String, String> specificArgs = new LinkedHashMap<>();
-        specificArgs.put("--vmname", "vm");
+        specificArgs.put(Constants.VM_NAME_ARG, "vm");
         faultSpec.setArgs(specificArgs);
         VCenterCredentials creds = credentialsSpecMockData.getVCenterCredentialsData();
         EndpointSpec endpointSpec = endpointMockData.vCenterEndpointSpecMock();
@@ -478,7 +530,7 @@ public class FaultsMockData {
         faultSpec.setEndpoint(endpointSpec);
         faultSpec.setFault(VCenterNicFaults.DISCONNECT_NIC);
         faultSpec.setFaultName(VCenterNicFaults.DISCONNECT_NIC.name());
-
+        faultSpec.setVmName("vm");
         return faultSpec;
     }
 
@@ -491,6 +543,40 @@ public class FaultsMockData {
         faultSpec.setFault(AwsEC2StateFaults.STOP_INSTANCES);
         faultSpec.setInstanceIds(new ArrayList<>());
         faultSpec.setFaultName(faultSpec.getFault().name());
+        return faultSpec;
+    }
+
+    public AwsRDSFaultSpec getAwsRDSFaultSpec() {
+        AwsRDSFaultSpec faultSpec = new AwsRDSFaultSpec();
+        List<String> dbIdentifiers = new ArrayList<>();
+        dbIdentifiers.add("id1");
+        dbIdentifiers.add("id2");
+        List<AwsRDSInstance> selectedRdsInstances = new ArrayList<>();
+        AwsRDSInstance rdsInstance = new AwsRDSInstance();
+        rdsInstance.setDbEngine("postgres");
+        rdsInstance.setDbRole("Instance");
+        rdsInstance.setInstanceIdentifier(dbIdentifiers.get(0));
+        selectedRdsInstances.add(rdsInstance);
+        AWSCredentials creds = credentialsSpecMockData.getAwsCredentialsData();
+        EndpointSpec endpointSpec = endpointMockData.awsEndpointSpecMock();
+        faultSpec.setCredentials(creds);
+        faultSpec.setEndpoint(endpointSpec);
+        faultSpec.setFault(AwsRDSFaults.STOP_INSTANCES);
+        faultSpec.setDbIdentifiers(dbIdentifiers);
+        faultSpec.setSelectedRDSInstances(selectedRdsInstances);
+        faultSpec.setFaultName(faultSpec.getFault().name());
+        return faultSpec;
+    }
+
+    public AzureVMStateFaultSpec getAzureVMStateFaultSpec() {
+        AzureVMStateFaultSpec faultSpec = new AzureVMStateFaultSpec();
+        AzureCredentials creds = credentialsSpecMockData.getAzureCredentialsData();
+        EndpointSpec endpointSpec = endpointMockData.awsEndpointSpecMock();
+        faultSpec.setCredentials(creds);
+        faultSpec.setEndpoint(endpointSpec);
+        faultSpec.setFault(AzureVMStateFaults.STOP_VMS);
+        faultSpec.setResourceIds(new ArrayList<>());
+        faultSpec.setFaultName(faultSpec.getFault().name());
 
         return faultSpec;
     }
@@ -498,10 +584,83 @@ public class FaultsMockData {
     public SupportScriptInfo getSupportScriptInfo() {
         SupportScriptInfo faultInjectionScriptInfo = new SupportScriptInfo();
         faultInjectionScriptInfo.setClassPathResource(true);
-        faultInjectionScriptInfo.setScriptFileName("mock_command.txt");
+        faultInjectionScriptInfo.setScriptFileName(FaultConstants.INFRA_AGENT_NAME);
         faultInjectionScriptInfo.setTargetDirectoryPath(DEFAULT_TEMP_DIR);
         faultInjectionScriptInfo.setExecutable(false);
         return faultInjectionScriptInfo;
     }
 
+    public RedisDelayFaultSpec getRedisDelayFaultSpec() {
+        EndpointSpec endpointSpec = endpointMockData.getRedisProxyEndpointMockData();
+        RedisDelayFaultSpec delayFaultSpec = new RedisDelayFaultSpec();
+        delayFaultSpec.setEndpointName(endpointSpec.getName());
+        delayFaultSpec.setEndpoint(endpointSpec);
+        delayFaultSpec.setDelay(1000);
+        delayFaultSpec.setPercentage(50);
+        Map<String, String> specificArgs = new HashMap<>();
+        specificArgs.put(FaultConstants.OPERATION, delayFaultSpec.getFaultName());
+        delayFaultSpec.setArgs(specificArgs);
+        return delayFaultSpec;
+    }
+
+    public RedisReturnErrorFaultSpec getRedisReturnErrorFaultSpec() {
+        EndpointSpec endpointSpec = endpointMockData.getRedisProxyEndpointMockData();
+        RedisReturnErrorFaultSpec faultSpec = new RedisReturnErrorFaultSpec();
+        faultSpec.setEndpointName(endpointSpec.getName());
+        faultSpec.setEndpoint(endpointSpec);
+        faultSpec.setErrorType("CON");
+        faultSpec.setPercentage(50);
+        Map<String, String> specificArgs = new HashMap<>();
+        specificArgs.put(FaultConstants.OPERATION, faultSpec.getFaultName());
+        faultSpec.setArgs(specificArgs);
+        return faultSpec;
+    }
+
+    public RedisFaultSpec getRedisFaultSpec() {
+        EndpointSpec endpointSpec = endpointMockData.getRedisProxyEndpointMockData();
+        RedisFaultSpec faultSpec = new RedisFaultSpec();
+        faultSpec.setEndpointName(endpointSpec.getName());
+        faultSpec.setEndpoint(endpointSpec);
+        faultSpec.setPercentage(25);
+        Map<String, String> specificArgs = new HashMap<>();
+        specificArgs.put(FaultConstants.OPERATION, faultSpec.getFaultName());
+        faultSpec.setArgs(specificArgs);
+        return faultSpec;
+    }
+
+    public RedisDropConnectionFaultSpec getRedisDropConnectionFaultSpec() {
+        EndpointSpec endpointSpec = endpointMockData.getRedisProxyEndpointMockData();
+        RedisDropConnectionFaultSpec faultSpec = new RedisDropConnectionFaultSpec();
+        faultSpec.setEndpointName(endpointSpec.getName());
+        faultSpec.setEndpoint(endpointSpec);
+        faultSpec.setPercentage(25);
+        Map<String, String> specificArgs = new HashMap<>();
+        specificArgs.put(FaultConstants.OPERATION, faultSpec.getFaultName());
+        faultSpec.setArgs(specificArgs);
+        return faultSpec;
+    }
+
+    public VCenterFaultTriggerSpec getVcenterFaultTriggerSpecForVMstateFault() {
+        VCenterFaultTriggerSpec vCenterFaultTriggerSpec = new VCenterFaultTriggerSpec();
+        VMStateFaultSpec vmStateFaultSpec = getVMStateFaultSpec();
+        vCenterFaultTriggerSpec.setFaultSpec(vmStateFaultSpec);
+        vCenterFaultTriggerSpec.setSchedule(vmStateFaultSpec.getSchedule());
+        return vCenterFaultTriggerSpec;
+    }
+
+    public VCenterFaultTriggerSpec getVcenterFaultTriggerSpecForVMDiskFault() {
+        VCenterFaultTriggerSpec vCenterFaultTriggerSpec = new VCenterFaultTriggerSpec();
+        VMDiskFaultSpec vmDiskFaultSpec = getVMDiskFaultSpec();
+        vCenterFaultTriggerSpec.setFaultSpec(vmDiskFaultSpec);
+        vCenterFaultTriggerSpec.setSchedule(vmDiskFaultSpec.getSchedule());
+        return vCenterFaultTriggerSpec;
+    }
+
+    public VCenterFaultTriggerSpec getVcenterFaultTriggerSpecForVMNicFault() {
+        VCenterFaultTriggerSpec vCenterFaultTriggerSpec = new VCenterFaultTriggerSpec();
+        VMNicFaultSpec vmNicFaultSpec = getVMNicFaultSpec();
+        vCenterFaultTriggerSpec.setFaultSpec(vmNicFaultSpec);
+        vCenterFaultTriggerSpec.setSchedule(vmNicFaultSpec.getSchedule());
+        return vCenterFaultTriggerSpec;
+    }
 }

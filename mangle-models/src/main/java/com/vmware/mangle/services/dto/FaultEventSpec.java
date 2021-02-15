@@ -37,4 +37,5 @@ public class FaultEventSpec {
     private String faultEventType;
     private String taskId;
     private String faultStatus;
+    private Integer timeoutInMilliseconds;
 }

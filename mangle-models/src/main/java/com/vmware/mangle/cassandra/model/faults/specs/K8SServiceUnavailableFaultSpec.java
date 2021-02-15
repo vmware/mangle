@@ -16,6 +16,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
+import com.vmware.mangle.cassandra.model.scheduler.SchedulerInfo;
 import com.vmware.mangle.services.enums.K8SFaultName;
 import com.vmware.mangle.services.enums.K8SResource;
 
@@ -41,6 +42,12 @@ public class K8SServiceUnavailableFaultSpec extends K8SFaultSpec {
     @Override
     public void setResourceType(K8SResource resourceType) {
         super.setResourceType(resourceType);
+    }
+
+    @JsonIgnore
+    @Override
+    public void setSchedule(SchedulerInfo schedule) {
+        super.setSchedule(schedule);
     }
 
     @Override

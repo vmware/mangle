@@ -72,6 +72,20 @@ public class WavefrontEventMockData {
         return eventDetails;
     }
 
+    public WavefrontEventDetailsDto getEventDetailsDtoForEndedEvent() {
+        WavefrontEventDetailsDto eventDetails = new WavefrontEventDetailsDto();
+        ArrayList<WavefrontEventItemDto> items = new ArrayList<>();
+        items.add(getEventItemData());
+        WavefrontEventItemDto dto = getEventItemData();
+        dto.setRunningState("ENDED");
+        eventDetails.setItems(items);
+        eventDetails.setEventSearchStats(new HashMap<>());
+        eventDetails.setMoreItems(false);
+        eventDetails.setLimit(100);
+
+        return eventDetails;
+    }
+
     public WavefrontEventSearchResponse getRetrieveEventMockData() {
         WavefrontEventSearchResponse response = new WavefrontEventSearchResponse();
         response.setResponse(getEventDetailsDto());

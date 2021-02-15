@@ -13,11 +13,12 @@ package com.vmware.mangle.faults.plugin.tasks.helpers;
 
 import java.util.List;
 
+import lombok.NoArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.pf4j.Extension;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec;
-import com.vmware.mangle.cassandra.model.faults.specs.VMFaultSpec;
 import com.vmware.mangle.cassandra.model.tasks.FaultTask;
 import com.vmware.mangle.cassandra.model.tasks.SupportScriptInfo;
 import com.vmware.mangle.cassandra.model.tasks.Task;
@@ -35,9 +36,18 @@ import com.vmware.mangle.utils.exceptions.MangleException;
  *         commands, remediation commands and execution of each one of them
  */
 @Extension(ordinal = 1)
-public class VCenterSpecificFaultTaskHelper<T extends VMFaultSpec> extends AbstractCommandExecutionTaskHelper<T> {
+@Log4j2
+@NoArgsConstructor
+@SuppressWarnings("common-java:DuplicatedBlocks")
+public class VCenterSpecificFaultTaskHelper<T extends CommandExecutionFaultSpec>
+        extends AbstractCommandExecutionTaskHelper<T> {
 
     private VCenterFaultHelper vCenterFaultHelper;
+
+    @Autowired
+    public VCenterSpecificFaultTaskHelper(VCenterFaultHelper vCenterFaultHelper) {
+        this.vCenterFaultHelper = vCenterFaultHelper;
+    }
 
     @Autowired
     public void setvCenterFaultHelper(VCenterFaultHelper vCenterFaultHelper) {
@@ -60,7 +70,7 @@ public class VCenterSpecificFaultTaskHelper<T extends VMFaultSpec> extends Abstr
     }
 
     @Override
-    protected ICommandExecutor getExecutor(Task<T> task) throws MangleException {
+    public ICommandExecutor getExecutor(Task<T> task) throws MangleException {
         return vCenterFaultHelper.getExecutor(task.getTaskData());
     }
 
@@ -98,4 +108,5 @@ public class VCenterSpecificFaultTaskHelper<T extends VMFaultSpec> extends Abstr
     protected void checkTaskSpecificPrerequisites(Task<T> task) throws MangleException {
         //When needed we will implement this
     }
+
 }

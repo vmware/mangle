@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 
 import { FaultService } from './fault.service';
-import { HttpClientModule, HttpClient } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 
 describe('FaultService', () => {
   let faultService: FaultService;
@@ -10,7 +11,7 @@ describe('FaultService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [
-        HttpClientModule
+        HttpClientTestingModule
       ]
     });
     faultService = TestBed.get(FaultService);
@@ -58,17 +59,17 @@ describe('FaultService', () => {
   });
 
   it('should execute vcenter disk fault', () => {
-    faultService.executeVcenterDiskFault({});
+    faultService.executeVCenterVMDiskFault({});
     expect(http.post).toHaveBeenCalled();
   });
 
   it('should execute vcenter nic fault', () => {
-    faultService.executeVcenterNicFault({});
+    faultService.executeVCenterVMNicFault({});
     expect(http.post).toHaveBeenCalled();
   });
 
   it('should execute vcenter state fault', () => {
-    faultService.executeVcenterStateFault({});
+    faultService.executeVCenterVMStateFault({});
     expect(http.post).toHaveBeenCalled();
   });
 
@@ -119,6 +120,57 @@ describe('FaultService', () => {
 
   it('should execute kernel panic fault', () => {
     faultService.executeKernelPanicFault({});
+    expect(http.post).toHaveBeenCalled();
+  });
+
+  it('should execute clock skew fault', () => {
+    faultService.executeClockSkewFault({});
+    expect(http.post).toHaveBeenCalled();
+  });
+
+  it('should execute db connection leak fault', () => {
+    faultService.executeConnectionLeakFault({});
+    expect(http.post).toHaveBeenCalled();
+  });
+
+  it('should execute transaction error fault', () => {
+    faultService.executeTransactionErrorFault({});
+    expect(http.post).toHaveBeenCalled();
+  });
+
+  it('should get transaction error codes', () => {
+    spyOn(http, 'get');
+    faultService.getTransactionErrorCode('test');
+    expect(http.get).toHaveBeenCalled();
+  });
+
+  it('should execute transaction latency fault', () => {
+    faultService.executeTransactionLatencyFault({});
+    expect(http.post).toHaveBeenCalled();
+  });
+
+  it('should execute redis db delay fault', () => {
+    faultService.executeRedisDelayFault({});
+    expect(http.post).toHaveBeenCalled();
+  });
+
+  it('should execute redis db return error fault', () => {
+    faultService.executeRedisReturnErrorFault({});
+    expect(http.post).toHaveBeenCalled();
+  });
+
+  it('should execute redis db return empty fault', () => {
+    faultService.executeRedisReturnEmptyFault({});
+    expect(http.post).toHaveBeenCalled();
+  });
+
+  it('should execute redis db drop connection fault', () => {
+    faultService.executeRedisDropConnectionFault({});
+    expect(http.post).toHaveBeenCalled();
+  });
+
+  it('should execute Network Partition fault', () => {
+    faultService.executeNetworkPartitionFault({});
     expect(http.post).toHaveBeenCalled();
   });
 

@@ -11,8 +11,11 @@
 
 package com.vmware.mangle.services;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -22,6 +25,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -45,6 +50,7 @@ import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 @Service
 public class FileStorageService {
 
+    private static final CharSequence PARENT_FILE_REFERENCE = "..";
     private final Path fileStorageLocation;
 
     @Autowired
@@ -64,13 +70,19 @@ public class FileStorageService {
 
         try {
             // Check if the file's name contains invalid characters
-            if (fileName.contains("..")) {
+            if (fileName.contains(PARENT_FILE_REFERENCE)) {
                 throw new MangleRuntimeException(ErrorCode.INVALID_CHAR_IN_FILE_NAME, fileName);
             }
             // Copy file to the target location (Replacing existing file with the same name)
             Path targetLocation = this.fileStorageLocation.resolve(fileName);
             if (targetLocation.toFile().exists()) {
                 throw new MangleException(ErrorCode.PRE_EXISTING_PLUGIN_FILE, ErrorConstants.PRE_EXISTING_PLUGIN_FILE);
+            }
+            List<String> filesList = getZipEntriesList(file.getInputStream());
+            for (String childFileName : filesList) {
+                if (childFileName.contains(PARENT_FILE_REFERENCE)) {
+                    throw new MangleRuntimeException(ErrorCode.INVALID_CHAR_IN_FILE_NAME, childFileName);
+                }
             }
             Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
             return fileName;
@@ -131,10 +143,9 @@ public class FileStorageService {
     public List<String> getFiles() {
         File[] files = new File(this.fileStorageLocation.toString())
                 .listFiles((dir, name) -> (name.toLowerCase().endsWith(".zip") || name.toLowerCase().endsWith(".jar")));
-        ArrayList<String> fileNames = Arrays.asList(files).stream().map(File::getName)
+        return Arrays.asList(files).stream().map(File::getName)
                 .filter(fileName -> (!fileName.contains(CommonConstants.DEFAULT_PLUGIN_ID)))
                 .collect(Collectors.toCollection(ArrayList::new));
-        return fileNames;
     }
 
     /**
@@ -148,5 +159,26 @@ public class FileStorageService {
             }
         }
         throw new MangleRuntimeException(ErrorCode.FILE_NAME_NOT_EXIST, fileName);
+    }
+
+    /**
+     * Utility method to return List with names of Zip File Entries
+     *
+     * @param fis
+     * @return
+     */
+    private List<String> getZipEntriesList(InputStream fis) {
+        ZipEntry zipEntry = null;
+        List<String> fileEntries = new ArrayList<>();
+        try (ZipInputStream zipInputStream = new ZipInputStream(new BufferedInputStream(fis))) {
+            while ((zipEntry = zipInputStream.getNextEntry()) != null) {
+                fileEntries.add(zipEntry.getName());
+            }
+        } catch (FileNotFoundException e) {
+            throw new MangleRuntimeException(ErrorCode.FILE_NAME_NOT_EXIST, e);
+        } catch (IOException e) {
+            throw new MangleRuntimeException(e, ErrorCode.GENERIC_ERROR, (Object) null);
+        }
+        return fileEntries;
     }
 }

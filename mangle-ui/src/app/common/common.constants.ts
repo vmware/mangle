@@ -4,6 +4,8 @@ export class CommonConstants {
     public static readonly EQUALS_TO = "=";
     public static readonly AND_OP = "&";
 
+    public static readonly DEFAULT_DOMAIN = "mangle.local";
+
     public static readonly id = "id";
     public static readonly username = "username";
     public static readonly name_var = "name";
@@ -33,19 +35,25 @@ export class CommonConstants {
     public static readonly active = "ACTIVE";
     public static readonly quorumValue = "quorumValue";
     public static readonly deploymentType = "deploymentType";
+    public static readonly NOTIFICATION_NAMES = "names";
 
+    public static readonly COMMAND_EXECUTION_FAULT_SPEC = "com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec";
     public static readonly K8S_FAULT_SPEC = "com.vmware.mangle.cassandra.model.faults.specs.K8SFaultTriggerSpec";
+    public static readonly ENDPOINT_GROUP_FAULT_SPEC = "com.vmware.mangle.cassandra.model.faults.specs.EndpointGroupFaultTriggerSpec";
     public static readonly CPU_FAULT_SPEC = "com.vmware.mangle.cassandra.model.faults.specs.CpuFaultSpec";
     public static readonly MEMORY_FAULT_SPEC = "com.vmware.mangle.cassandra.model.faults.specs.MemoryFaultSpec";
     public static readonly DISKIO_FAULT_SPEC = "com.vmware.mangle.cassandra.model.faults.specs.DiskIOFaultSpec";
     public static readonly KILL_PROCESS_FAULT_SPEC = "com.vmware.mangle.cassandra.model.faults.specs.KillProcessFaultSpec";
+    public static readonly STOP_SERVICE_FAULT_SPEC = "com.vmware.mangle.cassandra.model.faults.specs.StopServiceFaultSpec";
     public static readonly DOCKER_FAULT_SPEC = "com.vmware.mangle.cassandra.model.faults.specs.DockerFaultSpec";
     public static readonly K8S_DELETE_FAULT_SPEC = "com.vmware.mangle.cassandra.model.faults.specs.K8SDeleteResourceFaultSpec";
     public static readonly K8S_NOT_READY_FAULT_SPEC = "com.vmware.mangle.cassandra.model.faults.specs.K8SResourceNotReadyFaultSpec";
     public static readonly K8S_SERVICE_UNAVAILABLE_SPEC = "com.vmware.mangle.cassandra.model.faults.specs.K8SServiceUnavailableFaultSpec";
+    public static readonly VCENTER_FAULT_SPEC = "com.vmware.mangle.cassandra.model.faults.specs.VCenterFaultTriggerSpec";
     public static readonly VCENTER_DISK_FAULT_SPEC = "com.vmware.mangle.cassandra.model.faults.specs.VMDiskFaultSpec";
     public static readonly VCENTER_NIC_FAULT_SPEC = "com.vmware.mangle.cassandra.model.faults.specs.VMNicFaultSpec";
     public static readonly VCENTER_STATE_FAULT_SPEC = "com.vmware.mangle.cassandra.model.faults.specs.VMStateFaultSpec";
+    public static readonly VCENTER_HOST_FAULT_SPEC = "com.vmware.mangle.model.vcenter.specs.HostFaultSpec";
     public static readonly NETWORK_FAULT_SPEC = "com.vmware.mangle.cassandra.model.faults.specs.NetworkFaultSpec";
     public static readonly FILE_HANDLER_LEAK_FAULT_SPEC = "com.vmware.mangle.cassandra.model.faults.specs.FilehandlerLeakFaultSpec";
     public static readonly THREAD_LEAK_FAULT_SPEC = "com.vmware.mangle.cassandra.model.faults.specs.ThreadLeakFaultSpec";
@@ -58,13 +66,30 @@ export class CommonConstants {
     public static readonly KERNEL_PANIC_FAULT_SPEC = "com.vmware.mangle.cassandra.model.faults.specs.KernelPanicSpec";
     public static readonly AWS_EC2_NETWORK_FAULT_SPEC = "com.vmware.mangle.model.aws.faults.spec.AwsEC2NetworkFaultSpec";
     public static readonly AWS_EC2_STATE_FAULT_SPEC = "com.vmware.mangle.model.aws.faults.spec.AwsEC2InstanceStateFaultSpec";
+    public static readonly AWS_EC2_STORAGE_FAULT_SPEC = "com.vmware.mangle.model.aws.faults.spec.AwsEC2StorageFaultSpec";
+    public static readonly AWS_RDS_FAULT_SPEC = "com.vmware.mangle.model.aws.faults.spec.AwsRDSFaultSpec";
+    public static readonly AZURE_VM_STATE_FAULT_SPEC = "com.vmware.mangle.model.azure.faults.spec.AzureVMStateFaultSpec";
+    public static readonly AZURE_VM_NETWORK_FAULT_SPEC = "com.vmware.mangle.model.azure.faults.spec.AzureVMNetworkFaultSpec";
+    public static readonly AZURE_VM_STORAGE_FAULT_SPEC = "com.vmware.mangle.model.azure.faults.spec.AzureVMStorageFaultSpec";
+    public static readonly DB_CONNECTION_LEAK_FAULT_SPEC = "com.vmware.mangle.cassandra.model.faults.specs.DbFaultSpec";
+    public static readonly DB_TRANSACTION_ERROR_FAULT_SPEC = "com.vmware.mangle.cassandra.model.faults.specs.DbTransactionErrorFaultSpec";
+    public static readonly CLOCK_SKEW_FAULT_SPEC = "com.vmware.mangle.cassandra.model.faults.specs.ClockSkewSpec";
+    public static readonly DB_TRANSACTION_LATENCY_FAULT_SPEC = "com.vmware.mangle.cassandra.model.faults.specs.DbTransactionLatencyFaultSpec";
+    public static readonly REDIS_DB_DELAY_FAULT_SPEC = "com.vmware.mangle.cassandra.model.redis.faults.specs.RedisDelayFaultSpec";
+    public static readonly REDIS_DB_RETURN_ERROR_FAULT_SPEC = "com.vmware.mangle.cassandra.model.redis.faults.specs.RedisReturnErrorFaultSpec";
+    public static readonly REDIS_DB_RETURN_EMPTY_FAULT_SPEC = "com.vmware.mangle.cassandra.model.redis.faults.specs.RedisFaultSpec";
+    public static readonly REDIS_DB_DROP_CONN_FAULT_SPEC = "com.vmware.mangle.cassandra.model.redis.faults.specs.RedisDropConnectionFaultSpec";
+    public static readonly NETWORK_PARTITION_FAULT_SPEC = "com.vmware.mangle.cassandra.model.faults.specs.NetworkPartitionFaultSpec";
 
     public static readonly APP_FAULTS = "APP_FAULTS";
     public static readonly INFRA_FAULTS = "INFRA_FAULTS";
+    public static readonly DB_FAULTS = "DB_FAULTS";
     public static readonly INFRA_FAULTS_DOCKER = "INFRA_FAULTS_DOCKER";
     public static readonly INFRA_FAULTS_VCENTER = "INFRA_FAULTS_VCENTER";
     public static readonly INFRA_FAULTS_K8S = "INFRA_FAULTS_K8S";
     public static readonly INFRA_FAULTS_AWS = "INFRA_FAULTS_AWS";
+    public static readonly INFRA_FAULTS_AZURE = "INFRA_FAULTS_AZURE";
+    public static readonly DB_FAULTS_REDIS = "DB_FAULTS_REDIS";
 
     public static readonly INFRA_FAULTS_NETWORK = "INFRA_FAULTS_NETWORK";
     public static readonly NETWORK_DELAY_MILLISECONDS = "NETWORK_DELAY_MILLISECONDS";
@@ -79,15 +104,22 @@ export class CommonConstants {
     public static readonly MEMORY_INFRA_FAULT_URL = "core/fault/memory-infra";
     public static readonly DISKIO_FAULT_URL = "core/fault/diskio-infra";
     public static readonly KILL_PROCESS_FAULT_URL = "core/fault/killprocess";
+    public static readonly STOP_SERVICE_FAULT_URL = "core/fault/stopservice";
     public static readonly DOCKER_FAULT_URL = "core/fault/docker-state-change";
     public static readonly K8S_DELETE_FAULT_URL = "core/fault/delete-k8s-resource";
     public static readonly K8S_NOT_READY_FAULT_URL = "core/fault/k8s-resource-not-ready";
     public static readonly K8S_SERVICE_UNAVAILABLE_URL = "core/fault/k8s-service-unavailable";
-    public static readonly VCENTER_DISK_FAULT_URL = "core/fault/vcenter-disk";
-    public static readonly VCENTER_NIC_FAULT_URL = "core/fault/vcenter-nic";
-    public static readonly VCENTER_STATE_FAULT_URL = "core/fault/vcenter-state";
-    public static readonly AWS_EC2_STATE_FAULT_URL = "core/fault/aws-ec2-state";
-    public static readonly AWS_EC2_NETWORK_FAULT_URL = "core/fault/aws-ec2-network";
+    public static readonly VCENTER_DISK_FAULT_URL = "core/fault/vcenter/vm-storage";
+    public static readonly VCENTER_NIC_FAULT_URL = "core/fault/vcenter/vm-network";
+    public static readonly VCENTER_STATE_FAULT_URL = "core/fault/vcenter/vm-state";
+    public static readonly VCENTER_HOST_FAULT_URL = "core/fault/vcenter/vcenter-host";
+    public static readonly AWS_EC2_STATE_FAULT_URL = "core/fault/aws/ec2-state";
+    public static readonly AWS_EC2_NETWORK_FAULT_URL = "core/fault/aws/ec2-network";
+    public static readonly AWS_EC2_STORAGE_FAULT_URL = "core/fault/aws/ec2-storage";
+    public static readonly AWS_RDS_FAULT_URL = "core/fault/aws/rds";
+    public static readonly AZURE_VM_STATE_FAULT_URL = "core/fault/azure/vm-state";
+    public static readonly AZURE_VM_NETWORK_FAULT_URL = "core/fault/azure/vm-network";
+    public static readonly AZURE_VM_STORAGE_FAULT_URL = "core/fault/azure/vm-storage";
     public static readonly CUSTOM_FAULT_URL = "core/fault/custom-fault";
     public static readonly PACKET_DELAY_FAULT_URL = "core/fault/packet-delay";
     public static readonly PACKET_DROP_FAULT_URL = "core/fault/packet-drop";
@@ -105,4 +137,36 @@ export class CommonConstants {
     public static readonly REQUESTS_SCHEDULED_URL = "core/requests/scheduled";
     public static readonly DISK_SPACE_FAULT_URL = "core/fault/disk-space";
     public static readonly KERNEL_PANIC_FAULT_URL = "core/fault/kernel-panic";
+    public static readonly DB_CONNECTION_LEAK_FAULT_URL = CommonConstants.FAULT_URL + "/db-connection-leak";
+    public static readonly DB_TRANSACTION_ERROR_FAULT_URL = CommonConstants.FAULT_URL + "/db-transaction-error";
+    public static readonly CLOCK_SKEW_FAULT_URL = "core/fault/clock-skew";
+    public static readonly DB_TRANSACTION_LATENCY_FAULT_URL = CommonConstants.FAULT_URL + "/db-transaction-latency";
+    public static readonly REDIS_DB_DELAY_FAULT_URL = CommonConstants.FAULT_URL + "/redis-db-delay";
+    public static readonly REDIS_DB_RETURN_ERROR_FAULT_URL = CommonConstants.FAULT_URL + "/redis-db-return-error";
+    public static readonly REDIS_DB_RETURN_EMPTY_FAULT_URL = CommonConstants.FAULT_URL + "/redis-db-return-empty";
+    public static readonly REDIS_DB_DROP_CONN_FAULT_URL = CommonConstants.FAULT_URL + "/redis-db-drop-connection";
+    public static readonly NETWORK_PARTITION_FAULT_URL = CommonConstants.FAULT_URL + "/network-partition";
+
+    public static readonly MACHINE = "MACHINE";
+    public static readonly K8S_CLUSTER = "K8S_CLUSTER";
+    public static readonly DOCKER = "DOCKER";
+    public static readonly VCENTER = "VCENTER";
+    public static readonly AWS = "AWS";
+    public static readonly AZURE = "AZURE";
+    public static readonly REDIS_FI_PROXY = "REDIS_FI_PROXY";
+    public static readonly ENDPOINT_GROUP = "ENDPOINT_GROUP";
+    public static readonly FUTURE = "FUTURE";
+    public static readonly PAST = "PAST";
+    public static readonly WAVEFRONT = "WAVEFRONT";
+    public static readonly DATADOG = "DATADOG";
+    public static readonly DATABASE = "DATABASE";
+
+    public static readonly metricConfigName = "metricConfigName";
+
+    public static readonly POSTGRES = 'POSTGRES';
+    public static readonly CASSANDRA = 'CASSANDRA';
+    public static readonly MONGODB = 'MONGODB';
+
+    public static readonly QUERY_NAME = "queryName";
+    public static readonly SERVICE_NAME = "deleteByName";
 }

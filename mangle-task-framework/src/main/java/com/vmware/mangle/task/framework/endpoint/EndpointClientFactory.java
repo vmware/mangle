@@ -22,22 +22,30 @@ import org.springframework.stereotype.Component;
 
 import com.vmware.mangle.cassandra.model.endpoint.AWSConnectionProperties;
 import com.vmware.mangle.cassandra.model.endpoint.AWSCredentials;
+import com.vmware.mangle.cassandra.model.endpoint.AzureConnectionProperties;
+import com.vmware.mangle.cassandra.model.endpoint.AzureCredentials;
 import com.vmware.mangle.cassandra.model.endpoint.CredentialsSpec;
 import com.vmware.mangle.cassandra.model.endpoint.DockerCertificates;
 import com.vmware.mangle.cassandra.model.endpoint.DockerConnectionProperties;
 import com.vmware.mangle.cassandra.model.endpoint.EndpointSpec;
 import com.vmware.mangle.cassandra.model.endpoint.K8SConnectionProperties;
 import com.vmware.mangle.cassandra.model.endpoint.K8SCredentials;
+import com.vmware.mangle.cassandra.model.endpoint.RedisProxyConnectionProperties;
 import com.vmware.mangle.cassandra.model.endpoint.RemoteMachineConnectionProperties;
 import com.vmware.mangle.cassandra.model.endpoint.RemoteMachineCredentials;
 import com.vmware.mangle.cassandra.model.endpoint.VCenterConnectionProperties;
 import com.vmware.mangle.cassandra.model.endpoint.VCenterCredentials;
 import com.vmware.mangle.utils.clients.aws.CustomAwsClient;
+import com.vmware.mangle.utils.clients.azure.CustomAzureClient;
+import com.vmware.mangle.utils.clients.database.DatabaseClient;
 import com.vmware.mangle.utils.clients.docker.CustomDockerClient;
 import com.vmware.mangle.utils.clients.endpoint.EndpointClient;
 import com.vmware.mangle.utils.clients.kubernetes.KubernetesCommandLineClient;
+import com.vmware.mangle.utils.clients.redis.RedisProxyClient;
 import com.vmware.mangle.utils.clients.ssh.SSHUtils;
 import com.vmware.mangle.utils.clients.vcenter.VCenterClient;
+import com.vmware.mangle.utils.constants.ErrorConstants;
+import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.MangleRuntimeException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 import com.vmware.mangle.utils.helpers.security.DecryptFields;
@@ -50,7 +58,11 @@ import com.vmware.mangle.utils.helpers.security.DecryptFields;
 @Component
 public class EndpointClientFactory {
 
-    public EndpointClient getEndPointClient(CredentialsSpec credentials, @NonNull EndpointSpec endpoint) {
+    public EndpointClient getEndPointClient(CredentialsSpec credentials, @NonNull EndpointSpec endpoint)
+            throws MangleException {
+        if (null != endpoint.getEnable() && !endpoint.getEnable()) {
+            throw new MangleException(ErrorCode.ENDPOINT_DISABLED, endpoint.getName());
+        }
         switch (endpoint.getEndPointType()) {
         case DOCKER:
             return getCustomDockerClient(endpoint.getDockerConnectionProperties());
@@ -62,6 +74,12 @@ public class EndpointClientFactory {
             return getVCenterEndpoint(credentials, endpoint.getVCenterConnectionProperties());
         case AWS:
             return getAwsEndpoint(credentials, endpoint.getAwsConnectionProperties());
+        case AZURE:
+            return getAzureEndpoint(credentials, endpoint.getAzureConnectionProperties());
+        case REDIS_FI_PROXY:
+            return getRedisProxyEndpoint(endpoint.getRedisProxyConnectionProperties());
+        case DATABASE:
+            return new DatabaseClient();
         default:
             return null;
         }
@@ -71,7 +89,14 @@ public class EndpointClientFactory {
             VCenterConnectionProperties connProperties) {
         VCenterCredentials vCenterCredentials = (VCenterCredentials) DecryptFields.decrypt(credentialsSpec);
         return new VCenterClient(connProperties.getHostname(), vCenterCredentials.getUserName(),
-                vCenterCredentials.getPassword(), connProperties.getVCenterAdapterProperties());
+                vCenterCredentials.getPassword(), connProperties.getVCenterAdapterDetails());
+    }
+
+    private CustomAzureClient getAzureEndpoint(CredentialsSpec credentialsSpec,
+            AzureConnectionProperties connProperties) {
+        AzureCredentials azureCredentials = (AzureCredentials) DecryptFields.decrypt(credentialsSpec);
+        return new CustomAzureClient(connProperties.getSubscriptionId(), connProperties.getTenant(),
+                azureCredentials.getAzureClientId(), azureCredentials.getAzureClientKey());
     }
 
     public CustomAwsClient getAwsEndpoint(CredentialsSpec credentialsSpec, AWSConnectionProperties connProperties) {
@@ -142,9 +167,10 @@ public class EndpointClientFactory {
                 throw new MangleRuntimeException(e, ErrorCode.IO_EXCEPTION);
             }
         }
-        if (null != k8sConnectionProps.getNamespace() && "" != k8sConnectionProps.getNamespace().trim()) {
+        if (null != k8sConnectionProps.getNamespace() && !"".equals(k8sConnectionProps.getNamespace().trim())) {
             client.setNameSpace(k8sConnectionProps.getNamespace());
         }
+        testConnection(client);
         return client;
     }
 
@@ -165,4 +191,17 @@ public class EndpointClientFactory {
         return sshClient;
     }
 
+    public void testConnection(EndpointClient client) throws MangleRuntimeException {
+        try {
+            client.testConnection();
+        } catch (MangleException exception) {
+            throw new MangleRuntimeException(ErrorConstants.TEST_CONNECTION_FAILED, ErrorCode.TEST_CONNECTION_FAILED);
+        }
+    }
+
+    private EndpointClient getRedisProxyEndpoint(RedisProxyConnectionProperties redisProxyConnectionProperties) {
+        RedisProxyClient client = RedisProxyClient.getClient();
+        client.setRedisProxyConnectionProperties(redisProxyConnectionProperties);
+        return client;
+    }
 }

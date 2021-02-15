@@ -1,0 +1,7 @@
+<div class="form-group">
+    <label for="notifiers">Notifiers (optional)</label>
+    <span class="label label-info" *ngFor="let notiname of notifiersData">{{notiname}}&nbsp;
+        <clr-icon shape="times" size="12" (click)="removeNotifiers(notiname);"></clr-icon>
+    </span>
+    <clr-icon shape="plus-circle" (click)="openNotifiersModal();" style="width:21px;height:30px;"></clr-icon>
+</div>

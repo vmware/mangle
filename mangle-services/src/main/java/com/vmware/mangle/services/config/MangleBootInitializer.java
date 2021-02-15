@@ -39,7 +39,10 @@ import com.vmware.mangle.services.ClusterConfigService;
 import com.vmware.mangle.services.SchedulerService;
 import com.vmware.mangle.services.TaskService;
 import com.vmware.mangle.services.enums.MangleQuorumStatus;
+import com.vmware.mangle.services.events.schedule.ScheduleCreatedEvent;
+import com.vmware.mangle.services.events.web.CustomEventPublisher;
 import com.vmware.mangle.services.hazelcast.HazelcastTaskCache;
+import com.vmware.mangle.services.poll.PollingService;
 import com.vmware.mangle.utils.constants.Constants;
 import com.vmware.mangle.utils.constants.HazelcastConstants;
 import com.vmware.mangle.utils.exceptions.MangleException;
@@ -62,15 +65,23 @@ public class MangleBootInitializer {
     private List<String> taskQueue = new ArrayList<>();
 
     private ThreadPoolTaskScheduler taskScheduler;
+    private CustomEventPublisher eventPublisher;
+
+    //@Autowired
+    private PollingService<?> pollingService;
 
     @Autowired
     public MangleBootInitializer(TaskService taskService, HazelcastTaskCache taskCache,
-            SchedulerService schedulerService, ClusterConfigService clusterConfigService) {
+            SchedulerService schedulerService, ClusterConfigService clusterConfigService,
+            CustomEventPublisher eventPublisher,PollingService pollingService) {
         this.taskService = taskService;
         this.mapService = taskCache;
         this.schedulerService = schedulerService;
         this.configService = clusterConfigService;
+        this.eventPublisher = eventPublisher;
+        this.pollingService = pollingService;
     }
+
 
     @Autowired
     public void setTaskScheduler(ThreadPoolTaskScheduler threadPoolTaskScheduler) {
@@ -78,13 +89,13 @@ public class MangleBootInitializer {
     }
 
     /**
-     * The method will re-trigger all the schedules and schedule the INPROGRESS tasks to be triggered
-     * after 5minutes in following cases:
+     * The method will re-trigger all the schedules and schedule the INPROGRESS tasks to be
+     * triggered after 5minutes in following cases:
      *
      * 1. if the deployment mode standalone, after the tomcat is initialized
      *
-     * 2. If deployment is in cluster mode, after the quorum is established, this will be triggered from
-     * the master node
+     * 2. If deployment is in cluster mode, after the quorum is established, this will be triggered
+     * from the master node
      */
     public void initializeApplicationTasks() {
         if (null != hazelcastInstance
@@ -92,6 +103,9 @@ public class MangleBootInitializer {
                         .getCluster().getLocalMember().getAddress()
                 && HazelcastConstants.getMangleQourumStatus() == MangleQuorumStatus.PRESENT) {
             log.info("Mangle cluster has only one node, will be triggering scheduled tasks and in-progress tasks");
+            if (!pollingService.isThreadalive()) {
+                pollingService.startPollingThread();
+            }
             scheduleMisfiredJobs();
             retriggerInProgressTasks();
         }
@@ -105,7 +119,7 @@ public class MangleBootInitializer {
             return;
         }
         for (SchedulerSpec scheduledJob : scheduledJobsList) {
-            mapService.addTaskToCache(scheduledJob.getId(), scheduledJob.getStatus().name());
+            eventPublisher.publishEvent(new ScheduleCreatedEvent(scheduledJob.getId(), scheduledJob.getStatus()));
         }
     }
 
@@ -116,7 +130,8 @@ public class MangleBootInitializer {
      *
      * 2. If a task is older than 30mins, that task is also updated as a failed task
      *
-     * 3. All other tasks will be added to a queue, and will be scheduled to be triggered after 5 mins
+     * 3. All other tasks will be added to a queue, and will be scheduled to be triggered after 5
+     * mins
      *
      */
     private void retriggerInProgressTasks() {
@@ -152,6 +167,7 @@ public class MangleBootInitializer {
 
     }
 
+    @SuppressWarnings("deprecation")
     private void updateTaskFailed(Task<TaskSpec> task, TaskStatus taskStatus) throws MangleException {
         TaskTrigger taskTrigger = task.getTriggers().peek();
         taskTrigger.setEndTime(new Date(System.currentTimeMillis()).toGMTString());
@@ -185,9 +201,9 @@ public class MangleBootInitializer {
     }
 
     /**
-     * Method will update the cluster configuration of the cluster with the list of the members if the
-     * cluster has a quorum, only node that has joined the cluster with active quorum can update the
-     * members list
+     * Method will update the cluster configuration of the cluster with the list of the members if
+     * the cluster has a quorum, only node that has joined the cluster with active quorum can update
+     * the members list
      */
     public void updateClusterConfigObject() {
         log.info("Updating mangle cluster configuration");
@@ -212,8 +228,8 @@ public class MangleBootInitializer {
     }
 
     /**
-     * This method will be called when a node leaves the cluster, which may cause the current node to
-     * lose the quorum
+     * This method will be called when a node leaves the cluster, which may cause the current node
+     * to lose the quorum
      *
      * When a node loses quorum it will remove it's entry from the list of members in db
      */

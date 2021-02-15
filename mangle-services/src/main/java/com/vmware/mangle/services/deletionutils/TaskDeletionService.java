@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.actuate.endpoint.OperationType;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
@@ -30,6 +31,8 @@ import com.vmware.mangle.cassandra.model.tasks.Task;
 import com.vmware.mangle.cassandra.model.tasks.TaskStatus;
 import com.vmware.mangle.model.response.DeleteOperationResponse;
 import com.vmware.mangle.services.SchedulerService;
+import com.vmware.mangle.services.cassandra.model.events.basic.EntityOperationFailedEvent;
+import com.vmware.mangle.services.events.web.CustomEventPublisher;
 import com.vmware.mangle.services.repository.TaskRepository;
 import com.vmware.mangle.utils.constants.ErrorConstants;
 import com.vmware.mangle.utils.exceptions.MangleException;
@@ -46,11 +49,14 @@ public class TaskDeletionService {
 
     private TaskRepository taskRepository;
     private SchedulerService schedulerService;
+    private CustomEventPublisher eventPublisher;
 
     @Autowired
-    public TaskDeletionService(TaskRepository taskRepository, SchedulerService schedulerService) {
+    public TaskDeletionService(TaskRepository taskRepository, SchedulerService schedulerService,
+            CustomEventPublisher eventPublisher) {
         this.taskRepository = taskRepository;
         this.schedulerService = schedulerService;
+        this.eventPublisher = eventPublisher;
     }
 
     public DeleteOperationResponse deleteTasksByIds(List<String> taskIds) throws MangleException {
@@ -91,6 +97,8 @@ public class TaskDeletionService {
         if (!StringUtils.isEmpty(taskId)) {
             Task<TaskSpec> task = taskRepository.findById(taskId).orElse(null);
             if (task != null && task.getTaskStatus() == TaskStatus.IN_PROGRESS) {
+                eventPublisher.publishAnEvent(new EntityOperationFailedEvent(taskId,
+                        OperationType.DELETE.name(), task.getClass().getName()));
                 throw new MangleException(String.format(ErrorConstants.INPROGRESS_TASK_DELETION_FAILURE, taskId),
                         ErrorCode.INPROGRESS_TASK_DELETION_FAILURE, taskId);
             }

@@ -32,6 +32,7 @@ import com.hazelcast.core.ReplicatedMap;
 import com.hazelcast.nio.Address;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -40,8 +41,10 @@ import com.vmware.mangle.cassandra.model.faults.specs.TaskSpec;
 import com.vmware.mangle.cassandra.model.hazelcast.HazelcastClusterConfig;
 import com.vmware.mangle.cassandra.model.tasks.Task;
 import com.vmware.mangle.services.ClusterConfigService;
+import com.vmware.mangle.services.TaskService;
 import com.vmware.mangle.services.enums.MangleNodeStatus;
 import com.vmware.mangle.services.enums.MangleQuorumStatus;
+import com.vmware.mangle.services.poll.PollingService;
 import com.vmware.mangle.services.tasks.executor.TaskExecutor;
 import com.vmware.mangle.utils.CommonUtils;
 import com.vmware.mangle.utils.constants.Constants;
@@ -88,6 +91,14 @@ public class HazelcastClusterMembershipListener implements MembershipListener, H
     private PartitionService partitionService;
 
     private ThreadPoolTaskScheduler taskScheduler;
+    @Autowired
+    private PollingService<?> pollingService;
+
+    @Value("${hazelcast.config.kubernetesMode}")
+    private boolean kubernetesMode;
+
+    @Autowired
+    private TaskService taskService;
 
     private static void updateMangleNodeCurrentStatus(MangleNodeStatus nodeStatus) {
         URLConstants.setMangleNodeStatus(nodeStatus);
@@ -102,7 +113,9 @@ public class HazelcastClusterMembershipListener implements MembershipListener, H
     public void memberAdded(MembershipEvent membershipEvent) {
         Address addedMember = membershipEvent.getMember().getAddress();
         clusterConfigService.handleQuorumForNewNodeAddition();
-        hz.getConfig().getNetworkConfig().getJoin().getTcpIpConfig().addMember(addedMember.getHost());
+        if (!kubernetesMode) {
+            hz.getConfig().getNetworkConfig().getJoin().getTcpIpConfig().addMember(addedMember.getHost());
+        }
         log.debug("Member {} joined the cluster", addedMember);
     }
 
@@ -110,13 +123,14 @@ public class HazelcastClusterMembershipListener implements MembershipListener, H
      *
      * Method is triggered when member leaves the cluster
      *
-     * Upon the member leaving the cluster, the tasks that were being executed on the dead node are to
-     * be re-triggered on the each of the other node, depending on which node owns the partition, in
-     * which key(task id in our case) is stored
+     * Upon the member leaving the cluster, the tasks that were being executed on the dead node are
+     * to be re-triggered on the each of the other node, depending on which node owns the partition,
+     * in which key(task id in our case) is stored
      *
-     * The task that are triggered in this method are only those, which sits in the partition that are
-     * already migrated to another node(new owner) when it joined the cluster, but those tasks were
-     * continued to be executed on the same node(old owner), on which they had first started executing
+     * The task that are triggered in this method are only those, which sits in the partition that
+     * are already migrated to another node(new owner) when it joined the cluster, but those tasks
+     * were continued to be executed on the same node(old owner), on which they had first started
+     * executing
      *
      *
      *
@@ -161,13 +175,21 @@ public class HazelcastClusterMembershipListener implements MembershipListener, H
         }
         this.taskScheduler.schedule(this::triggerTasks,
                 new Date(System.currentTimeMillis() + Constants.ONE_MINUTE_IN_MILLIS * 5));
+
+        if (null != hz
+                && hz.getCluster().getMembers().iterator().hasNext() && hz.getCluster().getMembers().iterator().next()
+                        .getAddress() == hz.getCluster().getLocalMember().getAddress()
+                && !pollingService.isThreadalive()) {
+            pollingService.startPollingThread();
+        }
     }
 
     private void triggerTask(String taskId) throws MangleException {
         log.debug("Task {} will be triggered on the current node", taskId);
         log.info("Triggering the task {}", taskId);
         if (hazelcastTaskService.isScheduledTask(taskId)) {
-            hazelcastTaskService.triggerTask(taskId);
+            Task<TaskSpec> task = taskService.getTaskById(taskId);
+            hazelcastTaskService.triggerTask(task);
         } else {
             taskQueue.add(taskId);
         }
@@ -219,8 +241,8 @@ public class HazelcastClusterMembershipListener implements MembershipListener, H
     }
 
     /**
-     * Method will remove the member entry of the removed node present in the cluster config This will
-     * only take place on the nodes that have the quorum
+     * Method will remove the member entry of the removed node present in the cluster config This
+     * will only take place on the nodes that have the quorum
      *
      * also removes the ip of the removed node from the node status replicated map
      *
@@ -249,7 +271,8 @@ public class HazelcastClusterMembershipListener implements MembershipListener, H
     private void triggerTasks() {
         for (String taskId : taskQueue) {
             try {
-                hazelcastTaskService.triggerTask(taskId);
+                Task<TaskSpec> task = taskService.getTaskById(taskId);
+                hazelcastTaskService.triggerTask(task);
             } catch (MangleException e) {
                 log.error("Failed to re-trigger the task {} because  of the exception {}", taskId, e.getMessage());
             }
@@ -257,13 +280,13 @@ public class HazelcastClusterMembershipListener implements MembershipListener, H
     }
 
     /**
-     * At any particular point in time, when a node leaves a cluster, then the entry of that node can be
-     * removed from the db by a node which meets the following terms,
+     * At any particular point in time, when a node leaves a cluster, then the entry of that node
+     * can be removed from the db by a node which meets the following terms,
      *
      * 1. If the node is the last identified master(as persisted in the DB)
      *
-     * 2. If the removed node is the last persisted master, and if the current node is the oldest node
-     * in the cluster with the quorum
+     * 2. If the removed node is the last persisted master, and if the current node is the oldest
+     * node in the cluster with the quorum
      *
      * @param config
      * @param event

@@ -64,4 +64,9 @@ public class Event implements Serializable {
         this.name = name;
         this.message = message;
     }
+
+    public void addToMessage(String message) {
+        setMessage(this.message + "; " + message);
+    }
+
 }

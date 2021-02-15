@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import lombok.extern.log4j.Log4j2;
 import org.pf4j.Extension;
 
 import com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec;
@@ -25,7 +24,6 @@ import com.vmware.mangle.cassandra.model.tasks.Task;
 import com.vmware.mangle.cassandra.model.tasks.commands.CommandInfo;
 import com.vmware.mangle.cassandra.model.tasks.commands.CommandOutputProcessingInfo;
 import com.vmware.mangle.task.framework.helpers.AbstractCommandExecutionTaskHelper;
-import com.vmware.mangle.task.framework.skeletons.ILongDurationTaskHelper;
 import com.vmware.mangle.utils.CommandUtils;
 import com.vmware.mangle.utils.ICommandExecutor;
 import com.vmware.mangle.utils.exceptions.MangleException;
@@ -37,9 +35,7 @@ import com.vmware.mangle.utils.exceptions.MangleException;
  */
 
 @Extension(ordinal = 1)
-@Log4j2
-public class MockTaskHelper<T extends CommandExecutionFaultSpec> extends AbstractCommandExecutionTaskHelper<T>
-        implements ILongDurationTaskHelper<T> {
+public class MockTaskHelper<T extends CommandExecutionFaultSpec> extends AbstractCommandExecutionTaskHelper<T> {
 
     private ICommandExecutor commandExecutor;
 
@@ -59,45 +55,37 @@ public class MockTaskHelper<T extends CommandExecutionFaultSpec> extends Abstrac
     }
 
     private List<CommandInfo> getInjectionCommandInfoList() {
-        List<CommandInfo> commandInfoList = new ArrayList<>();
-        CommandInfo commandInfo = new CommandInfo();
-        commandInfoList.add(commandInfo);
-        commandInfo.setCommand("echo \"Injecting Fault\"");
         List<CommandOutputProcessingInfo> commandOutputProcessingInfoList = new ArrayList<>();
         CommandOutputProcessingInfo commandOutputProcessingInfo = new CommandOutputProcessingInfo();
         commandOutputProcessingInfoList.add(commandOutputProcessingInfo);
-        commandInfo.setCommandOutputProcessingInfoList(null);
         List<String> expectedCommandOutputList = new ArrayList<>();
         expectedCommandOutputList.add("Injecting Fault");
-        commandInfo.setExpectedCommandOutputList(expectedCommandOutputList);
-        commandInfo.setIgnoreExitValueCheck(false);
-        commandInfo.setNoOfRetries(2);
-        commandInfo.setRetryInterval(1);
-        commandInfo.setTimeout(1);
+        CommandInfo commandInfo = CommandInfo.builder("echo \"Injecting Fault\"")
+                .commandOutputProcessingInfoList(commandOutputProcessingInfoList)
+                .expectedCommandOutputList(expectedCommandOutputList).ignoreExitValueCheck(false).noOfRetries(2)
+                .retryInterval(1).timeout(1).build();
+        List<CommandInfo> commandInfoList = new ArrayList<>();
+        commandInfoList.add(commandInfo);
         return commandInfoList;
     }
 
     private List<CommandInfo> getRemediationcommandInfoList() {
-        List<CommandInfo> commandInfoList = new ArrayList<>();
-        CommandInfo commandInfo = new CommandInfo();
-        commandInfoList.add(commandInfo);
-        commandInfo.setCommand("echo \"Remediating Fault\"");
         List<CommandOutputProcessingInfo> commandOutputProcessingInfoList = new ArrayList<>();
         CommandOutputProcessingInfo commandOutputProcessingInfo = new CommandOutputProcessingInfo();
         commandOutputProcessingInfoList.add(commandOutputProcessingInfo);
-        commandInfo.setCommandOutputProcessingInfoList(commandOutputProcessingInfoList);
         List<String> expectedCommandOutputList = new ArrayList<>();
         expectedCommandOutputList.add("Remediating Fault");
-        commandInfo.setExpectedCommandOutputList(expectedCommandOutputList);
-        commandInfo.setIgnoreExitValueCheck(false);
-        commandInfo.setNoOfRetries(2);
-        commandInfo.setRetryInterval(1);
-        commandInfo.setTimeout(1);
+        CommandInfo commandInfo = CommandInfo.builder("echo \"Remediating Fault\"")
+                .commandOutputProcessingInfoList(commandOutputProcessingInfoList)
+                .expectedCommandOutputList(expectedCommandOutputList).ignoreExitValueCheck(false).noOfRetries(2)
+                .retryInterval(1).timeout(1).build();
+        List<CommandInfo> commandInfoList = new ArrayList<>();
+        commandInfoList.add(commandInfo);
         return commandInfoList;
     }
 
     @Override
-    protected ICommandExecutor getExecutor(Task<T> task) throws MangleException {
+    public ICommandExecutor getExecutor(Task<T> task) throws MangleException {
         if (commandExecutor == null) {
             commandExecutor = new CommandUtils();
         }
@@ -131,23 +119,6 @@ public class MockTaskHelper<T extends CommandExecutionFaultSpec> extends Abstrac
     protected void checkRemediationPreRequisites(Task<T> task) throws MangleException {
         //No requirement identified
 
-    }
-
-    @Override
-    public boolean isTaskSupportingPause() {
-        return false;
-    }
-
-    @Override
-    public boolean pauseTask(Task<T> task) throws MangleException {
-        log.info("Pausing the Task: " + task.getTaskData().getId());
-        return true;
-    }
-
-    @Override
-    public boolean resumeTask(Task<T> task) throws MangleException {
-        log.info("Resuming the Task: " + task.getTaskData().getId());
-        return true;
     }
 
     @Override

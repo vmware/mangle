@@ -1,42 +1,30 @@
-import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
-import { EndpointService } from 'src/app/core/endpoint/endpoint.service';
-import { FaultService } from '../../../fault.service';
-import { DataService } from 'src/app/shared/data.service';
-import { CommonNetwork } from '../common.network';
-import { CommonConstants } from 'src/app/common/common.constants';
+import {Component, OnInit} from "@angular/core";
+import {Router} from "@angular/router";
+import {EndpointService} from "src/app/core/endpoint/endpoint.service";
+import {FaultService} from "../../../fault.service";
+import {DataService} from "src/app/shared/data.service";
+import {CommonNetwork} from "../common.network";
+import {CommonConstants} from "src/app/common/common.constants";
+import {CommonUtils} from "src/app/shared/commonUtils";
 
 @Component({
-  selector: 'app-packet-corruption',
-  templateUrl: './../network.component.html'
+  selector: "app-packet-corruption",
+  templateUrl: "./../network.component.html"
 })
 export class PacketCorruptionComponent extends CommonNetwork implements OnInit {
 
-  public alertMessage: string;
-  public isErrorMessage: boolean;
+  public percentageHidden = false;
+  public latencyHidden = false;
+  public faultDescription = "Execute Packet Corruption Fault";
 
-  public latencyHidden: boolean = false;
-  public percentageHidden: boolean = false;
-  public faultDescription: string = "Execute Packet Corruption Fault"
-
-  constructor(faultService: FaultService, private endpointService: EndpointService, router: Router, private dataService: DataService) {
-    super(faultService, router, CommonConstants.PACKET_CORRUPTION_PERCENTAGE);
+  constructor(faultService: FaultService, endpointService: EndpointService, router: Router,
+              private dataService: DataService, commonUtils: CommonUtils) {
+    super(endpointService, faultService, router, CommonConstants.PACKET_CORRUPTION_PERCENTAGE, commonUtils);
   }
 
   ngOnInit() {
     this.percentageHidden = true;
-    this.endpointService.getAllEndpoints().subscribe(
-      res => {
-        if (res.code) {
-          this.endpoints = [];
-        } else {
-          this.endpoints = res;
-        }
-      }, err => {
-        this.endpoints = [];
-        this.isErrorMessage= true;
-        this.alertMessage = err.error.description;
-      });
+    this.getAllEndpoints();
     if (this.dataService.sharedData != null) {
       this.populateFaultData(this.dataService);
     }

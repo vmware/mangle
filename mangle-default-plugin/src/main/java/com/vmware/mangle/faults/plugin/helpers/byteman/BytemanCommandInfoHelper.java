@@ -74,9 +74,9 @@ import com.vmware.mangle.utils.constants.Constants;
 public class BytemanCommandInfoHelper {
 
     static CommandInfo getK8sJavaAgentInstallationCommandInfo(CommandExecutionFaultSpec jvmAgentFaultSpec) {
-        CommandInfo baseCommandInfo = getBaseJavaAgentInstallationCommandInfo();
+        CommandInfo.CommandInfoBuilder builder;
         if (!StringUtils.isEmpty(jvmAgentFaultSpec.getArgs().get(JAVA_HOME_PATH))) {
-            baseCommandInfo.setCommand(String.format(PID_K8S_ATTACH_MXBEANS_COMMAND_WITH_PORT_JAVA_HOME,
+            builder = CommandInfo.builder(String.format(PID_K8S_ATTACH_MXBEANS_COMMAND_WITH_PORT_JAVA_HOME,
                     jvmAgentFaultSpec.getK8sArguments().getPodInAction(),
                     jvmAgentFaultSpec.getK8sArguments().getContainerName(),
                     SET_JAVA_HOME_CMD + jvmAgentFaultSpec.getArgs().get(JAVA_HOME_PATH) + " && "
@@ -84,200 +84,186 @@ public class BytemanCommandInfoHelper {
                     ((JVMAgentFaultSpec) jvmAgentFaultSpec).getJvmProperties().getPort(),
                     jvmAgentFaultSpec.getArgs().get(PROCESS)));
         } else {
-            baseCommandInfo.setCommand(String.format(PID_K8S_ATTACH_MXBEANS_COMMAND_WITH_PORT,
+            builder = CommandInfo.builder(String.format(PID_K8S_ATTACH_MXBEANS_COMMAND_WITH_PORT,
                     jvmAgentFaultSpec.getK8sArguments().getPodInAction(),
                     jvmAgentFaultSpec.getK8sArguments().getContainerName(), jvmAgentFaultSpec.getInjectionHomeDir(),
                     ((JVMAgentFaultSpec) jvmAgentFaultSpec).getJvmProperties().getPort(),
                     jvmAgentFaultSpec.getArgs().get(PROCESS)));
         }
-        baseCommandInfo.setNoOfRetries(10);
-        baseCommandInfo.setRetryInterval(5);
-        return baseCommandInfo;
+        getBaseJavaAgentInstallationCommandInfo(builder);
+        builder.noOfRetries(10).retryInterval(5);
+        return builder.build();
     }
 
     static CommandInfo getDockerJavaAgentInstallationCommandInfo(CommandExecutionFaultSpec jvmAgentFaultSpec) {
-        CommandInfo baseCommandInfo = getBaseJavaAgentInstallationCommandInfo();
+        CommandInfo.CommandInfoBuilder builder;
         if (!StringUtils.isEmpty(jvmAgentFaultSpec.getArgs().get(JAVA_HOME_PATH))) {
-            baseCommandInfo.setCommand(String.format(
+            builder = CommandInfo.builder(String.format(
                     SET_JAVA_HOME_CMD + jvmAgentFaultSpec.getArgs().get(JAVA_HOME_PATH) + "&&"
                             + PID_ATTACH_MXBEANS_COMMAND_WITH_PORT,
                     jvmAgentFaultSpec.getInjectionHomeDir(),
                     ((JVMAgentFaultSpec) jvmAgentFaultSpec).getJvmProperties().getPort(),
                     jvmAgentFaultSpec.getArgs().get(PROCESS)));
         } else {
-            baseCommandInfo.setCommand(
+            builder = CommandInfo.builder(
                     String.format(PID_ATTACH_MXBEANS_COMMAND_WITH_PORT, jvmAgentFaultSpec.getInjectionHomeDir(),
                             ((JVMAgentFaultSpec) jvmAgentFaultSpec).getJvmProperties().getPort(),
                             jvmAgentFaultSpec.getArgs().get(PROCESS)));
         }
+        getBaseJavaAgentInstallationCommandInfo(builder);
+        CommandInfo baseCommandInfo = builder.build();
         log.debug("CommandInfo object of attachBeansCommandInfo :" + baseCommandInfo);
         return baseCommandInfo;
     }
 
     static CommandInfo getLinuxJavaAgentInstallCommandInfo(CommandExecutionFaultSpec jvmAgentFaultSpec) {
         // Byteman install command
-        CommandInfo baseCommandInfo = getBaseJavaAgentInstallationCommandInfo();
-        baseCommandInfo.setCommand(getLinuxJavaAgentInstallationCommand(jvmAgentFaultSpec));
-        return baseCommandInfo;
+        CommandInfo.CommandInfoBuilder builder =
+                CommandInfo.builder(getLinuxJavaAgentInstallationCommand(jvmAgentFaultSpec));
+        getBaseJavaAgentInstallationCommandInfo(builder);
+        return builder.build();
     }
 
-    private static CommandInfo getBaseJavaAgentInstallationCommandInfo() {
-        CommandInfo baseCommandInfo = new CommandInfo();
-        baseCommandInfo.setIgnoreExitValueCheck(true);
-        baseCommandInfo.setExpectedCommandOutputList(
-                Arrays.asList(SUCCESSFUL_BYTEMAN_AGENT_INSTALLATION_MESSAGE, BYTEMAN_AGENT_INSTALLATION_RETRY_MESSAGE));
-        baseCommandInfo.setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentInstallationRequest());
-        return baseCommandInfo;
+    private static CommandInfo.CommandInfoBuilder getBaseJavaAgentInstallationCommandInfo(
+            CommandInfo.CommandInfoBuilder builder) {
+        return builder.ignoreExitValueCheck(true)
+                .expectedCommandOutputList(Arrays.asList(SUCCESSFUL_BYTEMAN_AGENT_INSTALLATION_MESSAGE,
+                        BYTEMAN_AGENT_INSTALLATION_RETRY_MESSAGE))
+                .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentInstallationRequest());
     }
 
     static CommandInfo getK8sJavaAgentFaultInjectionCommandInfo(CommandExecutionFaultSpec jvmAgentFaultSpec,
             JavaAgentFaultUtils javaAgentFaultUtils) {
-        CommandInfo baseCommandInfo = getBaseJavaAgentFaultInjectionCommandInfo();
-
-        baseCommandInfo
-                .setCommand(String.format(KUBE_FAULT_EXEC_STRING, jvmAgentFaultSpec.getK8sArguments().getPodInAction(),
+        CommandInfo.CommandInfoBuilder builder = CommandInfo
+                .builder(String.format(KUBE_FAULT_EXEC_STRING, jvmAgentFaultSpec.getK8sArguments().getPodInAction(),
                         jvmAgentFaultSpec.getK8sArguments().getContainerName(),
                         javaAgentFaultUtils.buildInjectionCommand(jvmAgentFaultSpec.getArgs(),
                                 jvmAgentFaultSpec.getInjectionHomeDir(),
                                 String.valueOf(((JVMAgentFaultSpec) jvmAgentFaultSpec).getJvmProperties().getPort()))));
-        baseCommandInfo.setNoOfRetries(10);
-        baseCommandInfo.setRetryInterval(5);
-        return baseCommandInfo;
+        getBaseJavaAgentFaultInjectionCommandInfo(builder);
+        builder.noOfRetries(10).retryInterval(5);
+        return builder.build();
     }
 
     static CommandInfo getDockerJavaAgentFaultInjectionCommandInfo(CommandExecutionFaultSpec jvmAgentFaultSpec,
             JavaAgentFaultUtils javaAgentFaultUtils) {
-        CommandInfo baseCommandInfo = getBaseJavaAgentFaultInjectionCommandInfo();
+        CommandInfo.CommandInfoBuilder builder;
         if (!StringUtils.isEmpty(jvmAgentFaultSpec.getArgs().get(JAVA_HOME_PATH))) {
-            baseCommandInfo.setCommand(String.format(SET_JAVA_HOME_CMD + jvmAgentFaultSpec.getArgs().get(JAVA_HOME_PATH)
-                    + "&&"
+            builder = CommandInfo.builder(String.format(SET_JAVA_HOME_CMD
+                    + jvmAgentFaultSpec.getArgs().get(JAVA_HOME_PATH) + "&&"
                     + javaAgentFaultUtils.buildInjectionCommand(jvmAgentFaultSpec.getArgs(),
                             jvmAgentFaultSpec.getInjectionHomeDir(),
                             String.valueOf(((JVMAgentFaultSpec) jvmAgentFaultSpec).getJvmProperties().getPort()))));
         } else {
-            baseCommandInfo.setCommand(javaAgentFaultUtils.buildInjectionCommand(jvmAgentFaultSpec.getArgs(),
+            builder = CommandInfo.builder(javaAgentFaultUtils.buildInjectionCommand(jvmAgentFaultSpec.getArgs(),
                     jvmAgentFaultSpec.getInjectionHomeDir(),
                     String.valueOf(((JVMAgentFaultSpec) jvmAgentFaultSpec).getJvmProperties().getPort())));
         }
+        getBaseJavaAgentFaultInjectionCommandInfo(builder);
+        CommandInfo baseCommandInfo = builder.build();
         log.debug("CommandInfo object of InjectFaultCommandInfo :" + baseCommandInfo);
-
         return baseCommandInfo;
     }
 
     static CommandInfo getLinuxJavaAgentFaultInjectionCommandInfo(CommandExecutionFaultSpec jvmAgentFaultSpec) {
-        // TODO Validating Fault arguments
-        CommandInfo baseCommandInfo = getBaseJavaAgentFaultInjectionCommandInfo();
-        baseCommandInfo.setCommand(getBytemanSubmitCommand(jvmAgentFaultSpec).replace("%s",
-                "-if " + CommonUtils.convertMaptoDelimitedString(jvmAgentFaultSpec.getArgs(), " ")));
-        baseCommandInfo.setIgnoreExitValueCheck(true);
-        return baseCommandInfo;
+        CommandInfo.CommandInfoBuilder builder = CommandInfo.builder(getBytemanSubmitCommand(jvmAgentFaultSpec)
+                .replace("%s", "-if " + CommonUtils.convertMaptoDelimitedString(jvmAgentFaultSpec.getArgs(), " ")));
+        getBaseJavaAgentFaultInjectionCommandInfo(builder);
+        return builder.ignoreExitValueCheck(true).build();
     }
 
-    private static CommandInfo getBaseJavaAgentFaultInjectionCommandInfo() {
-        CommandInfo baseCommandInfo = new CommandInfo();
+    private static CommandInfo.CommandInfoBuilder getBaseJavaAgentFaultInjectionCommandInfo(
+            CommandInfo.CommandInfoBuilder builder) {
+
         List<CommandOutputProcessingInfo> commandOutputProcessingInfoList = new ArrayList<>();
         CommandOutputProcessingInfo commandOutputProcessingInfo = new CommandOutputProcessingInfo();
         commandOutputProcessingInfo.setExtractedPropertyName("faultId");
         commandOutputProcessingInfo.setRegExpression("[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}");
         commandOutputProcessingInfoList.add(commandOutputProcessingInfo);
-
-        baseCommandInfo.setCommandOutputProcessingInfoList(commandOutputProcessingInfoList);
-        baseCommandInfo.setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentFaultInjectionRequest());
-        baseCommandInfo.setIgnoreExitValueCheck(false);
-        baseCommandInfo.setExpectedCommandOutputList(Arrays.asList(Constants.SUCESSFUL_FAULT_CREATION_MESSAGE));
-
-        return baseCommandInfo;
+        return builder.commandOutputProcessingInfoList(commandOutputProcessingInfoList)
+                .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentFaultInjectionRequest())
+                .ignoreExitValueCheck(false)
+                .expectedCommandOutputList(Arrays.asList(Constants.SUCESSFUL_FAULT_CREATION_MESSAGE));
     }
 
     static CommandInfo getK8sJavaAgentFaultRemediationRequestCommandInfo(CommandExecutionFaultSpec jvmAgentFaultSpec,
             JavaAgentFaultUtils javaAgentFaultUtils) {
-        CommandInfo baseCommandInfo = getBaseJavaAgentFaultRemediationRequestCommandInfo();
-        baseCommandInfo
-                .setCommand(String.format(KUBE_FAULT_EXEC_STRING, jvmAgentFaultSpec.getK8sArguments().getPodInAction(),
+        CommandInfo.CommandInfoBuilder builder = CommandInfo
+                .builder(String.format(KUBE_FAULT_EXEC_STRING, jvmAgentFaultSpec.getK8sArguments().getPodInAction(),
                         jvmAgentFaultSpec.getK8sArguments().getContainerName(),
                         javaAgentFaultUtils.buildRemediationCommand(jvmAgentFaultSpec.getInjectionHomeDir(),
                                 String.valueOf(((JVMAgentFaultSpec) jvmAgentFaultSpec).getJvmProperties().getPort()))));
-        ;
-        return baseCommandInfo;
+        getBaseJavaAgentFaultRemediationRequestCommandInfo(builder);
+        return builder.build();
     }
 
     static CommandInfo getDockerJavaAgentFaultRemediateRequestCommandInfo(CommandExecutionFaultSpec jvmAgentFaultSpec,
             JavaAgentFaultUtils javaAgentFaultUtils) {
-        CommandInfo baseCommandInfo = getBaseJavaAgentFaultRemediationRequestCommandInfo();
-        baseCommandInfo.setCommand(javaAgentFaultUtils.buildRemediationCommand(jvmAgentFaultSpec.getInjectionHomeDir(),
-                String.valueOf(((JVMAgentFaultSpec) jvmAgentFaultSpec).getJvmProperties().getPort())));
+        CommandInfo.CommandInfoBuilder builder =
+                CommandInfo.builder(javaAgentFaultUtils.buildRemediationCommand(jvmAgentFaultSpec.getInjectionHomeDir(),
+                        String.valueOf(((JVMAgentFaultSpec) jvmAgentFaultSpec).getJvmProperties().getPort())));
+        getBaseJavaAgentFaultRemediationRequestCommandInfo(builder);
+        CommandInfo baseCommandInfo = builder.build();
         log.debug("CommandInfo object RemediationCommandInfo:" + baseCommandInfo);
         return baseCommandInfo;
     }
 
     static CommandInfo getLinuxJavaAgentFaultRemediationRequestCommandInfo(
             CommandExecutionFaultSpec jvmAgentFaultSpec) {
-        CommandInfo baseCommandInfo = getBaseJavaAgentFaultRemediationRequestCommandInfo();
-        baseCommandInfo
-                .setCommand(getBytemanSubmitCommand(jvmAgentFaultSpec).replace("%s", "-rf " + FI_ADD_INFO_FAULTID));
-        return baseCommandInfo;
+        CommandInfo.CommandInfoBuilder builder = CommandInfo
+                .builder(getBytemanSubmitCommand(jvmAgentFaultSpec).replace("%s", "-rf " + FI_ADD_INFO_FAULTID));
+        return getBaseJavaAgentFaultRemediationRequestCommandInfo(builder).build();
     }
 
-    private static CommandInfo getBaseJavaAgentFaultRemediationRequestCommandInfo() {
-        CommandInfo baseCommandInfo = new CommandInfo();
-        baseCommandInfo.setIgnoreExitValueCheck(false);
-        baseCommandInfo.setExpectedCommandOutputList(Arrays.asList(REMEDIATION_REQUEST_SUCCESSFUL_STRING));
-        baseCommandInfo.setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentFaultRemediationRequest());
-        return baseCommandInfo;
+    private static CommandInfo.CommandInfoBuilder getBaseJavaAgentFaultRemediationRequestCommandInfo(
+            CommandInfo.CommandInfoBuilder builder) {
+        return builder.ignoreExitValueCheck(false)
+                .expectedCommandOutputList(Arrays.asList(REMEDIATION_REQUEST_SUCCESSFUL_STRING))
+                .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentFaultRemediationRequest());
     }
 
     static CommandInfo getK8sJavaAgentFaultRemediationVerificationCommandInfo(
             CommandExecutionFaultSpec jvmAgentFaultSpec, JavaAgentFaultUtils javaAgentFaultUtils) {
-        CommandInfo baseCommandInfo = getBaseJavaAgentFaultRemediationVerificationCommandInfo();
-        baseCommandInfo
-                .setCommand(String.format(KUBE_FAULT_EXEC_STRING, jvmAgentFaultSpec.getK8sArguments().getPodInAction(),
+        CommandInfo.CommandInfoBuilder builder = CommandInfo
+                .builder(String.format(KUBE_FAULT_EXEC_STRING, jvmAgentFaultSpec.getK8sArguments().getPodInAction(),
                         jvmAgentFaultSpec.getK8sArguments().getContainerName(),
                         javaAgentFaultUtils.buildGetFaultCommand(jvmAgentFaultSpec.getInjectionHomeDir(),
                                 String.valueOf(((JVMAgentFaultSpec) jvmAgentFaultSpec).getJvmProperties().getPort()))));
-        return baseCommandInfo;
+        return getBaseJavaAgentFaultRemediationVerificationCommandInfo(builder).build();
     }
 
     static CommandInfo getDockerJavaAgentFaultRemediationVerificationCommandInfo(
             CommandExecutionFaultSpec jvmAgentFaultSpec, JavaAgentFaultUtils javaAgentFaultUtils) {
-        CommandInfo baseCommandInfo = getBaseJavaAgentFaultRemediationVerificationCommandInfo();
-        baseCommandInfo.setCommand(javaAgentFaultUtils.buildGetFaultCommand(jvmAgentFaultSpec.getInjectionHomeDir(),
-                String.valueOf(((JVMAgentFaultSpec) jvmAgentFaultSpec).getJvmProperties().getPort())));
-        log.debug("CommandInfo object FaultCommandInfo :" + baseCommandInfo);
-        return baseCommandInfo;
+        CommandInfo.CommandInfoBuilder builder =
+                CommandInfo.builder(javaAgentFaultUtils.buildGetFaultCommand(jvmAgentFaultSpec.getInjectionHomeDir(),
+                        String.valueOf(((JVMAgentFaultSpec) jvmAgentFaultSpec).getJvmProperties().getPort())));
+        return getBaseJavaAgentFaultRemediationVerificationCommandInfo(builder).build();
     }
 
     static CommandInfo getLinuxJavaAgentFaultRemediationVerificationCommandInfo(
             CommandExecutionFaultSpec jvmAgentFaultSpec) {
-        CommandInfo baseCommandInfo = getBaseJavaAgentFaultRemediationVerificationCommandInfo();
-        baseCommandInfo
-                .setCommand(getBytemanSubmitCommand(jvmAgentFaultSpec).replace("%s", "-gf " + FI_ADD_INFO_FAULTID));
-        return baseCommandInfo;
+        CommandInfo.CommandInfoBuilder builder = CommandInfo
+                .builder(getBytemanSubmitCommand(jvmAgentFaultSpec).replace("%s", "-gf " + FI_ADD_INFO_FAULTID));
+        return getBaseJavaAgentFaultRemediationVerificationCommandInfo(builder).build();
     }
 
-    private static CommandInfo getBaseJavaAgentFaultRemediationVerificationCommandInfo() {
-        CommandInfo baseCommandInfo = new CommandInfo();
-        baseCommandInfo.setNoOfRetries(NO_OF_RETRIES);
-        baseCommandInfo.setRetryInterval(RETRY_WAIT_INTERVAL);
-        baseCommandInfo.setIgnoreExitValueCheck(true);
-        baseCommandInfo
-                .setExpectedCommandOutputList(Arrays.asList(FAULT_COMPLETION_STRING, AGENT_NOT_AVAILABLE_STRING));
-        return baseCommandInfo;
+    private static CommandInfo.CommandInfoBuilder getBaseJavaAgentFaultRemediationVerificationCommandInfo(
+            CommandInfo.CommandInfoBuilder builder) {
+        return builder.noOfRetries(NO_OF_RETRIES).retryInterval(RETRY_WAIT_INTERVAL).ignoreExitValueCheck(true)
+                .expectedCommandOutputList(Arrays.asList(FAULT_COMPLETION_STRING, AGENT_NOT_AVAILABLE_STRING));
     }
 
     static CommandInfo getK8sJavaAgentRuleInstallationCommandInfo(CommandExecutionFaultSpec jvmAgentFaultSpec,
             String ruleFileName) {
-        CommandInfo baseCommandInfo = getBaseJavaAgentRuleInstallationCommandInfo(jvmAgentFaultSpec);
-        baseCommandInfo
-                .setCommand(String.format(KUBE_FAULT_EXEC_STRING, jvmAgentFaultSpec.getK8sArguments().getPodInAction(),
+        CommandInfo.CommandInfoBuilder builder = CommandInfo
+                .builder(String.format(KUBE_FAULT_EXEC_STRING, jvmAgentFaultSpec.getK8sArguments().getPodInAction(),
                         jvmAgentFaultSpec.getK8sArguments().getContainerName(),
                         String.format(SUBMIT_COMMAND_WITH_PORT, jvmAgentFaultSpec.getInjectionHomeDir(),
                                 ((JVMCodeLevelFaultSpec) jvmAgentFaultSpec).getJvmProperties().getPort())
                                 + new StringBuilder().append(jvmAgentFaultSpec.getInjectionHomeDir()).append(AGENT_NAME)
                                         .append(FORWARD_SLASH).append(ruleFileName)));
-
-        baseCommandInfo.setNoOfRetries(10);
-        baseCommandInfo.setRetryInterval(5);
-        return baseCommandInfo;
+        getBaseJavaAgentRuleInstallationCommandInfo(jvmAgentFaultSpec, builder);
+        return builder.noOfRetries(10).retryInterval(5).build();
     }
 
     static CommandInfo getK8SCopyBytemanRuleFileInfo(String rule, String ruleFileName,
@@ -290,47 +276,41 @@ public class BytemanCommandInfoHelper {
         } catch (IOException e) {
             log.error(e);
         }
-        CommandInfo k8sCopyBytemanRuleFileCommandInfo = new CommandInfo();
         StringBuilder ruleFilepath = new StringBuilder().append(jvmAgentFaultSpec.getInjectionHomeDir())
                 .append(AGENT_NAME).append(FORWARD_SLASH).append(ruleFileName);
-        k8sCopyBytemanRuleFileCommandInfo
-                .setCommand("cp " + ruleFile.getPath() + " " + jvmAgentFaultSpec.getK8sArguments().getPodInAction()
-                        + ":" + ruleFilepath + " -c " + jvmAgentFaultSpec.getK8sArguments().getContainerName());
-        k8sCopyBytemanRuleFileCommandInfo.setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentCopyOnK8sPod());
-        return k8sCopyBytemanRuleFileCommandInfo;
+        return CommandInfo
+                .builder("cp " + ruleFile.getPath() + " " + jvmAgentFaultSpec.getK8sArguments().getPodInAction() + ":"
+                        + ruleFilepath + " -c " + jvmAgentFaultSpec.getK8sArguments().getContainerName())
+                .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentCopyOnK8sPod()).build();
     }
 
     static CommandInfo getDockerJavaAgentRuleInstallationCommandInfo(CommandExecutionFaultSpec jvmAgentFaultSpec) {
-        CommandInfo baseCommandInfo = getBaseJavaAgentRuleInstallationCommandInfo(jvmAgentFaultSpec);
-        baseCommandInfo.setCommand(String.format(SUBMIT_COMMAND_WITH_PORT, jvmAgentFaultSpec.getInjectionHomeDir(),
-                ((JVMCodeLevelFaultSpec) jvmAgentFaultSpec).getJvmProperties().getPort())
-                + jvmAgentFaultSpec.getInjectionHomeDir() + jvmAgentFaultSpec.getArgs().get(TASK_ID) + ".btm");
-        return baseCommandInfo;
+        CommandInfo.CommandInfoBuilder builder =
+                CommandInfo.builder(String.format(SUBMIT_COMMAND_WITH_PORT, jvmAgentFaultSpec.getInjectionHomeDir(),
+                        ((JVMCodeLevelFaultSpec) jvmAgentFaultSpec).getJvmProperties().getPort())
+                        + jvmAgentFaultSpec.getInjectionHomeDir() + jvmAgentFaultSpec.getArgs().get(TASK_ID) + ".btm");
+        return getBaseJavaAgentRuleInstallationCommandInfo(jvmAgentFaultSpec, builder).build();
     }
 
     static CommandInfo getLinuxJavaAgentRuleInstallationCommandInfo(CommandExecutionFaultSpec jvmAgentFaultSpec) {
-        CommandInfo baseCommandInfo = getBaseJavaAgentRuleInstallationCommandInfo(jvmAgentFaultSpec);
         // Byteman Submit or injection command
-        baseCommandInfo.setCommand(getBytemanSubmitCommand(jvmAgentFaultSpec).replace("%s",
-                jvmAgentFaultSpec.getInjectionHomeDir() + jvmAgentFaultSpec.getArgs().get(TASK_ID) + ".btm"));
-        return baseCommandInfo;
+        CommandInfo.CommandInfoBuilder builder =
+                CommandInfo.builder(getBytemanSubmitCommand(jvmAgentFaultSpec).replace("%s",
+                        jvmAgentFaultSpec.getInjectionHomeDir() + jvmAgentFaultSpec.getArgs().get(TASK_ID) + ".btm"));
+        return getBaseJavaAgentRuleInstallationCommandInfo(jvmAgentFaultSpec, builder).build();
     }
 
-    private static CommandInfo getBaseJavaAgentRuleInstallationCommandInfo(
-            CommandExecutionFaultSpec jvmAgentFaultSpec) {
-        List<String> expectedCommandInfolist = new ArrayList<String>();
+    private static CommandInfo.CommandInfoBuilder getBaseJavaAgentRuleInstallationCommandInfo(
+            CommandExecutionFaultSpec jvmAgentFaultSpec, CommandInfo.CommandInfoBuilder builder) {
+        List<String> expectedCommandInfolist = new ArrayList<>();
         expectedCommandInfolist.add("install rule " + jvmAgentFaultSpec.getArgs().get(TASK_ID));
         expectedCommandInfolist.add("redefine rule " + jvmAgentFaultSpec.getArgs().get(TASK_ID));
-        CommandInfo baseCommandInfo = new CommandInfo();
-        baseCommandInfo.setIgnoreExitValueCheck(false);
-        baseCommandInfo.setExpectedCommandOutputList(expectedCommandInfolist);
-        return baseCommandInfo;
+        return builder.ignoreExitValueCheck(false).expectedCommandOutputList(expectedCommandInfolist);
     }
 
     static CommandInfo getK8sJavaAgentRuleUninstallationCommandInfo(CommandExecutionFaultSpec jvmAgentFaultSpec) {
         String ruleFileName = jvmAgentFaultSpec.getArgs().get(TASK_ID) + ".btm";
-        CommandInfo baseCommandInfo = getBaseJavaAgentRuleUninstallationCommandInfo(jvmAgentFaultSpec);
-        baseCommandInfo.setCommand(String.format(String.format(KUBE_FAULT_EXEC_STRING,
+        CommandInfo.CommandInfoBuilder builder = CommandInfo.builder(String.format(String.format(KUBE_FAULT_EXEC_STRING,
                 jvmAgentFaultSpec.getK8sArguments().getPodInAction(),
                 jvmAgentFaultSpec.getK8sArguments().getContainerName(),
                 String.format(SUBMIT_COMMAND_WITH_PORT, jvmAgentFaultSpec.getInjectionHomeDir(), new StringBuilder()
@@ -338,80 +318,72 @@ public class BytemanCommandInfoHelper {
                         .append(new StringBuilder().append(jvmAgentFaultSpec.getInjectionHomeDir()).append(AGENT_NAME)
                                 .append(FORWARD_SLASH).append(ruleFileName))
                         .toString()))));
-        baseCommandInfo.setIgnoreExitValueCheck(true);
-        return baseCommandInfo;
+        getBaseJavaAgentRuleUninstallationCommandInfo(jvmAgentFaultSpec, builder);
+        return builder.ignoreExitValueCheck(true).build();
     }
 
     static CommandInfo getDockerJavaAgentRuleUninstallationCommandInfo(CommandExecutionFaultSpec jvmAgentFaultSpec) {
         String ruleFileName = jvmAgentFaultSpec.getArgs().get(TASK_ID) + ".btm";
-        CommandInfo baseCommandInfo = getBaseJavaAgentRuleUninstallationCommandInfo(jvmAgentFaultSpec);
-        baseCommandInfo.setCommand(String.format(SUBMIT_COMMAND_WITH_PORT, jvmAgentFaultSpec.getInjectionHomeDir(),
-                ((JVMCodeLevelFaultSpec) jvmAgentFaultSpec).getJvmProperties().getPort()) + "-u "
-                + jvmAgentFaultSpec.getInjectionHomeDir() + ruleFileName);
-        baseCommandInfo.setIgnoreExitValueCheck(true);
-        log.debug("CommandInfo object for RemediationCommandInfo :" + baseCommandInfo);
-        return baseCommandInfo;
+        CommandInfo.CommandInfoBuilder builder =
+                CommandInfo.builder(String.format(SUBMIT_COMMAND_WITH_PORT, jvmAgentFaultSpec.getInjectionHomeDir(),
+                        ((JVMCodeLevelFaultSpec) jvmAgentFaultSpec).getJvmProperties().getPort()) + "-u "
+                        + jvmAgentFaultSpec.getInjectionHomeDir() + ruleFileName);
+        getBaseJavaAgentRuleUninstallationCommandInfo(jvmAgentFaultSpec, builder);
+        return builder.ignoreExitValueCheck(true).build();
     }
 
     static CommandInfo getJavaAgentRuleDeleteCommandInfo(CommandExecutionFaultSpec jvmAgentFaultSpec) {
         String ruleFileName = jvmAgentFaultSpec.getArgs().get(TASK_ID) + ".btm";
-        CommandInfo deleteRulefileCommandInfo = new CommandInfo();
+        CommandInfo.CommandInfoBuilder builder;
         if (jvmAgentFaultSpec.getEndpoint().getEndPointType() == EndpointType.K8S_CLUSTER) {
-            deleteRulefileCommandInfo
-                    .setCommand(DELETE_COMMAND + new StringBuilder().append(jvmAgentFaultSpec.getInjectionHomeDir())
+            builder = CommandInfo
+                    .builder(DELETE_COMMAND + new StringBuilder().append(jvmAgentFaultSpec.getInjectionHomeDir())
                             .append(AGENT_NAME).append(FORWARD_SLASH).append(ruleFileName));
         } else {
-            deleteRulefileCommandInfo.setCommand(DELETE_COMMAND + jvmAgentFaultSpec.getInjectionHomeDir()
+            builder = CommandInfo.builder(DELETE_COMMAND + jvmAgentFaultSpec.getInjectionHomeDir()
                     + jvmAgentFaultSpec.getArgs().get(TASK_ID) + ".btm");
         }
-        deleteRulefileCommandInfo.setIgnoreExitValueCheck(true);
+        builder.ignoreExitValueCheck(true);
+        CommandInfo deleteRulefileCommandInfo = builder.build();
         log.debug("CommandInfo object for Delete Rule file CommandInfo :" + deleteRulefileCommandInfo);
         return deleteRulefileCommandInfo;
     }
 
     static CommandInfo getLinuxJavaAgentRuleUninstallationCommandInfo(CommandExecutionFaultSpec jvmAgentFaultSpec) {
-        CommandInfo baseCommandInfo = getBaseJavaAgentRuleUninstallationCommandInfo(jvmAgentFaultSpec);
-        baseCommandInfo.setCommand(getBytemanSubmitCommand(jvmAgentFaultSpec).replace("%s",
+        CommandInfo.CommandInfoBuilder builder = CommandInfo.builder(getBytemanSubmitCommand(jvmAgentFaultSpec).replace(
+                "%s",
                 "-u " + jvmAgentFaultSpec.getInjectionHomeDir() + jvmAgentFaultSpec.getArgs().get(TASK_ID) + ".btm"));
-        return baseCommandInfo;
+        return getBaseJavaAgentRuleUninstallationCommandInfo(jvmAgentFaultSpec, builder).build();
     }
 
-    private static CommandInfo getBaseJavaAgentRuleUninstallationCommandInfo(
-            CommandExecutionFaultSpec jvmAgentFaultSpec) {
-        CommandInfo baseCommandInfo = new CommandInfo();
-        baseCommandInfo.setIgnoreExitValueCheck(false);
-        baseCommandInfo.setExpectedCommandOutputList(
-                Arrays.asList("uninstall RULE " + jvmAgentFaultSpec.getArgs().get(TASK_ID)));
-        return baseCommandInfo;
+    private static CommandInfo.CommandInfoBuilder getBaseJavaAgentRuleUninstallationCommandInfo(
+            CommandExecutionFaultSpec jvmAgentFaultSpec, CommandInfo.CommandInfoBuilder builder) {
+        return builder.ignoreExitValueCheck(false)
+                .expectedCommandOutputList(Arrays.asList("uninstall RULE " + jvmAgentFaultSpec.getArgs().get(TASK_ID)));
     }
 
     static CommandInfo getK8sJavaAgentEnableTrobleshootingCommandInfo(CommandExecutionFaultSpec jvmAgentFaultSpec) {
-
-        CommandInfo enableTrobleshootingCommandInfo = new CommandInfo();
-        enableTrobleshootingCommandInfo
-                .setCommand(String.format(KUBE_FAULT_EXEC_STRING, jvmAgentFaultSpec.getK8sArguments().getPodInAction(),
+        return CommandInfo
+                .builder(String.format(KUBE_FAULT_EXEC_STRING, jvmAgentFaultSpec.getK8sArguments().getPodInAction(),
                         jvmAgentFaultSpec.getK8sArguments().getContainerName(),
                         String.format(SUBMIT_COMMAND_WITH_PORT, jvmAgentFaultSpec.getInjectionHomeDir(),
                                 ((JVMAgentFaultSpec) jvmAgentFaultSpec).getJvmProperties().getPort())
-                                + "-enableTroubleshooting"));
-        enableTrobleshootingCommandInfo.setIgnoreExitValueCheck(true);
-        enableTrobleshootingCommandInfo.setExpectedCommandOutputList(
-                Arrays.asList(SUCCESSFUL_TROUBLESHOOTING_ENABLED_MESSAGE, ENABLE_TROUBLESHOOTING_RETRY_MESSAGE));
-        enableTrobleshootingCommandInfo.setNoOfRetries(10);
-        enableTrobleshootingCommandInfo.setRetryInterval(5);
-        return enableTrobleshootingCommandInfo;
+                                + "-enableTroubleshooting"))
+                .ignoreExitValueCheck(true)
+                .expectedCommandOutputList(
+                        Arrays.asList(SUCCESSFUL_TROUBLESHOOTING_ENABLED_MESSAGE, ENABLE_TROUBLESHOOTING_RETRY_MESSAGE))
+                .noOfRetries(10).retryInterval(5).build();
     }
 
     static CommandInfo getK8sJavaAgentCopyCommand(CommandExecutionFaultSpec jvmAgentFaultSpec) {
-        CommandInfo k8sCopyCommandInfo = new CommandInfo();
-        k8sCopyCommandInfo.setCommand(new StringBuilder().append("cp ")
-                .append(ConstantsUtils.getMangleSupportScriptDirectory()).append(AGENT_NAME).append(" ")
-                .append(jvmAgentFaultSpec.getK8sArguments().getPodInAction() + ":")
-                .append(jvmAgentFaultSpec.getInjectionHomeDir()).append(AGENT_NAME)
-                .append(Constants.K8S_CONTAINER_OPTION).append(jvmAgentFaultSpec.getK8sArguments().getContainerName())
-                .toString());
-        k8sCopyCommandInfo.setKnownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentCopyOnK8sPod());
-        return k8sCopyCommandInfo;
+        return CommandInfo
+                .builder(new StringBuilder().append("cp ").append(ConstantsUtils.getMangleSupportScriptDirectory())
+                        .append(AGENT_NAME).append(" ")
+                        .append(jvmAgentFaultSpec.getK8sArguments().getPodInAction() + ":")
+                        .append(jvmAgentFaultSpec.getInjectionHomeDir()).append(AGENT_NAME)
+                        .append(Constants.K8S_CONTAINER_OPTION)
+                        .append(jvmAgentFaultSpec.getK8sArguments().getContainerName()).toString())
+                .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentCopyOnK8sPod()).build();
     }
 
     static void createDockerRuleFile(CommandExecutionFaultSpec jvmAgentFaultSpec, String rule) {
@@ -424,40 +396,32 @@ public class BytemanCommandInfoHelper {
 
 
     static CommandInfo getLinuxJavAgentExtractCommandInfo(CommandExecutionFaultSpec jvmAgentFaultSpec) {
-        CommandInfo extractAgentCommandInfo = new CommandInfo();
         // Tar extraction command
-        extractAgentCommandInfo.setCommand(String.format(EXTRACT_AGENT_COMMAND, jvmAgentFaultSpec.getInjectionHomeDir(),
-                AGENT_NAME + AGENT_JAR_EXTENSION));
-        extractAgentCommandInfo.setIgnoreExitValueCheck(true);
-        extractAgentCommandInfo.setExpectedCommandOutputList(Arrays.asList(""));
-        return extractAgentCommandInfo;
+        return CommandInfo
+                .builder(String.format(EXTRACT_AGENT_COMMAND, jvmAgentFaultSpec.getInjectionHomeDir(),
+                        AGENT_NAME + AGENT_JAR_EXTENSION))
+                .ignoreExitValueCheck(true).expectedCommandOutputList(Arrays.asList("")).build();
     }
 
 
     static CommandInfo getLinuxJavaAgentScriptsPermissionsUpdateCommandInfo(
             CommandExecutionFaultSpec jvmAgentFaultSpec) {
         String agentPathInTargetMachine = jvmAgentFaultSpec.getInjectionHomeDir() + AGENT_NAME;
-        CommandInfo changePermissionCommandInfo = new CommandInfo();
         // change permission command
-        changePermissionCommandInfo.setCommand(
-                "chmod -R 777 " + agentPathInTargetMachine + ";chmod -R 777 " + agentPathInTargetMachine + "/*");
-        changePermissionCommandInfo.setIgnoreExitValueCheck(true);
-        changePermissionCommandInfo.setExpectedCommandOutputList(Arrays.asList(""));
-        return changePermissionCommandInfo;
+        return CommandInfo
+                .builder(
+                        "chmod -R 777 " + agentPathInTargetMachine + ";chmod -R 777 " + agentPathInTargetMachine + "/*")
+                .ignoreExitValueCheck(true).expectedCommandOutputList(Arrays.asList("")).build();
     }
 
     static CommandInfo getLinuxJavaAgentRuleCreationCommandInfo(CommandExecutionFaultSpec jvmAgentFaultSpec,
             String rule) {
-        CommandInfo bytemanRuleCommandInfo = new CommandInfo();
-        bytemanRuleCommandInfo.setExpectedCommandOutputList(Arrays.asList(""));
-
         String ruleFile = jvmAgentFaultSpec.getArgs().get(TASK_ID) + ".btm";
         String ruleFileName = writeRuleToFile(rule, ruleFile);
         updateSupportScriptInfo(jvmAgentFaultSpec,
                 getSupportScriptInfo(ruleFileName, jvmAgentFaultSpec.getInjectionHomeDir()));
-        bytemanRuleCommandInfo.setCommand("chmod 777 " + jvmAgentFaultSpec.getInjectionHomeDir() + ruleFile);
-
-        return bytemanRuleCommandInfo;
+        return CommandInfo.builder("chmod 777 " + jvmAgentFaultSpec.getInjectionHomeDir() + ruleFile)
+                .expectedCommandOutputList(Arrays.asList("")).build();
     }
 
     private static String writeRuleToFile(String rule, String ruleFileName) {
@@ -484,7 +448,7 @@ public class BytemanCommandInfoHelper {
     private static void updateSupportScriptInfo(CommandExecutionFaultSpec faultSpec, SupportScriptInfo scriptInfo) {
         if (CollectionUtils.isEmpty(faultSpec.getSupportScriptInfo())) {
             log.debug("Support Script list is empty. Creating and adding the byteman rule");
-            ArrayList<SupportScriptInfo> scripts = new ArrayList<SupportScriptInfo>();
+            ArrayList<SupportScriptInfo> scripts = new ArrayList<>();
             scripts.add(scriptInfo);
             faultSpec.setSupportScriptInfo(scripts);
         } else {

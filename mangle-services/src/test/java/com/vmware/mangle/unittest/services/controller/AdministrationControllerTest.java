@@ -17,6 +17,7 @@ import static org.mockito.Mockito.when;
 
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.hateoas.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.testng.Assert;
@@ -56,10 +57,13 @@ public class AdministrationControllerTest {
     @Test
     public void movechangeMangleNodeStatusTest() throws MangleException {
         when(administrationService.updateMangleNodeStatus(nodeStatusUpdateDto)).thenReturn(task);
-        ResponseEntity<Task<MangleNodeStatusDto>> response =
+        ResponseEntity<Resource<Task<MangleNodeStatusDto>>> response =
                 controller.updateMangleNodeStatus(nodeStatusUpdateDto);
+        Resource<Task<MangleNodeStatusDto>> resource = response.getBody();
+
         Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        Assert.assertEquals(response.getBody(), task);
+        Assert.assertNotNull(resource);
+        Assert.assertEquals(resource.getContent(), task);
         verify(administrationService, times(1)).updateMangleNodeStatus(nodeStatusUpdateDto);
     }
 }

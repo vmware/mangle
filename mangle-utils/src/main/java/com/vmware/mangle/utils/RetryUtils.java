@@ -31,7 +31,7 @@ public class RetryUtils {
 
     @FunctionalInterface
     public interface RunnableWithException {
-        void run() throws Exception;
+        void run() throws MangleException;
     }
 
     /**
@@ -39,7 +39,6 @@ public class RetryUtils {
      *
      * @param callable
      * @param throwable
-     * @param message
      * @return
      * @throws MangleException
      */
@@ -52,7 +51,6 @@ public class RetryUtils {
      *
      * @param callable
      * @param throwable
-     * @param message
      * @return
      * @throws MangleException
      */
@@ -81,7 +79,6 @@ public class RetryUtils {
      *
      * @param callable
      * @param throwable
-     * @param message
      * @param retryCount
      * @param retryDelay
      * @return
@@ -92,7 +89,7 @@ public class RetryUtils {
     private static <T> T retryLogics(Callable<T> callable, Throwable throwable, int retryCount, long retryDelay)
             throws MangleException {
         int counter = 0;
-
+        Throwable exception = new Throwable();
         while (counter < retryCount) {
             try {
                 return callable.call();
@@ -100,18 +97,24 @@ public class RetryUtils {
                 if (mangleException.getMessage().startsWith("FAILED")) {
                     throw mangleException;
                 }
+                exception = mangleException;
                 log.error(String.format("retry %s / %s, %s", ++counter, retryCount, mangleException.getMessage()));
             } catch (Exception e) {
                 if (e.getMessage().startsWith("FAILED")) {
                     throw new MangleException(ErrorCode.RETRY_LOGICS_FAILED, e.getMessage());
                 }
+                exception = e;
                 log.error(String.format("retry %s / %s, %s", ++counter, retryCount, e.getMessage()));
             }
             CommonUtils.delayInSecondsWithDebugLog(retryDelay);
         }
+        if (null == throwable) {
+            throwable = exception;
+        }
         if (throwable instanceof MangleException) {
             throw (MangleException) throwable;
+        } else {
+            throw new MangleException(ErrorCode.RETRY_LOGICS_FAILED, throwable.getMessage());
         }
-        throw new MangleException(ErrorCode.RETRY_LOGICS_FAILED, throwable.getMessage());
     }
 }

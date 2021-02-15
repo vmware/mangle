@@ -47,6 +47,8 @@ public class HazelcastClusterConfig {
 
     private MangleDeploymentMode deploymentMode;
 
+    private String productVersion;
+
     public HazelcastClusterConfig() {
         this.id = UUID.randomUUID().toString();
     }

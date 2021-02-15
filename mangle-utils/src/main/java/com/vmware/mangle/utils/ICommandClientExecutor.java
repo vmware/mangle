@@ -28,7 +28,7 @@ public interface ICommandClientExecutor extends ICommandExecutor {
     public Object[] getOperationParamValues(String[] inputParamValues);
 
     default OperationInputData extractOperationAndParamValues(String command) {
-        String[] commandArray = command.split(":");
+        String[] commandArray = command.split(":", 2);
         OperationInputData inputData = new OperationInputData();
         inputData.setOperationName(commandArray[0]);
         inputData.setParamValues(

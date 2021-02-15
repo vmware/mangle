@@ -12,12 +12,14 @@
 package com.vmware.mangle.utils.clients.aws;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
 import lombok.extern.log4j.Log4j2;
 
 import com.vmware.mangle.cassandra.model.tasks.commands.CommandExecutionResult;
+import com.vmware.mangle.model.aws.AwsService;
 import com.vmware.mangle.services.dto.OperationInputData;
 import com.vmware.mangle.services.dto.OperationMetaData;
 import com.vmware.mangle.utils.ICommandClientExecutor;
@@ -33,11 +35,24 @@ import com.vmware.mangle.utils.exceptions.MangleException;
 @Log4j2
 public class AWSCommandExecutor implements ICommandClientExecutor {
     CustomAwsClient awsClient;
-    Map<String, OperationMetaData> awsEC2FaultMap;
+    Map<String, OperationMetaData> faultMap;
 
-    public AWSCommandExecutor(CustomAwsClient awsClient) {
+    public AWSCommandExecutor(CustomAwsClient awsClient, AwsService awsService) {
         this.awsClient = awsClient;
-        this.awsEC2FaultMap = ReadFaultOperationProperties.getAwsEC2FaultOperationMap();
+        setFaultMap(awsService);
+    }
+
+    private void setFaultMap(AwsService awsService) {
+        switch (awsService) {
+        case EC2:
+            this.faultMap = ReadFaultOperationProperties.getAwsEC2FaultOperationMap();
+            break;
+        case RDS:
+            this.faultMap = ReadFaultOperationProperties.getAwsRDSFaultOperationMap();
+            break;
+        default:
+            break;
+        }
     }
 
     @Override
@@ -45,7 +60,7 @@ public class AWSCommandExecutor implements ICommandClientExecutor {
         CommandExecutionResult returnObject = new CommandExecutionResult();
         OperationInputData inputData = extractOperationAndParamValues(command);
         try {
-            returnObject = callOperation(awsEC2FaultMap.get(inputData.getOperationName()), inputData.getParamValues());
+            returnObject = callOperation(faultMap.get(inputData.getOperationName()), inputData.getParamValues());
         } catch (MangleException e) {
             returnObject.setCommandOutput(e.getMessage());
             returnObject.setExitCode(1);
@@ -58,9 +73,7 @@ public class AWSCommandExecutor implements ICommandClientExecutor {
     public Object[] getOperationParamValues(String[] inputParamValues) {
         List<Object> valueList = new ArrayList<>();
         valueList.add(awsClient);
-        for (String inputParamValue : inputParamValues) {
-            valueList.add(inputParamValue.split(","));
-        }
+        valueList.addAll(Arrays.asList(inputParamValues));
         return valueList.toArray(new Object[0]);
     }
 }

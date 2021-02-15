@@ -1,25 +1,13 @@
-<app-alert [(alertMessage)]="alertMessage" [(isErrorMessage)]="isErrorMessage" (alertMessageChange)="alertMessage = $event"></app-alert>
+<app-alert [(alertMessage)]="alertMessage" [isErrorMessage]="isErrorMessage" (alertMessageChange)="alertMessage = $event"></app-alert>
 <div>
-    <h3 class="modal-title">Execute Aws EC2 Network Fault</h3>
     <form #awsEC2NetworkFaultForm="ngForm" (ngSubmit)="executeAwsEC2NetworkFault(awsEC2NetworkFaultForm.value);" ngNativeValidate>
         <section class="form-block">
-            <div class="form-group">
-                <label for="endpointName">Endpoint</label>
-                <clr-dropdown>
-                    <input autocomplete="off" clrDropdownTrigger type="text" name="endpointName" (input)="searchEndpoint($event.target.value);displayEndpointFields($event.target.value);" (focus)="searchEndpoint('');" [(ngModel)]="faultFormData.endpointName" />
-                    <clr-icon shape="caret down" clrDropdownTrigger size="24" (click)="searchEndpoint('');"></clr-icon>
-                    <clr-dropdown-menu *clrIfOpen class="menu-height" clrPosition="bottom-left">
-                        <ng-container *ngFor="let searchedEndpoint of searchedEndpoints">
-                            <button type="button" clrDropdownItem class="option-height" *ngIf="searchedEndpoint.endPointType == 'AWS'" (click)="setEndpointVal(searchedEndpoint.name);displayEndpointFields(searchedEndpoint.name);">{{searchedEndpoint.name}}</button>
-                        </ng-container>
-                    </clr-dropdown-menu>
-                </clr-dropdown>
-            </div>
+            <fault-endpoint [faultFormData]="faultFormData" [supportedEpTypes]="supportedEpTypes" [endpoints]="endpoints" (displayEndpointFieldsEvent)="displayEndpointFields($event);"></fault-endpoint>
             <div class="form-group">
                 <label for="fault">Fault</label>
                 <div class="select">
-                    <select name="fault" [(ngModel)]="faultFormData.fault" required>
-                        <ng-container *ngFor="let networkFaultTypeVal of networkaultTypes">
+                    <select name="fault" id="fault" [(ngModel)]="faultFormData.fault" required>
+                        <ng-container *ngFor="let networkFaultTypeVal of networkFaultTypes">
                             <option [value]="networkFaultTypeVal">{{networkFaultTypeVal}}</option>
                         </ng-container>
                     </select>
@@ -27,23 +15,20 @@
             </div>
             <div class="form-group">
                 <label for="awsTags">AWS Tags</label>
-                <span class="label label-info" *ngFor="let item of awsTagsData | keyvalue">{{item.key}}={{item.value}}&nbsp;<clr-icon shape="times" size="12" (click)="removeAwsTag(item.key);"></clr-icon></span>
+                <span id="awsTags" class="label label-info" *ngFor="let item of awsTagsData | keyvalue">{{item.key}}={{item.value}}&nbsp;<clr-icon shape="times" size="12" (click)="removeAwsTag(item.key);"></clr-icon></span>
                 <clr-icon shape="plus-circle" (click)="awsTagsModal=true;" style="width:21px;height:30px;"></clr-icon>
             </div>
             <div class="form-group">
                 <label for="randomInjection">Random Injection</label>
                 <div class="select">
-                    <select name="randomInjection" [(ngModel)]="faultFormData.randomInjection">
+                    <select name="randomInjection" id="randomInjection" [(ngModel)]="faultFormData.randomInjection">
                         <option [ngValue]="true">true</option>
                         <option [ngValue]="false">false</option>
                     </select>
                 </div>
             </div>
-            <div class="form-group">
-                <label for="tags">Tags</label>
-                <span class="label label-info" *ngFor="let item of tagsData | keyvalue">{{item.key}}={{item.value}}&nbsp;<clr-icon shape="times" size="12" (click)="removeTag(item.key);"></clr-icon></span>
-                <clr-icon shape="plus-circle" (click)="tagsModal=true;" style="width:21px;height:30px;"></clr-icon>
-            </div>
+            <fault-tags [tagsData]="tagsData" (tagsModalEvent)="tagsModal=$event;"></fault-tags>
+            <fault-notifiers [notifiersData]="notifiersData" (notifiersModalEvent)="notifierModal=$event;"></fault-notifiers>
         </section>
         <button type="submit" class="btn btn-primary" [clrLoading]="runBtnState">RUN FAULT</button>
     </form>
@@ -55,11 +40,11 @@
                 <section class="form-block">
                     <div class="form-group">
                         <label for="tagKey">Key</label>
-                        <input type="text" name="tagKey" ngModel>
+                        <input type="text" name="tagKey" id="tagKey" ngModel>
                     </div>
                     <div class="form-group">
                         <label for="tagValue">Value</label>
-                        <input type="text" name="tagValue" ngModel>
+                        <input type="text" name="tagValue" id="tagValue" ngModel>
                     </div>
                 </section>
                 <button type="button" class="btn btn-outline" (click)="awsTagsModal=false;">CANCEL</button>
@@ -67,23 +52,5 @@
             </form>
         </div>
 </clr-modal>
-
-<clr-modal [(clrModalOpen)]="tagsModal">
-    <h3 class="modal-title">Add Tags</h3>
-    <div class="modal-body">
-        <form #tagsForm="ngForm" (ngSubmit)="updateTags(tagsForm.value);tagsModal=false;tagsForm.reset();">
-            <section class="form-block">
-                <div class="form-group">
-                    <label for="tagKey">Key</label>
-                    <input type="text" name="tagKey" ngModel>
-                </div>
-                <div class="form-group">
-                    <label for="tagValue">Value</label>
-                    <input type="text" name="tagValue" ngModel>
-                </div>
-            </section>
-            <button type="button" class="btn btn-outline" (click)="tagsModal=false;">CANCEL</button>
-            <button type="submit" class="btn btn-primary">ADD</button>
-        </form>
-    </div>
-</clr-modal>
+<app-tags [tagsModal]="tagsModal" [tagsData]="tagsData" (updateTagsModal)="tagsModal=$event;"></app-tags>
+<app-notifiers [notifierModal]="notifierModal" [notifiersData]="notifiersData" (updateNotifiersModal)="notifierModal=$event;"></app-notifiers>

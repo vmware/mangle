@@ -29,6 +29,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import com.vmware.mangle.cassandra.model.security.User;
+import com.vmware.mangle.cassandra.model.security.UserLoginAttempts;
 import com.vmware.mangle.services.CustomUserDetailsService;
 import com.vmware.mangle.services.UserLoginAttemptsService;
 import com.vmware.mangle.services.config.CustomAuthenticationProvider;
@@ -89,9 +90,11 @@ public class CustomAuthenticationProviderTest {
     public void testAuthenticationLockedUser() {
         User user = userMockData.getMockUser();
         Authentication token = new UsernamePasswordAuthenticationToken(user.getName(), UUID.randomUUID().toString());
+        UserLoginAttempts userLoginAttempts = userMockData.getUserLoginAttemptsForUser(user.getName());
 
         doNothing().when(userLoginAttemptsService).resetFailAttempts(user.getName());
         when(userDetailsService.loadUserByUsername(user.getName())).thenReturn(userMockData.getMockLockedUserDetails());
+        when(userLoginAttemptsService.getUserAttemptsForUser(user.getName())).thenReturn(userLoginAttempts);
 
         try {
             Authentication auth = authenticationProvider.authenticate(token);

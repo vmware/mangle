@@ -163,6 +163,12 @@ public class ClusterConfigService implements HazelcastInstanceAware, HazelcastCl
         return persistentConfig;
     }
 
+    public HazelcastClusterConfig updateProductVersion(String productVersion) {
+        HazelcastClusterConfig clusterConfig = getClusterConfiguration();
+        clusterConfig.setProductVersion(productVersion);
+        return repository.save(clusterConfig);
+    }
+
 
     @Override
     public void setHazelcastInstance(HazelcastInstance hazelcastInstance) {
@@ -190,7 +196,8 @@ public class ClusterConfigService implements HazelcastInstanceAware, HazelcastCl
             Set<String> activeMembers = clusterActiveMembers.stream().map(member -> member.getAddress().getHost())
                     .collect(Collectors.toSet());
             config.setMembers(activeMembers);
-            if (null == config.getQuorum() || HazelcastConstants.getMangleQourum() < possibleQuorumValue) {
+            if (null == config.getQuorum() || HazelcastConstants.getMangleQourum() < possibleQuorumValue
+                    || config.getQuorum() < possibleQuorumValue) {
                 log.info("updating quorum value to {}", possibleQuorumValue);
                 config.setQuorum(possibleQuorumValue);
                 HazelcastUtils.updateHazelcastMangleQuorumValue(possibleQuorumValue);

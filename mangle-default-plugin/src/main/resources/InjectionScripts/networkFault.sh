@@ -4,6 +4,7 @@ main(){
 errorExitCode=127
 readAndParseArgs $@
 basedirectory=$(dirname "$0")
+exportPATHVariable
 if [ "$operation" = "remediate" ]
 then
     preRequisitescheck
@@ -26,6 +27,23 @@ fi
 preRequisitescheck
 status
 injectFault
+}
+exportPATHVariable(){
+    DIR_SBIN="/sbin"
+    if [ -d "$DIR_SBIN" ]
+    then
+        export PATH=$PATH:$DIR_SBIN
+    fi
+    DIR_USR_SBIN="/usr/sbin"
+    if [ -d "$DIR_USR_SBIN" ]
+    then
+        export PATH=$PATH:$DIR_USR_SBIN
+    fi
+    DIR_USR_LOCAL_SBIN="/usr/local/sbin"
+    if [ -d "$DIR_USR_LOCAL_SBIN" ]
+    then
+        export PATH=$PATH:$DIR_USR_LOCAL_SBIN
+    fi
 }
 readAndParseArgs(){
     if [ $# -eq 0 ]
@@ -111,6 +129,7 @@ preRequisitescheck(){
     isPgrepPresent
     isAwkPresent
     checkWritePermissionOfInjectionDir
+    checkPermissionOfTCCommand
     if [ ! -z "$precheckmessage" ]
     then
         precheckmessage="Precheck Failed with pre-requisites : $precheckmessage"
@@ -135,6 +154,14 @@ checkSudoTc(){
     sudoRetVal=$?
     if [ $sudoRetVal -eq 0 ]; then
         sudoCommand="sudo"
+    fi
+}
+
+checkPermissionOfTCCommand(){
+    $sudoCommand tc qdisc add > $basedirectory/networkFault.log 2>&1 &
+    opt=$(cat $basedirectory/networkFault.log |  awk '/Operation not permitted/{x++;}END{print x}')
+    if [ $opt -ne 0 ]; then
+        precheckmessage="$precheckmessage Sudo Permission for TC command is required,"
     fi
 }
 

@@ -1,0 +1,26 @@
+<div class="form-group">
+    <label for="endpointName">Endpoint</label>
+    <clr-dropdown>
+        <input autocomplete="off" clrDropdownTrigger type="text" name="endpointName" required
+            (input)="searchEndpoint($event.target['value']);displayEndpointFields($event.target['value']);"
+            (focus)="searchEndpoint('');" [(ngModel)]="faultFormData.endpointName" />
+        <clr-icon shape="caret down" clrDropdownTrigger size="24" (click)="searchEndpoint('');"></clr-icon>
+        <clr-dropdown-menu *clrIfOpen class="menu-height" clrPosition="bottom-left">
+            <ng-container *ngFor="let searchedEndpoint of searchedEndpoints">
+                <button type="button" clrDropdownItem class="option-height"
+                    *ngIf="(supportedEpTypes.indexOf(searchedEndpoint.endPointType) > -1 || supportedEpTypes.indexOf(searchedEndpoint.endpointGroupType) > -1) && supportedDbTypes.indexOf(searchedEndpoint.databaseConnectionProperties.dbType) > -1"
+                    (click)="setEndpointVal(searchedEndpoint.name);displayEndpointFields(searchedEndpoint.name);getDockerContainers(searchedEndpoint);setShowSelectRandomEndpoint(searchedEndpoint.endPointType);">{{searchedEndpoint.name}}</button>
+            </ng-container>
+        </clr-dropdown-menu>
+    </clr-dropdown>
+</div>
+
+<div *ngIf="showSelectRandomEndpoint" class="form-group">
+    <label for="randomEndpoint">Select Random Endpoint</label>
+    <div class="select">
+        <select name="randomEndpoint" id="randomEndpoint" [(ngModel)]="faultFormData.randomEndpoint">
+            <option [ngValue]="true">true</option>
+            <option [ngValue]="false">false</option>
+        </select>
+    </div>
+</div>

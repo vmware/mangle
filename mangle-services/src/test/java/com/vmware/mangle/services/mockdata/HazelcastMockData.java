@@ -82,7 +82,7 @@ public class HazelcastMockData {
 
     public Task<TaskSpec> getMockTask() {
         TasksMockData<TaskSpec> tasksMockData = new TasksMockData<TaskSpec>(getMockFaultSpec());
-        Task<TaskSpec> task = tasksMockData.getDummyTask();
+        Task<TaskSpec> task = tasksMockData.getDummy1Task();
         task.setScheduledTask(false);
         return task;
     }

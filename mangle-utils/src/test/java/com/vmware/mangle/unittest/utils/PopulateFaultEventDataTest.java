@@ -40,7 +40,7 @@ import com.vmware.mangle.cassandra.model.tasks.TaskTrigger;
 import com.vmware.mangle.cassandra.model.tasks.TaskType;
 import com.vmware.mangle.services.dto.FaultEventSpec;
 import com.vmware.mangle.utils.PopulateFaultEventData;
-import com.vmware.mangle.utils.helpers.notifiers.Notifier;
+import com.vmware.mangle.utils.helpers.notifiers.MetricProviderNotifier;
 
 
 /**
@@ -58,7 +58,7 @@ public class PopulateFaultEventDataTest extends PowerMockTestCase {
     private final Map<String, String> faultTags = new HashMap<String, String>();
 
     @Mock
-    Notifier wavefrontNotifier;
+    MetricProviderNotifier wavefrontNotifier;
 
     @Mock
     Task task;
@@ -107,7 +107,9 @@ public class PopulateFaultEventDataTest extends PowerMockTestCase {
         populateBaseData();
         when(commandExecutionFaultSpec.getEndpoint()).thenReturn(endpoint);
         when(trigger.getTaskStatus()).thenReturn(TaskStatus.COMPLETED);
+        when(task.getTaskStatus()).thenReturn(TaskStatus.COMPLETED);
         when(task.getTaskType()).thenReturn(TaskType.INJECTION);
+        when(task.getExtensionName()).thenReturn("");
         getFaultData();
 
         PopulateFaultEventData populateTaskData = new PopulateFaultEventData(task);
@@ -126,6 +128,7 @@ public class PopulateFaultEventDataTest extends PowerMockTestCase {
         when(task.getTaskType()).thenReturn(TaskType.INJECTION);
         when(commandExecutionFaultSpec.getEndpoint()).thenReturn(endpoint);
         when(trigger.getTaskStatus()).thenReturn(TaskStatus.FAILED);
+        when(task.getTaskStatus()).thenReturn(TaskStatus.FAILED);
         getFaultData();
 
         PopulateFaultEventData populateTaskData = new PopulateFaultEventData(task);
@@ -146,6 +149,7 @@ public class PopulateFaultEventDataTest extends PowerMockTestCase {
         when(commandExecutionFaultSpec.getEndpoint()).thenReturn(endpoint);
         when(commandExecutionFaultSpec.getTimeoutInMilliseconds()).thenReturn(null);
         when(trigger.getTaskStatus()).thenReturn(TaskStatus.FAILED);
+        when(task.getTaskStatus()).thenReturn(TaskStatus.FAILED);
         getFaultData();
 
         PopulateFaultEventData populateTaskData = new PopulateFaultEventData(task);
@@ -157,6 +161,29 @@ public class PopulateFaultEventDataTest extends PowerMockTestCase {
         Assert.assertEquals(TaskStatus.FAILED.name(), eventData.getFaultStatus());
         Assert.assertNotNull(eventData.getFaultEndTime());
     }
+
+    @Test(description = "Validate populating of Fault Event data when all valid data is provided and the Fault in injected state")
+    public void validateFaultSpecDataWhenInjected() {
+        log.info("Validating the fault event data when all valid data are populated and Task status is completed");
+        populateBaseData();
+        when(commandExecutionFaultSpec.getEndpoint()).thenReturn(endpoint);
+        when(trigger.getTaskStatus()).thenReturn(TaskStatus.INJECTED);
+        when(task.getTaskStatus()).thenReturn(TaskStatus.INJECTED);
+        when(task.getTaskType()).thenReturn(TaskType.INJECTION);
+        when(task.getExtensionName())
+                .thenReturn("com.vmware.mangle.faults.plugin.tasks.helpers.SystemResourceFaultTaskHelper2");
+        getFaultData();
+
+        PopulateFaultEventData populateTaskData = new PopulateFaultEventData(task);
+        FaultEventSpec eventData = populateTaskData.getFaultEventSpec();
+
+        Assert.assertEquals(faultName + "-" + TaskType.INJECTION, eventData.getFaultName());
+        Assert.assertEquals(faultStartTime, eventData.getFaultStartTime());
+        Assert.assertNotNull(eventData.getFaultEndTime());
+        Assert.assertEquals(taskID, eventData.getTaskId());
+        Assert.assertEquals(TaskStatus.INJECTED.name(), eventData.getFaultStatus());
+    }
+
 
     private void getFaultData() {
         populateTags();

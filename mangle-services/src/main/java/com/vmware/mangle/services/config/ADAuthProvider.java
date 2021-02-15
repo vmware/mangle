@@ -14,7 +14,6 @@ package com.vmware.mangle.services.config;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import javax.annotation.PostConstruct;
 
 import lombok.extern.log4j.Log4j2;
@@ -33,6 +32,7 @@ import com.vmware.mangle.services.PrivilegeService;
 import com.vmware.mangle.services.UserLoginAttemptsService;
 import com.vmware.mangle.services.UserService;
 import com.vmware.mangle.services.hazelcast.HazelcastClusterSyncAware;
+import com.vmware.mangle.utils.exceptions.MangleException;
 
 /**
  * Custom Active dirctory authentication provider, maintains multiple AD authenticator details
@@ -134,6 +134,17 @@ public class ADAuthProvider implements AuthenticationProvider, HazelcastClusterS
         return true;
     }
 
+    public boolean testConnection(ADAuthProviderDto adAuthProviderDto) throws MangleException {
+        log.info(String.format("Testing connection to authentication provider with adURL %s, and "
+                        + "adDomain %s",
+                adAuthProviderDto.getAdUrl(),
+                adAuthProviderDto.getAdDomain()));
+        AuthenticationProvider authProvider = activeDirectoryLdapAuthenticationProvider(adAuthProviderDto.getAdUrl(),
+                adAuthProviderDto.getAdDomain());
+        return ((CustomActiveDirectoryLdapAuthenticationProvider) authProvider)
+                .testConnection(adAuthProviderDto.getAdUser(), adAuthProviderDto.getAdUserPassword());
+    }
+
     /**
      * removes the authentication provider from the list of the configured auth providers
      *
@@ -153,8 +164,8 @@ public class ADAuthProvider implements AuthenticationProvider, HazelcastClusterS
      */
     public AuthenticationProvider activeDirectoryLdapAuthenticationProvider(String adUrl, String adDomain) {
         log.debug(String.format("Instantiating new AD provider with AD url %s and AD domain %s", adUrl, adDomain));
-        CustomActiveDirectoryLdapAuthenticationProvider provider =
-                new CustomActiveDirectoryLdapAuthenticationProvider(userService, userLoginAttemptsService, privilegeService, adDomain, adUrl);
+        CustomActiveDirectoryLdapAuthenticationProvider provider = new CustomActiveDirectoryLdapAuthenticationProvider(
+                userService, userLoginAttemptsService, privilegeService, adDomain, adUrl);
         provider.setConvertSubErrorCodesToExceptions(true);
         provider.setUseAuthenticationRequestCredentials(true);
 

@@ -29,6 +29,7 @@ public class HazelcastConstants {
 
     public static final String HAZELCAST_NODE_TASKS_MAP = "nodeTasks";
     public static final String HAZELCAST_TASKS_MAP = "tasks";
+    public static final String HAZELCAST_RESILIENCY_SCORE_MAP = "resiliencyScore";
     public static final String MANGLE_APPLICATION_STATUS_MAP = "mangleApplicationStatusMap";
     public static final String HAZELCAST_MANGLE_NODE_CURRENT_STATUS_ATTRIBUTE = "mangleNodeCurrentStatus";
     public static final String HAZELCAST_MANGLE_SYNC_TOPIC_NAME = "syncOperationListener";

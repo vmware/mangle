@@ -18,8 +18,8 @@ import org.springframework.stereotype.Component;
 
 import com.vmware.mangle.cassandra.model.tasks.Task;
 import com.vmware.mangle.cassandra.model.tasks.TaskStatus;
+import com.vmware.mangle.services.NotifierService;
 import com.vmware.mangle.services.TaskService;
-
 import com.vmware.mangle.services.events.task.TaskCompletedEvent;
 import com.vmware.mangle.services.events.task.TaskCreatedEvent;
 import com.vmware.mangle.services.events.task.TaskModifiedEvent;
@@ -50,6 +50,10 @@ public class MangleTaskListener {
     @Autowired
     private MetricProviderHelper metricProvider;
 
+    @Autowired
+    private NotifierService notifierService;
+
+    @SuppressWarnings("rawtypes")
     @EventListener
     public void handleTaskModifiedEvent(TaskModifiedEvent event) {
         Task task = event.getTask();
@@ -65,6 +69,7 @@ public class MangleTaskListener {
         }
     }
 
+    @SuppressWarnings("rawtypes")
     @EventListener
     public void handleTaskCreatedEvent(TaskCreatedEvent event) {
         Task task = event.getTask();
@@ -74,6 +79,7 @@ public class MangleTaskListener {
         mapService.addTaskToCache(taskId, task.getTaskStatus().name());
     }
 
+    @SuppressWarnings("rawtypes")
     @EventListener
     public void handleTaskSubstageEvent(TaskSubstageEvent event) {
         Task task = event.getTask();
@@ -87,9 +93,12 @@ public class MangleTaskListener {
         }
     }
 
+    @SuppressWarnings("rawtypes")
     @EventListener
     public void handleTaskCompletedEvent(TaskCompletedEvent event) {
         Task task = event.getTask();
+        //Created thread because of Send notification to metric provider as well as slack parallelly.
+        new Thread(() -> notifierService.sendNotification(task), Thread.currentThread().getName()).start();
         metricProvider.sendFaultEvent(task);
     }
 }

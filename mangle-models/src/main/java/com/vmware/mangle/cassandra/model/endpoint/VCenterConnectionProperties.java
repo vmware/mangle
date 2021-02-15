@@ -12,15 +12,13 @@
 package com.vmware.mangle.cassandra.model.endpoint;
 
 import java.io.Serializable;
-
-import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 
-import com.datastax.driver.core.DataType;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
-import org.springframework.data.cassandra.core.mapping.CassandraType;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.cassandra.core.mapping.UserDefinedType;
 
 /**
@@ -38,9 +36,27 @@ public class VCenterConnectionProperties implements Serializable {
     @NotEmpty
     private String hostname;
 
-    @CassandraType(type = DataType.Name.UDT, userTypeName = "vCenterAdapterProperties")
-    @ApiModelProperty(value = "VCenter adapter URL that will delegate fault injection to vc(\"http://IP:PORT\")")
-    @Valid
-    private VCenterAdapterProperties vCenterAdapterProperties;
+    @ApiModelProperty(value = "VCenter adapter details name that has to be used for delegating VCENTER faults")
+    @NotEmpty
+    private String vCenterAdapterDetailsName;
 
+    @JsonIgnore
+    @Transient
+    private transient VCenterAdapterDetails vCenterAdapterDetails;
+
+    @JsonIgnore
+    public VCenterAdapterDetails getVCenterAdapterDetails() {
+        return vCenterAdapterDetails;
+    }
+
+    @JsonIgnore
+    public VCenterAdapterProperties getVCenterAdapterProperties() {
+        VCenterAdapterProperties adapterProperties = new VCenterAdapterProperties();
+        if (null != vCenterAdapterDetails) {
+            adapterProperties.setVcAdapterUrl(vCenterAdapterDetails.getAdapterUrl());
+            adapterProperties.setUsername(vCenterAdapterDetails.getUsername());
+            adapterProperties.setPassword(vCenterAdapterDetails.getPassword());
+        }
+        return adapterProperties;
+    }
 }

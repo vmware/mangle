@@ -13,7 +13,6 @@ package com.vmware.mangle.unittest.faults.plugin.helpers.systemresource;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -22,6 +21,7 @@ import static com.vmware.mangle.utils.constants.FaultConstants.DEFAULT_TEMP_DIR;
 import static com.vmware.mangle.utils.constants.FaultConstants.LOAD_ARG;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -37,6 +37,8 @@ import com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.JVMAgentFaultSpec;
 import com.vmware.mangle.cassandra.model.tasks.SupportScriptInfo;
 import com.vmware.mangle.cassandra.model.tasks.commands.CommandInfo;
+import com.vmware.mangle.faults.plugin.helpers.FaultConstants;
+import com.vmware.mangle.faults.plugin.helpers.KnownFailuresHelper;
 import com.vmware.mangle.faults.plugin.helpers.systemresource.LinuxSystemResourceFaultHelper;
 import com.vmware.mangle.faults.plugin.helpers.systemresource.SystemResourceFaultUtils;
 import com.vmware.mangle.faults.plugin.mockdata.FaultsMockData;
@@ -68,8 +70,11 @@ public class LinuxSystemResourceFaultHelperTest {
     List<SupportScriptInfo> supportScripts;
 
     private String injectionCommand;
-
+    private String builtInjectionCommand;
+    private String agentExtractionCommand;
+    private String agentInstallationCommand;
     private String remediationCommand;
+    private String builtRemediationCommand;
 
     @BeforeClass
     public void setUpBeforeClass() throws Exception {
@@ -78,9 +83,21 @@ public class LinuxSystemResourceFaultHelperTest {
         linuxSystemResourceFaultHelper =
                 new LinuxSystemResourceFaultHelper(endpointClientFactory, systemResourceFaultUtils);
         CommandExecutionFaultSpec cpuFaultSpec = faultsMockData.getLinuxCpuJvmAgentFaultSpec();
-        injectionCommand = String.format("%s/cpuburn.sh --operation=inject --load=%s --timeout=%s", DEFAULT_TEMP_DIR,
-                cpuFaultSpec.getArgs().get(LOAD_ARG), cpuFaultSpec.getTimeoutInMilliseconds()).toString();
-        remediationCommand = String.format("/tmp/cpuburn.sh --operation=remediate");
+
+        injectionCommand =
+                String.format("cd %s;./%s --operation inject --faultname %s --load %s --timeout %s --faultId %s",
+                        DEFAULT_TEMP_DIR + "/" + FaultConstants.INFRA_AGENT_NAME_FOLDER, FaultConstants.INFRA_SUBMIT,
+                        cpuFaultSpec.getFaultName(), cpuFaultSpec.getArgs().get(LOAD_ARG),
+                        cpuFaultSpec.getTimeoutInMilliseconds(), cpuFaultSpec.getFaultName());
+        builtInjectionCommand = String.format("%s --operation inject --faultname %s --load %s --timeout %s",
+                FaultConstants.INFRA_SUBMIT, cpuFaultSpec.getFaultName(), cpuFaultSpec.getArgs().get(LOAD_ARG),
+                cpuFaultSpec.getTimeoutInMilliseconds(), cpuFaultSpec.getFaultName());
+        remediationCommand = String.format("cd %s;./%s --operation remediate --faultId %s",
+                DEFAULT_TEMP_DIR + "/" + FaultConstants.INFRA_AGENT_NAME_FOLDER, FaultConstants.INFRA_SUBMIT,
+                cpuFaultSpec.getFaultName());
+        builtRemediationCommand = String.format("%s --operation remediate", FaultConstants.INFRA_SUBMIT);
+
+
     }
 
     @Test
@@ -108,29 +125,38 @@ public class LinuxSystemResourceFaultHelperTest {
             Mockito.when(
                     endpointClientFactory.getEndPointClient(cpuFaultSpec.getCredentials(), cpuFaultSpec.getEndpoint()))
                     .thenReturn(sshUtils);
-            Mockito.when(systemResourceFaultUtils.buildInjectionCommand(any(), any())).thenReturn(injectionCommand);
+            Mockito.when(systemResourceFaultUtils.buildInjectionCommand(any(), any()))
+                    .thenReturn(builtInjectionCommand);
+            Mockito.when(systemResourceFaultUtils
+                    .getLinuxPythonAgentExtractCommandInfo(any(CommandExecutionFaultSpec.class)))
+                    .thenReturn(CommandInfo.builder(agentExtractionCommand).ignoreExitValueCheck(true)
+                            .expectedCommandOutputList(Arrays.asList("")).build());
+            Mockito.when(
+                    systemResourceFaultUtils.getPythonAgentInstallCommandInfo(any(CommandExecutionFaultSpec.class)))
+                    .thenReturn(CommandInfo.builder(agentInstallationCommand).ignoreExitValueCheck(true)
+                            .expectedCommandOutputList(Arrays.asList(""))
+                            .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentInstallationRequest()).build());
             List<CommandInfo> injectionCommands =
                     linuxSystemResourceFaultHelper.getInjectionCommandInfoList(cpuFaultSpec);
             log.info(RestTemplateWrapper.objectToJson(injectionCommands));
             List<CommandInfo> expectedCommands = getExpectedInjectionCommands();
             Assert.assertTrue(injectionCommands.size() > 0);
-            Assert.assertEquals(injectionCommands.get(0).getCommand(), expectedCommands.get(0).getCommand());
+            Assert.assertEquals(injectionCommands, expectedCommands);
         } catch (MangleException e) {
             log.error("testGetInjectionCommandInfoListForCPU System resource Fault failed with Exception: ", e);
             Assert.assertTrue(false);
-
-
         }
     }
 
 
     @Test
-    public void testGetRemediationCommandInfoList() {
+    public void testGetRemediationCommandInfoList() throws MangleException {
         JVMAgentFaultSpec cpuFaultSpec = faultsMockData.getLinuxCpuJvmAgentFaultSpec();
         cpuFaultSpec.setJvmProperties(null);
         Mockito.when(endpointClientFactory.getEndPointClient(cpuFaultSpec.getCredentials(), cpuFaultSpec.getEndpoint()))
                 .thenReturn(sshUtils);
-        Mockito.when(systemResourceFaultUtils.buildRemediationCommand(any(), any())).thenReturn(remediationCommand);
+        Mockito.when(systemResourceFaultUtils.buildRemediationCommand(any(), any()))
+                .thenReturn(builtRemediationCommand);
         when(systemResourceFaultUtils.isManualRemediationSupported(anyString())).thenReturn(true);
         try {
             List<CommandInfo> remediationCommands =
@@ -165,35 +191,33 @@ public class LinuxSystemResourceFaultHelperTest {
 
     @Test
     void testGetAgentFaultInjectionScripts() {
-
+        CommandExecutionFaultSpec cpuFaultSpec = faultsMockData.getDockerCpuJvmAgentFaultSpec();
         LinuxSystemResourceFaultHelper linuxSystemResourceFaultHelper =
-                spy(new LinuxSystemResourceFaultHelper(endpointClientFactory, systemResourceFaultUtils));
-        when(linuxSystemResourceFaultHelper.getFaultInjectionScripts(any())).thenReturn(supportScripts);
-        verify(linuxSystemResourceFaultHelper, times(1)).getFaultInjectionScripts(any(CommandExecutionFaultSpec.class));
+                new LinuxSystemResourceFaultHelper(endpointClientFactory, systemResourceFaultUtils);
+        Mockito.when(systemResourceFaultUtils.getAgentFaultScriptsPython(any())).thenReturn(supportScripts);
+        linuxSystemResourceFaultHelper.getFaultInjectionScripts(cpuFaultSpec);
+        verify(systemResourceFaultUtils, times(1)).getAgentFaultScriptsPython(any(String.class));
+
     }
 
     private List<CommandInfo> getExpectedInjectionCommands() {
         List<CommandInfo> list = new ArrayList<>();
-        CommandInfo injectionCmdInfo = new CommandInfo();
-        injectionCmdInfo.setCommand(injectionCommand);
-        injectionCmdInfo.setIgnoreExitValueCheck(false);
-        injectionCmdInfo.setExpectedCommandOutputList(Collections.EMPTY_LIST);
-        injectionCmdInfo.setNoOfRetries(0);
-        injectionCmdInfo.setRetryInterval(0);
-        injectionCmdInfo.setTimeout(0);
+        CommandInfo injectionCmdInfo = CommandInfo.builder(injectionCommand).ignoreExitValueCheck(false)
+                .expectedCommandOutputList(Collections.emptyList()).noOfRetries(3).retryInterval(2).timeout(0)
+                .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfSystemResourceFaultInjectionRequest()).build();
+        list.add(CommandInfo.builder(agentExtractionCommand).ignoreExitValueCheck(true)
+                .expectedCommandOutputList(Arrays.asList("")).build());
+        list.add(CommandInfo.builder(agentInstallationCommand).ignoreExitValueCheck(true)
+                .expectedCommandOutputList(Arrays.asList(""))
+                .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfAgentInstallationRequest()).build());
         list.add(injectionCmdInfo);
         return list;
     }
 
     private List<CommandInfo> getExpectedRemediationCommandsforCPUFault() {
         List<CommandInfo> list = new ArrayList<>();
-        CommandInfo remediationCmdInfo = new CommandInfo();
-        remediationCmdInfo.setCommand(remediationCommand);
-        remediationCmdInfo.setIgnoreExitValueCheck(false);
-        remediationCmdInfo.setNoOfRetries(0);
-        remediationCmdInfo.setRetryInterval(0);
-        remediationCmdInfo.setTimeout(0);
-        remediationCmdInfo.setExpectedCommandOutputList(Collections.EMPTY_LIST);
+        CommandInfo remediationCmdInfo = CommandInfo.builder(remediationCommand).ignoreExitValueCheck(false)
+                .noOfRetries(0).retryInterval(0).timeout(0).expectedCommandOutputList(Collections.emptyList()).build();
         list.add(remediationCmdInfo);
         return list;
     }

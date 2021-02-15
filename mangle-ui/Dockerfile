@@ -1,4 +1,4 @@
-FROM vmware/photon
+FROM photon:latest
 
 MAINTAINER Shashi Ranjan <ranjans@vmware.com>
 

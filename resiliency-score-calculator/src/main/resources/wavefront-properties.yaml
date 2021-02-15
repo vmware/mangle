@@ -1,0 +1,18 @@
+wavefrontUrl: "https://varca.wavefront.com"
+wavefrontApiToken: "8e33d61c-51ac-41d9-9ac1-dca74353f56e"
+wavefrontProxyUrl: "10.196.173.117"
+wavefrontProxyPort: "2878"
+wavefrontMetricSource: "mangle-resiliency-calculator"
+metricName: "berserker.response.result"
+outputMetricName: "mangle.overall.resiliencyscore"
+outputUrlMetricName: "mangle.urls.resiliencyscore"
+functionScoreMetricName: "mangle.functional.resiliencyscore"
+testReferenceWindow: 15
+resiliencyCalculationWindow: 1
+metricQueryGranularity: "s"
+tags:
+  EndpointName: "LocalvRNICluster"
+  DID: "DPSKALU"
+services:
+  - serviceFamily: "VRNI"
+    service: "ALL"

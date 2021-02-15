@@ -84,4 +84,24 @@ public class CPUFaultTest {
             throw e;
         }
     }
+
+    /**
+     * Test method for {@link CPUFault#CPUFault(CpuFaultSpec)}.
+     *
+     * @throws MangleException
+     */
+    @Test
+    public void testConstructorwithEndpointGroupType() {
+        log.info("Executing test: testConstructorwithUnsupportedEndpoint on CPUFault#CPUFault");
+        try {
+            CpuFaultSpec faultSpec = faultsMockData.getRMGroupCPUFaultSpec();
+            CPUFault cpuFault = new CPUFault(faultSpec);
+            Assert.assertEquals(cpuFault.getFaultSpec().getArgs().size(), 1);
+            Assert.assertEquals(cpuFault.getFaultSpec().getArgs().get("__load"),
+                    String.valueOf(faultSpec.getCpuLoad()));
+        } catch (MangleException e) {
+            log.error("CPUFault initialization failed with Exception: ", e);
+            Assert.assertTrue(false);
+        }
+    }
 }

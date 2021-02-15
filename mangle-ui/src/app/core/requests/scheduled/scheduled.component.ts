@@ -1,29 +1,47 @@
-import { Component, OnInit } from '@angular/core';
-import { RequestsService } from '../requests.service';
-import { Router } from '@angular/router';
-import { ClrDatagridSortOrder } from '@clr/angular';
-import { MessageConstants } from 'src/app/common/message.constants';
+import {Component, OnInit} from "@angular/core";
+import {RequestsService} from "../requests.service";
+import {Router} from "@angular/router";
+import {ClrDatagridSortOrder} from "@clr/angular";
+import {MessageConstants} from "src/app/common/message.constants";
 
 @Component({
-  selector: 'app-scheduled',
-  templateUrl: './scheduled.component.html'
+  selector: "app-scheduled",
+  templateUrl: "./scheduled.component.html"
 })
 export class ScheduledComponent implements OnInit {
 
-  constructor(private requestsService: RequestsService, private router: Router) {
+  constructor(private requestsService: RequestsService) {
 
   }
 
   public alertMessage: string;
   public isErrorMessage: boolean;
+  public viewReportFlag: boolean;
+  public viewDetailedStatus: boolean;
+  public modifySchedule: boolean;
+  public notifierModal: boolean;
 
   public scheduledJobs: any = [];
   public scheduledTaskDetails: any = {};
 
-  public isLoadingScheduledJobs: boolean = false;
-  public isLoadingScheduledTaskDetails: boolean = false;
+  public isLoadingScheduledJobs = false;
+  public isLoadingScheduledTaskDetails = false;
 
   public startTimeDesc = ClrDatagridSortOrder.DESC;
+
+  public jobType: any = ["CRON", "SIMPLE"];
+  public status: any = ["INITIALIZING", "CANCELLED", "SCHEDULED", "FINISHED", "PAUSED", "SCHEDULE_FAILED"];
+  public cronModal: boolean = false;
+  public notifiersData: any = [];
+
+  public schedulerFormData: any = {
+    "id": null,
+    "jobType": null,
+    "scheduledTime": null,
+    "cronExpression": null,
+    "status": null,
+    "description": null
+  };
 
   ngOnInit() {
     this.getAllScheduleJobs();
@@ -37,12 +55,12 @@ export class ScheduledComponent implements OnInit {
           this.scheduledJobs = [];
           this.isLoadingScheduledJobs = false;
         } else {
-          this.scheduledJobs = res;
+          this.scheduledJobs = res.content;
           this.isLoadingScheduledJobs = false;
         }
       }, err => {
         this.scheduledJobs = [];
-        this.isErrorMessage= true;
+        this.isErrorMessage = true;
         this.alertMessage = err.error.description;
         this.isLoadingScheduledJobs = false;
       }
@@ -54,16 +72,16 @@ export class ScheduledComponent implements OnInit {
       this.requestsService.deleteScheduleOnly(scheduleTask.id).subscribe(
         res => {
           this.getAllScheduleJobs();
-          this.isErrorMessage= false;
+          this.isErrorMessage = false;
           this.alertMessage = scheduleTask.id + MessageConstants.SCHEDULE_DELETE;
           this.isLoadingScheduledJobs = false;
         }, err => {
           this.getAllScheduleJobs();
-          this.isErrorMessage= true;
+          this.isErrorMessage = true;
           this.alertMessage = err.error.description;
           this.isLoadingScheduledJobs = false;
           if (this.alertMessage === undefined) {
-            this.isErrorMessage= true;
+            this.isErrorMessage = true;
             this.alertMessage = err.error.error;
           }
         });
@@ -77,16 +95,16 @@ export class ScheduledComponent implements OnInit {
       this.requestsService.deleteSchedule(scheduleTask.id).subscribe(
         res => {
           this.getAllScheduleJobs();
-          this.isErrorMessage= false;
+          this.isErrorMessage = false;
           this.alertMessage = scheduleTask.id + MessageConstants.SCHEDULE_DELETE;
           this.isLoadingScheduledJobs = false;
         }, err => {
           this.getAllScheduleJobs();
-          this.isErrorMessage= true;
+          this.isErrorMessage = true;
           this.alertMessage = err.error.description;
           this.isLoadingScheduledJobs = false;
           if (this.alertMessage === undefined) {
-            this.isErrorMessage= true;
+            this.isErrorMessage = true;
             this.alertMessage = err.error.error;
           }
         });
@@ -100,16 +118,16 @@ export class ScheduledComponent implements OnInit {
       this.requestsService.cancelSchedule(scheduleTask.id).subscribe(
         res => {
           this.getAllScheduleJobs();
-          this.isErrorMessage= false;
+          this.isErrorMessage = false;
           this.alertMessage = scheduleTask.id + MessageConstants.SCHEDULE_CANCEL;
           this.isLoadingScheduledJobs = false;
         }, err => {
           this.getAllScheduleJobs();
-          this.isErrorMessage= true;
+          this.isErrorMessage = true;
           this.alertMessage = err.error.description;
           this.isLoadingScheduledJobs = false;
           if (this.alertMessage === undefined) {
-            this.isErrorMessage= true;
+            this.isErrorMessage = true;
             this.alertMessage = err.error.error;
           }
         });
@@ -123,16 +141,16 @@ export class ScheduledComponent implements OnInit {
       this.requestsService.pauseSchedule(scheduleTask.id).subscribe(
         res => {
           this.getAllScheduleJobs();
-          this.isErrorMessage= false;
+          this.isErrorMessage = false;
           this.alertMessage = scheduleTask.id + MessageConstants.SCHEDULE_PAUSE;
           this.isLoadingScheduledJobs = false;
         }, err => {
           this.getAllScheduleJobs();
-          this.isErrorMessage= true;
+          this.isErrorMessage = true;
           this.alertMessage = err.error.description;
           this.isLoadingScheduledJobs = false;
           if (this.alertMessage === undefined) {
-            this.isErrorMessage= true;
+            this.isErrorMessage = true;
             this.alertMessage = err.error.error;
           }
         });
@@ -141,17 +159,50 @@ export class ScheduledComponent implements OnInit {
     }
   }
 
+  public populateScheduler(scheduledJob) {
+    this.schedulerFormData = scheduledJob;
+    this.populateFaultNotifiers(scheduledJob);
+  }
+
+  public modifyScheduleData(scheduleTask) {
+    this.addNotifiersInScheduleTask(scheduleTask);
+    if (confirm(MessageConstants.MODIFY_CONFIRM + scheduleTask.id + MessageConstants.QUESTION_MARK)) {
+      this.isLoadingScheduledJobs = true;
+      this.requestsService.modifySchedule(scheduleTask).subscribe(
+        res => {
+          this.getAllScheduleJobs();
+          this.isErrorMessage = false;
+          this.alertMessage = scheduleTask.id + MessageConstants.SCHEDULE_MODIFY;
+          this.isLoadingScheduledJobs = false;
+        }, err => {
+          this.getAllScheduleJobs();
+          this.isErrorMessage = true;
+          this.alertMessage = err.error.description;
+          this.isLoadingScheduledJobs = false;
+          if (this.alertMessage === undefined) {
+            this.isErrorMessage = true;
+            this.alertMessage = err.error.error;
+          }
+        });
+    }
+  }
+
+  public setScheduleCron(eventVal) {
+    this.schedulerFormData.cronExpression = eventVal;
+    this.cronModal = false;
+  }
+
   public resumeSchedule(scheduleTask) {
     if (confirm(MessageConstants.RESUME_CONFIRM + scheduleTask.id + MessageConstants.QUESTION_MARK)) {
       this.requestsService.resumeSchedule(scheduleTask.id).subscribe(
         res => {
           this.getAllScheduleJobs();
-          this.isErrorMessage= false;
+          this.isErrorMessage = false;
           this.alertMessage = scheduleTask.id + MessageConstants.SCHEDULE_RESUME;
           this.isLoadingScheduledJobs = false;
         }, err => {
           this.getAllScheduleJobs();
-          this.isErrorMessage= true;
+          this.isErrorMessage = true;
           this.alertMessage = err.error.description;
           this.isLoadingScheduledJobs = false;
           if (this.alertMessage === undefined) {
@@ -168,7 +219,7 @@ export class ScheduledComponent implements OnInit {
     this.requestsService.getTaskById(scheduleTask.id).subscribe(
       res => {
         if (res.code) {
-          this.isErrorMessage= true;
+          this.isErrorMessage = true;
           this.alertMessage = res.description;
           this.isLoadingScheduledTaskDetails = false;
         } else {
@@ -184,11 +235,22 @@ export class ScheduledComponent implements OnInit {
           this.isLoadingScheduledTaskDetails = false;
         }
       }, err => {
-        this.isErrorMessage= true;
+        this.isErrorMessage = true;
         this.alertMessage = err.error.description;
         this.isLoadingScheduledTaskDetails = false;
       }
     );
   }
 
+  public populateFaultNotifiers(scheduledJob: any) {
+    if (scheduledJob.notifierNames != null && scheduledJob.notifierNames.length > 0) {
+      this.notifiersData = scheduledJob.notifierNames;
+    }
+  }
+
+  public addNotifiersInScheduleTask(scheduleTask: any) {
+    if (this.notifiersData !== [] && this.notifiersData.length > 0) {
+      scheduleTask.notifierNames = this.notifiersData;
+    }
+  }
 }

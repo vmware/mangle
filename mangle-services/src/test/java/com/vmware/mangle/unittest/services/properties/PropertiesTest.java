@@ -46,6 +46,15 @@ public class PropertiesTest {
     }
 
     @Test
+    public void verifyDefaultTomcatDir() {
+        String property = propertyMap.get("server.tomcat.basedir");
+
+        Assert.assertNotNull(property, "Tomcat base directory property cannot be null");
+        Assert.assertEquals(property, "/home/mangle/var/opt/mangle-tomcat", "Tomcat directory cannot be "
+                + "changed");
+    }
+
+    @Test
     public void verifyHazelcastDefaultProperties() {
         String configProperty = propertyMap.get("hazelcast.config.public");
         String validationToken = propertyMap.get("hazelcast.config.validationToken");

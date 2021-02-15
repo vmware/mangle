@@ -15,6 +15,18 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import lombok.Getter;
+
+import com.vmware.mangle.cassandra.model.faults.specs.ClockSkewSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.K8SDeleteResourceFaultSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.K8SResourceNotReadyFaultSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.K8SServiceUnavailableFaultSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.KernelPanicSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.NetworkPartitionFaultSpec;
+import com.vmware.mangle.cassandra.model.redis.faults.specs.RedisDelayFaultSpec;
+import com.vmware.mangle.cassandra.model.redis.faults.specs.RedisDropConnectionFaultSpec;
+import com.vmware.mangle.cassandra.model.redis.faults.specs.RedisFaultSpec;
+import com.vmware.mangle.cassandra.model.redis.faults.specs.RedisReturnErrorFaultSpec;
 import com.vmware.mangle.services.ClusterConfigService;
 import com.vmware.mangle.services.MetricProviderService;
 import com.vmware.mangle.services.PluginDetailsService;
@@ -38,6 +50,8 @@ public class CommonConstants {
     public static final String NO_RECORD_FOUND_FOR_ID = "Fault not found for given id ";
     public static final String NO_RECORD_FOUND_FOR_NAME = "Fault not found for given name ";
     public static final String ENDPOINTS_RESULT_FOUND = "Successfully retrieved all the endpoints";
+    public static final String ENDPOINTS_DISABLED = "Successfully disbaled the endpoints";
+    public static final String ENDPOINTS_ENABLED = "Successfully enabled the endpoints";
     public static final String ENDPOINTS_UPDATED = "Updated endpoint successfully";
     public static final String ENDPOINTS_CREATED = "Created endpoint successfully";
     public static final String CREDENTIALS_RESULT_FOUND = "Successfully retrieved all the credentials";
@@ -92,7 +106,68 @@ public class CommonConstants {
     public static final String PLUGIN_PROPERTIES_FILE_NAME = "plugin.properties";
     public static final String DISK_FILL_SIZE_RANGE_ERROR = "DiskFillSize value must be between 1 to 100";
 
+    public static final String RESILIENCY_SCORE = " Resiliency Score ";
+    public static final String RESILIENCY_SCORE_METRIC_CONFIG_UPDATED_MESSAGE =
+            RESILIENCY_SCORE + " metric config is updated ";
+    public static final String RESILIENCY_SCORE_METRIC_CONFIG_DELETED =
+            RESILIENCY_SCORE + " metric config has been deleted successfully";
+    public static final String RESILIENCY_SCORE_METRIC_CONFIG_RETRIEVED =
+            RESILIENCY_SCORE + " metric config has been retrieved";
+    public static final String SERVICES_RETRIEVED = "All services details have been retrieved";
+    public static final String RESILIENCY_SCORE_CALCULATING_TRIGGERED =
+            RESILIENCY_SCORE + "calculating tasks have been triggered. ";
+    public static final String RESILIENCY_SCORE_CALCULATING_COMPLETED =
+            RESILIENCY_SCORE + " calculating successfully completed. ";
+    public static final String RESILIENCY_SCORE_CALCULATION_IN_PROGRESS =
+            RESILIENCY_SCORE + " calculating is in progress. ";
+    public static final String DELETE = " delete ";
+    public static final String OPERATION = " operation ";
+    public static final String SUCCESSFUL = " successful ";
+    public static final String FAILED = " failed ";
+    public static final String TASK = " task ";
+    public static final String RESILIENCY_SCORE_TASK_FOUND = RESILIENCY_SCORE + TASK + "details retrieval" + SUCCESSFUL;
+    public static final String RESILIENCY_SCORE_DELETED = RESILIENCY_SCORE + DELETE + OPERATION + SUCCESSFUL;
+    public static final String RESILIENCY_SCORE_TASK_SCHEDULED =
+            "Scheduling of Resiliency score task completed successfully";
+    public static final String RESILIENCY_SCORE_CALCULATING = "ResiliencyScoreCalculating-";
+    public static final String RESILIENCY_SCORE_CALCULATING_DESCRIPTION =
+            "ResiliencyScore Calculation task has been created.";
+    //Notifier related constants
+    public static final String SLACK_HELLO_MSG = "Hello Team,\n>Fault is submitted on endpoint : *";
+    public static final String SLACK_MSG_TASK_ID = "taskId";
+    public static final String SLACK_MSG_TASK_NAME = "taskName";
+    public static final String SLACK_MSG_FAULT_NAME = "faultName";
+    public static final String SLACK_MSG_FAULT_STATUS = "faultStatus";
+    public static final String SLACK_MSG_FAULT_START_TIME = "faultStartTime";
+    public static final String SLACK_MSG_FAULT_END_TIME = "faultEndTime";
+    public static final String SLACK_MSG_FAULT_FAILURE_REASON = "faultFailureReason";
+    public static final String SLACK_MSG_FAULT_DESCRIPTION = "faultDescription";
+    public static final String SERVICE_NAME = "service_name";
+    public static final String MANGLE = "mangle";
+
+    public static final String SERVICE_ADDED = "Service definition added successfully";
+    public static final String SERVICE_UPDATED = "Service definition updated successfully";
+    public static final String SERVICE_DELETED = "Service definition deleted successfully";
+
+    public static final String QUERIES_RETRIEVED = "All Query details have been retrieved";
+    public static final String QUERY_ADDED = "Query definition added successfully";
+    public static final String QUERY_UPDATED = "Query definition updated successfully";
+    public static final String QUERY_DELETED = "Query definition deleted successfully";
+    public static final String QUERY_DELETING_FAILED = "Query deletion failed  ";
+
+    @SuppressWarnings("rawtypes")
     public static List<Class> getMergeResyncClass() {
         return mergeResyncClass;
     }
+
+    public static final String DB_TRANSACTION_ERROR_CODE_INVALID =
+            "Provide valid db transaction error code, refer get api : faults/db-transaction-error-code";
+
+    @Getter
+    private static final List<String> skipToValidateEndpointTypeClass =
+            new ArrayList<>(Arrays.asList(K8SServiceUnavailableFaultSpec.class.getName(),
+                    K8SResourceNotReadyFaultSpec.class.getName(), K8SDeleteResourceFaultSpec.class.getName(),
+                    KernelPanicSpec.class.getName(), ClockSkewSpec.class.getName(), RedisDelayFaultSpec.class.getName(),
+                    RedisReturnErrorFaultSpec.class.getName(), RedisFaultSpec.class.getName(),
+                    RedisDropConnectionFaultSpec.class.getName(), NetworkPartitionFaultSpec.class.getName()));
 }

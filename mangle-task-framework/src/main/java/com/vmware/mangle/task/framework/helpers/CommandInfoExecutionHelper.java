@@ -31,6 +31,7 @@ import com.vmware.mangle.utils.CommonUtils;
 import com.vmware.mangle.utils.ICommandExecutor;
 import com.vmware.mangle.utils.constants.Constants;
 import com.vmware.mangle.utils.constants.ErrorConstants;
+import com.vmware.mangle.utils.constants.StringConstants;
 import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
@@ -47,22 +48,23 @@ public class CommandInfoExecutionHelper {
      * Utility Class to execute list of the commands Defined in Fault for Injection, Remediation and
      * Test Machine Preperation
      *
-     * @param commandInfos
+     * @param list
      */
-    public void runCommands(ICommandExecutor executor, List<CommandInfo> commandInfos,
+    public String runCommands(ICommandExecutor executor, List<CommandInfo> list,
             TaskTroubleShootingInfo taskTroubleShootingInfo, Map<String, String> args) throws MangleException {
-        String latestCommandOutput = null;
-        if (!CollectionUtils.isEmpty(commandInfos)) {
-            for (CommandInfo commandInfo : commandInfos) {
+        String latestCommandOutput = "";
+        if (!CollectionUtils.isEmpty(list)) {
+            for (CommandInfo commandInfo : list) {
                 latestCommandOutput = executeRetriableCommand(executor, commandInfo, taskTroubleShootingInfo, args,
                         latestCommandOutput).getCommandOutput();
-
+                log.info("Running command: {}", this.maskCommand(commandInfo.getCommand()));
                 if (commandInfo.getCommandOutputProcessingInfoList() != null) {
                     extractFieldsFromCommandResult(commandInfo.getCommandOutputProcessingInfoList(),
                             taskTroubleShootingInfo, latestCommandOutput);
                 }
             }
         }
+        return latestCommandOutput;
     }
 
     private CommandExecutionResult executeRetriableCommand(ICommandExecutor executor, CommandInfo commandInfo,
@@ -97,8 +99,8 @@ public class CommandInfoExecutionHelper {
     private CommandExecutionResult executeCommand(ICommandExecutor executor, CommandInfo commandInfo,
             TaskTroubleShootingInfo taskTroubleShootingInfo, Map<String, String> args, String latestCommandOutput)
             throws MangleException {
-        CommandExecutionResult commandExecutionResult = executor
-                .executeCommand(getAbsoluteCommand(commandInfo, taskTroubleShootingInfo, args, latestCommandOutput));
+        String absoluteCommand = getAbsoluteCommand(commandInfo, taskTroubleShootingInfo, args, latestCommandOutput);
+        CommandExecutionResult commandExecutionResult = executor.executeCommand(absoluteCommand);
         // Condition to validate if the Command Execution completed with
         // valid exit code
         if (!commandInfo.isIgnoreExitValueCheck() && commandExecutionResult.getExitCode() != 0) {
@@ -119,8 +121,8 @@ public class CommandInfoExecutionHelper {
                 log.error(String.format(ErrorConstants.COMMAND_EXECUTION_FAILURE_FOR_EXPECTED_OUTPUT,
                         commandInfo.getExpectedCommandOutputList(), commandExecutionResult.getCommandOutput()));
                 throw new MangleException(commandExecutionResult.getCommandOutput(),
-                        ErrorCode.COMMAND_EXEC_EXIT_CODE_ERROR, commandInfo.getCommand(),
-                        commandExecutionResult.getExitCode(), commandExecutionResult.getCommandOutput());
+                        ErrorCode.COMMAND_EXEC_EXIT_CODE_ERROR, absoluteCommand, commandExecutionResult.getExitCode(),
+                        commandExecutionResult.getCommandOutput());
             }
         }
         return commandExecutionResult;
@@ -132,8 +134,9 @@ public class CommandInfoExecutionHelper {
             for (Map.Entry<String, String> entry : commandInfo.getKnownFailureMap().entrySet()) {
                 if (StringUtils.isNotEmpty(entry.getKey()) && commandExecutionResult.getCommandOutput().toLowerCase()
                         .contains(entry.getKey().toLowerCase())) {
-                    log.error(String.format(ErrorConstants.COMMAND_EXEC_EXIT_CODE_ERROR, commandInfo.getCommand(),
-                            commandExecutionResult.getExitCode(), commandExecutionResult.getCommandOutput()));
+                    log.error(String.format(ErrorConstants.COMMAND_EXEC_EXIT_CODE_ERROR,
+                            this.maskCommand(commandInfo.getCommand()), commandExecutionResult.getExitCode(),
+                            commandExecutionResult.getCommandOutput()));
                     if (entry.getValue() != null) {
                         throw new MangleException(commandExecutionResult.getCommandOutput(),
                                 ErrorCode.COMMAND_EXEC_ERROR_WITH_KNOWN_FAILURE, entry.getValue());
@@ -146,7 +149,7 @@ public class CommandInfoExecutionHelper {
             }
         }
         throw new MangleException(commandExecutionResult.getCommandOutput(), ErrorCode.COMMAND_EXEC_EXIT_CODE_ERROR,
-                commandInfo.getCommand(), commandExecutionResult.getExitCode(),
+                this.maskCommand(commandInfo.getCommand()), commandExecutionResult.getExitCode(),
                 commandExecutionResult.getCommandOutput());
     }
 
@@ -177,23 +180,24 @@ public class CommandInfoExecutionHelper {
      */
     private String getAbsoluteCommand(CommandInfo commandInfo, TaskTroubleShootingInfo taskTroubleShootingInfo,
             Map<String, String> args, String latestCommandOutput) throws MangleException {
+        CommandInfo.CommandInfoBuilder builder = commandInfo.toBuilder();
         // Replace all the arg references
         if (!CollectionUtils.isEmpty(args)) {
-            processReferences(commandInfo, args, Constants.FIAACO_CMD_ARG_EXPRESSION);
+            builder.command(processReferences(commandInfo, args, Constants.FIAACO_CMD_ARG_EXPRESSION));
         }
 
         // Replace all the additional Information references
         if (taskTroubleShootingInfo != null) {
-            processReferences(commandInfo, taskTroubleShootingInfo.getAdditionalInfo(),
-                    Constants.FIAACO_CMD_ADD_INFO_EXPRESSION);
+            builder.command(processReferences(commandInfo, taskTroubleShootingInfo.getAdditionalInfo(),
+                    Constants.FIAACO_CMD_ADD_INFO_EXPRESSION));
         }
         // Condition to replace Reference to Previous Command result in the present Command
         if (commandInfo.getCommand().contains(Constants.FIAACO_CMD_STACK_EXPRESSION) && latestCommandOutput != null) {
-            commandInfo.setCommand(commandInfo.getCommand().replaceAll("\\" + Constants.FIAACO_CMD_STACK_EXPRESSION,
+            builder.command(commandInfo.getCommand().replaceAll("\\" + Constants.FIAACO_CMD_STACK_EXPRESSION,
                     latestCommandOutput.trim()));
         }
-        log.debug("Absolute Command is " + commandInfo.getCommand());
-        return commandInfo.getCommand();
+        log.debug("Absolute Command is " + this.maskCommand(commandInfo.getCommand()));
+        return builder.build().getCommand();
     }
 
     /**
@@ -201,19 +205,21 @@ public class CommandInfoExecutionHelper {
      * @param referedValues
      * @throws MangleException
      */
-    private void processReferences(CommandInfo commandInfo, Map<String, String> referedValues, String expression)
+    private String processReferences(CommandInfo commandInfo, Map<String, String> referedValues, String expression)
             throws MangleException {
         if (commandInfo.getCommand().contains(expression) && referedValues != null) {
+            String command = commandInfo.getCommand();
             for (Entry<String, String> entry : referedValues.entrySet()) {
-                if (commandInfo.getCommand().contains(expression + entry.getKey()) && entry.getValue() != null) {
-                    commandInfo.setCommand(
-                            commandInfo.getCommand().replaceAll("\\" + expression + entry.getKey(), entry.getValue()));
+                if (command.contains(expression + entry.getKey()) && entry.getValue() != null) {
+                    command = command.replaceAll("\\" + expression + entry.getKey(), entry.getValue());
                 }
             }
+            commandInfo = commandInfo.toBuilder().command(command).build();
         }
         if (commandInfo.getCommand().contains(expression)) {
-            throw new MangleException(ErrorCode.MISSING_REFERENCE_VALUES, commandInfo.getCommand());
+            throw new MangleException(ErrorCode.MISSING_REFERENCE_VALUES, this.maskCommand(commandInfo.getCommand()));
         }
+        return commandInfo.getCommand();
     }
 
 
@@ -229,13 +235,16 @@ public class CommandInfoExecutionHelper {
         // invocation of the script
         if (faultInjectionScriptInfo.isExecutable()) {
             List<CommandInfo> commandInfos = new ArrayList<>();
-            CommandInfo commandInfo = new CommandInfo();
-            commandInfo.setCommand("chmod u+x " + faultInjectionScriptInfo.getTargetDirectoryPath() + "/"
-                    + faultInjectionScriptInfo.getScriptFileName());
-            commandInfo.setIgnoreExitValueCheck(false);
-            commandInfo.setExpectedCommandOutputList(Arrays.asList(""));
+            CommandInfo commandInfo = CommandInfo
+                    .builder("chmod u+x " + faultInjectionScriptInfo.getTargetDirectoryPath() + "/"
+                            + faultInjectionScriptInfo.getScriptFileName())
+                    .ignoreExitValueCheck(false).expectedCommandOutputList(Arrays.asList("")).build();
             commandInfos.add(commandInfo);
             runCommands(executor, commandInfos, null, null);
         }
+    }
+
+    private String maskCommand(String command) {
+        return command.replaceAll(StringConstants.REGULAR_EXP_FOR_PASS_MASK, StringConstants.REPLACEMENT_TXT);
     }
 }

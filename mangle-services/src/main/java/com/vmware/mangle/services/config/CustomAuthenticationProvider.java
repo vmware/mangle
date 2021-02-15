@@ -19,6 +19,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import com.vmware.mangle.cassandra.model.security.UserLoginAttempts;
 import com.vmware.mangle.services.CustomUserDetailsService;
 import com.vmware.mangle.services.UserLoginAttemptsService;
 import com.vmware.mangle.utils.constants.ErrorConstants;
@@ -61,8 +62,17 @@ public class CustomAuthenticationProvider extends DaoAuthenticationProvider {
             throw e;
 
         } catch (LockedException e) {
-            throw new LockedException(ErrorConstants.USER_ACCOUNT_LOCKED_ERROR_MSG);
+            UserLoginAttempts loginAttempts = userLoginAttemptsService.getUserAttemptsForUser(authentication.getName());
+            long remainingTimeForUserUnlock = getRemainingTimeoutForUserLockout(loginAttempts);
+
+            throw new LockedException(String.format(ErrorConstants.USER_ACCOUNT_LOCKED_ERROR_MSG, remainingTimeForUserUnlock));
         }
+    }
+
+    private long getRemainingTimeoutForUserLockout(UserLoginAttempts loginAttempts) {
+        double totalTimeoutTime = Math.pow(2, loginAttempts.getAttempts()) * 1000;
+        return Math.round(
+                (totalTimeoutTime - (System.currentTimeMillis() - loginAttempts.getLastAttempt().getTime())) / 1000);
 
     }
 }

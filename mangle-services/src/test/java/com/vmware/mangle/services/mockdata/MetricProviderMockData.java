@@ -14,6 +14,7 @@ package com.vmware.mangle.services.mockdata;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.UUID;
 
 import com.vmware.mangle.cassandra.model.MangleAdminConfigurationSpec;
 import com.vmware.mangle.cassandra.model.metricprovider.DatadogConnectionProperties;
@@ -68,6 +69,16 @@ public class MetricProviderMockData {
     }
 
     /**
+     * @return WaveFrontConnectionProperties
+     */
+    public WaveFrontConnectionProperties getWavefrontConnectionPropertiesNoTags() {
+        WaveFrontConnectionProperties waveFrontConnectionProperties = new WaveFrontConnectionProperties();
+        waveFrontConnectionProperties.setWavefrontAPIToken(this.properties.getProperty("wavefrontAPIToken"));
+        waveFrontConnectionProperties.setWavefrontInstance(this.properties.getProperty("wavefrontInstance"));
+        return waveFrontConnectionProperties;
+    }
+
+    /**
      * @return MetricProviderSpec
      */
     public MetricProviderSpec metricProviderWavefront() {
@@ -77,6 +88,41 @@ public class MetricProviderMockData {
         wavefrontMetricProviderSpecs.setWaveFrontConnectionProperties(getWavefrontConnectionProperties());
         wavefrontMetricProviderSpecs.setId(properties.getProperty("wavefrontId"));
         return wavefrontMetricProviderSpecs;
+    }
+
+    /**
+     * @return MetricProviderSpec
+     */
+    public MetricProviderSpec metricProviderWavefrontNoTags() {
+        MetricProviderSpec wavefrontMetricProviderSpecs = new MetricProviderSpec();
+        wavefrontMetricProviderSpecs.setName(properties.getProperty("wavefrontMetricReporterName"));
+        wavefrontMetricProviderSpecs.setMetricProviderType(MetricProviderType.WAVEFRONT);
+        wavefrontMetricProviderSpecs.setWaveFrontConnectionProperties(getWavefrontConnectionPropertiesNoTags());
+        wavefrontMetricProviderSpecs.setId(properties.getProperty("wavefrontId"));
+        return wavefrontMetricProviderSpecs;
+    }
+
+    /**
+     * @return MetricProviderSpec
+     */
+    public MetricProviderSpec metricProviderDatadogNoTags() {
+        MetricProviderSpec datadogMetricProviderSpecs = new MetricProviderSpec();
+        datadogMetricProviderSpecs.setName(properties.getProperty("datadogMetricReporterName"));
+        datadogMetricProviderSpecs.setMetricProviderType(MetricProviderType.DATADOG);
+        datadogMetricProviderSpecs.setDatadogConnectionProperties(getDatadogConnectionPropertiesNoTags());
+        datadogMetricProviderSpecs.setId(properties.getProperty("datadogId"));
+        return datadogMetricProviderSpecs;
+    }
+
+    /**
+     * @return DatadogConnectionProperties
+     */
+    public DatadogConnectionProperties getDatadogConnectionPropertiesNoTags() {
+        DatadogConnectionProperties datadogConnectionProperties = new DatadogConnectionProperties();
+        datadogConnectionProperties.setApiKey(this.properties.getProperty("apiKey"));
+        datadogConnectionProperties.setApplicationKey(this.properties.getProperty("applicationKey"));
+        datadogConnectionProperties.setUri(this.properties.getProperty("uri"));
+        return datadogConnectionProperties;
     }
 
     /**
@@ -141,5 +187,16 @@ public class MetricProviderMockData {
         mangleAdminConfigurationSpec.setPropertyName(MetricProviderConstants.SENDING_MANGLE_METRICS);
         mangleAdminConfigurationSpec.setPropertyValue("false");
         return mangleAdminConfigurationSpec;
+    }
+
+    /**
+     * @return MetricProviderSpec
+     */
+    public MetricProviderSpec getPrometheusMetricProvider() {
+        MetricProviderSpec prometheusMetricProviderSpecs = new MetricProviderSpec();
+        prometheusMetricProviderSpecs.setName("prometheus_test");
+        prometheusMetricProviderSpecs.setMetricProviderType(MetricProviderType.PROMETHEUS);
+        prometheusMetricProviderSpecs.setId(UUID.randomUUID().toString());
+        return prometheusMetricProviderSpecs;
     }
 }

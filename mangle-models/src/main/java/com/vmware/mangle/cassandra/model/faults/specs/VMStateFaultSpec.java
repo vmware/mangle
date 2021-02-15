@@ -11,7 +11,7 @@
 
 package com.vmware.mangle.cassandra.model.faults.specs;
 
-import com.datastax.driver.core.DataType.Name;
+import com.datastax.driver.core.DataType;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.springframework.data.cassandra.core.mapping.CassandraType;
@@ -28,7 +28,10 @@ import com.vmware.mangle.services.enums.VCenterStateFaults;
 @SuppressWarnings("squid:MaximumInheritanceDepth")
 public class VMStateFaultSpec extends VMFaultSpec {
     private static final long serialVersionUID = 1L;
-    @CassandraType(type = Name.VARCHAR)
+
+    private String vmName;
+
+    @CassandraType(type = DataType.Name.VARCHAR)
     private VCenterStateFaults fault;
 
     public VMStateFaultSpec() {

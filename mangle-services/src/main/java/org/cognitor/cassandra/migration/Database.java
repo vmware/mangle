@@ -97,6 +97,7 @@ public class Database implements Closeable {
         List<String> expectedMigrationFailureMessages = new ArrayList<>();
         expectedMigrationFailureMessages.add("a field of the same name already exists");
         expectedMigrationFailureMessages.add("it conflicts with an existing column");
+        expectedMigrationFailureMessages.add("Unknown field ");
         return expectedMigrationFailureMessages;
     }
 
@@ -104,8 +105,8 @@ public class Database implements Closeable {
         if (keyspaceExists()) {
             return;
         }
-        try (Session session = this.cluster.connect()) {
-            session.execute(this.keyspace.getCqlStatement());
+        try (Session localSession = this.cluster.connect()) {
+            localSession.execute(this.keyspace.getCqlStatement());
         } catch (DriverException exception) {
             throw new MigrationException(format("Unable to create keyspace %s.", keyspaceName), exception);
         }
@@ -194,8 +195,8 @@ public class Database implements Closeable {
      */
     public void execute(DbMigration migration) {
         notNull(migration, "migration");
-        LOGGER.debug(format("About to execute migration %s to version %d", migration.getScriptName(),
-                migration.getVersion()));
+        LOGGER.debug("About to execute migration {} to version {}", migration.getScriptName(), migration.getVersion());
+
         String lastStatement = null;
         SimpleCQLLexer lexer = new SimpleCQLLexer(migration.getMigrationScript());
         for (String statement : lexer.getCqlQueries()) {
@@ -214,8 +215,8 @@ public class Database implements Closeable {
             }
         }
         logMigration(migration, true);
-        LOGGER.debug(format("Successfully applied migration %s to version %d", migration.getScriptName(),
-                migration.getVersion()));
+        LOGGER.debug("Successfully applied migration {} to version {}", migration.getScriptName(),
+                migration.getVersion());
     }
 
     private void executeStatement(String statement) {

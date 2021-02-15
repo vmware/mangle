@@ -112,8 +112,9 @@ public class BytemanFaultTaskHelperTest {
             when(bytemanFaultHelperFactory.getHelper(Mockito.any())).thenReturn(bytemanFaultHelper);
             doNothing().when(taskData).setInjectionCommandInfoList(value);
             when(bytemanFaultHelper.getInjectionCommandInfoList(Mockito.any())).thenReturn(value);
-            Mockito.doNothing().when(commandInfoExecutionHelper).runCommands(Mockito.any(), Mockito.any(),
-                    Mockito.any(), Mockito.any());
+            Mockito.when(
+                    commandInfoExecutionHelper.runCommands(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
+                    .thenReturn("");
 
             task = injectionTask.init(faultsMockData.getK8sCpuJvmAgentFaultSpec(), null);
             jvmInjectionTask.init(faultsMockData.getK8sCpuJvmAgentFaultSpec(), null);
@@ -153,8 +154,9 @@ public class BytemanFaultTaskHelperTest {
             when(endpointClientFactory.getEndPointClient(Mockito.any(), Mockito.any())).thenReturn(sshUtils);
             when(bytemanFaultHelperFactory.getHelper(Mockito.any())).thenReturn(linuxBytemanFaultHelper);
             task = injectionTask.init(faultsMockData.getLinuxJvmCodelevelFaultSpec());
-            Mockito.doNothing().when(commandInfoExecutionHelper).runCommands(Mockito.any(), Mockito.any(),
-                    Mockito.any(), Mockito.any());
+            Mockito.when(
+                    commandInfoExecutionHelper.runCommands(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
+                    .thenReturn("");
         } catch (MangleException e1) {
             e1.printStackTrace();
         }
@@ -219,8 +221,9 @@ public class BytemanFaultTaskHelperTest {
             when(bytemanFaultHelperFactory.getHelper(Mockito.any())).thenReturn(dockerBytemanFaultHelper);
             Mockito.doNothing().when(dockerBytemanFaultHelper).checkTaskSpecificPrerequisites();
             task = injectionTask.init(faultSpec);
-            Mockito.doNothing().when(commandInfoExecutionHelper).runCommands(Mockito.any(), Mockito.any(),
-                    Mockito.any(), Mockito.any());
+            Mockito.when(
+                    commandInfoExecutionHelper.runCommands(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
+                    .thenReturn("");
         } catch (MangleException e1) {
             e1.printStackTrace();
         }

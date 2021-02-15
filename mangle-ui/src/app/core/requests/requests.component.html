@@ -3,7 +3,7 @@
         <div class="content-area height-1200">
             <router-outlet></router-outlet>
         </div>
-        <clr-vertical-nav [clrVerticalNavCollapsible]="requestsCollapsible">
+        <clr-vertical-nav [clrVerticalNavCollapsible]="false">
             <clr-vertical-nav-group routerLinkActive="active">
                 <clr-icon shape="align-bottom" clrVerticalNavIcon></clr-icon>Requests
                 <clr-vertical-nav-group-children *clrIfExpanded="true">
@@ -11,14 +11,7 @@
                     <a clrVerticalNavLink [routerLink]="['scheduled']" routerLinkActive="active">Scheduled Jobs</a>
                 </clr-vertical-nav-group-children>
             </clr-vertical-nav-group>
-            <clr-vertical-nav-group routerLinkActive="active" *ngIf="isAdminUser">
-                <clr-icon shape="details" clrVerticalNavIcon></clr-icon>Logs
-                <clr-vertical-nav-group-children *clrIfExpanded="false">
-                    <a clrVerticalNavLink href="application/logfile" target="_blank">Application Log <clr-icon
-                            shape="pop-out"></clr-icon></a>
-                </clr-vertical-nav-group-children>
-            </clr-vertical-nav-group>
-            <a clrVerticalNavLink [routerLink]="['events']" routerLinkActive="active">
+            <a clrVerticalNavLink [routerLink]="['events']" routerLinkActive="active" *ngIf="isAdminUser">
                 <clr-icon shape="event" clrVerticalNavIcon></clr-icon>Application Events
             </a>
         </clr-vertical-nav>

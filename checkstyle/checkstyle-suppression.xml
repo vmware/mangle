@@ -5,6 +5,6 @@
 
 <suppressions>
 	<suppress
-		files="BytemanCommandInfoHelper\.java|K8sCommandInfoHelper\.java|MangleApplication\.java|Constants\.java|KubernetesTemplates\.java|EndpointClientFactory\.java|WavefrontMetricHelper\.java|MetricsHelper.java|EndpointClientFactory.java|EventListener\.java|CommandResultUtils\.java|AgentMain\.java"
+		files="BytemanCommandInfoHelper\.java|K8sCommandInfoHelper\.java|MangleApplication\.java|Constants\.java|KubernetesTemplates\.java|EndpointClientFactory\.java|WavefrontMetricHelper\.java|MetricsHelper.java|EndpointClientFactory.java|EventListener\.java|CommandResultUtils\.java|AgentMain\.java|VCenterTaskUtils\.java"
 		checks="HideUtilityClassConstructorCheck" />
 </suppressions>

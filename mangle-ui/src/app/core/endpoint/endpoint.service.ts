@@ -21,12 +21,16 @@ export class EndpointService {
 
     public addEndpoint(endpoint) {
         this.removeExtraArgs(endpoint);
-        return this.http.post(ServiceConstants.ENDPOINTS, endpoint);
+        return this.http.post(ServiceConstants.ENDPOINTS_V2, endpoint);
     }
 
     public updateEndpoint(endpoint) {
         this.removeExtraArgs(endpoint);
-        return this.http.put(ServiceConstants.ENDPOINTS, endpoint);
+        return this.http.put(ServiceConstants.ENDPOINTS_V2, endpoint);
+    }
+
+    public enableEndpoints(endpointNames, enableFlag: boolean) {
+        return this.http.post(ServiceConstants.ENDPOINTS_ENABLE + CommonConstants.QUESTION_MARK + "enable" + CommonConstants.EQUALS_TO + enableFlag + CommonConstants.AND_OP + "names" + CommonConstants.EQUALS_TO + endpointNames, null);
     }
 
     public deleteEndpoint(name) {
@@ -117,8 +121,17 @@ export class EndpointService {
     }
 
     public updateAwsCredential(credential) {
-        return this.http.put(ServiceConstants.ENDPOINTS_CREDENTIALS_AWS, credential);
+        return this.http.post(ServiceConstants.ENDPOINTS_CREDENTIALS_AWS, credential);
     }
+
+    public addAzureCredential(credential) {
+        return this.http.post(ServiceConstants.ENDPOINTS_CREDENTIALS_AZURE, credential);
+    }
+
+    public updateAzureCredential(credential) {
+        return this.http.post(ServiceConstants.ENDPOINTS_CREDENTIALS_AZURE, credential);
+    }
+
     public deleteCredential(name) {
         return this.http.delete(ServiceConstants.ENDPOINTS_CREDENTIALS + CommonConstants.QUESTION_MARK + CommonConstants.credentialNames + CommonConstants.EQUALS_TO + name);
     }
@@ -138,5 +151,33 @@ export class EndpointService {
                 delete endpoint.dockerConnectionProperties[CommonConstants.certificatesName];
             }
         }
+    }
+
+    public getVCenterAdapterDetails(): Observable<any> {
+        return this.http.get(ServiceConstants.VCENTER_ADAPTER_DETAILS_URL);
+    }
+
+    public updateVCenterAdapterDetails(vCenterAdapterDetail): Observable<any> {
+        return this.http.put(ServiceConstants.VCENTER_ADAPTER_DETAILS_URL, vCenterAdapterDetail);
+    }
+
+    public addVCenterAdapterDetails(vCenterAdapterDetail): Observable<any> {
+        return this.http.post(ServiceConstants.VCENTER_ADAPTER_DETAILS_URL, vCenterAdapterDetail);
+    }
+
+    public deleteVCenterAdapterDetails(vCenterAdapterDetailsNames) {
+        return this.http.delete(ServiceConstants.VCENTER_ADAPTER_DETAILS_URL + "?adapterDetailsNames=" + vCenterAdapterDetailsNames);
+    }
+
+    public testVCenterAdapterConnection(vCenterAdapterDetail) {
+        return this.http.post(ServiceConstants.VCENTER_ADAPTER_DETAILS_TEST_CONNECTION_URL, vCenterAdapterDetail);
+    }
+
+    public addDatabaseCredential(credential: any) {
+        return this.http.post(ServiceConstants.ENDPOINTS_CREDENTIALS_DATABASE, credential);
+    }
+
+    public updateDatabaseCredential(credential: any) {
+        return this.http.put(ServiceConstants.ENDPOINTS_CREDENTIALS_DATABASE, credential);
     }
 }

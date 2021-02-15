@@ -1,0 +1,42 @@
+##############################################################################
+# JBoss, Home of Professional Open Source
+# Copyright 2009, Red Hat and individual contributors
+# by the @authors tag. See the copyright.txt in the distribution for a
+# full listing of individual contributors.
+#
+# This is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation; either version 2.1 of
+# the License, or (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this software; if not, write to the Free
+# Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+#
+# @authors Andrew Dinn
+#
+# Test for BYTEMAN-219 to ensure that it is possible to call an interface method
+# inherited by an abstract class even if the abstract class does not iself
+# implement the method. the interface method will always be defined by any
+# instantiable subclass so a call to the method should typecheck ands execute
+# correctly.
+#
+# in this example C3 is an abstract class which implements interface I4
+# but leaves it to its subclass C4 to provide the actual implementation of
+# method interfaceMethod. The type checker should still detect that this
+# method can safely be called on any instance of C3.
+
+RULE test abstract interface method call
+CLASS C3
+METHOD testMethod(Test)
+HELPER org.jboss.byteman.tests.helpers.Default
+BIND test : Test = $1
+IF TRUE
+DO $0.interfaceMethod(test)
+ENDRULE

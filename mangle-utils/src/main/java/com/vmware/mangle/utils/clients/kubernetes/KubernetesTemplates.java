@@ -39,6 +39,7 @@ public class KubernetesTemplates {
     public static final String SELECTORS_PREFIX = "selectors#";
     public static final String SERVICE_KEY_PREFIX = "key#";
     public static final String OUTPUT_JSONPATH = "-o=jsonpath=";
+    private static final String K8S_LABEL_EXPRESSION = " -l \"%s\" ";
     public static final String GET_NODES_JSONPATH = GET + NODES + OUTPUT_JSONPATH;
     public static final String GET_NODE_PODCIDR = GET + NODE + "%s " + OUTPUT_JSONPATH + "\"{.spec.podCIDR}\"";
     public static final String GET_PODS_JSONPATH = GET + PODS + OUTPUT_JSONPATH;
@@ -49,14 +50,14 @@ public class KubernetesTemplates {
     public static final String GET_SERVICES_JSONPATH = GET + SERVICES + OUTPUT_JSONPATH;
     public static final String GET_ALLPODS_IN_NODE = GET + PODS + TEMPLATE_OUTPUT
             + "\"{{range.items}}{{if eq .spec.nodeName \\\"%s\\\"}}{{.metadata.name}} {{end}}{{end}}\"";
-    public static final String GET_ALLPOD_USING_LABELS = GET + PODS + " -l \"%s\" " + TEMPLATE_OUTPUT
-            + "\"{{range.items}}{{if eq .status.phase \\\"Running\\\"}}{{.metadata.name}} {{end}}{{end}}\"";
+    public static final String GET_ALLPOD_USING_LABELS = GET + PODS + K8S_LABEL_EXPRESSION + TEMPLATE_OUTPUT
+            + "\"{{range.items}}{{\\$name:=.metadata.name}}{{range .status.conditions}}{{if (and (eq .type \\\"Ready\\\") (eq .status \\\"True\\\"))}}{{\\$name}} {{end}}{{end}}{{end}}\"";
     public static final String GET_PODNODE_MAP = GET + PODS + TEMPLATE_OUTPUT
             + "\"{{range.items}}{{if eq .status.phase \\\"Running\\\"}}{{.metadata.name}}:{{.spec.nodeName}} {{end}}{{end}}\"";
     public static final String GET_ALLPOD_IPS_USING_LABELS =
-            GET + PODS + " -l \"%s\" " + OUTPUT_JSONPATH + "\"{.items[*].status.podIP}\"";
+            GET + PODS + K8S_LABEL_EXPRESSION + OUTPUT_JSONPATH + "\"{.items[*].status.podIP}\"";
     public static final String GET_ALLPOD_NODES_USING_LABELS =
-            GET + PODS + " -l \"%s\" " + TEMPLATE_OUTPUT + "\"{{range.items}}{{.spec.nodeName}} {{end}}\"";
+            GET + PODS + K8S_LABEL_EXPRESSION + TEMPLATE_OUTPUT + "\"{{range.items}}{{.spec.nodeName}} {{end}}\"";
     public static final String GET_NODE_EXTERNAL_IP_MAP = GET + NODES + TEMPLATE_OUTPUT
             + "\"{{range.items}}{{.metadata.name}},{{range.status.addresses}}{{if eq .type \\\"ExternalIP\\\"}}{{.address}} {{end}}{{end}}{{end}}\"";
     public static final String CHECK_AVAILABILITY_NODE = GET + NODES + TEMPLATE_OUTPUT
@@ -76,7 +77,7 @@ public class KubernetesTemplates {
     public static final String VRBC_UI_POD_LABELS = "app=vrbc-ui";
     public static final String GET_SERVICE_LB_HOSTNAME =
             GET + SERVICE + " %s " + OUTPUT_JSONPATH + "\"{.status.loadBalancer.ingress[0].hostname}\"";
-    public static final String RESTART_PODS_WITH_LABELS = DELETE + PODS + " -l \"%s\" ";
+    public static final String RESTART_PODS_WITH_LABELS = DELETE + PODS + K8S_LABEL_EXPRESSION + " ";
     public static final String RESTART_POD_WITH_NAME = DELETE + POD + " \"%s\"";
     public static final String CSP_SERVICE_NAME = "csp-service";
     public static final String NGINX_CONTAINER_IMAGE = "nginx";

@@ -26,6 +26,7 @@ import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.Member;
 import com.hazelcast.core.ReplicatedMap;
+import com.hazelcast.kubernetes.KubernetesProperties;
 import com.hazelcast.quorum.QuorumType;
 import com.hazelcast.spi.properties.GroupProperty;
 import lombok.extern.log4j.Log4j2;
@@ -35,6 +36,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.util.CollectionUtils;
 
 import com.vmware.mangle.cassandra.model.hazelcast.HazelcastClusterConfig;
@@ -56,6 +58,7 @@ import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 @Configuration
 @EnableConfigurationProperties
 @Log4j2
+@DependsOn("migrationManager")
 public class HazelcastConfig {
 
     private HazelcastClusterMigrationListener migrationListener;
@@ -83,6 +86,21 @@ public class HazelcastConfig {
 
     @Value("${hazelcast.config.deploymentMode}")
     private String deploymentMode;
+
+    @Value("${hazelcast.health.monitoring.threshold.memory.percentage}")
+    private String thresholdMemoryPercentage;
+
+    @Value("${hazelcast.health.monitoring.threshold.cpu.percentage}")
+    private String thresholdCPUPercentage;
+
+    @Value("${hazelcast.health.monitoring.delay.seconds}")
+    private String monitorDelaySeconds;
+
+    @Value("${hazelcast.config.kubernetesMode}")
+    private boolean kubernetesMode;
+
+    @Value("${info.app.version}")
+    private String productVersion;
 
     private static final String NAME = HazelcastConstants.HAZELCAST_TASKS_MAP;
 
@@ -155,7 +173,6 @@ public class HazelcastConfig {
      */
     @Bean(name = "hazelcastInstance")
     public HazelcastInstance createHazelcastCluster() throws MangleException {
-
         if (StringUtils.isEmpty(clusterValidationToken)) {
             throw new MangleException(ErrorConstants.CLUSTER_VALIDATION_TOKEN_MISSING,
                     ErrorCode.CLUSTER_MANDATORY_PARAMETER_NOT_PROVIDED);
@@ -203,6 +220,10 @@ public class HazelcastConfig {
         mangleMaintenanceModeConfig.setBooleanAttribute("MANGLE_IN_MAINTENANCE_MODE", false);
         String validationToken = HazelcastUtils.getApplicationValidationToken(clusterValidationToken);
         config.setProperty(GroupProperty.APPLICATION_VALIDATION_TOKEN.getName(), validationToken);
+        config.setProperty(GroupProperty.HEALTH_MONITORING_THRESHOLD_MEMORY_PERCENTAGE.getName(),
+                thresholdMemoryPercentage);
+        config.setProperty(GroupProperty.HEALTH_MONITORING_THRESHOLD_CPU_PERCENTAGE.getName(), thresholdCPUPercentage);
+        config.setProperty(GroupProperty.HEALTH_MONITORING_DELAY_SECONDS.getName(), monitorDelaySeconds);
         config.setMemberAttributeConfig(mangleMaintenanceModeConfig);
         config.addListenerConfig(new ListenerConfig(membershipListener));
         config.addListenerConfig(new ListenerConfig(migrationListener));
@@ -232,9 +253,14 @@ public class HazelcastConfig {
             clusterConfig.setClusterName(clusterName);
             clusterConfig.setDeploymentMode(extractMangleDeploymentMode(deploymentMode));
             clusterConfig.setQuorum(extractQuorum(null));
+            clusterConfig.setProductVersion(productVersion);
             clusterConfigService.addClusterConfiguration(clusterConfig);
             log.info("Bringing up the cluster with the validation token: {}", validationToken);
         } else {
+            if (StringUtils.isEmpty(clusterConfig.getProductVersion())) {
+                clusterConfig = clusterConfigService.updateProductVersion(productVersion);
+            }
+
             validateHazelcastInitialization(clusterConfig, validationToken);
 
             /**
@@ -266,9 +292,14 @@ public class HazelcastConfig {
             config.getNetworkConfig().setPublicAddress(publicAddress);
         }
 
-        /* Setting up tcp/ip discovery for the hazelcast cluster */
+        /* Setting up tcp/ip or Kubernetes discovery for the hazelcast cluster */
         config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
-        config.getNetworkConfig().getJoin().getTcpIpConfig().setMembers(members).setEnabled(true);
+        if (kubernetesMode) {
+            config.getNetworkConfig().getJoin().getKubernetesConfig().setEnabled(true)
+                    .setProperty(KubernetesProperties.SERVICE_DNS.key(), clusterMembers);
+        } else {
+            config.getNetworkConfig().getJoin().getTcpIpConfig().setMembers(members).setEnabled(true);
+        }
 
         HazelcastUtils.updateHazelcastMangleQuorumValue(extractQuorum(clusterConfig));
         QuorumConfig quorumConfig = getQuorumConfig();
@@ -349,6 +380,16 @@ public class HazelcastConfig {
                 && !clusterConfig.getDeploymentMode().name().equals(deploymentMode)) {
             throw new MangleException(ErrorConstants.CLUSTER_CONFIG_MISMATCH_DEPLOYMENT_MODE,
                     ErrorCode.CLUSTER_CONFIG_MISMATCH_DEPLOYMENT_TYPE);
+        }
+
+        /**
+         * mangle version mismatch: The nodes participating in the cluster formation don't have a same major
+         * version
+         */
+
+        if (null != clusterConfig.getProductVersion() && !clusterConfig.getProductVersion().equals(productVersion)) {
+            throw new MangleException(ErrorConstants.CLUSTER_CONFIG_MISMATCH_PRODUCT_VERSION,
+                    ErrorCode.CLUSTER_CONFIG_MISMATCH_PRODUCT_VERSION);
         }
     }
 

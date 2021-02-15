@@ -18,8 +18,10 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.ReadingConverter;
 
 import com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.EndpointGroupFaultTriggerSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.K8SFaultTriggerSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.TaskSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.VCenterFaultTriggerSpec;
 import com.vmware.mangle.utils.exceptions.MangleRuntimeException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
@@ -33,6 +35,8 @@ import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 public class TaskSpecReadingConverter implements Converter<String, TaskSpec> {
 
     private Gson gson;
+    private static final String CHILD_SPEC_TYPE_PARAM = "childSpecType";
+    private static final String FAULT_SPEC_PARAM = "faultSpec";
 
     public TaskSpecReadingConverter() {
         gson = new Gson();
@@ -50,11 +54,25 @@ public class TaskSpecReadingConverter implements Converter<String, TaskSpec> {
             Class specClass = Class.forName(specClassName);
             TaskSpec taskSpec = (TaskSpec) gson.fromJson(source, specClass);
             if (specClassName.equals(K8SFaultTriggerSpec.class.getName())) {
-                String childSpecClassName = jsonObject.getString("childSpecType");
+                String childSpecClassName = jsonObject.getString(CHILD_SPEC_TYPE_PARAM);
                 Class childSpecClass = Class.forName(childSpecClassName);
                 CommandExecutionFaultSpec childSpec = (CommandExecutionFaultSpec) gson
-                        .fromJson(jsonObject.get("faultSpec").toString(), childSpecClass);
+                        .fromJson(jsonObject.get(FAULT_SPEC_PARAM).toString(), childSpecClass);
                 ((K8SFaultTriggerSpec) taskSpec).setFaultSpec(childSpec);
+            }
+            if (specClassName.equals(VCenterFaultTriggerSpec.class.getName())) {
+                String childSpecClassName = jsonObject.getString(CHILD_SPEC_TYPE_PARAM);
+                Class childSpecClass = Class.forName(childSpecClassName);
+                CommandExecutionFaultSpec childSpec = (CommandExecutionFaultSpec) gson
+                        .fromJson(jsonObject.get(FAULT_SPEC_PARAM).toString(), childSpecClass);
+                ((VCenterFaultTriggerSpec) taskSpec).setFaultSpec(childSpec);
+            }
+            if (specClassName.equals(EndpointGroupFaultTriggerSpec.class.getName())) {
+                String childSpecClassName = jsonObject.getString(CHILD_SPEC_TYPE_PARAM);
+                Class childSpecClass = Class.forName(childSpecClassName);
+                CommandExecutionFaultSpec childSpec = (CommandExecutionFaultSpec) gson
+                        .fromJson(jsonObject.get(FAULT_SPEC_PARAM).toString(), childSpecClass);
+                ((EndpointGroupFaultTriggerSpec) taskSpec).setFaultSpec(childSpec);
             }
             return taskSpec;
         } catch (Exception e) {

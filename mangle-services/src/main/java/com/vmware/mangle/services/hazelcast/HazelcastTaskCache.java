@@ -32,8 +32,6 @@ public class HazelcastTaskCache implements HazelcastInstanceAware {
     @Autowired
     private HazelcastTaskMapListener listener;
 
-    private HazelcastInstance hz;
-
     private IMap<String, String> taskMap;
 
     public String addTaskToCache(String key, String value) {
@@ -69,8 +67,7 @@ public class HazelcastTaskCache implements HazelcastInstanceAware {
 
     @Override
     public void setHazelcastInstance(HazelcastInstance hazelcastInstance) {
-        hz = hazelcastInstance;
-        taskMap = hz.getMap(HAZELCAST_TASKS_MAP);
+        taskMap = hazelcastInstance.getMap(HAZELCAST_TASKS_MAP);
         taskMap.addLocalEntryListener(listener);
     }
 }

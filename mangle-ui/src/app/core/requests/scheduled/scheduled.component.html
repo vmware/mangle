@@ -1,4 +1,4 @@
-<app-alert [(alertMessage)]="alertMessage" [(isErrorMessage)]="isErrorMessage" (alertMessageChange)="alertMessage = $event"></app-alert>
+<app-alert [(alertMessage)]="alertMessage" [isErrorMessage]="isErrorMessage" (alertMessageChange)="alertMessage = $event"></app-alert>
 <h2>Scheduled Jobs</h2><clr-icon shape="refresh" (click)="getAllScheduleJobs();"></clr-icon><br />
 <clr-datagrid [clrDgLoading]="isLoadingScheduledJobs" id="scheduledg" name="scheduledg">
     <clr-dg-column [clrDgField]="'id'">ID</clr-dg-column>
@@ -11,9 +11,10 @@
             <button class="action-item" *ngIf="(scheduledJob.status == 'INITIALIZING' || scheduledJob.status == 'SCHEDULED')" (click)="cancelSchedule(scheduledJob);">Cancel</button>
             <button class="action-item" *ngIf="(scheduledJob.status == 'SCHEDULED')" (click)="pauseSchedule(scheduledJob);">Pause</button>
             <button class="action-item" *ngIf="(scheduledJob.status == 'PAUSED')" (click)="resumeSchedule(scheduledJob);">Resume</button>
-            <button class="action-item" (click)="getScheduledTaskDetails(scheduledJob);viewReportFlage=true;">Reports</button>
+            <button class="action-item" (click)="getScheduledTaskDetails(scheduledJob);viewReportFlag=true;">Reports</button>
             <button class="action-item" (click)="deleteSchedule(scheduledJob);">Delete</button>
             <button class="action-item" (click)="deleteScheduleOnly(scheduledJob);">Delete Schedule Only</button>
+            <button class="action-item" *ngIf="(scheduledJob.status == 'INITIALIZING' || scheduledJob.status == 'SCHEDULED')" (click)="populateScheduler(scheduledJob);modifySchedule=true;">Modify</button>
         </clr-dg-action-overflow>
         <clr-dg-cell><a href="javascript://" (click)="getScheduledTaskDetails(scheduledJob);viewDetailedStatus=true;">{{scheduledJob.id}}</a></clr-dg-cell>
         <clr-dg-cell>{{scheduledJob.jobType}}</clr-dg-cell>
@@ -55,12 +56,80 @@
         </clr-datagrid>
     </div>
 </clr-modal>
-<clr-modal [(clrModalOpen)]="viewReportFlage" [clrModalSize]="'lg'">
+<clr-modal [(clrModalOpen)]="viewReportFlag" [clrModalSize]="'lg'">
     <h3 class="modal-title">Schedule Task Details</h3>
     <div class="modal-body">
         <code>
             <pre>{{scheduledTaskDetails |json}}</pre>
         </code>
-        <button type="button" class="btn btn-outline" (click)="viewReportFlage=false;">OK</button>
+        <button type="button" class="btn btn-outline" (click)="viewReportFlag=false;">OK</button>
     </div>
 </clr-modal>
+<clr-modal [(clrModalOpen)]="modifySchedule" [clrModalClosable]="false">
+    <h3 class="modal-title">Modify Schedule</h3>
+    <div class="modal-body">
+        <form #modifyScheduleForm="ngForm"
+            (ngSubmit)="modifyScheduleData(modifyScheduleForm.value);modifySchedule=false;modifyScheduleForm.reset();"
+            *ngIf="schedulerFormData" ngNativeValidate>
+            <section class="form-block">
+                <div class="form-group">
+                    <label for="id">ID</label>
+                    <input type="text" name="id" [(ngModel)]="schedulerFormData.id" readonly="true" size="37">
+                </div>
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <input type="text" name="description" [(ngModel)]="schedulerFormData.description">
+                </div>
+                <div class="form-group">
+                    <label for="jobType">Job Type</label>
+                    <div class="select">
+                        <select name="jobType" [(ngModel)]="schedulerFormData.jobType" required>
+                            <ng-container *ngFor="let schedulerJobType of jobType">
+                                <option [value]="schedulerJobType">{{schedulerJobType}}</option>
+                            </ng-container>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="status">Status</label>
+                    <div class="select">
+                        <select name="status" [(ngModel)]="schedulerFormData.status" readonly="true" required>
+                            <ng-container *ngFor="let schedulerStatus of status">
+                                <option [value]="schedulerStatus">{{schedulerStatus}}</option>
+                            </ng-container>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group" [hidden]="schedulerFormData.jobType=='CRON'">
+                    <label for="scheduledTime">Scheduled Time</label>
+                    <input type="number" min="1" max="9223372036854775807" name="scheduledTime"
+                                [(ngModel)]="schedulerFormData.scheduledTime"
+                                (input)="setSubmitButton();" [required]="schedulerFormData.jobType=='SIMPLE'" >&nbsp;&nbsp;<span style="height:39px;">Epoch Milliseconds</span>
+                </div>
+                <div class="form-group" [hidden]="schedulerFormData.jobType=='SIMPLE'">
+                    <label for="cronExpression">Cron Expression</label>
+                    <input type="text" name="cronExpression" [(ngModel)]="schedulerFormData.cronExpression"
+                                (input)="setSubmitButton();" [required]="schedulerFormData.jobType=='CRON'">
+                                <clr-icon shape="calendar" style="width:21px;height:39px;" (click)="cronModal=true;"></clr-icon>
+                                &nbsp;
+                                <clr-signpost>
+                                    <clr-icon shape="info" style="width:24px;height:41px;" clrSignpostTrigger></clr-icon>
+                                    <clr-signpost-content [clrPosition]="'top-left'" *clrIfOpen>
+                                        Please provide the Spring supported cron expressions only. Refer to
+                                        <a href="https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/scheduling/support/CronSequenceGenerator.html"
+                                            target="_blank">https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/scheduling/support/CronSequenceGenerator.html
+                                        </a>
+                                    </clr-signpost-content>
+                                </clr-signpost>
+                </div>
+                <fault-notifiers [notifiersData]="notifiersData" (notifiersModalEvent)="notifierModal=$event;"></fault-notifiers>
+            </section>
+            <button type="submit" class="btn btn-primary">SUBMIT</button>
+            <button type="button" class="btn btn-outline"
+                (click)="modifySchedule=false;modifyScheduleForm.reset();ngOnInit();">CANCEL</button>
+        </form>
+    </div>
+</clr-modal>
+<app-cron [cronModal]="cronModal" [cronValOrig]="schedulerFormData.cronExpression"
+    (cronMessageEvent)="setScheduleCron($event);"></app-cron>
+<app-notifiers [notifierModal]="notifierModal" [notifiersData]="notifiersData" (updateNotifiersModal)="notifierModal=$event;"></app-notifiers>

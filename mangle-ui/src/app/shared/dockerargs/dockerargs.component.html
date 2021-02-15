@@ -1,0 +1,21 @@
+<div [hidden]="dockerHidden">
+    <div class="form-group">
+        <label><b>Docker Arguments</b></label>
+    </div>
+    <br />
+    <fieldset ngModelGroup="dockerArguments">
+        <div class="form-group">
+            <label for="containerName">Container Name</label>
+            <clr-dropdown>
+                <input autocomplete="off" clrDropdownTrigger type="text" name="containerName" (input)="searchContainer($event.target.value);" (focus)="searchContainer('');" [(ngModel)]="faultFormData.dockerArguments.containerName" />
+                <clr-icon shape="caret down" clrDropdownTrigger size="24" (click)="searchContainer('');">
+                </clr-icon>
+                <clr-dropdown-menu *clrIfOpen class="menu-height" clrPosition="bottom-left">
+                    <ng-container *ngFor="let searchedContainer of searchedContainers">
+                        <button type="button" clrDropdownItem class="option-height" (click)="setContainerVal(searchedContainer);">{{searchedContainer}}</button>
+                    </ng-container>
+                </clr-dropdown-menu>
+            </clr-dropdown>
+        </div>
+    </fieldset>
+</div>

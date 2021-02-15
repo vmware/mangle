@@ -15,6 +15,7 @@ import java.util.Date;
 
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.datastax.driver.core.exceptions.UnavailableException;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -203,7 +204,7 @@ public class CustomizedResponseEntityExceptionHandler extends ResponseEntityExce
                 customErrorMessage.getErrorMessage(errorCode) + CAUSE + formBindExceptionMessage(ex.getBindingResult());
         ErrorDetails errorDetails = new ErrorDetails(new Date(), errorCode, errorMsg, request.getDescription(false));
         headers.add(ErrorConstants.REQUEST_FAILED_MESSAGE_HEADER, ErrorConstants.ERROR_MSG);
-        return new ResponseEntity<>(errorDetails, headers, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(errorDetails, headers, HttpStatus.PRECONDITION_FAILED);
     }
 
     @ExceptionHandler(DataAccessException.class)
@@ -216,6 +217,8 @@ public class CustomizedResponseEntityExceptionHandler extends ResponseEntityExce
             errorMsg = hostAvailableException.getCustomMessage(Integer.MAX_VALUE, true, false);
         } else if (exception.getCause() instanceof InvalidQueryException) {
             errorMsg = ErrorConstants.INVALID_QUERY_EXCEPTION;
+        } else if (exception.getCause() instanceof UnavailableException) {
+            errorMsg = ErrorConstants.UNAVAILABLE_EXCEPTION;
         }
         ErrorDetails errorDetails =
                 new ErrorDetails(new Date(), ErrorCode.DB_ERROR.getCode(), errorMsg, request.getDescription(false));

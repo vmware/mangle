@@ -33,20 +33,24 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import com.vmware.mangle.cassandra.model.security.ADAuthProviderDto;
 import com.vmware.mangle.cassandra.model.security.Privilege;
 import com.vmware.mangle.cassandra.model.security.Role;
 import com.vmware.mangle.cassandra.model.security.User;
 import com.vmware.mangle.cassandra.model.security.UsernameDomain;
 import com.vmware.mangle.model.enums.DefaultRoles;
+import com.vmware.mangle.services.config.CustomActiveDirectoryLdapAuthenticationProvider;
 import com.vmware.mangle.services.hazelcast.HazelcastClusterSyncAware;
 import com.vmware.mangle.services.repository.UserRepository;
 import com.vmware.mangle.utils.constants.Constants;
 import com.vmware.mangle.utils.constants.ErrorConstants;
 import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
+import com.vmware.mangle.utils.helpers.security.DecryptFields;
 
 /**
  *
@@ -72,13 +76,17 @@ public class UserService implements HazelcastClusterSyncAware {
     @Autowired
     private SessionRegistry sessionRegistry;
 
+    private PasswordResetService passwordResetService;
+
     @Autowired
     public UserService(UserRepository userRepository, PrivilegeService privilegeService,
-            ADAuthProviderService adAuthProviderService, PasswordEncoder passwordEncoder) {
+            ADAuthProviderService adAuthProviderService, PasswordEncoder passwordEncoder,
+            PasswordResetService passwordResetService) {
         this.userRepository = userRepository;
         this.privilegeService = privilegeService;
         this.authProviderService = adAuthProviderService;
         this.passwordEncoder = passwordEncoder;
+        this.passwordResetService = passwordResetService;
     }
 
     @Autowired
@@ -87,7 +95,7 @@ public class UserService implements HazelcastClusterSyncAware {
     }
 
     public Set<Role> getRoleForUser(String username) {
-        log.debug("Retrieving role for the user: " + username);
+        log.debug("Received request to get role by username...");
         Set<Role> roles = null;
         User user = userRepository.findByName(username);
         if (user != null) {
@@ -102,7 +110,7 @@ public class UserService implements HazelcastClusterSyncAware {
     }
 
     public User getUserByName(String username) {
-        log.debug("Retrieving User for the username: " + username);
+        log.debug("Received request to get user by its name...");
         User user = userRepository.findByName(username);
         if (user != null) {
             user.setRoles(new HashSet<>(roleService.getRolesByNames(user.getRoleNames())));
@@ -137,12 +145,7 @@ public class UserService implements HazelcastClusterSyncAware {
     }
 
     public void updatePassword(String username, String currentPassword, String newPassword) throws MangleException {
-        User dbUser = getUserByName(username);
-        if (dbUser == null) {
-            log.error("Failed to find the user {}, execution of the updateUser failed", username);
-            throw new MangleException(ErrorConstants.USER_NOT_FOUND, ErrorCode.USER_NOT_FOUND, username);
-        }
-
+        User dbUser = getDBUser(username);
         UsernameDomain usernameDomain = extractUserAndDomain(username);
 
         if (usernameDomain.getDomain() != null && !usernameDomain.getDomain().equals(Constants.LOCAL_DOMAIN_NAME)) {
@@ -152,18 +155,54 @@ public class UserService implements HazelcastClusterSyncAware {
 
         if (!passwordEncoder.matches(currentPassword, dbUser.getPassword())) {
             log.error("Failed to update the password for the user {}, incorrect current password ", username);
-            throw new MangleException(ErrorConstants.CURRENT_CREDS_PD_MISMATCH, ErrorCode.CURRENT_PASSWORD_MISMATCH);
+            throw new MangleException(ErrorConstants.CURRENT_CREDS_PASSWORD_MISMATCH,
+                    ErrorCode.CURRENT_PASSWORD_MISMATCH);
+        }
+
+        if (passwordEncoder.matches(newPassword, dbUser.getPassword())) {
+            log.error("Failed to update the password for the user {}, new password is same as current password ",
+                    username);
+            throw new MangleException(ErrorConstants.NEW_CREDS_PASSWORD_MATCH_OLD_PASSWORD,
+                    ErrorCode.NEW_CREDS_PASSWORD_MATCH_OLD_PASSWORD);
         }
 
         dbUser.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(dbUser);
     }
 
+    private User getDBUser(String username) throws MangleException {
+        User dbUser = getUserByName(username);
+        if (dbUser == null) {
+            log.error("Failed to find the user {}, execution of the updateUser failed", username);
+            throw new MangleException(ErrorConstants.USER_NOT_FOUND, ErrorCode.USER_NOT_FOUND, username);
+        }
+        return dbUser;
+    }
+
+    public User updateFirstTimePassword(String username, String newPassword) throws MangleException {
+        if (!passwordResetService.readResetStatus()) {
+            User dbUser = getDBUser(username);
+            UsernameDomain usernameDomain = extractUserAndDomain(username);
+            if (usernameDomain.getDomain() != null && !usernameDomain.getDomain().equals(Constants.LOCAL_DOMAIN_NAME)) {
+                throw new MangleException(ErrorConstants.CREDS_CHANGE_FOR_NON_LOCAL_USER,
+                        ErrorCode.PASSWORD_CHANGE_FOR_NON_LOCAL_USER);
+            }
+            dbUser.setPassword(passwordEncoder.encode(newPassword));
+            return userRepository.save(dbUser);
+        } else {
+            throw new MangleException(ErrorConstants.FIRST_TIME_PSWD_CONFIGURATION, ErrorCode.FIRST_TIME_PSWD_ERROR);
+        }
+
+    }
+
     public User createUser(User user) throws MangleException {
-        log.debug("Creating user " + user.getName());
+        log.debug("Received request to create user...");
         UsernameDomain usernameDomain = extractUserAndDomain(user.getName());
 
         verifyDomainInfo(usernameDomain);
+        if (!usernameDomain.getDomain().equals(Constants.LOCAL_DOMAIN_NAME)) {
+            preCheckForNonLocalUserAddition(usernameDomain.getUsername(), usernameDomain.getDomain());
+        }
         initializeDefaultRoles(user);
 
         user.setRoles(getPersitentRoles(user.getRoleNames()));
@@ -181,6 +220,42 @@ public class UserService implements HazelcastClusterSyncAware {
         }
     }
 
+    /**
+     *
+     * @param user
+     * @throws MangleException
+     *
+     * @deprecated
+     */
+    @Deprecated
+    public void validateADDetailsForUserCreation(User user) throws MangleException {
+        UsernameDomain usernameDomain = extractUserAndDomain(user.getName());
+        if (!usernameDomain.getDomain().equals(Constants.LOCAL_DOMAIN_NAME)) {
+            ADAuthProviderDto adAuthProviderDto =
+                    authProviderService.getADAuthProviderByAdDomain(usernameDomain.getDomain());
+            if (adAuthProviderDto != null && StringUtils.isEmpty(adAuthProviderDto.getAdUser())) {
+                log.error("AD information configured is insufficient for manual user addition");
+                throw new MangleException(String.format(ErrorConstants.AD_DETAILS_INSUFFICIENT_FOR_USER_ADDITION,
+                        adAuthProviderDto.getAdUrl()), ErrorCode.AD_DETAILS_INSUFFICIENT_FOR_USER_ADDITION);
+            }
+        }
+    }
+
+    private void preCheckForNonLocalUserAddition(String username, String domain) throws MangleException {
+        ADAuthProviderDto adAuthProviderDto =
+                (ADAuthProviderDto) DecryptFields.decrypt(authProviderService.getADAuthProviderByAdDomain(domain));
+        CustomActiveDirectoryLdapAuthenticationProvider provider = new CustomActiveDirectoryLdapAuthenticationProvider(
+                adAuthProviderDto.getAdDomain(), adAuthProviderDto.getAdUrl());
+        if ((!StringUtils.isEmpty(adAuthProviderDto.getAdUser())
+                || !StringUtils.isEmpty(adAuthProviderDto.getAdUserPassword()))
+                && !provider.searchForUser(username, adAuthProviderDto.getAdUser(),
+                        adAuthProviderDto.getAdUserPassword())) {
+            throw new MangleException(
+                    String.format(ErrorConstants.USER_NOT_FOUND_ON_AD, username, adAuthProviderDto.getAdUrl()),
+                    ErrorCode.USER_NOT_FOUND_ON_AD, username, adAuthProviderDto.getAdUrl());
+        }
+    }
+
     private void initializeDefaultRoles(User user) {
         if (CollectionUtils.isEmpty(user.getRoleNames())) {
             user.setRoleNames(new HashSet<>());
@@ -190,7 +265,7 @@ public class UserService implements HazelcastClusterSyncAware {
     }
 
     public List<User> getAllUsers() {
-        log.debug("Retrieving all the users");
+        log.debug("Received request to get all users...");
         return userRepository.findAll();
     }
 
@@ -214,7 +289,7 @@ public class UserService implements HazelcastClusterSyncAware {
     }
 
     public void deleteUsersByNames(List<String> usernames) throws MangleException {
-        log.info("Deleting users: {}", usernames);
+        log.debug("Received request to delete user by names...");
         String currentUser = getCurrentUserName();
         List<User> persistedUsers = userRepository.findByNameIn(usernames);
         Set<String> persistedUserNames = persistedUsers.stream().map(User::getName).collect(Collectors.toSet());

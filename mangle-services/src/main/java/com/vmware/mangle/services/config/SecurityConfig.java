@@ -29,6 +29,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import com.vmware.mangle.cassandra.model.security.Privilege;
@@ -36,6 +37,7 @@ import com.vmware.mangle.cassandra.model.security.Role;
 import com.vmware.mangle.model.enums.DefaultPrivileges;
 import com.vmware.mangle.services.PrivilegeService;
 import com.vmware.mangle.services.UserService;
+import com.vmware.mangle.utils.constants.SecurityURLConstants;
 
 /**
  *
@@ -69,7 +71,7 @@ public class SecurityConfig implements WebMvcConfigurer {
      * @throws Exception
      */
     @Autowired
-    public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
+    public void configureGlobal(AuthenticationManagerBuilder auth) {
         auth.authenticationProvider(adAuthProvider);
         auth.authenticationProvider(customAuthenticationProvider);
     }
@@ -96,6 +98,7 @@ public class SecurityConfig implements WebMvcConfigurer {
         private static final String V1_API = "/api/v1/";
         private static final String REST_V1_API = REST + V1_API;
         private static final String APPLICATION = "/application/";
+        private static final String NOTIFIER = "notifier";
         private final String adminReadWrite = DefaultPrivileges.ADMIN_READ_WRITE.name();
         private final String adminRead = DefaultPrivileges.ADMIN_READ.name();
         private final String userReadWrite = DefaultPrivileges.USER_READ_WRITE.name();
@@ -107,12 +110,16 @@ public class SecurityConfig implements WebMvcConfigurer {
         protected void configure(HttpSecurity http) throws Exception {
             http.httpBasic().authenticationEntryPoint(authenticationEntryPoint).and().authorizeRequests()
 
-                    .antMatchers("/", "/*.html", "/*.js", "/*.map", "/assets/**", "/*.ico").permitAll()
                     .antMatchers("/webjars/**", "/swagger-resources/**", "/swagger", "/swagger-ui.html",
                             "/swagger-resources", "/csrf")
-                    .permitAll().antMatchers(APPLICATION + "health").permitAll()
+                    .permitAll().antMatchers("/", "/*.html", "/*.js", "/*.map", "/assets/**", "/*.ico").permitAll()
+                    .antMatchers(APPLICATION + "health").permitAll().antMatchers(APPLICATION + "prometheus").permitAll()
                     .antMatchers(REST_V1_API + "auth-provider-management/domains").permitAll()
                     .antMatchers(HttpMethod.GET, REST_V1_API + "user-management/users/admin").permitAll()
+                    .antMatchers(HttpMethod.PUT, REST_V1_API + "user-management/users/admin").permitAll()
+
+                    .antMatchers(HttpMethod.POST, REST_V1_API + "tasks/pagination")
+                    .hasAnyAuthority(adminRead, adminReadWrite, readOnly, userReadWrite)
 
                     .antMatchers(HttpMethod.GET, REST_V1_API + "tasks")
                     .hasAnyAuthority(adminRead, adminReadWrite, readOnly, userReadWrite)
@@ -127,6 +134,12 @@ public class SecurityConfig implements WebMvcConfigurer {
                     .hasAnyAuthority(adminRead, adminReadWrite, readOnly, userReadWrite)
 
                     .antMatchers(HttpMethod.GET, REST_V1_API + "endpoints/**")
+                    .hasAnyAuthority(adminRead, adminReadWrite, readOnly, userReadWrite)
+
+                    .antMatchers(HttpMethod.GET, REST_V1_API + "resiliencyscore")
+                    .hasAnyAuthority(adminRead, adminReadWrite, readOnly, userReadWrite)
+
+                    .antMatchers(HttpMethod.GET, REST_V1_API + "resiliencyscore/**")
                     .hasAnyAuthority(adminRead, adminReadWrite, readOnly, userReadWrite)
 
                     .antMatchers(HttpMethod.GET, REST_V1_API + "plugins")
@@ -145,6 +158,9 @@ public class SecurityConfig implements WebMvcConfigurer {
 
                     .antMatchers(REST_V1_API + "user-management/user")
                     .hasAnyAuthority(adminRead, adminReadWrite, readOnly)
+
+                    .antMatchers(REST_V1_API + SecurityURLConstants.USER_LOGIN_SUFFIX)
+                    .hasAnyAuthority(adminRead, adminReadWrite, userReadWrite, readOnly)
 
                     .antMatchers(REST_V1_API + "user-management/password")
                     .hasAnyAuthority(adminRead, adminReadWrite, userReadWrite, readOnly)
@@ -170,20 +186,31 @@ public class SecurityConfig implements WebMvcConfigurer {
 
                     .antMatchers(REST_V1_API + "faults/**").hasAnyAuthority(adminRead, adminReadWrite, userReadWrite)
 
-                    .antMatchers(REST + "/api/**").hasAuthority(adminReadWrite)
+                    .antMatchers(REST_V1_API + "resiliencyscore/calculate").hasAnyAuthority(adminRead, adminReadWrite, userReadWrite)
 
                     .antMatchers(REST_V1_API + "administration/**")
                     .hasAnyAuthority(adminRead, adminReadWrite, userReadWrite)
 
-                    .antMatchers(APPLICATION + "zip").hasAuthority(adminReadWrite)
-                    .antMatchers(APPLICATION + "logfile").hasAuthority(adminReadWrite)
-                    .antMatchers(APPLICATION + "restart").hasAuthority(adminReadWrite)
+                    .antMatchers(HttpMethod.GET, REST_V1_API + NOTIFIER + "/**")
+                    .hasAnyAuthority(adminRead, adminReadWrite, readOnly, userReadWrite)
+
+                    .antMatchers(HttpMethod.POST, REST_V1_API + NOTIFIER + "/**").hasAnyAuthority(adminReadWrite)
+
+                    .antMatchers(HttpMethod.PUT, REST_V1_API + NOTIFIER + "/**").hasAnyAuthority(adminReadWrite)
+
+                    .antMatchers(HttpMethod.DELETE, REST_V1_API + NOTIFIER).hasAnyAuthority(adminReadWrite)
+
+                    .antMatchers(REST + "/api/**").hasAuthority(adminReadWrite)
+
+                    .antMatchers(APPLICATION + "zip").hasAuthority(adminReadWrite).antMatchers(APPLICATION + "logfile")
+                    .hasAuthority(adminReadWrite).antMatchers(APPLICATION + "restart").hasAuthority(adminReadWrite)
                     .antMatchers(APPLICATION + "shutdown").hasAuthority(adminReadWrite)
                     .antMatchers(APPLICATION + "refresh").hasAuthority(adminReadWrite)
                     .antMatchers(APPLICATION + "loggers/**").hasAuthority(adminReadWrite)
 
                     .anyRequest().authenticated().and().logout().deleteCookies("JSESSIONID");
 
+            http.addFilterBefore(new DefaultPasswordChangeFilter(), BasicAuthenticationFilter.class);
             http.sessionManagement().maximumSessions(5).sessionRegistry(sessionRegistry());
             http.csrf().disable();
         }

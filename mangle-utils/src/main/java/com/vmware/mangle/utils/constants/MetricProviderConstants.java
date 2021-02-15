@@ -40,6 +40,7 @@ public class MetricProviderConstants {
     public static final String WAVEFRONT_CLOSE_EVENT = "/api/v2/event/%s/close";
     public static final String WAVEFRONT_DELETE_EVENT = "/api/v2/event//%s";
     public static final String WAVEFRONT_ONGOING_STATE = "ONGOING";
+    public static final String WAVEFRONT_ENDED_STATE = "ENDED";
 
     public static final String METRIC_PROVIDERS_FOUND = "Successfully got all available Metric Providers";
     public static final String METRIC_PROVIDERS_EMPTY = "Metric provider list is empty";

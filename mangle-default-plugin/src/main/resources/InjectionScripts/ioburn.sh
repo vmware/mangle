@@ -25,7 +25,16 @@ then
 fi
 preRequisitescheck
 status
+isSudoPresent
 injectFault
+}
+
+isSudoPresent(){
+    sudo -nv > /dev/null 2>&1
+    sudoRetVal=$?
+    if [ $sudoRetVal -eq 0 ]; then
+        sudoCommand="sudo"
+    fi
 }
 
 readAndParseArgs(){
@@ -66,29 +75,29 @@ validateInputs(){
     if [ ! -d "$targetDir" ]; then
         validationMessage="${targetDir} is not available"
     else
-        touch $targetDir/mangle.txt > /dev/null 2>&1
+        $sudoCommand touch $targetDir/mangle.txt > /dev/null 2>&1
         touchRetVal=$?
         if [ $touchRetVal -ne 0 ]; then
-            validationMessage="The Provided user does not have permission on ${targetDir}"
+            validationMessage="The Provided user does not have permission on ${targetDir} and sudo also not exists in this machine"
         else
-            rm -f $targetDir/mangle.txt > /dev/null 2>&1
+            $sudoCommand rm -f $targetDir/mangle.txt > /dev/null 2>&1
         fi
     fi
     if [ -z $(echo $blockSize|grep -E "^[0-9]+$") ]
     then
-        validationMessage="${validationMessage}blockSize value should be an integer\n"
+        validationMessage="${validationMessage} blockSize value should be an integer\n"
     else
         targetDirDiskSize=$(df -B1 $targetDir | awk ' NR==2 { print $2 } ')
         echo "targetDirDiskSize:"$targetDirDiskSize" bytes"
         if [ $blockSize -gt $targetDirDiskSize ]
         then
-           validationMessage="${validationMessage}Provide iosize less than maximum size of disk\n"
+           validationMessage="${validationMessage} Provide iosize less than maximum size of disk\n"
         fi
     fi
 
     if [ -z $(echo $timeout|grep -E "^[0-9]+$") ]
     then
-        validationMessage="${validationMessage}timeout value should be an integer\n"
+        validationMessage="${validationMessage} timeout value should be an integer\n"
     fi
     if [ ! -z "$validationMessage" ]
     then
@@ -138,7 +147,7 @@ remediate(){
 }
 
 cleanup(){
-  rm -rf $targetDir/burn > /dev/null 2>&1
+  $sudoCommand rm -rf $targetDir/burn > /dev/null 2>&1
   rm -rf $basedir/loopburnio.sh > /dev/null 2>&1
   rm -rf $basedir/ioburn.sh > /dev/null 2>&1
   rm -rf $basedir/.ioburnOutput.properties > /dev/null 2>&1
@@ -220,12 +229,12 @@ injectFault(){
     echo "ioburn injection starting on "\$targetDir "for ":\$timelimit "seconds"
     while [ \$startTime -gt \$check ]
     do
-        dd if=/dev/zero of=\$targetDir/burn bs=\$blockSize count=1024 > /dev/null 2>&1
+        $sudoCommand dd if=/dev/zero of=\$targetDir/burn bs=\$blockSize count=1024 > /dev/null 2>&1
         currentTime=\$((\$(date +%s)))
         check=\`expr \$currentTime - \$timelimit\`
     done
     echo "Autoremedition started"
-    rm -rf \$targetDir/burn > /dev/null 2>&1
+    $sudoCommand rm -rf \$targetDir/burn > /dev/null 2>&1
     rm -rf \$basedir/loopburnio.sh > /dev/null 2>&1
     rm -rf \$basedir/.ioburnOutput.properties > /dev/null 2>&1
     rm -rf \$basedir/ioburn.sh > /dev/null 2>&1
@@ -244,7 +253,7 @@ EOF
        kill -STOP \$processID > /dev/null 2>&1
        pgrep -f "loopburnio.sh"|xargs -L 1 pgrep -P |xargs kill -9
        kill -9 \$processID > /dev/null 2>&1
-       rm -rf \$targetDir/burn > /dev/null 2>&1
+       $sudoCommand rm -rf \$targetDir/burn > /dev/null 2>&1
        rm -rf \$basedir/loopburnio.sh > /dev/null 2>&1
        rm -rf \$basedir/.ioburnOutput.properties > /dev/null 2>&1
        rm -rf \$basedir/ioburn.sh > /dev/null 2>&1

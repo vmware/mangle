@@ -39,4 +39,9 @@ public class CustomEventPublisher {
         log.trace("Publishing custom event. ");
         applicationEventPublisher.publishEvent(eventService.save(event));
     }
+
+    public void publishEvent(Event event) {
+        log.trace("Publish application event. ");
+        applicationEventPublisher.publishEvent(event);
+    }
 }

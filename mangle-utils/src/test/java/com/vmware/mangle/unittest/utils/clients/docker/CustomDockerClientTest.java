@@ -85,7 +85,7 @@ import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
  *
  */
 @PrepareForTest(value = { DockerClientBuilder.class, CustomDockerClient.class, ExposedPort.class })
-@PowerMockIgnore(value = { "javax.net.ssl.*" })
+@PowerMockIgnore(value = { "javax.net.ssl.*", "com.sun.org.apache.xalan.internal.xsltc.trax.*" })
 public class CustomDockerClientTest extends PowerMockTestCase {
 
     @InjectMocks
@@ -1222,4 +1222,55 @@ public class CustomDockerClientTest extends PowerMockTestCase {
         verify(dockerClient, times(2)).listContainersCmd();
     }
 
+    /**
+     * Test method for
+     * {@link com.vmware.mangle.clients.docker.CustomDockerClient#getAllContainerNames()}.
+     *
+     * Description: Test case to validate the getAllcontainerNames method returning the list of
+     * container names in Docker Host.
+     *
+     * @throws MangleException
+     */
+    @Test
+    public void testGetAllContainerNames() throws MangleException {
+        ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
+        when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
+        Container container = mock(Container.class);
+        List<Container> allContainers = new ArrayList<>();
+        allContainers.add(container);
+        when(listContainersCmd.exec()).thenReturn(allContainers);
+        when(container.getNames()).thenReturn(new String[] { "/" + containerName });
+
+        List<String> expectedContainerNames = new ArrayList<String>();
+        expectedContainerNames.add("test");
+        List<String> resultContainerNames = customDockerClient.getAllContainerNames();
+
+        verify(dockerClient, times(1)).listContainersCmd();
+        Assert.assertEquals(resultContainerNames, expectedContainerNames);
+        Assert.assertEquals(resultContainerNames.size(), 1);
+    }
+
+
+    /**
+     * Test method for
+     * {@link com.vmware.mangle.clients.docker.CustomDockerClient#getAllContainerNames()}.
+     *
+     * Description: Test case to validate the ProcessingException thrown in getAllcontainerNames
+     * method.
+     *
+     * @throws MangleException
+     */
+    @Test
+    public void testGetAllContainerNames_DockerConnectionFailure() throws MangleException {
+        ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
+        when(dockerClient.listContainersCmd()).thenReturn(listContainersCmd);
+        ProcessingException processingException = mock(ProcessingException.class);
+        doThrow(processingException).when(listContainersCmd).exec();
+        try {
+            customDockerClient.getAllContainerNames();
+        } catch (MangleException e) {
+            Assert.assertEquals(e.getErrorCode(), ErrorCode.DOCKER_CONNECTION_FAILURE);
+            verify(dockerClient, times(1)).listContainersCmd();
+        }
+    }
 }

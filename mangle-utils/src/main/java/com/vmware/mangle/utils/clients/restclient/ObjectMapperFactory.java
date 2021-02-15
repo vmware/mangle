@@ -31,7 +31,7 @@ public class ObjectMapperFactory implements FactoryBean<ObjectMapper> {
     @Override
     public ObjectMapper getObject() throws Exception {
         ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        SimpleModule simpleModule = new SimpleModule("SimpleModule", new Version(1, 0, 0, null));
+        SimpleModule simpleModule = new SimpleModule("SimpleModule", new Version(1, 0, 0, null, null, null));
         simpleModule.addSerializer(new CustomLocalDateSerializer());
         simpleModule.addDeserializer(LocalDate.class, new CustomLocalDateDeserializer());
         simpleModule.addSerializer(new CustomLocalDateTimeSerializer());

@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.Resource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,6 +29,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.vmware.mangle.cassandra.model.hazelcast.HazelcastClusterConfig;
 import com.vmware.mangle.model.enums.MangleDeploymentMode;
@@ -53,17 +55,17 @@ public class ClusterConfigController {
     }
 
     @ApiOperation(value = "API to get hazelcast configuration", nickname = "getHazelcastConfig")
-    @GetMapping
-    public ResponseEntity<Resource<HazelcastClusterConfig>> getHazelcastConfig() {
+    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Resource<HazelcastClusterConfig>> getHazelcastConfig() throws MangleException {
         log.info("Fetching cluster information");
         HazelcastClusterConfig config = configService.getClusterConfiguration();
         Resource<HazelcastClusterConfig> configResource = new Resource<>(config);
-        Link link = linkTo(methodOn(getClass()).getHazelcastConfig()).withSelfRel();
-        configResource.add(link);
+        configResource.add(getSelfLink(), getHateoasLinkForUpdateHazelcastConfigWithGetRel(),
+                getHateoasLinkForUpdateDepTypeWithGetRel(), getHateoasLinkForUpdateQuorumWithGetRel());
         return new ResponseEntity<>(configResource, HttpStatus.OK);
     }
 
-    @PutMapping
+    @PutMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "API to update hazelcast configuration", nickname = "update-hazelcast-config", hidden = true)
     public ResponseEntity<Resource<HazelcastClusterConfig>> updateHazelcastConfig(
             @RequestBody HazelcastClusterConfig config) throws MangleException {
@@ -76,31 +78,57 @@ public class ClusterConfigController {
         config.setId(persistenceConfig.getId());
         config = configService.updateClusterConfiguration(config);
         Resource<HazelcastClusterConfig> configResource = new Resource<>(config);
-        Link link = linkTo(methodOn(getClass()).updateHazelcastConfig(null)).withSelfRel();
-        configResource.add(link);
+        configResource.add(getHateoasLinkForGetHazelcastConfigWithGetRel(), getSelfLink(),
+                getHateoasLinkForUpdateDepTypeWithGetRel(), getHateoasLinkForUpdateQuorumWithGetRel());
         return new ResponseEntity<>(configResource, HttpStatus.OK);
     }
 
-    @PostMapping
+    @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "API to update mangle deployment type", nickname = "update-deployment-type")
     public ResponseEntity<Resource<HazelcastClusterConfig>> updateDeploymentMode(
             @RequestParam MangleDeploymentMode deploymentType) throws MangleException {
         HazelcastClusterConfig config = configService.updateMangleDeploymentType(deploymentType);
         Resource<HazelcastClusterConfig> configResource = new Resource<>(config);
-        Link link = linkTo(methodOn(getClass()).updateDeploymentMode(null)).withSelfRel();
-        configResource.add(link);
+        configResource.add(getHateoasLinkForGetHazelcastConfigWithGetRel(),
+                getHateoasLinkForUpdateHazelcastConfigWithGetRel(), getSelfLink(),
+                getHateoasLinkForUpdateQuorumWithGetRel());
         return new ResponseEntity<>(configResource, HttpStatus.OK);
     }
 
-    @PostMapping("/quorum")
+    @PostMapping(value = "/quorum", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "API to update mangle quorum", nickname = "update-quorum")
     public ResponseEntity<Resource<HazelcastClusterConfig>> updateQuorum(@RequestParam int quorumValue)
             throws MangleException {
         HazelcastClusterConfig config = configService.updateMangleQuorum(quorumValue);
         Resource<HazelcastClusterConfig> configResource = new Resource<>(config);
-        Link link = linkTo(methodOn(getClass()).updateQuorum(0)).withSelfRel();
-        configResource.add(link);
+        configResource.add(getHateoasLinkForGetHazelcastConfigWithGetRel(),
+                getHateoasLinkForUpdateHazelcastConfigWithGetRel(), getHateoasLinkForUpdateDepTypeWithGetRel(),
+                getSelfLink());
         return new ResponseEntity<>(configResource, HttpStatus.OK);
+    }
+
+    public Link getSelfLink() {
+        return new Link(ServletUriComponentsBuilder.fromCurrentRequestUri().build().toUri().toASCIIString())
+                .withSelfRel();
+    }
+
+    private Link getHateoasLinkForUpdateQuorumWithGetRel() throws MangleException {
+        return linkTo(methodOn(ClusterConfigController.class).updateQuorum(0)).withRel("UPDATE-QUORUM");
+    }
+
+    private Link getHateoasLinkForUpdateDepTypeWithGetRel() throws MangleException {
+        return linkTo(methodOn(ClusterConfigController.class).updateDeploymentMode(MangleDeploymentMode.STANDALONE))
+                .withRel("UPDATE-DEPLOYMENT");
+    }
+
+    private Link getHateoasLinkForUpdateHazelcastConfigWithGetRel() throws MangleException {
+        return linkTo(methodOn(ClusterConfigController.class).updateHazelcastConfig(new HazelcastClusterConfig()))
+                .withRel("UPDATE-HAZELCAST-CONFIG");
+    }
+
+    private Link getHateoasLinkForGetHazelcastConfigWithGetRel() throws MangleException {
+        return linkTo(methodOn(ClusterConfigController.class).updateHazelcastConfig(new HazelcastClusterConfig()))
+                .withRel("GET-HAZELCAST-CONFIG");
     }
 
 }

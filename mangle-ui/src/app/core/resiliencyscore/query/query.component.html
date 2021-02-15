@@ -1,0 +1,108 @@
+<app-alert [(alertMessage)]="alertMessage" [isErrorMessage]="isErrorMessage"
+    (alertMessageChange)="alertMessage = $event;"></app-alert> <br />
+<div [hidden]="queryDatagrid">
+    <clr-alert [clrAlertClosable]="false">
+        <clr-alert-item>
+            <span class="alert-text">
+                Experimental Feature: The Resiliency Score calculation feature is currently supported only for Wavefront
+                monitoring data source.
+            </span>
+        </clr-alert-item>
+    </clr-alert>
+    <clr-datagrid [clrDgLoading]="isLoading" [(clrDgSelected)]="selectedQueries"
+        (clrDgSelectedChange)="updateActionButtons()">
+        <clr-dg-action-bar>
+            <div class="btn-group">
+                <button type="button" class="btn btn-sm btn-secondary" [disabled]="selectedQueries.length >= 1"
+                    (click)="populateQueryForm({'name': null, 'weight': null, 'queryCondition': null});queryDatagrid=true;queryForm=false;addEdit='Add';">
+                    <clr-icon shape="plus"></clr-icon> Add
+                </button>
+            </div>
+            <div class="btn-group">
+                <button type="button" class="btn btn-sm btn-secondary"
+                    [disabled]="selectedQueries.length !== 1"
+                    (click)="populateQueryForm(selectedQueries[0]);queryDatagrid=true;queryForm=false;addEdit='Edit';">
+                    <clr-icon shape="pencil"></clr-icon> Edit
+                </button>
+            </div>
+            <div class="btn-group">
+                <button type="button" class="btn btn-sm btn-secondary"
+                    [disabled]="selectedQueries.length !== 1"
+                    (click)="deleteQuery(selectedQueries[0]);">
+                    <clr-icon shape="close"></clr-icon> Delete
+                </button>
+            </div>
+        </clr-dg-action-bar>
+
+        <clr-dg-column [clrDgField]="'name'">Name</clr-dg-column>
+        <clr-dg-column [clrDgField]="'weight'">Weightage</clr-dg-column>
+        <clr-dg-column [clrDgField]="'queryCondition'">Condition</clr-dg-column>
+
+        <clr-dg-row *clrDgItems="let query of allQueries" [clrDgItem]="query">
+            <clr-dg-cell>{{query.name}}</clr-dg-cell>
+            <clr-dg-cell>{{query.weight}}</clr-dg-cell>
+            <clr-dg-cell>{{query.queryCondition}}</clr-dg-cell>
+        </clr-dg-row>
+        <clr-dg-footer>
+            <clr-dg-pagination #pagination [clrDgPageSize]="10">
+                <clr-dg-page-size [clrPageSizeOptions]="[10,20,50,100]">Queries per page</clr-dg-page-size>
+                {{pagination.firstItem + 1}} - {{pagination.lastItem + 1}} of {{pagination.totalItems}} allQueries
+            </clr-dg-pagination>
+        </clr-dg-footer>
+    </clr-datagrid>
+</div>
+
+
+<div [hidden]="queryForm">
+    <h3 class="modal-title">{{addEdit}} Query Definition</h3>
+    <form #queryInputForm="ngForm" #nativeAwsForm *ngIf="queryFormData"
+        (ngSubmit)="addOrUpdateQuery(queryInputForm.value,addEdit);queryDatagrid=false;queryForm=true;"
+        ngNativeValidate>
+        <section class="form-block">
+            <div class="form-group">
+                <input type="text" name="id" [(ngModel)]="queryFormData.id" [hidden]="true">
+            </div>
+            <div class="form-group">
+                <label for="name">Query Name
+                    <a href="javascript://" role="tooltip" aria-haspopup="true"
+                        class="tooltip tooltip-md tooltip-bottom-right">
+                        <clr-icon shape="info-circle" size="24"></clr-icon>
+                        <span class="tooltip-content">Provide a name to uniquely identify the query defintion. Note
+                            that: On providing an existing query name, the specified query definition will be updated
+                            with the last updated value.</span>
+                    </a>
+                </label>
+                <input type="text" name="name" id="name" pattern="^[A-Za-z0-9-_.]+$"
+                    title="alphanumeric and special characters (_ - .) are allowed" [(ngModel)]="queryFormData.name"
+                    [required]="addEdit == 'Add'" [readonly]="addEdit == 'Edit'">
+            </div>
+            <div class="form-group">
+                <label for="weight">Weightage
+                    <a href="javascript://" role="tooltip" aria-haspopup="true"
+                        class="tooltip tooltip-md tooltip-bottom-right">
+                        <clr-icon shape="info-circle" size="24"></clr-icon>
+                        <span class="tooltip-content">Weightage is used while calculating the ResiliencyScore. Weightage
+                            defines the % impact of query on overall ResiliencyScore of service</span>
+                    </a>
+                </label>
+                <input type="number" min="0.1" max="1" step="0.1" name="weight" id="weight"
+                    [(ngModel)]="queryFormData.weight" required>
+            </div>
+            <div class="form-group">
+                <label for="queryCondition">Query Condition
+                    <a href="javascript://" role="tooltip" aria-haspopup="true"
+                        class="tooltip tooltip-md tooltip-bottom-right">
+                        <clr-icon shape="info-circle" size="24"></clr-icon>
+                        <span class="tooltip-content">Query condition must be a alert condition. Monitoring System
+                            should return 0 or 1 as the timeseries data on running the query condition. 0 indicates
+                            alert condition not met while 1 indicates alert condition is met</span>
+                    </a>
+                </label>
+                <input type="textarea" name="queryCondition" [(ngModel)]="queryFormData.queryCondition" required>
+            </div>
+        </section>
+        <button type="submit" class="btn btn-primary" [disabled]="disableSubmit">SUBMIT</button>
+        <button type="button" class="btn btn-outline"
+            (click)="queryDatagrid=false;queryForm=true;ngOnInit();">CANCEL</button>
+    </form>
+</div>

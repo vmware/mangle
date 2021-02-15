@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { HttpClientModule } from '@angular/common/http';
 import { RouterTestingModule } from '@angular/router/testing';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { BrowserModule } from '@angular/platform-browser';
@@ -13,6 +12,7 @@ import { MemoryInfraComponent } from './memory.component';
 import { FaultService } from '../../fault.service';
 import { EndpointService } from 'src/app/core/endpoint/endpoint.service';
 import { Router } from '@angular/router';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 
 describe('MemoryInfraComponent', () => {
     let component: MemoryInfraComponent;
@@ -27,7 +27,7 @@ describe('MemoryInfraComponent', () => {
                 BrowserAnimationsModule,
                 BrowserModule,
                 FormsModule,
-                HttpClientModule,
+                HttpClientTestingModule,
                 CommonModule,
                 ClarityModule,
                 RouterTestingModule.withRoutes([{ path: 'memory-infra', component: MemoryInfraComponent }])

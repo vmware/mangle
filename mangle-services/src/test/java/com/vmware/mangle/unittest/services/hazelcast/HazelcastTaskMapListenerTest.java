@@ -35,9 +35,12 @@ import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import com.vmware.mangle.cassandra.model.tasks.Task;
 import com.vmware.mangle.cassandra.model.tasks.TaskStatus;
+import com.vmware.mangle.services.TaskService;
 import com.vmware.mangle.services.hazelcast.HazelcastTaskMapListener;
 import com.vmware.mangle.services.hazelcast.HazelcastTaskService;
+import com.vmware.mangle.services.mockdata.HazelcastMockData;
 import com.vmware.mangle.utils.exceptions.MangleException;
 
 /**
@@ -51,6 +54,9 @@ public class HazelcastTaskMapListenerTest {
     private HazelcastTaskService hazelcastTaskService;
 
     @Mock
+    private TaskService taskService;
+
+    @Mock
     private IMap<Object, Object> map;
 
     @Mock
@@ -61,6 +67,8 @@ public class HazelcastTaskMapListenerTest {
     @InjectMocks
     private HazelcastTaskMapListener listener;
 
+    private HazelcastMockData mockData = new HazelcastMockData();
+
     @BeforeMethod
     public void initMocks() {
         MockitoAnnotations.initMocks(this);
@@ -70,25 +78,29 @@ public class HazelcastTaskMapListenerTest {
 
 
     @Test
-    public void testEntryUpdatedInprogressStatus() {
+    public void testEntryUpdatedInprogressStatus() throws MangleException {
         String memberId = UUID.randomUUID().toString();
         Member member = mock(Member.class);
         String key = UUID.randomUUID().toString();
         String value = TaskStatus.IN_PROGRESS.name();
+        Task task = mockData.getMockTask();
 
         EntryEvent<String, String> event =
                 new EntryEvent<>(memberId, member, EntryEventType.UPDATED.getType(), key, value);
+        when(taskService.getTaskById(anyString())).thenReturn(task);
         listener.entryUpdated(event);
     }
 
     @Test
-    public void testEntryRemovedInprogressStatus() {
+    public void testEntryRemovedInprogressStatus() throws MangleException {
         String memberId = UUID.randomUUID().toString();
         Member member = mock(Member.class);
         String key = UUID.randomUUID().toString();
         String value = TaskStatus.IN_PROGRESS.name();
+        Task task = mockData.getMockTask();
 
         doNothing().when(hazelcastTaskService).removeTaskFromClusterNodeCache(anyString());
+        when(taskService.getTaskById(anyString())).thenReturn(task);
 
         EntryEvent<String, String> event =
                 new EntryEvent<>(memberId, member, EntryEventType.REMOVED.getType(), key, value);
@@ -97,13 +109,15 @@ public class HazelcastTaskMapListenerTest {
     }
 
     @Test
-    public void testEntryRemovedNoNodeTasks() {
+    public void testEntryRemovedNoNodeTasks() throws MangleException {
         String memberId = UUID.randomUUID().toString();
         Member member = mock(Member.class);
         String key = UUID.randomUUID().toString();
         String value = TaskStatus.IN_PROGRESS.name();
+        Task task = mockData.getMockTask();
 
         doNothing().when(hazelcastTaskService).removeTaskFromClusterNodeCache(anyString());
+        when(taskService.getTaskById(anyString())).thenReturn(task);
 
         EntryEvent<String, String> event =
                 new EntryEvent<>(memberId, member, EntryEventType.REMOVED.getType(), key, value);
@@ -121,11 +135,14 @@ public class HazelcastTaskMapListenerTest {
 
         String key = UUID.randomUUID().toString();
         String value = TaskStatus.COMPLETED.name();
+        Task task = mockData.getMockTask();
 
         when(hz.getCluster()).thenReturn(cluster);
         when(cluster.getLocalMember()).thenReturn(member);
         when(member.getAddress()).thenReturn(address);
-        doNothing().when(hazelcastTaskService).triggerTask(key);
+
+        when(taskService.getTaskById(key)).thenReturn(task);
+        doNothing().when(hazelcastTaskService).triggerTask(task);
 
         EntryEvent<String, String> event =
                 new EntryEvent<String, String>(memberId, member, EntryEventType.ADDED.getType(), key, value);
@@ -135,7 +152,7 @@ public class HazelcastTaskMapListenerTest {
         verify(hz, times(1)).getCluster();
         verify(cluster, times(1)).getLocalMember();
         verify(member, times(1)).getAddress();
-        verify(hazelcastTaskService, times(1)).triggerTask(key);
+        verify(hazelcastTaskService, times(1)).triggerTask(task);
     }
 
     @Test

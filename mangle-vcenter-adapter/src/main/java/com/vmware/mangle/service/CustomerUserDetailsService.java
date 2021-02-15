@@ -12,10 +12,14 @@
 package com.vmware.mangle.service;
 
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import com.vmware.mangle.utils.constants.Constants;
 
@@ -28,12 +32,28 @@ import com.vmware.mangle.utils.constants.Constants;
 @Component
 @Log4j2
 public class CustomerUserDetailsService implements UserDetailsService {
+
+    private String customAdminCred;
+    private PasswordEncoder passwordEncoder;
+    private String userAdminCred;
+
+    @Autowired
+    public CustomerUserDetailsService(PasswordEncoder passwordEncoder,
+            @Value("${mangle.vcenter.adapter.user}") String customAdminCred,
+            @Value("${defaultAdminUserPassword}") String userAdminCred) {
+        this.passwordEncoder = passwordEncoder;
+        this.customAdminCred = customAdminCred;
+        this.userAdminCred = userAdminCred;
+    }
+
     @Override
     public UserDetails loadUserByUsername(String username) {
-        log.debug("Logging in as user: %s", username);
+        log.debug("Logging in as user: {}", username);
+        if (StringUtils.hasText(customAdminCred)) {
+            userAdminCred = passwordEncoder.encode(customAdminCred);
+        }
         if (username.equals(Constants.DEFAULT_USER)) {
-            return User.withUsername(Constants.DEFAULT_USER)
-                    .password("$2a$10$93B/8pkk.Dl0z8Cfh6EW0uQnUkpjMCjS7sUtB9R0TA2ZthFd6jdtC").roles("USER").build();
+            return User.withUsername(Constants.DEFAULT_USER).password(userAdminCred).roles("USER").build();
         } else {
             return null;
         }

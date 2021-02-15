@@ -24,81 +24,51 @@ import com.vmware.mangle.utils.clients.kubernetes.KubernetesTemplates;
  *
  */
 @UtilityClass
-
 public class K8sCommandInfoHelper {
 
     static CommandInfo getK8sCheckContainerStateCommand(String resourceName, String containerName) {
-        CommandInfo checkContainerStateInfo = new CommandInfo();
-        checkContainerStateInfo.setIgnoreExitValueCheck(false);
-        checkContainerStateInfo.setNoOfRetries(30);
-        checkContainerStateInfo.setRetryInterval(10);
-        checkContainerStateInfo
-                .setCommand(String.format(KubernetesTemplates.IS_CONTAINER_READY, resourceName, containerName));
-        checkContainerStateInfo.setExpectedCommandOutputList(Arrays.asList("true"));
-        return checkContainerStateInfo;
+        return CommandInfo.builder(String.format(KubernetesTemplates.IS_CONTAINER_READY, resourceName, containerName))
+                .ignoreExitValueCheck(false).noOfRetries(30).retryInterval(10)
+                .expectedCommandOutputList(Arrays.asList("true")).build();
     }
-
 
     static CommandInfo getK8sPatchContainerWithOriginalImageCommandInfo(String resourceName, String containerName,
             String originalImage) {
-        CommandInfo k8sPatchCommandInfo = new CommandInfo();
-        k8sPatchCommandInfo.setIgnoreExitValueCheck(false);
-        k8sPatchCommandInfo.setCommand(String.format(KubernetesTemplates.PATCH_CONTAINER_IMAGE_OF_POD, resourceName,
-                containerName, originalImage));
-        return k8sPatchCommandInfo;
+        return CommandInfo.builder(String.format(KubernetesTemplates.PATCH_CONTAINER_IMAGE_OF_POD, resourceName,
+                containerName, originalImage)).ignoreExitValueCheck(false).build();
     }
 
     static CommandInfo getK8sPatchContainerWithNginxImageCommandInfo(String resourceName, String containerName) {
-        CommandInfo k8sPatchCommandInfo = new CommandInfo();
-        k8sPatchCommandInfo.setIgnoreExitValueCheck(false);
-        k8sPatchCommandInfo.setCommand(String.format(KubernetesTemplates.PATCH_CONTAINER_IMAGE_OF_POD, resourceName,
-                containerName, KubernetesTemplates.NGINX_CONTAINER_IMAGE));
-        return k8sPatchCommandInfo;
+        return CommandInfo.builder(String.format(KubernetesTemplates.PATCH_CONTAINER_IMAGE_OF_POD, resourceName,
+                containerName, KubernetesTemplates.NGINX_CONTAINER_IMAGE)).ignoreExitValueCheck(false).build();
     }
 
     static CommandInfo getK8sServicePatchWithSelectorsCommandInfo(String resourceName, String selectors) {
-        CommandInfo k8sServicePatchCommandInfo = new CommandInfo();
-        k8sServicePatchCommandInfo.setIgnoreExitValueCheck(false);
-        k8sServicePatchCommandInfo
-                .setCommand(String.format(KubernetesTemplates.PATCH_SERVICE_WITH_SELECTORS, resourceName, selectors));
-        return k8sServicePatchCommandInfo;
+        return CommandInfo
+                .builder(String.format(KubernetesTemplates.PATCH_SERVICE_WITH_SELECTORS, resourceName, selectors))
+                .ignoreExitValueCheck(false).build();
     }
 
     static CommandInfo getK8sNodeUnCordonCommand(String resourceName) {
-        CommandInfo nodeUnCordonCommandInfo = new CommandInfo();
-        nodeUnCordonCommandInfo.setIgnoreExitValueCheck(false);
-        nodeUnCordonCommandInfo.setCommand(KubernetesTemplates.UNCORDON + resourceName);
-        return nodeUnCordonCommandInfo;
+        return CommandInfo.builder(KubernetesTemplates.UNCORDON + resourceName).ignoreExitValueCheck(false).build();
     }
 
     static CommandInfo getK8sCheckForReadinessProbeCommand(String resourceName, String containerName) {
-        CommandInfo checkForReadinessProbeCommand = new CommandInfo();
-        checkForReadinessProbeCommand.setCommand(String.format(KubernetesTemplates.IS_CONTAINER_HAS_READINESS_PROBE,
-                resourceName, containerName, containerName));
-        checkForReadinessProbeCommand.setExpectedCommandOutputList(Arrays.asList("ReadinessProbe Configured"));
-        return checkForReadinessProbeCommand;
+        return CommandInfo
+                .builder(String.format(KubernetesTemplates.IS_CONTAINER_HAS_READINESS_PROBE, resourceName,
+                        containerName, containerName))
+                .expectedCommandOutputList(Arrays.asList("ReadinessProbe Configured")).build();
     }
 
     static CommandInfo getK8sCheckContainerStateCommandInfo(String resourceName, String containerName) {
-        CommandInfo checkContainerStateInfo = new CommandInfo();
-        checkContainerStateInfo.setIgnoreExitValueCheck(false);
-        checkContainerStateInfo.setNoOfRetries(30);
-        checkContainerStateInfo.setRetryInterval(10);
-        checkContainerStateInfo
-                .setCommand(String.format(KubernetesTemplates.IS_CONTAINER_READY, resourceName, containerName));
-        checkContainerStateInfo.setExpectedCommandOutputList(Arrays.asList("false"));
-        return checkContainerStateInfo;
+        return CommandInfo.builder(String.format(KubernetesTemplates.IS_CONTAINER_READY, resourceName, containerName))
+                .ignoreExitValueCheck(false).noOfRetries(30).retryInterval(10)
+                .expectedCommandOutputList(Arrays.asList("false")).build();
     }
 
-    static CommandInfo getK8sServiceEndpointsCommandInfo(String resourceName,String ... expectedOutPut) {
-        CommandInfo checkContainerStateInfo = new CommandInfo();
-        checkContainerStateInfo.setIgnoreExitValueCheck(false);
-        checkContainerStateInfo.setNoOfRetries(30);
-        checkContainerStateInfo.setRetryInterval(10);
-        checkContainerStateInfo.setCommand(String.format(KubernetesTemplates.GET_SERVICE_ENDPOINTS, resourceName));
-        checkContainerStateInfo.setExpectedCommandOutputList(Arrays.asList(expectedOutPut));
-        return checkContainerStateInfo;
+    static CommandInfo getK8sServiceEndpointsCommandInfo(String resourceName, String... expectedOutPut) {
+        return CommandInfo.builder(String.format(KubernetesTemplates.GET_SERVICE_ENDPOINTS, resourceName))
+                .ignoreExitValueCheck(false).noOfRetries(30).retryInterval(10)
+                .expectedCommandOutputList(Arrays.asList(expectedOutPut)).build();
     }
-
-
 }

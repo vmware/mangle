@@ -12,6 +12,7 @@
 package com.vmware.mangle.cassandra.model.endpoint;
 
 import java.io.Serializable;
+import java.util.Map;
 
 import javax.validation.constraints.Pattern;
 
@@ -35,4 +36,8 @@ public class K8SConnectionProperties implements Serializable {
     @Pattern(regexp = "[a-z0-9]([-a-z0-9]*[a-z0-9])?", message = "must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character (e.g. 'my-name',  or '123-abc')")
     @JsonProperty(defaultValue = "default")
     private String namespace;
+
+    @JsonProperty(required = false)
+    @ApiModelProperty(value = "resource labels to excluded the k8s reosurces for fault injections")
+    private Map<String, String> disabledResourceLabels;
 }

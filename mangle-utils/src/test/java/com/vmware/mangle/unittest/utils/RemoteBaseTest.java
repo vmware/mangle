@@ -25,6 +25,7 @@ import org.apache.log4j.Logger;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.testng.PowerMockTestCase;
 import org.testng.Assert;
@@ -40,6 +41,7 @@ import com.vmware.mangle.utils.clients.ssh.SSHUtils;
  * @author chetanc
  */
 @PrepareForTest(value = { RemoteBase.class })
+@PowerMockIgnore( { "com.sun.org.apache.xalan.internal.xsltc.trax.*" } )
 public class RemoteBaseTest extends PowerMockTestCase {
     private static Logger log = Logger.getLogger(RemoteBaseTest.class);
     @Mock

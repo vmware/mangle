@@ -61,6 +61,7 @@ import com.vmware.mangle.services.PrivilegeService;
 import com.vmware.mangle.services.UserLoginAttemptsService;
 import com.vmware.mangle.services.UserService;
 import com.vmware.mangle.utils.exceptions.MangleException;
+import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
 /**
  * Specialized LDAP authentication provider which uses Active Directory configuration conventions.
@@ -108,13 +109,9 @@ public class CustomActiveDirectoryLdapAuthenticationProvider extends AbstractLda
     private static final Pattern SUB_ERROR_CODE = Pattern.compile(".*data\\s([0-9a-f]{3,4}).*");
 
     // Error codes
-    private static final int USERNAME_NOT_FOUND = 0x525;
-    private static final int INVALID_PASSWORD = 0x52e;
-    private static final int NOT_PERMITTED = 0x530;
     private static final int PASSWORD_EXPIRED = 0x532;
     private static final int ACCOUNT_DISABLED = 0x533;
     private static final int ACCOUNT_EXPIRED = 0x701;
-    private static final int PASSWORD_NEEDS_RESET = 0x773;
     private static final int ACCOUNT_LOCKED = 0x775;
     private static final String TEST_USER = "test_user";
     private final String domain;
@@ -144,6 +141,19 @@ public class CustomActiveDirectoryLdapAuthenticationProvider extends AbstractLda
         this.userService = userService;
         this.userLoginAttemptsService = userLoginAttemptsService;
         this.privilegeService = privilegeService;
+        this.domain = StringUtils.hasText(domain) ? domain.toLowerCase() : null;
+        this.url = url;
+        this.rootDn = this.domain == null ? null : rootDnFromDomain(this.domain);
+    }
+
+    /**
+     * @param domain
+     *            the domain name (may be null or empty)
+     * @param url
+     *            an LDAP url (or multiple URLs)
+     */
+    public CustomActiveDirectoryLdapAuthenticationProvider(String domain, String url) {
+        Assert.isTrue(StringUtils.hasText(url), "Url cannot be empty");
         this.domain = StringUtils.hasText(domain) ? domain.toLowerCase() : null;
         this.url = url;
         this.rootDn = this.domain == null ? null : rootDnFromDomain(this.domain);
@@ -219,7 +229,7 @@ public class CustomActiveDirectoryLdapAuthenticationProvider extends AbstractLda
         return authorities;
     }
 
-    private DirContext bindAsUser(String username, String password) {
+    public DirContext bindAsUser(String username, String password) {
         // TODO. add DNS lookup based on domain
         final String bindUrl = url;
 
@@ -303,29 +313,6 @@ public class CustomActiveDirectoryLdapAuthenticationProvider extends AbstractLda
         }
     }
 
-    private String subCodeToLogMessage(int code) {
-        switch (code) {
-        case USERNAME_NOT_FOUND:
-            return "User was not found in directory";
-        case INVALID_PASSWORD:
-            return "Supplied password was invalid";
-        case NOT_PERMITTED:
-            return "User not permitted to logon at this time";
-        case PASSWORD_EXPIRED:
-            return "Password has expired";
-        case ACCOUNT_DISABLED:
-            return "Account is disabled";
-        case ACCOUNT_EXPIRED:
-            return "Account expired";
-        case PASSWORD_NEEDS_RESET:
-            return "User must reset password";
-        case ACCOUNT_LOCKED:
-            return "Account locked";
-        default:
-            return "Unknown (error code " + Integer.toHexString(code) + ")";
-        }
-    }
-
     private BadCredentialsException badCredentials() {
         return new BadCredentialsException(
                 messages.getMessage("LdapAuthenticationProvider.badCredentials", "Bad credentials"));
@@ -335,7 +322,7 @@ public class CustomActiveDirectoryLdapAuthenticationProvider extends AbstractLda
         return (BadCredentialsException) badCredentials().initCause(cause);
     }
 
-    private DirContextOperations searchForUser(DirContext context, String username) throws NamingException {
+    public DirContextOperations searchForUser(DirContext context, String username) throws NamingException {
         SearchControls searchControls = new SearchControls();
         searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
 
@@ -356,6 +343,18 @@ public class CustomActiveDirectoryLdapAuthenticationProvider extends AbstractLda
                     new UsernameNotFoundException("User " + username + " not found in directory.", incorrectResults);
             throw badCredentials(userNameNotFoundException);
         }
+    }
+
+    public boolean searchForUser(String username, String adUser, String adUserCred) {
+        boolean isExist = false;
+        DirContext ctx = bindAsUser(adUser, adUserCred);
+        try {
+            searchForUser(ctx, username);
+            isExist = true;
+        } catch (NamingException | BadCredentialsException e) {
+            log.error("Couldn't find user {} on the AD {}", username, url);
+        }
+        return isExist;
     }
 
     private String searchRootFromPrincipal(String bindPrincipal) {
@@ -450,6 +449,18 @@ public class CustomActiveDirectoryLdapAuthenticationProvider extends AbstractLda
             return true;
         }
         return false;
+    }
+
+    public boolean testConnection(String username, String password) throws MangleException {
+        UsernamePasswordAuthenticationToken authToken =
+                new UsernamePasswordAuthenticationToken(username, password);
+
+        try {
+            authenticate(authToken);
+        } catch (Exception e) {
+            throw new MangleException(e.getMessage(), ErrorCode.GENERIC_ERROR);
+        }
+        return true;
     }
 
     static class ContextFactory {

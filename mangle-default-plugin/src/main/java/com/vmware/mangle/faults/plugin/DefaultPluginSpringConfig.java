@@ -14,14 +14,18 @@ package com.vmware.mangle.faults.plugin;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.vmware.mangle.cassandra.model.faults.specs.VMFaultSpec;
 import com.vmware.mangle.faults.plugin.helpers.JavaAgentFaultUtils;
 import com.vmware.mangle.faults.plugin.helpers.aws.AwsEC2FaultHelper;
+import com.vmware.mangle.faults.plugin.helpers.aws.AwsRDSFaultHelper;
+import com.vmware.mangle.faults.plugin.helpers.azure.AzureVMFaultHelper;
 import com.vmware.mangle.faults.plugin.helpers.byteman.BytemanFaultHelperFactory;
 import com.vmware.mangle.faults.plugin.helpers.byteman.DockerBytemanFaultHelper;
 import com.vmware.mangle.faults.plugin.helpers.byteman.K8sBytemanFaultHelper;
 import com.vmware.mangle.faults.plugin.helpers.byteman.LinuxBytemanFaultHelper;
 import com.vmware.mangle.faults.plugin.helpers.docker.DockerFaultHelper;
 import com.vmware.mangle.faults.plugin.helpers.k8s.K8sFaultHelper;
+import com.vmware.mangle.faults.plugin.helpers.redis.RedisFaultHelper;
 import com.vmware.mangle.faults.plugin.helpers.systemresource.DockerSystemResourceFaultHelper;
 import com.vmware.mangle.faults.plugin.helpers.systemresource.K8sSystemResourceFaultHelper;
 import com.vmware.mangle.faults.plugin.helpers.systemresource.LinuxSystemResourceFaultHelper;
@@ -30,6 +34,9 @@ import com.vmware.mangle.faults.plugin.helpers.systemresource.SystemResourceFaul
 import com.vmware.mangle.faults.plugin.helpers.vcenter.VCenterFaultHelper;
 import com.vmware.mangle.faults.plugin.tasks.helpers.BytemanFaultTaskHelper;
 import com.vmware.mangle.faults.plugin.tasks.helpers.SystemResourceFaultTaskHelper;
+import com.vmware.mangle.faults.plugin.tasks.helpers.SystemResourceFaultTaskHelper2;
+import com.vmware.mangle.faults.plugin.tasks.helpers.VCenterSpecificFaultTaskHelper;
+import com.vmware.mangle.faults.plugin.tasks.helpers.VCenterSpecificFaultTriggerTaskHelper;
 import com.vmware.mangle.faults.plugin.utils.PluginUtils;
 import com.vmware.mangle.task.framework.endpoint.EndpointClientFactory;
 import com.vmware.mangle.task.framework.helpers.CommandInfoExecutionHelper;
@@ -80,6 +87,16 @@ public class DefaultPluginSpringConfig {
     }
 
     @Bean
+    public AwsRDSFaultHelper awsRDSFaultHelper(EndpointClientFactory endpointClientFactory) {
+        return new AwsRDSFaultHelper(endpointClientFactory);
+    }
+
+    @Bean
+    public AzureVMFaultHelper azureVMFaultHelper(EndpointClientFactory endpointClientFactory) {
+        return new AzureVMFaultHelper(endpointClientFactory);
+    }
+
+    @Bean
     public JavaAgentFaultUtils javaAgentFaultUtils() {
         return new JavaAgentFaultUtils();
     }
@@ -97,6 +114,11 @@ public class DefaultPluginSpringConfig {
     @Bean
     public SystemResourceFaultTaskHelper systemResourceFaultTask() {
         return new SystemResourceFaultTaskHelper();
+    }
+
+    @Bean
+    public SystemResourceFaultTaskHelper2 systemResourceFaultTask2() {
+        return new SystemResourceFaultTaskHelper2();
     }
 
     @Bean
@@ -142,5 +164,23 @@ public class DefaultPluginSpringConfig {
     public K8sSystemResourceFaultHelper k8sSystemResourceFaultHelper(EndpointClientFactory endpointClientFactory,
             SystemResourceFaultUtils systemResourceFaultUtils) {
         return new K8sSystemResourceFaultHelper(endpointClientFactory, systemResourceFaultUtils);
+    }
+
+    @Bean
+    public VCenterSpecificFaultTaskHelper<VMFaultSpec> vCenterSpecificFaultTaskHelper(
+            VCenterFaultHelper vCenterFaultHelper) {
+        return new VCenterSpecificFaultTaskHelper<>(vCenterFaultHelper);
+    }
+
+    @Bean
+    public VCenterSpecificFaultTriggerTaskHelper vCenterSpecificFaultTriggerTaskHelper(
+            VCenterSpecificFaultTaskHelper vCenterSpecificFaultTaskHelper,
+            EndpointClientFactory endpointClientFactory) {
+        return new VCenterSpecificFaultTriggerTaskHelper(vCenterSpecificFaultTaskHelper, endpointClientFactory);
+    }
+
+    @Bean
+    public RedisFaultHelper getRedisFaultHelper(EndpointClientFactory endpointClientFactory) {
+        return new RedisFaultHelper(endpointClientFactory);
     }
 }

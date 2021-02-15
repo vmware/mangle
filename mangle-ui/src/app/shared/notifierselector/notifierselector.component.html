@@ -1,0 +1,26 @@
+<clr-modal [(clrModalOpen)]="notifierModal" [clrModalClosable]="false">
+    <div class="modal-body">
+        <form #notifiersForm="ngForm"
+            (ngSubmit)="updateNotifiers(notifiersForm.value);closeNotifierModal();notifiersForm.reset();"
+            ngNativeValidate>
+            <section class="form-block">
+                <div class="form-group">
+                    <label for="type">Select notifier name</label>
+                    <div class="clr-control-container">
+                        <div class="clr-select-wrapper">
+                            <select id="type" class="clr-select" name="name" ngModel required size="4">
+                                <ng-container *ngFor="let notification of notifications">
+                                    <option *ngIf="notification.enable" [value]="notification.name">
+                                        {{notification.name}}</option>
+                                </ng-container>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <button type="submit" class="btn btn-primary" [disabled]="notifiersForm.invalid">ADD</button>
+            <button type="button" class="btn btn-outline"
+                (click)="closeNotifierModal();notifiersForm.reset();">CANCEL</button>
+        </form>
+    </div>
+</clr-modal>

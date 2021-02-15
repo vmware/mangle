@@ -35,11 +35,24 @@ public class ReadFaultOperationProperties {
     public static final String VCENTER_FAULT_OPERATION_PROPERTIES_FILE = "VCenterFaultOperations.properties";
     public static final String DOCKER_FAULT_OPERATION_PROPERTIES_FILE = "dockerFaultOperations.properties";
     public static final String AWS_EC2_FAULT_OPERATION_PROPERTIES_FILE = "awsEC2FaultOperations.properties";
+    public static final String AWS_RDS_FAULT_OPERATION_PROPERTIES_FILE = "awsRDSFaultOperations.properties";
+    public static final String AZURE_FAULT_OPERATION_PROPERTIES_FILE = "azureVMFaultOperations.properties";
     private static Map<String, OperationMetaData> vCenterFaultOperationMap = new HashMap<>();
     private static Map<String, OperationMetaData> dockerFaultOperationMap = new HashMap<>();
     private static Map<String, OperationMetaData> awsEC2FaultOperationMap = new HashMap<>();
+    private static Map<String, OperationMetaData> awsRDSFaultOperationMap = new HashMap<>();
+    private static Map<String, OperationMetaData> azureEC2FaultOperationMap = new HashMap<>();
 
     private ReadFaultOperationProperties() {
+    }
+
+    public static synchronized Map<String, OperationMetaData> getAwsRDSFaultOperationMap() {
+        if (CollectionUtils.isEmpty(awsRDSFaultOperationMap)) {
+            Properties awsRDSFaultproperties = ReadProperty
+                    .readProperty(PROPERTYFILE_FOLDER + File.separator + AWS_RDS_FAULT_OPERATION_PROPERTIES_FILE);
+            awsRDSFaultOperationMap = extractFaultOperationMap(awsRDSFaultproperties);
+        }
+        return awsRDSFaultOperationMap;
     }
 
     public static synchronized Map<String, OperationMetaData> getAwsEC2FaultOperationMap() {
@@ -49,6 +62,15 @@ public class ReadFaultOperationProperties {
             awsEC2FaultOperationMap = extractFaultOperationMap(awsEC2Faultproperties);
         }
         return awsEC2FaultOperationMap;
+    }
+
+    public static synchronized Map<String, OperationMetaData> getAzureFaultOperationMap() {
+        if (CollectionUtils.isEmpty(azureEC2FaultOperationMap)) {
+            Properties azureEC2Faultproperties = ReadProperty
+                    .readProperty(PROPERTYFILE_FOLDER + File.separator + AZURE_FAULT_OPERATION_PROPERTIES_FILE);
+            azureEC2FaultOperationMap = extractFaultOperationMap(azureEC2Faultproperties);
+        }
+        return azureEC2FaultOperationMap;
     }
 
     public static synchronized Map<String, OperationMetaData> getVcenterFaultOperationMap() {

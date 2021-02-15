@@ -130,7 +130,27 @@ public class CredentialServiceTest extends PowerMockTestCase {
             actualResult = true;
         }
         verify(credentialRepository, times(0)).findByName(anyString());
-        Assert.assertTrue(actualResult);
+        Assert.assertTrue(actualResult,
+                "Testcase for CredentialService.getCredentialByName(String) failed when credentials with empty name provided");
+    }
+
+    /**
+     * Test method for {@link CredentialService#getCredentialByName(java.lang.String)}.
+     *
+     * @throws MangleException
+     */
+    @Test(expectedExceptions = {
+            MangleRuntimeException.class }, description = "Test to verify that an exception is thrown when the credentials for the given name is not found in the db")
+    public void testGetCredentialByNameWithNonExistValue() throws MangleException, MangleRuntimeException {
+        Optional<CredentialsSpec> optional = Optional.empty();
+        when(credentialRepository.findByName(anyString())).thenReturn(optional);
+        try {
+            credentialService.getCredentialByName("5_74548_35346547");
+        } catch (MangleRuntimeException e) {
+            Assert.assertEquals(e.getErrorCode(), ErrorCode.NO_RECORD_FOUND);
+            verify(credentialRepository, times(1)).findByName(anyString());
+            throw e;
+        }
     }
 
     /**
@@ -149,7 +169,8 @@ public class CredentialServiceTest extends PowerMockTestCase {
             actualResult = true;
         }
         verify(credentialRepository, times(0)).findByName(anyString());
-        Assert.assertTrue(actualResult);
+        Assert.assertTrue(actualResult,
+                "Testcase for CredentialService.getCredentialByName(String) failed when credentials with null value provided");
     }
 
     /**
@@ -183,7 +204,29 @@ public class CredentialServiceTest extends PowerMockTestCase {
             actualResult = true;
         }
         verify(credentialRepository, times(0)).save(any());
-        Assert.assertTrue(actualResult);
+        Assert.assertTrue(actualResult,
+                "Testcase for CredentialService.addOrUpdateCredentials(CredentialsSpec) failed when null object is tried to save into DB");
+    }
+
+    /**
+     * Test method for {@link CredentialService#addOrUpdateCredentials(CredentialsSpec)}
+     *
+     * @throws MangleException
+     */
+    @Test(description = "Test to verify that method throws an exception when Invalid Name is tried to save into db")
+    public void testAddOrUpdateCredentialsWithSpecialCharacters() throws MangleException {
+        CredentialsSpec credentialSpec = credentialsSpecMockData.getRMCredentialsData();
+        credentialSpec.setName("@&");
+        when(credentialRepository.save(any())).thenReturn(credentialSpec);
+        boolean actualResult = false;
+        try {
+            credentialService.addOrUpdateCredentials(credentialSpec);
+        } catch (Exception e) {
+            actualResult = true;
+        }
+        verify(credentialRepository, times(0)).save(any());
+        Assert.assertTrue(actualResult,
+                "Testcase for CredentialService.addOrUpdateCredentials(CredentialsSpec) failed when Invalid credential name provided");
     }
 
     /**
@@ -214,14 +257,15 @@ public class CredentialServiceTest extends PowerMockTestCase {
     public void testValidateMultipartFileSizeWithException() throws IOException {
         MultipartFile file = Mockito.mock(MultipartFile.class);
         when(file.getOriginalFilename()).thenReturn(KUBE_CONFIG);
-        when(file.getBytes()).thenReturn(new byte[] { (byte) 2000 });
+        doThrow(new IOException()).when(file).getBytes();
         boolean actualResult = false;
         try {
             credentialService.validateMultipartFileSize(file, 0);
         } catch (Exception e) {
             actualResult = true;
         }
-        Assert.assertTrue(actualResult);
+        Assert.assertTrue(actualResult,
+                "Testcase for CredentialService.validateMultipartFileSize(file, size) failed when it throws an IOException");
         verify(file, times(1)).getBytes();
         verify(file, atMost(1)).getOriginalFilename();
     }
@@ -237,7 +281,7 @@ public class CredentialServiceTest extends PowerMockTestCase {
     public void testValidateMultipartFileSizeWithException1() throws MangleException, IOException {
         MultipartFile file = Mockito.mock(MultipartFile.class);
         when(file.getOriginalFilename()).thenReturn(KUBE_CONFIG);
-        doThrow(new IOException()).when(file).getBytes();
+        when(file.getBytes()).thenReturn(new byte[] { (byte) 2000 });
         try {
             credentialService.validateMultipartFileSize(file, 0);
         } catch (MangleException e) {
@@ -249,7 +293,28 @@ public class CredentialServiceTest extends PowerMockTestCase {
 
     public void testValidateMultipartFileSizeNull() throws MangleException {
         credentialService.validateMultipartFileSize(null, 0);
-        Assert.assertTrue(true);
+    }
+
+    /**
+     * Test method for
+     * {@link CredentialService#validateK8SConfigFile(org.springframework.web.multipart.MultipartFile)}.
+     *
+     * @throws MangleException
+     * @throws IOException
+     */
+    @Test
+    public void testValidateK8SConfigFileIOException() throws IOException {
+        MultipartFile file = Mockito.mock(MultipartFile.class);
+        when(file.getOriginalFilename()).thenReturn(KUBE_CONFIG);
+        doThrow(new IOException()).when(file).getBytes();
+        boolean actualResult = false;
+        try {
+            credentialService.validateK8SConfigFile(file);
+        } catch (Exception e) {
+            actualResult = true;
+        }
+        Assert.assertTrue(actualResult,
+                "Testcase for CredentialService.validateK8SConfigFile(file) failed when it throws an IOException");
     }
 
     /**
@@ -393,7 +458,7 @@ public class CredentialServiceTest extends PowerMockTestCase {
      * @throws MangleException
      */
     @Test
-    public void testUpdateCredentialWithNoneExistingName() throws MangleException {
+    public void testUpdateCredentialWithNonExistingName() throws MangleException {
         Optional<CredentialsSpec> optional = Optional.empty();
         when(credentialRepository.findByName(anyString())).thenReturn(optional);
         boolean actualResult = false;
@@ -404,7 +469,8 @@ public class CredentialServiceTest extends PowerMockTestCase {
             Assert.assertEquals(e.getErrorCode(), ErrorCode.NO_RECORD_FOUND);
         }
         verify(credentialRepository, times(1)).findByName(anyString());
-        Assert.assertTrue(actualResult);
+        Assert.assertTrue(actualResult,
+                "Testcase for CredentialService.updateCredential(CredentialsSpec) failed when the credentials doesn't exist in DB");
     }
 
     /**
@@ -422,7 +488,9 @@ public class CredentialServiceTest extends PowerMockTestCase {
             actualResult = true;
             Assert.assertEquals(e.getErrorCode(), ErrorCode.CREDENTIAL_NAME_NOT_VALID);
         }
-        Assert.assertTrue(actualResult);
+        Assert.assertTrue(actualResult,
+                "Testcase for CredentialService.updateCredential(CredentialsSpec) failed when the credentials has null value");
+
     }
 
     /**
@@ -444,7 +512,8 @@ public class CredentialServiceTest extends PowerMockTestCase {
             Assert.assertEquals(e.getErrorCode(), ErrorCode.DUPLICATE_RECORD_FOR_CREDENTIAL);
         }
         verify(credentialRepository, times(1)).findByName(anyString());
-        Assert.assertTrue(actualResult);
+        Assert.assertTrue(actualResult,
+                "Testcase for CredentialService.updateCredential(CredentialsSpec) failed when the credentials has same name but different type");
     }
 
     /**
@@ -459,5 +528,35 @@ public class CredentialServiceTest extends PowerMockTestCase {
         } catch (MangleRuntimeException e) {
             Assert.assertEquals(e.getErrorCode(), ErrorCode.RM_CREDENTIAL_WITH_NEITHER_PASSWORD_NOR_PRIVATEKEY);
         }
+    }
+
+    /**
+     * Test method for {@link CredentialService#getTotalPages(Slice)}.
+     *
+     */
+    @SuppressWarnings("unchecked")
+    @Test
+    public void getTotalPagesTest() {
+        Mockito.when(credentialRepository.count()).thenReturn(5L);
+        Slice<CredentialsSpec> slice = Mockito.mock(Slice.class);
+        when(slice.getSize()).thenReturn(2);
+        int response = credentialService.getTotalPages(slice);
+        verify(credentialRepository, Mockito.times(1)).count();
+        Assert.assertEquals(response, 3);
+    }
+
+    /**
+     * Test method for {@link CredentialService#getTotalPages(Slice)}.
+     *
+     */
+    @SuppressWarnings("unchecked")
+    @Test
+    public void getTotalPagesWithSliceSizeZeroTest() {
+        Mockito.when(credentialRepository.count()).thenReturn(1L);
+        Slice<CredentialsSpec> slice = Mockito.mock(Slice.class);
+        when(slice.getSize()).thenReturn(0);
+        int response = credentialService.getTotalPages(slice);
+        verify(credentialRepository, Mockito.times(1)).count();
+        Assert.assertEquals(response, 1);
     }
 }

@@ -11,6 +11,7 @@
 
 package com.vmware.mangle.unittest.services.events.listener;
 
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
@@ -36,6 +37,7 @@ import com.vmware.mangle.cassandra.model.tasks.Task;
 import com.vmware.mangle.cassandra.model.tasks.TaskStatus;
 import com.vmware.mangle.cassandra.model.tasks.TaskTrigger;
 import com.vmware.mangle.model.enums.SchedulerStatus;
+import com.vmware.mangle.services.NotifierService;
 import com.vmware.mangle.services.TaskService;
 import com.vmware.mangle.services.dto.FaultEventSpec;
 import com.vmware.mangle.services.events.listener.MangleTaskListener;
@@ -86,6 +88,9 @@ public class TaskListenerTest {
 
     @Mock
     TaskCompletedEvent mockTaskCompletedEvent;
+
+    @Mock
+    private NotifierService notificationService;
 
     @InjectMocks
     private MangleTaskListener listener;
@@ -180,6 +185,7 @@ public class TaskListenerTest {
         verify(metricProvider, times(1)).sendFaultEvent(task);
     }
 
+    @SuppressWarnings("unchecked")
     private void initDefForMockObjectsForTaskCompletedEvent() {
         Stack<TaskTrigger> triggers = mock(Stack.class);
         when(task.getTriggers()).thenReturn(triggers);
@@ -191,5 +197,6 @@ public class TaskListenerTest {
         when(trigger.getTaskStatus()).thenReturn(TaskStatus.COMPLETED);
         when(task.getTaskStatus()).thenReturn(TaskStatus.COMPLETED);
         when(commandExecutionFaultSpec.getEndpointName()).thenReturn("dummyEpName");
+        doNothing().when(notificationService).sendNotification(any(Task.class));
     }
 }

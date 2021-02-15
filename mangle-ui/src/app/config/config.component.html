@@ -9,30 +9,41 @@
 			<section class="form-block">
 				<div class="form-group">
 					<label for="name">User Name</label>
-					<input type="text" name="name" [(ngModel)]="userFormData.name" required readonly>
+					<input type="text" name="name" id="name" [(ngModel)]="userFormData.name" required readonly>
 				</div>
 				<div class="form-group">
-					<label for="oldPassword">Old Password</label>
-					<input type="password" name="oldPassword" [(ngModel)]="userFormData.oldPassword" required>
-				</div>
-				<div class="form-group">
-					<label for="password">New Password</label>
-					<input type="password" name="password" [(ngModel)]="userFormData.password" minlength="8"
+					<label for="password">Password</label>
+					<input [type]="showNewPassword?'text': 'password'" name="password" id="password" [(ngModel)]="userFormData.password" minlength="8"
 						maxlength="30" pattern="^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%!&+=]).{8,30}$"
 						title="Should consist of 8-30 characters and minimum of one digit, one lower alpha char, one upper alpha char, and one special character within a set of (@#$%!&+=)"
 						onCopy="return false" onDrag="return false" onDrop="return false" onPaste="return false"
-						required>
+						required #password="ngModel">
+          <clr-icon shape="eye" class="is-solid show-password" (click)="negateShowNewPassword()" *ngIf="showNewPassword"></clr-icon>
+          <clr-icon shape="eye-hide" class="is-solid show-password" (click)="negateShowNewPassword()" *ngIf="!showNewPassword"></clr-icon>
 					<ng2-password-strength-bar *ngIf="userFormData.password" [passwordToCheck]="userFormData.password"
 						[barLabel]="barLabel" [barColors]="barColors" [baseColor]="baseColor"
 						[strengthLabels]="strengthLabels">
 					</ng2-password-strength-bar>
 				</div>
 				<div class="form-group">
-					<label for="rePassword">Retype New Password</label>
-					<input type="password" name="rePassword" [(ngModel)]="userFormData.rePassword" required>
+					<label for="rePassword">Retype Password</label>
+					<input [type]="showRetypePassword?'text': 'password'" name="rePassword" id="rePassword" [(ngModel)]="userFormData.rePassword" required #retypeNewPassword="ngModel">
+          <clr-icon shape="eye" class="is-solid show-password" (click)="negateShowRetypePassword()" *ngIf="showRetypePassword"></clr-icon>
+          <clr-icon shape="eye-hide" class="is-solid show-password" (click)="negateShowRetypePassword()" *ngIf="!showRetypePassword"></clr-icon>
 				</div>
 			</section>
-			<button [clrLoading]="submitBtnState" type="submit" class="btn btn-primary">UPDATE</button>
+      <div class="alert alert-danger" role="alert" [hidden] = "!(retypeNewPassword.dirty && (password.value!==retypeNewPassword.value) && password.value != '' && retypeNewPassword.value != '')">
+        <div class="alert-items">
+          <div class="alert-item static">
+            <div class="alert-icon-wrapper">
+              <clr-icon class="alert-icon" shape="exclamation-circle"></clr-icon>
+            </div>
+            <span class="alert-text">Password do not match</span>
+          </div>
+        </div>
+      </div>
+			<button [clrLoading]="submitBtnState" type="submit" class="btn btn-primary"
+              [disabled]="(password.value!==retypeNewPassword.value) || !password.valid || !retypeNewPassword.valid">UPDATE</button>
 		</form>
 	</div>
 	<div style="float:right;width:30%;">&nbsp;</div>
