@@ -1,0 +1,8 @@
+from enum import Enum
+
+
+class NetworkFaults(Enum):
+    NETWORK_DELAY_MILLISECONDS = 1
+    PACKET_DUPLICATE_PERCENTAGE = 2
+    PACKET_CORRUPT_PERCENTAGE = 3
+    PACKET_LOSS_PERCENTAGE = 4
