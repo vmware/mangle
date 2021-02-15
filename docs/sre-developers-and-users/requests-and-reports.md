@@ -18,7 +18,7 @@ It provides details of the tasks executed by Mangle.
 
 ### Supported operations for Mangle tasks
 
-Click on ![](../.gitbook/assets/supportedactionsbutton%20%281%29.png) to understand what operations are supported for a specific task.
+Click on ![](../.gitbook/assets/supportedactionsbutton%20%283%29%20%281%29.png) to understand what operations are supported for a specific task.
 
 Primarily, the operations supported are Delete, Remediate Fault and Report. 
 
@@ -51,7 +51,7 @@ Click on the ID link of each schedule to view all the triggers of that schedule.
 
 ### Supported operations for Mangle schedules
 
-Click on ![](../.gitbook/assets/supportedactionsbutton%20%281%29.png) to understand what operations are supported for a Scheduled Job.
+Click on ![](../.gitbook/assets/supportedactionsbutton%20%283%29%20%281%29.png) to understand what operations are supported for a Scheduled Job.
 
 Primarily, the operations supported are Cancel, Pause, Resume, Reports, Delete, and Delete Schedule Only. 
 

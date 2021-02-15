@@ -1,8 +1,8 @@
 # Mangle Users Guide
 
-_Mangle Users Guide_ provides information about how to add endpoints, run faults and view reports.
+_Mangle Users Guide_ provides information about how to add endpoints, run faults, generate resiliency score and view reports.
 
-**Product version: 2.0.1**
+**Product version: 3.0.0**
 
 #### Intended Audience
 
@@ -12,6 +12,7 @@ This information is intended for SRE, Developers and Chaos engineers who would l
 | :--- | :--- |
 | [Adding Endpoints](adding-endpoints.md) | Provides information about adding the targets for fault injection |
 | [Injecting Faults](injecting-faults/) | Provides information about the types of faults that can be injected to a specific endpoint |
+| [Resiliency Score](resiliency-score.md) | Provides information about how to generate resiliency score metrics and send it to a monitoring system automatically using Mangle |
 | [Requests and Reports](requests-and-reports.md) | Provides information about the progress and status of the injections |
 
 Copyright \(c\) 2019 VMware, Inc. All rights reserved. [Copyright and trademark information](http://pubs.vmware.com/copyright-trademark.html). Any feedback you provide to VMware is subject to the terms at [www.vmware.com/community\_terms.html](http://www.vmware.com/community_terms.html).

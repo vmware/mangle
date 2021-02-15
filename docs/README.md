@@ -2,11 +2,11 @@
 
 ## Mangle Documentation
 
-The Mangle Documentation provides information about how to install, configure, and use Mangle™.
+The Mangle Documentation provides information about how to install, configure, and uses Mangle™.
 
 To navigate to the appropriate documentation, start with the [Mangle GitHub IO Page](https://vmware.github.io/mangle/).
 
-**Current Product version: 2.0.1**
+**Current Product version: 3.0.0**
 
 ### **Demo of the Mangle Version 1.0**
 

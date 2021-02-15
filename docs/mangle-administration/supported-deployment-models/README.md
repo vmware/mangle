@@ -4,7 +4,7 @@
 
 ### Deploying the Mangle Virtual Appliance
 
-For a quick POC we recommend that you deploy a single node instance of Mangle using the OVA file that we have made available [here](https://repo.vmware.com/mangle/v2.0.1/Mangle-2.0.1_OVF10.ova).
+For a quick POC we recommend that you deploy a single node instance of Mangle using the OVA file that we have made available [here](https://repo.vmware.com/mangle/v3.0.0/Mangle-3.0.0.0_OVF10.ova).
 
 Using the OVA is a fast and easy way to create a Mangle VM on VMware vSphere.
 
@@ -46,7 +46,7 @@ After you have downloaded the OVA, log in to your vSphere environment and perfor
 
    Read through the Mangle License Agreement, and then choose **I accept all license agreements**.
 
-   ![License](../../.gitbook/assets/step5_accept-license.png)
+   ![License](../../.gitbook/assets/license.png)
 
    Choose **Next**.
 
@@ -62,22 +62,13 @@ After you have downloaded the OVA, log in to your vSphere environment and perfor
 
    Provide a static or dhcp IP for Mangle after choosing an appropriate destination network. ![](../../.gitbook/assets/step7_select-network.png) 
 
-   ![](../../.gitbook/assets/step8_customize-template.png) 
+   ![](../../.gitbook/assets/deployovf_passwordset.png) 
 
-   Choose **Next**.
+   Choose **Next**. Provide an appropriate root user password. You should memorize this password to access the Mangle VM via SSH post deployment.
 
 8. Verify Deployment Settings and click **Finish** to start creating the virtual machine. Depending on bandwidth, this operation might take a while. When finished, vSphere powers up the Mangle VM based on your selections.
 
 After the VM is boots up successfully, open the command window. Press Alt+F2 to log into the VM.
-
-The default account credentials are:
-
-* Username: `root`
-* Password: `vmware`
-
-{% hint style="info" %}
-Because of limitations within OVA support on vSphere, it was necessary to specify a default password for the OVA option. However, for security reasons, we would recommend that you modify the password after importing the appliance.
-{% endhint %}
 
 It takes a couple of minutes for the containers to run. Once the Mangle application and DB containers are running, the Mangle application should be available at the following URL: 
 
@@ -174,10 +165,16 @@ Although the docker run commands above lists only a few DB\_OPTIONS and CLUSTER\
 
 Mangle vCenter Adapter is a fault injection adapter for injecting vCenter specific faults. All the vCenter operations from the Mangle application will be carried out through this adapter.
 
-To deploy the vCenter adapter container run the docker command below on the docker host.
+To deploy the vCenter adapter container using the default credentials run the docker command below on the docker host. Here the port 8443 is the external facing port on which the container will be available. Please ensure that the 8443 port is not used by any other application before running the command below. Else, change the command to use a free port and then run it. 
 
 ```text
 docker run --name mangle-vc-adapter -v /var/opt/mangle-vc-adapter-tomcat/logs:/var/opt/mangle-vc-adapter-tomcat/logs -d -p 8080:8080 -p 8443:8443 mangleuser/mangle_vcenter_adapter:<VERSION>
+```
+
+To deploy the vCenter adapter container using custom credentials run the docker command below on the docker host. Substitute the new password in angular brackets with a password of your choice. Here the port 8443 is the external facing port on which the container will be available. Please ensure that the 8443 port is not used by any other application before running the command below. Else, change the command to use a free port and then run it. 
+
+```text
+docker run --name mangle-vc-adapter -v /var/opt/mangle-vc-adapter-tomcat/logs:/var/opt/mangle-vc-adapter-tomcat/logs -d -p 8080:8080 -p 8443:8443 -e JAVA_OPTS="-DcustomAdminCred=<new password>" mangleuser/mangle_vcenter_adapter:<VERSION>
 ```
 
 {% hint style="info" %}
@@ -185,7 +182,9 @@ The API documentation for the vCenter Adapter can be found at:
 
 _https://&lt;NODE-IP&gt;:&lt;PORT&gt;:/mangle-vc-adapter/swagger-ui.html_
 
-The vCenter adapter requires authentication against any API calls. It supports only one user, _admin_ with password _admin_. All the post APIs that are supported by the adapter will take the vCenter information as a request body.
+If this URL is accessible and reachable, then you know that the vCenter adapter is deployed and running as expected. You can proceed with the addition of the adapter to Mangle as mentioned in [Adding Adapters](../../sre-developers-and-users/adding-adapters.md) section of the Users Guide.
+
+The vCenter adapter requires authentication against any API calls. It supports only one user, _admin._ If you have use the default credentials while deploying the container then the __password is _admin_. Else the password will be the custom one that you provided at the time of deployment. All the post APIs that are supported by the adapter will take the vCenter information as a request body.
 {% endhint %}
 
 ### Deploying Mangle on Kubernetes
@@ -207,6 +206,22 @@ All the relevant YAML files are available under the Mangle git repository under 
    `kubectl --kubeconfig=`_`<kubeconfig file>`_ `-n mangle apply -f` _`<path>`_`/mangle.yaml`
 
    `kubectl --kubeconfig=`_`<kubeconfig file>`_ `-n mangle apply -f` _`<path>`_`/mangle-service.yaml`
+
+#### Deploying Mangle vCenter Adapter on Kubernetes
+
+The relevant YAML files are available under the Mangle git repository under location 'mangle\mangle-support\kubernetes'
+
+        Create the Mangle vCenter Adapter pod and Service.
+
+* `kubectl --kubeconfig=`_`<kubeconfig file>`_ `-n mangle apply -f` _`<path>`_`/mangle-vc-adapter.yaml` 
+* `kubectl --kubeconfig=`_`<kubeconfig file>`_ `-n mangle apply -f` _`<path>`_`/mangle-vc-adapter-service.yaml`
+* In Mangle, Add the vCenter Adapter by providing the Name, VCenter Adapter URL, Username and Password and TestConnection and submit once the Test Connection is successful.
+* Add the Endpoint: VMware vCenter by providing the EndpointName, vCenter Host/IP and selecting the VCenter Adapter added.
+* Note: Check if the k8s have access to the target vCenter you are adding.
+
+As mentioned above, you can reach the vCenter Adapter API Documentation through the URL: _https://&lt;VCENTER-ADAPTER-IP&gt;:&lt;PORT&gt;:/mangle-vc-adapter/swagger-ui.html_
+
+The Health API of the vCenter Adapter:                                                                                        _https://&lt;VCENTER-ADAPTER-IP&gt;:&lt;PORT&gt;:/mangle-vc-adapter/application/health_                                       should return _"status \| "UP"_  if the adapter is running as expected_._
 
 ## Multi Node Deployment
 
@@ -320,4 +335,28 @@ Active members list of the active quorum will be maintained in DB under the tabl
 * a leaves the cluster due to network partition, a cannot communicate with b and vice versa
 * two clusters are created with each having one node
 * both the cluster loses the quorum\(2\)
+
+## **Upgrading existing instances of Mangle**
+
+### **Upgrading Mangle container**
+
+#### **\(Applicable if you have deployed Mangle on a Docker Host/ OVA vm\)**
+
+* You can make use of the upgrade script for upgrading the MangleWEB container running.
+* The upgrade script is available on the public Mangle Git hub repository at location: [mangle/mangle-support/](https://github.com/vmware/mangle/tree/master/mangle-support)`sh UpgradeMangle.sh --MANGLE_ADMIN_USERNAME=<admin@mangle.local> --MANGLE_ADMINPASSWORD=<mangleAdminpasswd>  --MANGLE_BUILD_NUMBER=<mangleBuildNo>  --MANGLE_CONTAINER_NAME=<mangleWEB> --MANGLE_APP_PORT=443 --MANGLE_DOCKER_ARTIFACTORY= <mangleDockerArtifactory>`
+* The script will prompt you to check if you have taken the DB snapshot using the link below: For reference to take DB snapshot: [https://docs.datastax.com/en/cassandra/3.0/cassandra/operations/opsBackupTakesSnapshot.html](https://docs.datastax.com/en/cassandra/3.0/cassandra/operations/opsBackupTakesSnapshot.html)
+* The upgrade script is tested out for Single Node upgrade.
+* The existing data in Cassandra will be intact while upgrading from Mangle version 2.0 to 3.0. There will be no changes to the existing DB tables. The db migration scripts takes care of adding new tables to the existing schema.
+
+### **Mangle Multi Node Upgrade:** 
+
+* Login to each of the Mangle nodes and stop and remove the running containers.
+* Deploy the mangle container on each of the nodes with the latest image by executing the docker run cmd.
+* Docker run should take the options given below. Please replace the values in the angular brackets as required.`-e CLUSTER_OPTIONS=“-DclusterValidationToken=mangle -DclusterMembers=NODE1-IP, NODE2-IP, NODE3-IP -DpublicAddress= -DdeploymentMode=CLUSTER"`
+
+###  **Upgrading Mangle On Kubernetes**
+
+* As Mangle is deployed as deployment in k8s,  edit the deployment of Mangle. _`kubectl -n <namespace> edit deployment <mangle>`_
+* Update the value for the key "_image_" with the latest image of mangle container.
+* As you save them, the older pods get terminated and the new pods get created with the latest image and the setup is upgraded.
 
