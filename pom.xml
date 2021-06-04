@@ -74,7 +74,7 @@
 		<jacoco.version>0.8.2</jacoco.version>
 		<com.jcraft.jsch.version>0.1.54</com.jcraft.jsch.version>
 		<net.sf.dozer.version>5.5.1</net.sf.dozer.version>
-		<org.apache.httpcomponents.version>4.4</org.apache.httpcomponents.version>
+		<org.apache.httpcomponents.version>4.5.13</org.apache.httpcomponents.version>
 		<httpcore.version>4.4.1</httpcore.version>
 		<commons-httpclient.version>3.1</commons-httpclient.version>
 		<commons-beanutils.version>1.9.4</commons-beanutils.version>
