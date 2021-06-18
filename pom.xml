@@ -55,11 +55,11 @@
 		<testng.version>6.11</testng.version>
 		<com.fasterxml.jackson.datatype.version>2.5.1</com.fasterxml.jackson.datatype.version>
 		<checkstyle.version>3.0.0</checkstyle.version>
-		<spring.security.core.version>5.2.5.RELEASE</spring.security.core.version>
-		<spring.security.web.version>5.2.5.RELEASE</spring.security.web.version>
+		<spring.security.core.version>5.2.10.RELEASE</spring.security.core.version>
+		<spring.security.web.version>5.2.10.RELEASE</spring.security.web.version>
 		<mvn.surefire.plugin.version>2.22.1</mvn.surefire.plugin.version>
 		<jacoco.ant.version>0.7.8</jacoco.ant.version>
-		<com.thoughtworks.xstream.version>1.4.15</com.thoughtworks.xstream.version>
+		<com.thoughtworks.xstream.version>1.4.17</com.thoughtworks.xstream.version>
 		<junit.jupiter.version>5.3.1</junit.jupiter.version>
 		<docker-java.version>3.1.0</docker-java.version>
 		<com.jcraft.jsch.version>0.1.54</com.jcraft.jsch.version>
@@ -69,12 +69,12 @@
 		<wavefront-java-client-version>4.26</wavefront-java-client-version>
 		<jacoco.version>0.8.2</jacoco.version>
 		<java.ws.rs.version>2.1.1</java.ws.rs.version>
-		<guava.version>25.0-jre</guava.version>
+		<guava.version>30.0-jre</guava.version>
 		<net.sf.dozer.version>5.5.1</net.sf.dozer.version>
 		<jacoco.version>0.8.2</jacoco.version>
 		<com.jcraft.jsch.version>0.1.54</com.jcraft.jsch.version>
 		<net.sf.dozer.version>5.5.1</net.sf.dozer.version>
-		<org.apache.httpcomponents.version>4.4</org.apache.httpcomponents.version>
+		<org.apache.httpcomponents.version>4.5.13</org.apache.httpcomponents.version>
 		<httpcore.version>4.4.1</httpcore.version>
 		<commons-httpclient.version>3.1</commons-httpclient.version>
 		<commons-beanutils.version>1.9.4</commons-beanutils.version>
