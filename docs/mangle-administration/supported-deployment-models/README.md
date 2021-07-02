@@ -2,88 +2,108 @@
 
 ## Single Node Deployments
 
+For a quick POC we recommend deploying a single node instance of Mangle on VMware vSphere using the OVA file available for download [here](https://repo.vmware.com/mangle/v3.0.0/Mangle-3.0.0.0_OVF10.ova). 
+
+### System Requirements
+
+A single node instance of the Mangle virtual appliance will be provisioned with the following resources:
+* 4 vCPU
+* 8 GB RAM
+* Approximately 54 GB of storage space (if thick provisioned)
+* Hosts running ESXi version 5.5 or later
+
 ### Deploying the Mangle Virtual Appliance
 
-For a quick POC we recommend that you deploy a single node instance of Mangle using the OVA file that we have made available [here](https://repo.vmware.com/mangle/v3.0.0/Mangle-3.0.0.0_OVF10.ova).
-
-Using the OVA is a fast and easy way to create a Mangle VM on VMware vSphere.
-
-After you have downloaded the OVA, log in to your vSphere environment and perform the following steps:
+Login to your vSphere environment and perform the following steps in vCenter:
 
 1. Start the Import Process
 
-   From the Actions pull-down menu for a datacenter, choose **Deploy OVF Template**.
+   * From the Actions pull-down menu for a datacenter, choose **Deploy OVF Template**.
+   ![Create/Register VM](../../.gitbook/assets/ova3.x_step1_deployovf.png)
 
-   ![Create/Register VM](../../.gitbook/assets/step1_deploy-ovf-template.png)
+   * Locate and select the downloaded OVA file (as the screenshot shows), or alternatively, for vCenter instances with connectivity to the internet, enter the OVA's URL to deploy from the web directly.
 
-   Provide the location of the downloaded ova file.
+   * Choose **Next**.
 
-   Choose **Next**.
+2. Specify the Name and Location of Virtual Machine                      
 
-2. Specify the name and location of virtual machine                      
+   * Enter a name for the virtual machine, and select the target location for it.
+   ![OVA file](../../.gitbook/assets/ova3.x_step2_nameandfolder.png)
 
-   Enter a name for the virtual machine and select a location for the virtual machine.
+   * Choose **Next**.
 
-   ![OVA file](../../.gitbook/assets/step2_select-name.png)
+3. Specify the Compute Resource
 
-   Choose **Next**.
+   * Select a cluster, host or resource pool where the virtual machine will be deployed.
+   ![Target datastore](../../.gitbook/assets/ova3.x_step3_computeresource.png)
 
-3. Specify the compute resource
+   * Choose **Next**.
 
-   Select a cluster, host or resource pool where the virtual machine needs to be deployed.
+4. Review Details
 
-   ![Target datastore](../../.gitbook/assets/step3_select-compute-resource.png)
+   * This screen shows details of the virtual appliance, including download size and size on disk.
+   ![](../../.gitbook/assets/ova3.x_step4_reviewdetails.png) 
 
-   Choose **Next**.
-
-4. Review details
-
-   ![](../../.gitbook/assets/step4_review-details.png) 
-
-   Choose **Next**.
+   * Choose **Next**.
 
 5. Accept License Agreement
 
-   Read through the Mangle License Agreement, and then choose **I accept all license agreements**.
+   * Read through the Mangle License Agreement, and then choose **I accept all license agreements**.
+   ![License](../../.gitbook/assets/ova3.x_step5_acceptlicense.png)
 
-   ![License](../../.gitbook/assets/license.png)
-
-   Choose **Next**.
+  * Choose **Next**.
 
 6. Select Storage
 
-   Mangle is provisioned with a maximum disk size. By default, Mangle uses only the portion of disk space that it needs, usually much less that the entire disk size \( **Thin** client\). If you want to pre-allocate the entire disk size \(reserving it entirely for Mangle instead\), select **Thick** instead.
+   * Mangle is provisioned with a maximum disk size. By default, Mangle uses only the portion of disk space that it needs, usually much less than the entire disk size \(**Thin** provisioned\). If you want to pre-allocate the entire disk size \(reserving it entirely for Mangle instead\), select **Thick** provisioning.
+   ![Deployment Options](../../.gitbook/assets/ova3.x_step6_selectstorage.png)
 
-   ![Deployment Options](../../.gitbook/assets/step6_select-storage.png)
-
-   Choose **Next**.
+   * Choose **Next**.
 
 7. Select Network
 
-   Provide a static or dhcp IP for Mangle after choosing an appropriate destination network. ![](../../.gitbook/assets/step7_select-network.png) 
+   * Choose an appropriate virtual network for the appliance and the IP protocol you will use (IPv4 by default but supports IPv6). 
+   ![](../../.gitbook/assets/ova3.x_step7_selectnetwork.png) 
 
-   ![](../../.gitbook/assets/deployovf_passwordset.png) 
+   * Choose **Next**.
 
-   Choose **Next**. Provide an appropriate root user password. You should memorize this password to access the Mangle VM via SSH post deployment.
+8. Customize the Template
 
-8. Verify Deployment Settings and click **Finish** to start creating the virtual machine. Depending on bandwidth, this operation might take a while. When finished, vSphere powers up the Mangle VM based on your selections.
+   * Enter a root user password for the Mangle appliance.  You should memorize this password to access the Mangle VM via SSH or console post deployment.
+   ![](../../.gitbook/assets/ova3.x_step8a_enterpwd.png) 
+   
+   * Once the password has been entered and confirmed, you will see a success message stating **All properties have valid values.**
+   ![](../../.gitbook/assets/ova3.x_step8b_allpropertiesentered.png) 
 
-After the VM is boots up successfully, open the command window. Press Alt+F2 to log into the VM.
+   * Enter values for any Networking Properties that need to be specified.  If any field is left blank, DHCP will be used.
+   ![](../../.gitbook/assets/ova3.x_step8c_allpropertiesentered.png) 
 
-It takes a couple of minutes for the containers to run. Once the Mangle application and DB containers are running, the Mangle application should be available at the following URL: 
+   * Choose **Next**.
 
+9. Ready to Complete
+
+   * Verify Deployment Settings, and click **Finish** to start creating the virtual machine. Depending on bandwidth, this operation might take a while. When finished, vSphere deploys the Mangle VM and configures it based on your selections but will leave it powered off by default.
+   ![](../../.gitbook/assets/ova3.x_step9_readytocomplete.png) 
+
+10. First Boot and Logging into the Appliance
+
+* Power on the newly created Mangle VM.  Once it boots up successfully, open a console session to the VM within vCenter.   
+
+* It takes a couple of minutes for the containers to run. Once the Mangle application and DB containers are running, the console should look similar to the example screenshot below (**ip address will be different for your environment**).  The console interface can also be used to set the appliance's time zone.
+![](../../.gitbook/assets/ova3.x_step10_consoleview.png) 
+
+* The Mangle application should be available at the following URL: 
 ```text
 https://<IP or Hostname provided>/mangle-services
 ```
 
-You will be prompted to change the admin password to continue.
+* Upon first visit to the Mangle application URL, you will be prompted to change the admin password to continue.
+    * Default Mangle Username: `admin@mangle.local`
+    * Password: `admin`
 
-* Default Mangle Username: `admin@mangle.local`
-* Password: `admin`
+11. Export the VM as a Template \(Optional\)
 
-Export the VM as a Template \(Optional\)
-
-Consider converting this imported VM into a template \(from the Actions menu, choose **Export** \) so that you have a master Mangle instance that can be combined with vSphere Guest Customization to enable rapid provisioning of Mangle instances.
+* Consider converting this imported VM into a template \(from the Actions menu, choose **Export** \) so that you have a master Mangle instance that can be combined with vSphere Guest Customization to enable rapid provisioning of Mangle instances.
 
 Now you can move on to the [Mangle Users Guide](../../sre-developers-and-users/).
 
