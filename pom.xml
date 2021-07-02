@@ -55,7 +55,7 @@
 		<testng.version>6.11</testng.version>
 		<com.fasterxml.jackson.datatype.version>2.5.1</com.fasterxml.jackson.datatype.version>
 		<checkstyle.version>3.0.0</checkstyle.version>
-		<spring.security.core.version>5.2.10.RELEASE</spring.security.core.version>
+		<spring.security.core.version>5.2.11.RELEASE</spring.security.core.version>
 		<spring.security.web.version>5.2.10.RELEASE</spring.security.web.version>
 		<mvn.surefire.plugin.version>2.22.1</mvn.surefire.plugin.version>
 		<jacoco.ant.version>0.7.8</jacoco.ant.version>
