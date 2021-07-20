@@ -60,7 +60,7 @@ Mangle supports docker hosts as endpoints or targets for injection. It needs the
 
 ### VMware vCenter Endpoint
 
-Mangle supports VMware vCenter as endpoints or targets for injection. It needs the IP/Hostname, credentials and a vCenter adapter URL to connect to the vCenter instance and run the supported faults.
+Mangle supports VMware vCenter as endpoints or targets for injection. It needs the IP/Hostname, credentials and a vCenter adapter URL to connect to the vCenter instance and run the supported faults.  If you have not yet added a vCenter adapter (a pre-requisite for adding vCenter endpoints), review the instructions for [Adding Adapters](../sre-developers-and-users/adding-adapters.md).
 
 | Tested and Supported Versions of VMware vCenter |
 | :--- |

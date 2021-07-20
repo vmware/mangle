@@ -2,13 +2,15 @@
 
 ## Why should I add adapters?
 
-Mangle supports most of the endpoints out of the box. However, certain proprietary endpoints such as VMware vCenter requires additional dependencies which would consume CPU and memory resources when enabled by default. To make the default deployment of Mangle lightweight, the dependencies required to support VMware vCenter has been externalized and consolidated in a separate container called the vCenter adapter. 
+Mangle supports most of the endpoints out of the box. However, certain proprietary endpoints such as VMware vCenter require additional dependencies which would consume CPU and memory resources when enabled by default. To make the default deployment of Mangle lightweight, the dependencies required to support VMware vCenter has been externalized and consolidated in a separate container called the vCenter adapter. 
 
-If you require Mangle to run faults against vCenter, then you should deploy an additional container for vCenter adapter \(refer to the '[**Deploying the Mangle vCenter adapter container section**](../mangle-administration/supported-deployment-models/#deploying-the-mangle-vcenter-adapter-container)**'** under the [**Mangle Deployment and Administration Guide**](../mangle-administration/) ****for details.**\)** and add the adapter instance under Mangle.
+If you require Mangle to run faults against vCenter, then you should deploy an additional container for the vCenter adapter \(refer to the '[**Deploying the Mangle vCenter adapter container section**](../mangle-administration/supported-deployment-models/#deploying-the-mangle-vcenter-adapter-container)**'** under the [**Mangle Deployment and Administration Guide**](../mangle-administration/) ****for details.**\)** and add the adapter instance under Mangle.
 
 ## Adapter Types
 
 At present only a single adapter type for vCenter Server is supported. But in future, there are plans to support adapters for other VMware products.
+
+### vCenter Server Adapter
 
 **Steps to follow:** 
 
@@ -23,7 +25,7 @@ At present only a single adapter type for vCenter Server is supported. But in fu
 {% hint style="info" %}
 vCenter adapter if deployed on the same machine on which Mangle is running, vCenter adapter IP used for adding vCenter endpoint can be either
 
-* A internal docker container IP OR
+* An internal docker container IP OR
 * A docker host IP 
 
 **To find out the internal docker container IP for mangle-vc-adapter run**
