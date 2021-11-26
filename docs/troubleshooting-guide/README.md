@@ -12,7 +12,7 @@ REQUIRED:
 
 * Endpoint type:
 * Details of Fault that was injected:
-* Type of Deployment: OVA, Container \(Single Node\), Container \(Multi Node\), Container \(Multi Node with HA Proxy\)
+* Type of Deployment: OVA, Container (Single Node), Container (Multi Node), Container (Multi Node with HA Proxy)
 * What stage of the Mangle lifecycle are you running into the issue?
 * Attach the Mangle support bundle
 
@@ -35,7 +35,7 @@ Please run `/etc/vmware/support/mangle-support.sh` and provide the resulting fil
 
 The location of the resulting log bundle is shown in the script output, similar to this example:
 
-```text
+```
 Created log bundle /storage/log/mangle_logs_2018-01-01-00-01-00.tar.gz
 ```
 
@@ -45,11 +45,22 @@ Provide this `.tar.gz` file to support.
 
 It is important to determine what stage in the appliance lifecycle you are at when encountering issues so that targeted troubleshooting steps can be followed. Please use the links below to identify what stage the failure is in, to apply the appropriate troubleshooting steps, and to provide the appropriate troubleshooting information for support.
 
-{% page-ref page="deployment-stage.md" %}
+{% content-ref url="deployment-stage.md" %}
+[deployment-stage.md](deployment-stage.md)
+{% endcontent-ref %}
 
-{% page-ref page="boot-stage.md" %}
+{% content-ref url="boot-stage.md" %}
+[boot-stage.md](boot-stage.md)
+{% endcontent-ref %}
 
-{% page-ref page="endpoint-addition-stage.md" %}
+{% content-ref url="broken-reference" %}
+[Broken link](broken-reference)
+{% endcontent-ref %}
 
-{% page-ref page="fault-injection-stage.md" %}
+{% content-ref url="endpoint-addition-stage.md" %}
+[endpoint-addition-stage.md](endpoint-addition-stage.md)
+{% endcontent-ref %}
 
+{% content-ref url="fault-injection-stage.md" %}
+[fault-injection-stage.md](fault-injection-stage.md)
+{% endcontent-ref %}

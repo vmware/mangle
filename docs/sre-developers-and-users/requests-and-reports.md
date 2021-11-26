@@ -13,17 +13,17 @@ It provides details of the tasks executed by Mangle.
 3. Endpoint Name: Name of the targeted endpoint during fault execution.
 4. Task Type: Type of the task executed. For eg: INJECTION or REMEDIATION
 5. Task Description: You can get more details about the fault, fault parameters, endpoint targeted, targeted component within an endpoint etc form this field.
-6. Start Time: Task trigger time 
+6. Start Time: Task trigger time&#x20;
 7. End Time: Task end time
 
 ### Supported operations for Mangle tasks
 
-Click on ![](../.gitbook/assets/supportedactionsbutton%20%283%29%20%281%29.png) to understand what operations are supported for a specific task.
+Click on ![](<../.gitbook/assets/supportedactionsbutton (3) (3) (2).png>) to understand what operations are supported for a specific task.
 
-Primarily, the operations supported are Delete, Remediate Fault and Report. 
+Primarily, the operations supported are Delete, Remediate Fault and Report.&#x20;
 
 {% hint style="info" %}
-Remediate Fault option will be enabled only if the the task type is INJECTION and status is set to COMPLETED. 
+Remediate Fault option will be enabled only if the the task type is INJECTION and status is set to COMPLETED.&#x20;
 {% endhint %}
 
 {% hint style="info" %}
@@ -51,9 +51,9 @@ Click on the ID link of each schedule to view all the triggers of that schedule.
 
 ### Supported operations for Mangle schedules
 
-Click on ![](../.gitbook/assets/supportedactionsbutton%20%283%29%20%281%29.png) to understand what operations are supported for a Scheduled Job.
+Click on ![](<../.gitbook/assets/supportedactionsbutton (3) (3) (2).png>) to understand what operations are supported for a Scheduled Job.
 
-Primarily, the operations supported are Cancel, Pause, Resume, Reports, Delete, and Delete Schedule Only. 
+Primarily, the operations supported are Cancel, Pause, Resume, Reports, Delete, and Delete Schedule Only.&#x20;
 
 ### Refreshing the schedule data grid
 
@@ -68,8 +68,7 @@ Click on the Logs link to open up a browser window displaying the current Mangle
 {% hint style="info" %}
 **For access to relevant API Swagger documentation:**
 
-Please traverse to link ****![](../.gitbook/assets/help.png) -----&gt; API Documentation from the Mangle UI or access _https://&lt;Mangle IP or Hostname&gt;/mangle-services/swagger-ui.html\#_/_scheduler-controller_
+Please traverse to link** **![](../.gitbook/assets/help.png) -----> API Documentation from the Mangle UI or access _https://\<Mangle IP or Hostname>/mangle-services/swagger-ui.html#_/_scheduler-controller_
 
-  ![](../.gitbook/assets/schedulercontroller.png) 
+&#x20;![](broken-reference) ![](../.gitbook/assets/schedulercontroller.png)&#x20;
 {% endhint %}
-
