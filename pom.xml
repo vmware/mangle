@@ -1179,7 +1179,6 @@
 				<module>mangle-default-plugin</module>
 				<module>mangle-ui</module>
 				<module>mangle-services</module>
-				<module>mangle-integration-tests</module>
 			</modules>
 		</profile>
 		<profile>
@@ -1192,7 +1191,6 @@
 				<module>mangle-test-plugin</module>
 				<module>mangle-default-plugin</module>
 				<module>mangle-services</module>
-				<module>mangle-integration-tests</module>
 			</modules>
 		</profile>
 		<profile>
@@ -1220,114 +1218,8 @@
 				<module>mangle-default-plugin</module>
 				<module>mangle-ui</module>
 				<module>mangle-services</module>
-				<module>mangle-integration-tests</module>
 				<module>mangle-vcenter-adapter</module>
 			</modules>
-		</profile>
-		<profile>
-			<id>integration-test</id>
-			<modules>
-				<module>mangle-integration-tests</module>
-			</modules>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-failsafe-plugin</artifactId>
-						<configuration>
-							<suiteXmlFiles>
-								<file>src/test/resources/integration-test-suite.xml</file>
-							</suiteXmlFiles>
-							<properties>
-								<property>
-									<name>listener</name>
-									<value>com.vmware.fiaasco.services.test.listeners.TestNGListener</value>
-								</property>
-							</properties>
-						</configuration>
-						<executions>
-							<execution>
-								<id>integration-test</id>
-								<phase>integration-test</phase>
-								<goals>
-									<goal>integration-test</goal>
-									<goal>verify</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-		<profile>
-			<id>vc-integration-test</id>
-			<modules>
-				<module>mangle-vcenter-adapter-integration-tests</module>
-			</modules>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-failsafe-plugin</artifactId>
-						<configuration>
-							<suiteXmlFiles>
-								<file>src/test/resources/integration-test-suite.xml</file>
-							</suiteXmlFiles>
-							<properties>
-								<property>
-									<name>listener</name>
-									<value>com.vmware.mangle.listeners.TestNGListener</value>
-								</property>
-							</properties>
-						</configuration>
-						<executions>
-							<execution>
-								<id>integration-test</id>
-								<phase>integration-test</phase>
-								<goals>
-									<goal>integration-test</goal>
-									<goal>verify</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-		<profile>
-			<id>mangle-vc-integration-test</id>
-			<modules>
-				<module>mangle-integration-tests</module>
-			</modules>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-failsafe-plugin</artifactId>
-						<configuration>
-							<suiteXmlFiles>
-								<file>src/test/resources/vcenter-integration-test-suite.xml</file>
-							</suiteXmlFiles>
-							<properties>
-								<property>
-									<name>listener</name>
-									<value>com.vmware.fiaasco.services.test.listeners.TestNGListener</value>
-								</property>
-							</properties>
-						</configuration>
-						<executions>
-							<execution>
-								<id>integration-test</id>
-								<phase>integration-test</phase>
-								<goals>
-									<goal>integration-test</goal>
-									<goal>verify</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
-				</plugins>
-			</build>
 		</profile>
 	</profiles>
 </project>
