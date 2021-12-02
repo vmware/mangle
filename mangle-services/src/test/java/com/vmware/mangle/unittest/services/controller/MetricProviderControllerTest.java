@@ -129,7 +129,7 @@ public class MetricProviderControllerTest {
         Assert.assertNotNull(resources);
 
         Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        Collection<MetricProviderSpec> responseList =  resources.getContent();
+        Collection<MetricProviderSpec> responseList = resources.getContent();
         Assert.assertEquals(responseList.size(), 2);
         Assert.assertEquals(responseList.iterator().next(), wavefrontSpec);
         verify(metricProviderService, times(1)).getAllMetricProviders();
@@ -180,10 +180,10 @@ public class MetricProviderControllerTest {
      */
     @Test
     public void testAddMetricProvider() throws MangleException {
-        when(metricProviderService.getMetricProviderByType(MetricProviderType.WAVEFRONT))
-                .thenReturn(new ArrayList<>());
+        when(metricProviderService.getMetricProviderByType(MetricProviderType.WAVEFRONT)).thenReturn(new ArrayList<>());
         when(metricProviderService.testConnectionMetricProvider(wavefrontSpec)).thenReturn(true);
         when(metricProviderService.addMetricProvider(wavefrontSpec)).thenReturn(wavefrontSpec);
+        when(metricProviderService.normalizeURI(wavefrontSpec)).thenReturn(wavefrontSpec);
         ResponseEntity<Resource<MetricProviderSpec>> response =
                 mangleMetricProviderController.addMetricProvider(wavefrontSpec);
 
@@ -206,13 +206,12 @@ public class MetricProviderControllerTest {
 
     @Test
     public void testAddMetricProviderFailTestConnection() throws MangleException {
-        when(metricProviderService.getMetricProviderByType(MetricProviderType.WAVEFRONT))
-                .thenReturn(new ArrayList<>());
+        when(metricProviderService.getMetricProviderByType(MetricProviderType.WAVEFRONT)).thenReturn(new ArrayList<>());
         when(metricProviderService.testConnectionMetricProvider(wavefrontSpec)).thenReturn(false);
         when(metricProviderService.addMetricProvider(wavefrontSpec)).thenReturn(wavefrontSpec);
+        when(metricProviderService.normalizeURI(wavefrontSpec)).thenReturn(wavefrontSpec);
         ResponseEntity<Resource<MetricProviderSpec>> response =
                 mangleMetricProviderController.addMetricProvider(wavefrontSpec);
-
         Resource<MetricProviderSpec> resource = response.getBody();
         Assert.assertNotNull(resource);
         Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);

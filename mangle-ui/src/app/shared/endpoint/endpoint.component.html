@@ -17,7 +17,7 @@
             <ng-container *ngFor="let searchedEndpoint of searchedEndpoints">
                 <button type="button" clrDropdownItem class="option-height"
                     *ngIf="supportedEpTypes.indexOf(searchedEndpoint.endPointType) > -1 || supportedEpTypes.indexOf(searchedEndpoint.endpointGroupType) > -1"
-                    (click)="setEndpointVal(searchedEndpoint.name);displayEndpointFields(searchedEndpoint.name);getDockerContainers(searchedEndpoint);setShowSelectRandomEndpoint(searchedEndpoint.endPointType);">{{searchedEndpoint.name}}</button>
+                    (click)="setEndpointVal(searchedEndpoint.name);displayEndpointFields(searchedEndpoint.name);getDockerContainers(searchedEndpoint);setShowSelectRandomEndpoint(searchedEndpoint.endPointType);resetK8sResourceType()">{{searchedEndpoint.name}}</button>
             </ng-container>
         </clr-dropdown-menu>
     </clr-dropdown>

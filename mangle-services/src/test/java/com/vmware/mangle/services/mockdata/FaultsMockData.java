@@ -41,6 +41,7 @@ import com.vmware.mangle.cassandra.model.faults.specs.JVMAgentFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.JVMCodeLevelFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.JVMProperties;
 import com.vmware.mangle.cassandra.model.faults.specs.K8SDeleteResourceFaultSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.K8SDrainNodeFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.K8SFaultTriggerSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.K8SResourceNotReadyFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.K8SServiceUnavailableFaultSpec;
@@ -309,6 +310,15 @@ public class FaultsMockData {
         resourceLabels.put("app", "app-inventory-service");
         k8SServiceUnavailableFaultSpec.setResourceLabels(resourceLabels);
         return k8SServiceUnavailableFaultSpec;
+    }
+
+    public K8SDrainNodeFaultSpec getDrainK8SNodeFaultSpec() {
+        K8SDrainNodeFaultSpec k8SFaultSpec = new K8SDrainNodeFaultSpec();
+        k8SFaultSpec.setEndpoint(endpointMockData.k8sEndpointMockData());
+        k8SFaultSpec.setEndpointName(endpointMockData.k8sEndpointMockData().getName());
+        k8SFaultSpec.setCredentials(credentialsSpecMockData.getk8SCredentialsData());
+        k8SFaultSpec.setFaultName(K8SFaultName.DRAIN_NODE.name());
+        return k8SFaultSpec;
     }
 
     public K8SDeleteResourceFaultSpec getDeleteK8SResourceFaultSpec() {

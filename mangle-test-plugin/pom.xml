@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!--
-   Copyright (c) 2016-2019 VMware, Inc. All Rights Reserved.
+   Copyright (c) 2016-2021 VMware, Inc. All Rights Reserved.
 
    This product is licensed to you under the Apache License, Version 2.0 (the "License").
    You may not use this product except in compliance with the License.
@@ -17,7 +17,7 @@
 	<parent>
 		<groupId>com.vmware.mangle</groupId>
 		<artifactId>mangle-root</artifactId>
-		<version>3.0.0</version>
+		<version>3.5.0</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
@@ -87,7 +87,7 @@
 				</executions>
 			</plugin>
 			<plugin>
-			    <groupId>org.apache.maven.plugins</groupId>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-assembly-plugin</artifactId>
 				<configuration>
 					<descriptors>

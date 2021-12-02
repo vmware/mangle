@@ -1,5 +1,6 @@
+<?xml version="1.0"?>
 <!--
-   Copyright (c) 2016-2019 VMware, Inc. All Rights Reserved.
+   Copyright (c) 2016-2021 VMware, Inc. All Rights Reserved.
 
    This product is licensed to you under the Apache License, Version 2.0 (the "License").
    You may not use this product except in compliance with the License.
@@ -15,7 +16,7 @@
 	<parent>
 		<groupId>com.vmware.mangle</groupId>
 		<artifactId>mangle-root</artifactId>
-		<version>3.0.0</version>
+		<version>3.5.0</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
@@ -37,6 +38,79 @@
 				<exclusion>
 					<groupId>org.bouncycastle</groupId>
 					<artifactId>bcpkix-jdk15on</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>io.netty</groupId>
+					<artifactId>netty-handler</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>io.netty</groupId>
+					<artifactId>
+						netty-transport-native-epoll
+					</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>io.netty</groupId>
+					<artifactId>netty-codec-http</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>io.netty</groupId>
+					<artifactId>netty-handler-proxy</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>io.netty</groupId>
+					<artifactId>
+						netty-transport-native-kqueue
+					</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>io.netty</groupId>
+					<artifactId>netty-buffer</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>io.netty</groupId>
+					<artifactId>netty-codec-socks</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>io.netty</groupId>
+					<artifactId>netty-resolver-dns</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>com.typesafe.netty</groupId>
+					<artifactId>netty-reactive-streams</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.asynchttpclient</groupId>
+					<artifactId>
+						async-http-client-netty-utils
+					</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>io.netty</groupId>
+			<artifactId>netty-handler</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>io.netty</groupId>
+			<artifactId>
+						netty-transport-native-epoll
+					</artifactId>
+			<classifier>linux-x86_64</classifier>
+		</dependency>
+		<dependency>
+			<groupId>io.netty</groupId>
+			<artifactId>
+						netty-transport-native-kqueue
+					</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.typesafe.netty</groupId>
+			<artifactId>netty-reactive-streams</artifactId>
+			<exclusions>
+				<exclusion>
+					<groupId>io.netty</groupId>
+					<artifactId>netty-handler</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>
@@ -168,6 +242,16 @@
 		<dependency>
 			<groupId>com.datastax.cassandra</groupId>
 			<artifactId>cassandra-driver-core</artifactId>
+			<exclusions>
+				<exclusion>
+					<groupId>io.netty</groupId>
+					<artifactId>netty-handler</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>io.netty</groupId>
+					<artifactId>netty-buffer</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.cognitor.cassandra</groupId>
@@ -216,6 +300,11 @@
 		<dependency>
 			<groupId>io.micrometer</groupId>
 			<artifactId>micrometer-registry-prometheus</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>io.micrometer</groupId>
+			<artifactId>micrometer-registry-dynatrace</artifactId>
+			<version>${micrometer-registry-dynatrace}</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-beanutils</groupId>

@@ -22,7 +22,7 @@ public class FaultConstants {
     private FaultConstants() {
     }
 
-    public static final String AGENT_NAME = "mangle-java-agent-2.0.0";
+    public static final String AGENT_NAME = "mangle-java-agent-3.5.0";
     public static final String AGENT_JAR_EXTENSION = "-full.tar.gz";
     public static final String INJECTION_SCRIPTS_FOLDER = "InjectionScripts/";
     public static final String INFRA_AGENT_NAME = "infra-agent.tar.gz";
@@ -122,6 +122,9 @@ public class FaultConstants {
     public static final String FAULT_OPERATION_ARG = ARGUEMENT_PREFIX + FAULT_OPERATION;
     public static final String LATENCY = "latency";
     public static final String LATENCY_SCRIPT_ARG = SCRIPT_ARGUEMENT_PREFIX + LATENCY;
+    public static final String JITTER = "jitter";
+    public static final String JITTER_SCRIPT_ARG = SCRIPT_ARGUEMENT_PREFIX + JITTER;
+    public static final String JITTER_ARG = ARGUEMENT_PREFIX + JITTER;
     public static final String LATENCY_ARG = ARGUEMENT_PREFIX + LATENCY;
     public static final String PERCENTAGE = "percentage";
     public static final String PERCENTAGE_SCRIPT_ARG = SCRIPT_ARGUEMENT_PREFIX + PERCENTAGE;
@@ -201,7 +204,7 @@ public class FaultConstants {
             new StringBuilder(FaultName.KILLPROCESSFAULT.getScriptFileName()).append(OPERATION_INJECT)
                     .append("--processIdentifier=\"%s\" --killAll=%s --processId=\"%s\"").toString();*/
     public static final String NETWORK_FAULT_INJECTION_COMMAND_WITH_ARGS = new StringBuilder(INFRA_SUBMIT)
-            .append(OPERATION_INJECT).append("--faultname %s ").append("%s %s %s %s %s %s %s %s %s %s").toString();
+            .append(OPERATION_INJECT).append("--faultname %s ").append("%s %s %s %s %s %s %s %s %s %s %s %s").toString();
     public static final String NETWORK_FAULT_INJECTION_COMMAND_WITH_ARGS_WITH_PORT =
             new StringBuilder(INFRA_SUBMIT).append(OPERATION_INJECT).append("--faultname %s ")
                     .append("%s %s %s %s %s %s %s %s %s %s %s %s").toString();

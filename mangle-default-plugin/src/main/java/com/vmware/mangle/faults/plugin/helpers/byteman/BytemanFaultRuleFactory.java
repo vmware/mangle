@@ -105,8 +105,8 @@ public class BytemanFaultRuleFactory {
         builder.append(getBindString(null));
 
         builder.append(getIfCondition(null));
-        String helperMethodStr = "throwException(\\\"" + jvmAgentFaultSpec.getArgs().get("exceptionClass")
-                + "\\\", \\\"" + jvmAgentFaultSpec.getArgs().get("exceptionMessage") + "\\\")";
+        String helperMethodStr = "throw new " + jvmAgentFaultSpec.getArgs().get("exceptionClass") + "(\\\""
+                + jvmAgentFaultSpec.getArgs().get("exceptionMessage") + "\\\");";
         builder.append(getHelperMethod(helperMethodStr));
         return builder.toString();
     }

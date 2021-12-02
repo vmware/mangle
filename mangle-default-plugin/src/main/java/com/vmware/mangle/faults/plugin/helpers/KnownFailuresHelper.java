@@ -91,6 +91,7 @@ import static com.vmware.mangle.utils.constants.KnownFailureConstants.INFRA_AGEN
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.INJECTION_FILES_IS_MISSING_IN_THE_ENDPOINT_OUTPUT1;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.INJECTION_FILES_IS_MISSING_IN_THE_ENDPOINT_OUTPUT2;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.K8S_INVALID_POD_CONTAINER_MAPPING_FAILURE_OUTPUT;
+import static com.vmware.mangle.utils.constants.KnownFailureConstants.K8S_INVALID_POD_CONTAINER_MAPPING_FAILURE_OUTPUT_MESSAGE;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.K8S_POD_TAR_NOT_AVAILABLE_AGENT_COPY_FAILURE_MESSAGE;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.K8S_POD_TAR_NOT_AVAILABLE_AGENT_COPY_FAILURE_OUTPUT;
 import static com.vmware.mangle.utils.constants.KnownFailureConstants.KILL_PROCESS_FOUND_MORE_THAN_ONE_PROCESS_FAILURE_MESSAGE;
@@ -193,7 +194,7 @@ public class KnownFailuresHelper {
         Map<String, String> knownFailuresforAgentCopyOnK8sPod = new HashMap<>();
         knownFailuresforAgentCopyOnK8sPod.put(EXPECTED_MESSAGE_FOR_FILE_NOT_FOUND,
                 AGENT_COPY_SUPPORT_SCRIPT_FILE_COPY_FAILURE);
-        knownFailuresforAgentCopyOnK8sPod.put(K8S_INVALID_POD_CONTAINER_MAPPING_FAILURE_OUTPUT, null);
+        knownFailuresforAgentCopyOnK8sPod.put(K8S_INVALID_POD_CONTAINER_MAPPING_FAILURE_OUTPUT, K8S_INVALID_POD_CONTAINER_MAPPING_FAILURE_OUTPUT_MESSAGE);
         knownFailuresforAgentCopyOnK8sPod.put(K8S_POD_TAR_NOT_AVAILABLE_AGENT_COPY_FAILURE_OUTPUT,
                 K8S_POD_TAR_NOT_AVAILABLE_AGENT_COPY_FAILURE_MESSAGE);
 
@@ -327,7 +328,7 @@ public class KnownFailuresHelper {
     public Map<String, String> getKnownFailuresOfSystemResourceK8SCopyRequest() {
         Map<String, String> knownFailureMap = new HashMap<>();
         knownFailureMap.put(EXPECTED_MESSAGE_FOR_FILE_NOT_FOUND, AGENT_COPY_SUPPORT_SCRIPT_FILE_COPY_FAILURE);
-        knownFailureMap.put(K8S_INVALID_POD_CONTAINER_MAPPING_FAILURE_OUTPUT, null);
+        knownFailureMap.put(K8S_INVALID_POD_CONTAINER_MAPPING_FAILURE_OUTPUT, K8S_INVALID_POD_CONTAINER_MAPPING_FAILURE_OUTPUT_MESSAGE);
         return knownFailureMap;
     }
 

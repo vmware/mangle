@@ -325,6 +325,11 @@ export class ProcessedComponent implements OnInit, OnDestroy {
           this.router.navigateByUrl(CommonConstants.K8S_DELETE_FAULT_URL);
           break;
         }
+        case CommonConstants.K8S_DRAIN_NODE_FAULT_SPEC: {
+          this.dataService.infraSubType = CommonConstants.INFRA_FAULTS_K8S;
+          this.router.navigateByUrl(CommonConstants.K8S_DRAIN_NODE_FAULT_URL);
+          break;
+        }
         case CommonConstants.K8S_NOT_READY_FAULT_SPEC: {
           this.dataService.infraSubType = CommonConstants.INFRA_FAULTS_K8S;
           this.router.navigateByUrl(CommonConstants.K8S_NOT_READY_FAULT_URL);

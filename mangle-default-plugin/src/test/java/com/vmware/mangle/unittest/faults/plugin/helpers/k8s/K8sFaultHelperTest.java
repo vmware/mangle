@@ -535,7 +535,7 @@ public class K8sFaultHelperTest {
         List<CommandInfo> list = new ArrayList<>();
 
         CommandInfo service1PatchCommand = CommandInfo
-                .builder(" patch service  app-inventory-service-0 -p '{\"spec\":{\"selector\":{\"app\":\"mangle\"}}}' ")
+                .builder(" patch service  app-inventory-service-0 -p '{\"spec\":{\"selector\":{\"app\":\"mangle-fault\"}}}' ")
                 .ignoreExitValueCheck(false).noOfRetries(0).retryInterval(0).timeout(0).build();
 
         CommandInfo service1VerifyEndpointsCommand =
@@ -544,7 +544,7 @@ public class K8sFaultHelperTest {
                         .expectedCommandOutputList(Arrays.asList("<no value>")).build();
 
         CommandInfo service2PatchCommand = CommandInfo
-                .builder(" patch service  app-inventory-service-1 -p '{\"spec\":{\"selector\":{\"app\":\"mangle\"}}}' ")
+                .builder(" patch service  app-inventory-service-1 -p '{\"spec\":{\"selector\":{\"app\":\"mangle-fault\"}}}' ")
                 .ignoreExitValueCheck(false).noOfRetries(0).retryInterval(0).timeout(0).build();
 
         CommandInfo service2VerifyEndpointsCommand =

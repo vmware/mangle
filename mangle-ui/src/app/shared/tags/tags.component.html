@@ -5,11 +5,29 @@
             ngNativeValidate>
             <section class="form-block">
                 <div class="form-group">
-                    <label for="tagKey">Key</label>
+                    <label for="tagKey">Key
+                        <a href="javascript://" role="tooltip" aria-haspopup="true"
+                            class="tooltip tooltip-md tooltip-bottom-right">
+                            <clr-icon shape="info-circle" size="24"></clr-icon>
+                            <span class="tooltip-content">If Dynatrace is Active Metric Provider: "artifact" text will
+                                be appended to tag
+                                key and the key provided will be ignored while sending the fault event.</span>
+                        </a>
+                    </label>
                     <input type="text" name="tagKey" ngModel required>
                 </div>
                 <div class="form-group">
-                    <label for="tagValue">Value</label>
+                    <label for="tagValue">Value
+                        <a href="javascript://" role="tooltip" aria-haspopup="true"
+                            class="tooltip tooltip-md tooltip-bottom-right">
+                            <clr-icon shape="info-circle" size="24"></clr-icon>
+                            <span class="tooltip-content"> If Dynatrace is Active Metric Provider: Enter artifact ID of
+                                the target
+                                where the fault will be injected. Note: Sending of
+                                fault injection event to Dynatrace will fail if the provided artifact id doesn't exist
+                                in Dynatrace. </span>
+                        </a>
+                    </label>
                     <input type="text" name="tagValue" ngModel required>
                 </div>
             </section>

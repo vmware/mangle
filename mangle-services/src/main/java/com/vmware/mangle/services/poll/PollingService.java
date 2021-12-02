@@ -17,10 +17,15 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import javax.annotation.PreDestroy;
 
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.data.cassandra.CassandraConnectionFailureException;
 import org.springframework.stereotype.Component;
 
@@ -56,9 +61,11 @@ import com.vmware.mangle.utils.exceptions.handler.CustomErrorMessage;
  */
 @Log4j2
 @Component
+@DependsOn("cassandraConfig")
 public class PollingService<T extends Task<? extends TaskSpec>> {
 
-
+    private ExecutorService threadService;
+    private boolean stopThread = false;
     private TaskService taskService;
     Thread thread = null;
     private FaultInjectionHelper faultInjectionHelper;
@@ -69,7 +76,7 @@ public class PollingService<T extends Task<? extends TaskSpec>> {
 
     private CommandInfoExecutionHelper commandInfoExecutionHelper;
     private EndpointClientFactory endpointClientFactory;
-    private static final int DEFAULT_RECOVERY_TIME = 60000;
+    private static final int DEFAULT_RECOVERY_TIME = 120000;
 
     public void setCommandInfoExecutionHelper(CommandInfoExecutionHelper commandInfoExecutionHelper) {
         this.commandInfoExecutionHelper = commandInfoExecutionHelper;
@@ -92,13 +99,15 @@ public class PollingService<T extends Task<? extends TaskSpec>> {
         this.customErrorMessage = customErrorMessage;
         this.taskService = taskService;
         this.publisher = publisher;
+        this.threadService = Executors.newSingleThreadExecutor();
     }
 
     @SuppressWarnings({ "unchecked" })
     public void startPollingThread() {
+
         Runnable pollingThread = () -> {
             log.info("Starting polling thread..");
-            while (true) {
+            while (!stopThread) {
                 try {
                     List<Task<TaskSpec>> inprogressTasks = taskService.getInjectedSystemResourceTasks();
                     if (!inprogressTasks.isEmpty()) {
@@ -128,9 +137,9 @@ public class PollingService<T extends Task<? extends TaskSpec>> {
                                                 task.getTaskTroubleShootingInfo(), null);
                                     }
                                     log.info("Status: " + output);
-                                    if (output.contains(TaskStatus.COMPLETED.name())
-                                            && (task.getTaskStatus().equals(TaskStatus.IN_PROGRESS)
-                                                    || task.getTaskStatus().equals(TaskStatus.INJECTED))) {
+                                    if (output.contains(TaskStatus.COMPLETED.name()) && (task.getTaskStatus().equals(
+                                            TaskStatus.IN_PROGRESS) || task.getTaskStatus().equals(TaskStatus.INJECTED)
+                                            || task.getTaskStatus().equals(TaskStatus.TEST_MACHINE_INVALID_STATE))) {
                                         updateTaskInfo((T) task, TaskStatus.COMPLETED, task.getTaskFailureReason(),
                                                 100);
                                         taskService.updateRemediationFieldofTaskById(task.getId(), true);
@@ -183,9 +192,7 @@ public class PollingService<T extends Task<? extends TaskSpec>> {
                 }
             }
         };
-        thread = new Thread(pollingThread);
-        thread.start();
-
+        threadService.submit(pollingThread);
     }
 
     @SuppressWarnings("unchecked")
@@ -282,6 +289,13 @@ public class PollingService<T extends Task<? extends TaskSpec>> {
             log.error(e);
         }
         return today.getTime();
+    }
+
+    @PreDestroy
+    public void destroy() {
+        log.info("Stopping the polling service thread instance");
+        this.stopThread = true;
+        this.threadService.shutdownNow();
     }
 
 }

@@ -11,13 +11,16 @@
 
 package com.vmware.mangle.task.framework.metric.providers;
 
+
 import lombok.NonNull;
 import org.springframework.stereotype.Component;
 
 import com.vmware.mangle.cassandra.model.metricprovider.DatadogConnectionProperties;
+import com.vmware.mangle.cassandra.model.metricprovider.DynatraceConnectionProperties;
 import com.vmware.mangle.cassandra.model.metricprovider.MetricProviderSpec;
 import com.vmware.mangle.cassandra.model.metricprovider.WaveFrontConnectionProperties;
 import com.vmware.mangle.utils.clients.metricprovider.DatadogClient;
+import com.vmware.mangle.utils.clients.metricprovider.DynatraceApiClient;
 import com.vmware.mangle.utils.clients.metricprovider.MetricProviderClient;
 import com.vmware.mangle.utils.clients.metricprovider.WaveFrontServerClient;
 import com.vmware.mangle.utils.exceptions.MangleException;
@@ -26,7 +29,6 @@ import com.vmware.mangle.utils.exceptions.MangleException;
 /**
  * @author ashrimali
  * @author dbhat
- *
  */
 @Component
 public class MetricProviderClientFactory {
@@ -43,6 +45,8 @@ public class MetricProviderClientFactory {
             return getDatagodMetricProvier(metricProviderSpec.getDatadogConnectionProperties());
         case WAVEFRONT:
             return getWavefrontMetricProvider(metricProviderSpec.getWaveFrontConnectionProperties());
+        case DYNATRACE:
+            return getDynatraceMetricProvier(metricProviderSpec.getDynatraceConnectionProperties());
         default:
             return null;
         }
@@ -56,6 +60,11 @@ public class MetricProviderClientFactory {
     private MetricProviderClient getDatagodMetricProvier(DatadogConnectionProperties datadogConnectionProperties)
             throws MangleException {
         return new DatadogClient(datadogConnectionProperties);
+    }
+
+    private MetricProviderClient getDynatraceMetricProvier(DynatraceConnectionProperties dynatraceConnectionProperties)
+            throws MangleException {
+        return new DynatraceApiClient(dynatraceConnectionProperties);
     }
 
 }

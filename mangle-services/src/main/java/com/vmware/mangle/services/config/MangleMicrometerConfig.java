@@ -13,6 +13,7 @@ package com.vmware.mangle.services.config;
 
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.datadog.DatadogMeterRegistry;
+import io.micrometer.dynatrace.DynatraceMeterRegistry;
 import io.micrometer.wavefront.WavefrontMeterRegistry;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.context.annotation.Bean;
@@ -22,7 +23,7 @@ import org.springframework.context.annotation.Configuration;
  * Configuration class to initialise Meter Registers
  *
  * @author ashrimali
- *
+ * @author dbhat
  */
 @Configuration
 @Log4j2
@@ -57,6 +58,25 @@ public class MangleMicrometerConfig {
             return wavefrontMeterRegistry;
         } catch (Exception exception) {
             log.error("Failed to initialize wavefront meter registry bean. " + exception.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * @param mangleDynatraceConfig
+     *            : Dynatrace Configuration.
+     * @return DynatraceMeterRegistry
+     */
+
+    @Bean
+    public DynatraceMeterRegistry initializeDynatraceMeterRegistry(MangleDynatraceConfig mangleDynatraceConfig) {
+        try {
+            DynatraceMeterRegistry dynatraceMeterRegistry =
+                    new DynatraceMeterRegistry(mangleDynatraceConfig, Clock.SYSTEM);
+            dynatraceMeterRegistry.stop();
+            return dynatraceMeterRegistry;
+        } catch (Exception exception) {
+            log.error("Failed to initialize Dynatrace meter registry Bean. " + exception.getMessage());
         }
         return null;
     }

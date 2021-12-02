@@ -18,11 +18,14 @@ export class DeleteK8SResourceComponent extends FaultCommons implements OnInit {
 
   public resourceNameHidden = true;
   public resourceLabelsHidden = true;
+  public resourceListHidden = true;
+  public resourceListAvailable = true;
   public resourceLabelsData: any = {};
   public supportedEpTypes: any = [CommonConstants.K8S_CLUSTER];
   public k8sResourceTypes: any = ["POD", "NODE", "SERVICE", "DEPLOYMENT", "STATEFULSET",
     "SECRET", "DAEMONSET", "CONFIGMAP", "JOB", "REPLICASET", "REPLICATIONCONTROLLER", "PV", "PVC"];
   public resourceLabelsModal: boolean;
+  public inputType: any = null;
 
   public faultFormData: any = {
     "endpointName": null,
@@ -74,11 +77,15 @@ export class DeleteK8SResourceComponent extends FaultCommons implements OnInit {
   public setResourceVal(selectedResource) {
     this.resourceNameHidden = true;
     this.resourceLabelsHidden = true;
+    this.resourceListHidden = true;
     if (selectedResource === "resourceName") {
       this.resourceNameHidden = false;
     }
     if (selectedResource === "resourceLabels") {
       this.resourceLabelsHidden = false;
+    }
+    if(selectedResource == "resourceList") {
+      this.resourceListHidden = false;
     }
   }
 
@@ -91,7 +98,7 @@ export class DeleteK8SResourceComponent extends FaultCommons implements OnInit {
   }
 
   public executeK8SDeleteResourceFault(faultData) {
-    if (!this.resourceNameHidden) {
+    if (!this.resourceNameHidden || !this.resourceListHidden) {
       delete faultData["resourceLabels"];
       faultData.randomInjection = true;
     } else {
@@ -137,6 +144,34 @@ export class DeleteK8SResourceComponent extends FaultCommons implements OnInit {
       this.disableSchedule = true;
       this.disableRun = false;
     }
+  }
+
+  public setResourceType(resourceType : String){
+    this.faultFormData.resourceType = resourceType;
+    this.inputType = null;
+    if (resourceType == "POD" || resourceType == null){
+      this.resourceListAvailable = true;
+      this.resourceNameHidden = true;
+      this.resourceLabelsHidden = true;
+      this.resourceListHidden = true;
+    }else{
+      this.resourceListAvailable = false;
+      this.resourceNameHidden = true;
+      this.resourceLabelsHidden = true;
+      this.resourceListHidden = true;
+      this.k8sResources = [];
+      this.faultFormData.resourceName = null;
+      this.getAllResources(this.faultFormData.endpointName,resourceType);
+    }
+  }
+
+  public setK8sResourceVal(resourceVal){
+    this.faultFormData.resourceName = resourceVal;
+  }
+
+  public resetResourceType(){
+    this.setResourceType(null);
+    this.inputType = null;
   }
 
 }

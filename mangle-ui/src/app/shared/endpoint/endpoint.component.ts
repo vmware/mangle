@@ -17,6 +17,7 @@ export class EndpointComponent {
     showSelectRandomEndpoint: boolean = false;
     @Output() displayEndpointFieldsEvent = new EventEmitter<string>();
     @Output() dockerContainersEvent = new EventEmitter<string>();
+    @Output() resetK8sResourceTypeEvent = new EventEmitter();
     public searchedEndpoints: any = [];
 
     ngOnInit() {
@@ -48,6 +49,10 @@ export class EndpointComponent {
 
     public getDockerContainers(endpointVal) {
         this.dockerContainersEvent.emit(endpointVal);
+    }
+
+    public resetK8sResourceType() {
+        this.resetK8sResourceTypeEvent.emit();
     }
 
     public setShowSelectRandomEndpoint(endpointType) {

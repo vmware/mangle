@@ -36,7 +36,7 @@ class DiskIOFault(InfraFault.InfraFault):
         if self.faultinfo.status == FaultStatus.FaultStatus.COMPLETED.name:
             return self.faultinfo.status
         log.info(psutil.disk_io_counters(perdisk=True))
-        current_disk_status = " Current  Disk io of the system is {}. To monitor IO of each disk ,try install sysstat" \
+        current_disk_status = " Current  Disk io of the system is {}. To monitor IO of each disk ,one way is to install sysstat" \
                               " and use iostat command  ".format(psutil.disk_io_counters())
         return self.faultinfo.status + " " +" ".join(str(x) for x in self.faultinfo.activity) + current_disk_status
 

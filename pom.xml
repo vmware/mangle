@@ -1,9 +1,9 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!-- Copyright (c) 2016-2019 VMware, Inc. All Rights Reserved. This product
-	is licensed to you under the Apache License, Version 2.0 (the "License").
-	You may not use this product except in compliance with the License. This
-	product may include a number of subcomponents with separate copyright notices
-	and license terms. Your use of these subcomponents is subject to the terms
+<?xml version="1.0"?>
+<!-- Copyright (c) 2016-2021 VMware, Inc. All Rights Reserved. This product 
+	is licensed to you under the Apache License, Version 2.0 (the "License"). 
+	You may not use this product except in compliance with the License. This 
+	product may include a number of subcomponents with separate copyright notices 
+	and license terms. Your use of these subcomponents is subject to the terms 
 	and conditions of the subcomponent's license, as noted in the LICENSE file. -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -11,7 +11,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.vmware.mangle</groupId>
 	<artifactId>mangle-root</artifactId>
-	<version>3.0.0</version>
+	<version>3.5.0</version>
 	<packaging>pom</packaging>
 	<name>mangle</name>
 	<description>Mangle</description>
@@ -20,7 +20,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.1.3.RELEASE</version>
+		<version>2.1.4.RELEASE</version>
 	</parent>
 
 	<repositories>
@@ -46,8 +46,10 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<java.version>1.8</java.version>
 		<maven-compiler.version>3.7.0</maven-compiler.version>
-		<spring.boot.version>2.2.2.RELEASE</spring.boot.version>
+		<spring.boot.version>2.2.13.RELEASE</spring.boot.version>
 		<spring.cloud.version>2.0.2.RELEASE</spring.cloud.version>
+		<springframework.version>5.1.20.RELEASE</springframework.version>
+		<springframework-plugin.version>1.2.0.RELEASE</springframework-plugin.version>
 		<swagger-version>2.9.2</swagger-version>
 		<spring.hateoas.version>0.25.1.RELEASE</spring.hateoas.version>
 		<spring.security.ldap.version>5.1.0.RELEASE</spring.security.ldap.version>
@@ -86,7 +88,7 @@
 		<org.mockito-core.version>2.21.0</org.mockito-core.version>
 		<org.powermock.version>1.7.4</org.powermock.version>
 		<glassfish.jersey.version>2.26</glassfish.jersey.version>
-		<pf4j.version>3.0.1</pf4j.version>
+		<pf4j.version>3.3.1</pf4j.version>
 		<pf4j-spring.version>0.5.0</pf4j-spring.version>
 		<cassandra.migration.version>2.2.0</cassandra.migration.version>
 		<hazelcast.version>3.11</hazelcast.version>
@@ -94,19 +96,24 @@
 		<org.json.version>20180130</org.json.version>
 		<net.jpountz.lz4.version>1.3.0</net.jpountz.lz4.version>
 		<log4j.version>1.2.17</log4j.version>
+		<avro-version>1.10.2</avro-version>
+		<asynchttpclient.version>2.12.3</asynchttpclient.version>
+		<netty.version>4.1.68.Final</netty.version>
+		<tomcat.version>9.0.54</tomcat.version>
+		<netty-reactive-streams-version>2.0.5</netty-reactive-streams-version>
 		<aws-sdk.version>1.11.579</aws-sdk.version>
 		<azure-sdk.version>1.29.0</azure-sdk.version>
 		<jackson.databind.version>2.10.1</jackson.databind.version>
 		<allbegray.slack-api.version>1.7.0.RELEASE</allbegray.slack-api.version>
 		<cassandra.migration.tool.version>2.1.9.0</cassandra.migration.tool.version>
 		<com.wavefront.version>1.15</com.wavefront.version>
+		<micrometer-registry-dynatrace>1.3.1</micrometer-registry-dynatrace>
 		<mangle.services.build.directory>mangle-services/target</mangle.services.build.directory>
 		<mangle.models.build.directory>mangle-models/target</mangle.models.build.directory>
 		<mangle.utils.build.directory>mangle-utils/target</mangle.utils.build.directory>
 		<mangle.metricreporter.build.directory>mangle-metric-reporter/target</mangle.metricreporter.build.directory>
 		<mangle.task-framework.build.directory>mangle-task-framework/target</mangle.task-framework.build.directory>
 		<mangle.default-plugin.build.directory>mangle-default-plugin/target</mangle.default-plugin.build.directory>
-
 		<mangle.services.classes.directory>mangle-services/target/classes</mangle.services.classes.directory>
 		<mangle.models.classes.directory>mangle-models/target/classes</mangle.models.classes.directory>
 		<mangle.utils.classes.directory>mangle-utils/target/classes</mangle.utils.classes.directory>
@@ -119,7 +126,6 @@
 		<mangle.metricreporter.source.directory>mangle-metric-reporter/src/main/java</mangle.metricreporter.source.directory>
 		<mangle.task-framework.source.directory>mangle-task-framework/src/main/java</mangle.task-framework.source.directory>
 		<mangle.default-plugin.source.directory>mangle-default-plugin/src/main/java</mangle.default-plugin.source.directory>
-
 		<!--sonarqube properties -->
 		<sonar.coverage.exclusions>**/com/vmware/mangle/model/**,**/com/vmware/mangle/constants/**,**/com/vmware/mangle/services/dto/**
 			,**/com/vmware/mangle/services/enums/**,**/com/vmware/mangle/cassandra/**</sonar.coverage.exclusions>
@@ -128,9 +134,101 @@
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-core</artifactId>
+				<version>${springframework.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-context</artifactId>
+				<version>${springframework.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework.plugin</groupId>
+				<artifactId>spring-plugin-core</artifactId>
+				<version>${springframework-plugin.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework.plugin</groupId>
+				<artifactId>spring-plugin-metadata</artifactId>
+				<version>${springframework-plugin.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.tomcat.embed</groupId>
+				<artifactId>tomcat-embed-core</artifactId>
+				<version>${tomcat.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.tomcat.embed</groupId>
+				<artifactId>tomcat-embed-el</artifactId>
+				<version>${tomcat.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.tomcat.embed</groupId>
+				<artifactId>tomcat-embed-websocket</artifactId>
+				<version>${tomcat.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.asynchttpclient</groupId>
+				<artifactId>async-http-client</artifactId>
+				<version>${asynchttpclient.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>io.netty</groupId>
+				<artifactId>netty-codec-http</artifactId>
+				<version>${netty.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>io.netty</groupId>
+				<artifactId>netty-handler-proxy</artifactId>
+				<version>${netty.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>io.netty</groupId>
+				<artifactId>netty-buffer</artifactId>
+				<version>${netty.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>io.netty</groupId>
+				<artifactId>netty-codec-socks</artifactId>
+				<version>${netty.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>io.netty</groupId>
+				<artifactId>netty-resolver-dns</artifactId>
+				<version>${netty.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>io.netty</groupId>
+				<artifactId>netty-transport-native-epoll</artifactId>
+				<version>${netty.version}</version>
+				<classifier>linux-x86_64</classifier>
+			</dependency>
+			<dependency>
+				<groupId>io.netty</groupId>
+				<artifactId>netty-transport-native-kqueue</artifactId>
+				<version>${netty.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.typesafe.netty</groupId>
+				<artifactId>netty-reactive-streams</artifactId>
+				<version>${netty-reactive-streams-version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.avro</groupId>
+				<artifactId>avro</artifactId>
+				<version>${avro-version}</version>
+			</dependency>
+			<dependency>
 				<groupId>com.vmware.mangle</groupId>
 				<artifactId>mangle-models</artifactId>
 				<version>${project.version}</version>
+				<exclusions>
+					<exclusion>
+						<groupId>io.netty</groupId>
+						<artifactId>netty-handler</artifactId>
+					</exclusion>
+				</exclusions>
 			</dependency>
 			<dependency>
 				<groupId>com.vmware.mangle</groupId>
@@ -154,12 +252,52 @@
 						<groupId>org.mortbay.jetty</groupId>
 						<artifactId>servlet-api</artifactId>
 					</exclusion>
+					<exclusion>
+						<groupId>io.netty</groupId>
+						<artifactId>netty-handler</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>io.netty</groupId>
+						<artifactId>
+						netty-transport-native-epoll
+					</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>io.netty</groupId>
+						<artifactId>netty-codec-http</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>io.netty</groupId>
+						<artifactId>netty-handler-proxy</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>io.netty</groupId>
+						<artifactId>
+						netty-transport-native-kqueue
+					</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>io.netty</groupId>
+						<artifactId>netty-buffer</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>io.netty</groupId>
+						<artifactId>netty-codec-socks</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>io.netty</groupId>
+						<artifactId>netty-resolver-dns</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>com.typesafe.netty</groupId>
+						<artifactId>netty-reactive-streams</artifactId>
+					</exclusion>
 				</exclusions>
 			</dependency>
 			<dependency>
 				<groupId>com.vmware.mangle</groupId>
 				<artifactId>mangle-vcenter-adapter-models</artifactId>
-				<version>3.0.0</version>
+				<version>3.5.0</version>
 			</dependency>
 			<dependency>
 				<groupId>com.amazonaws</groupId>
@@ -383,6 +521,44 @@
 				<groupId>com.github.docker-java</groupId>
 				<artifactId>docker-java</artifactId>
 				<version>${docker-java.version}</version>
+				<exclusions>
+					<exclusion>
+						<groupId>org.bouncycastle</groupId>
+						<artifactId>bcpkix-jdk15on</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>io.netty</groupId>
+						<artifactId>netty-codec-http</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>io.netty</groupId>
+						<artifactId>netty-handler</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>io.netty</groupId>
+						<artifactId>netty-handler-proxy</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>io.netty</groupId>
+						<artifactId>
+						netty-transport-native-epoll
+					</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>io.netty</groupId>
+						<artifactId>
+						netty-transport-native-kqueue
+					</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>io.netty</groupId>
+						<artifactId>netty-buffer</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>io.netty</groupId>
+						<artifactId>netty-codec-socks</artifactId>
+					</exclusion>
+				</exclusions>
 			</dependency>
 			<dependency>
 				<groupId>ch.ethz.ganymed</groupId>
@@ -393,6 +569,22 @@
 				<groupId>com.wavefront</groupId>
 				<artifactId>java-client</artifactId>
 				<version>${wavefront-java-client-version}</version>
+				<exclusions>
+					<exclusion>
+						<groupId>io.netty</groupId>
+						<artifactId>netty-handler</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>io.netty</groupId>
+						<artifactId>
+						netty-transport-native-epoll
+					</artifactId>
+					</exclusion>
+					<exclusion>
+						<artifactId>avro</artifactId>
+						<groupId>org.apache.avro</groupId>
+					</exclusion>
+				</exclusions>
 			</dependency>
 			<dependency>
 				<groupId>javax.ws.rs</groupId>
@@ -525,6 +717,48 @@
 				<groupId>com.vmware.mangle</groupId>
 				<artifactId>mangle-task-framework</artifactId>
 				<version>${project.version}</version>
+				<exclusions>
+					<exclusion>
+						<groupId>io.netty</groupId>
+						<artifactId>netty-handler</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>io.netty</groupId>
+						<artifactId>
+						netty-transport-native-epoll
+					</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>io.netty</groupId>
+						<artifactId>netty-codec-http</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>io.netty</groupId>
+						<artifactId>netty-handler-proxy</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>io.netty</groupId>
+						<artifactId>
+						netty-transport-native-kqueue
+					</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>io.netty</groupId>
+						<artifactId>netty-buffer</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>io.netty</groupId>
+						<artifactId>netty-codec-socks</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>io.netty</groupId>
+						<artifactId>netty-resolver-dns</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>com.typesafe.netty</groupId>
+						<artifactId>netty-reactive-streams</artifactId>
+					</exclusion>
+				</exclusions>
 			</dependency>
 			<dependency>
 				<groupId>com.vmware.mangle</groupId>
@@ -535,11 +769,27 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-starter-data-cassandra</artifactId>
 				<version>${spring.boot.version}</version>
+				<exclusions>
+					<exclusion>
+						<groupId>io.netty</groupId>
+						<artifactId>netty-handler</artifactId>
+					</exclusion>
+				</exclusions>
 			</dependency>
 			<dependency>
 				<groupId>com.datastax.cassandra</groupId>
 				<artifactId>cassandra-driver-core</artifactId>
 				<version>${cassandra-driver.version}</version>
+				<exclusions>
+					<exclusion>
+						<groupId>io.netty</groupId>
+						<artifactId>netty-handler</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>io.netty</groupId>
+						<artifactId>netty-buffer</artifactId>
+					</exclusion>
+				</exclusions>
 			</dependency>
 			<dependency>
 				<groupId>org.cognitor.cassandra</groupId>
@@ -591,6 +841,42 @@
 				<groupId>com.github.allbegray</groupId>
 				<artifactId>slack-api</artifactId>
 				<version>${allbegray.slack-api.version}</version>
+				<exclusions>
+					<exclusion>
+						<groupId>io.netty</groupId>
+						<artifactId>netty-codec-http</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>io.netty</groupId>
+						<artifactId>netty-handler</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>io.netty</groupId>
+						<artifactId>netty-handler-proxy</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>io.netty</groupId>
+						<artifactId>
+						netty-transport-native-epoll
+					</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>io.netty</groupId>
+						<artifactId>netty-buffer</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>io.netty</groupId>
+						<artifactId>netty-codec-socks</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>io.netty</groupId>
+						<artifactId>netty-resolver-dns</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>com.typesafe.netty</groupId>
+						<artifactId>netty-reactive-streams</artifactId>
+					</exclusion>
+				</exclusions>
 			</dependency>
 			<dependency>
 				<groupId>io.smartcat</groupId>
@@ -695,7 +981,7 @@
 								<goal>report</goal>
 							</goals>
 						</execution>
-						<!--Goal to merge all the jacoco exec files to generate consolidated
+						<!--Goal to merge all the jacoco exec files to generate consolidated 
 							jacoco-report -->
 						<!--includes all the report that are of the format "*it*.exec" -->
 						<!--Generates a file jacoco-it.exec inside target -->

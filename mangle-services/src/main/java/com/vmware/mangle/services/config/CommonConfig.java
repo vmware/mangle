@@ -11,20 +11,28 @@
 
 package com.vmware.mangle.services.config;
 
+import javax.annotation.PostConstruct;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import com.vmware.mangle.services.commons.ServiceCommonUtils;
 import com.vmware.mangle.utils.constants.Constants;
 
 /**
  *
  * @author chetanc
+ * @author dbhat
  */
 @Configuration
 public class CommonConfig {
+
+    @Autowired
+    private org.springframework.context.ApplicationContext applicationContext;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -37,5 +45,10 @@ public class CommonConfig {
         threadPoolTaskScheduler.setPoolSize(Constants.DEFAULT_THREAD_POOL_SIZE);
         threadPoolTaskScheduler.setThreadNamePrefix(Constants.DEFAULT_TASK_SCHEDULER_THREAD_POOL_NAME);
         return threadPoolTaskScheduler;
+    }
+
+    @PostConstruct
+    public void init() {
+        ServiceCommonUtils.setApplicationContext(applicationContext);
     }
 }

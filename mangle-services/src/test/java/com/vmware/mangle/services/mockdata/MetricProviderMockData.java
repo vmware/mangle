@@ -18,6 +18,7 @@ import java.util.UUID;
 
 import com.vmware.mangle.cassandra.model.MangleAdminConfigurationSpec;
 import com.vmware.mangle.cassandra.model.metricprovider.DatadogConnectionProperties;
+import com.vmware.mangle.cassandra.model.metricprovider.DynatraceConnectionProperties;
 import com.vmware.mangle.cassandra.model.metricprovider.MetricProviderSpec;
 import com.vmware.mangle.cassandra.model.metricprovider.WaveFrontConnectionProperties;
 import com.vmware.mangle.model.enums.MetricProviderType;
@@ -32,6 +33,7 @@ import com.vmware.mangle.utils.constants.MetricProviderConstants;
 public class MetricProviderMockData {
 
     private Properties properties;
+    private static final String DYNATRACE_DUMMY_API_KEY = "abcdefjhij1234567890";
 
     /**
      *
@@ -52,6 +54,50 @@ public class MetricProviderMockData {
         staticTags.put("source", "mangle");
         datadogConnectionProperties.setStaticTags(staticTags);
         return datadogConnectionProperties;
+    }
+
+    /**
+     * @return DynatraceConnectionProperties
+     */
+    public DynatraceConnectionProperties getDynatraceConnectionProperties() {
+        DynatraceConnectionProperties dynatraceConnectionProperties = getDynatraceConnectionProperties_withNoTags();
+        Map<String, String> staticTags = new HashMap<>();
+        staticTags.put("source", "mangle");
+        dynatraceConnectionProperties.setStaticTags(staticTags);
+        return dynatraceConnectionProperties;
+    }
+
+    /**
+     * @return DynatraceConnectionProperties
+     */
+    public DynatraceConnectionProperties getDynatraceConnectionProperties_withNoTags() {
+        DynatraceConnectionProperties dynatraceConnectionProperties = new DynatraceConnectionProperties();
+        dynatraceConnectionProperties.setApiToken(MockDataConstants.DYNATRACE_API_KEY);
+        dynatraceConnectionProperties.setDeviceId(MockDataConstants.DYNATRACE_DEVICE_ID);
+        dynatraceConnectionProperties.setUri(MockDataConstants.DYNATRACE_URI);
+        return dynatraceConnectionProperties;
+    }
+
+    /**
+     * @return MetricProviderSpec
+     */
+    public MetricProviderSpec getMetricProviderSpecForDynatrace() {
+        MetricProviderSpec dynatraceMetricProviderSpecs = new MetricProviderSpec();
+        dynatraceMetricProviderSpecs.setName(MockDataConstants.DYNATRACE_INSTANCE_NAME);
+        dynatraceMetricProviderSpecs.setMetricProviderType(MetricProviderType.DYNATRACE);
+        dynatraceMetricProviderSpecs.setDynatraceConnectionProperties(getDynatraceConnectionProperties());
+        dynatraceMetricProviderSpecs.setId(MockDataConstants.DYNATRACE_ID);
+        return dynatraceMetricProviderSpecs;
+    }
+
+    /**
+     * @return MetricProviderSpec
+     */
+    public MetricProviderSpec getMetricProviderSpecForDynatrace_NoTags() {
+        MetricProviderSpec dynatraceMetricProviderSpecs = new MetricProviderSpec();
+        dynatraceMetricProviderSpecs = getMetricProviderSpecForDynatrace();
+        dynatraceMetricProviderSpecs.setDynatraceConnectionProperties(getDynatraceConnectionProperties_withNoTags());
+        return dynatraceMetricProviderSpecs;
     }
 
     /**
@@ -101,6 +147,15 @@ public class MetricProviderMockData {
         wavefrontMetricProviderSpecs.setId(properties.getProperty("wavefrontId"));
         return wavefrontMetricProviderSpecs;
     }
+
+    public MetricProviderSpec getDynatraceMetricConfig() {
+        MetricProviderSpec dynatraceSpec = new MetricProviderSpec();
+        dynatraceSpec.setName(MockDataConstants.DYNATRACE_METRIC_PROVIDER_NAME);
+        dynatraceSpec.setMetricProviderType(MetricProviderType.DYNATRACE);
+        dynatraceSpec.setDynatraceConnectionProperties(getDynatraceConnectionProperties());
+        return dynatraceSpec;
+    }
+
 
     /**
      * @return MetricProviderSpec

@@ -85,10 +85,29 @@ public class K8sFaultHelper implements ICommandExecutionFaultHelper {
         case SERVICE_UNAVAILABLE:
             commandList = getServiceUnavailableFaultRemediationCommand(executor, (K8SFaultSpec) k8sFaultSpec);
             break;
+        case DRAIN_NODE:
+            commandList = getDrainNodeFaultRemediationCommand(executor, (K8SFaultSpec) k8sFaultSpec);
+            break;
         default:
             throw new MangleException(ErrorCode.UNSUPPORTED_FAULT, operation);
         }
         return commandList;
+    }
+
+    private List<CommandInfo> getDrainNodeFaultRemediationCommand(ICommandExecutor executor, K8SFaultSpec k8sFaultSpec)
+            throws MangleException {
+
+        log.info("Generating Remediation command for K8S Drain Node fault");
+        List<CommandInfo> commandInfoList = new ArrayList<>();
+        for (String resourceName : k8sFaultSpec.getResourcesList()) {
+            if (k8sFaultSpec.getResourceType().equals(K8SResource.NODE)) {
+                CommandInfo nodeUnCordonCommandInfo = K8sCommandInfoHelper.getK8sNodeUnCordonCommand(resourceName);
+                commandInfoList.add(nodeUnCordonCommandInfo);
+                log.debug(REMEDIATION_COMMAND_MESSAGE_STRING + k8sFaultSpec.getResourceType().name() + "drain fault:"
+                        + nodeUnCordonCommandInfo.getCommand());
+            }
+        }
+        return commandInfoList;
     }
 
     @Override
@@ -124,10 +143,35 @@ public class K8sFaultHelper implements ICommandExecutionFaultHelper {
         case SERVICE_UNAVAILABLE:
             commandList = getServiceUnavailableFaultInjectionCommand(executor, k8sFaultSpec);
             break;
+        case DRAIN_NODE:
+            commandList = getDrainNodeFaultInjectionCommand(executor, k8sFaultSpec);
+            break;
         default:
             throw new MangleException(ErrorCode.UNSUPPORTED_FAULT, operation);
         }
         return commandList;
+    }
+
+    /**
+     * Method to generate injection commands for DrainNode fault
+     *
+     * @param executor
+     * @param
+     */
+
+    private List<CommandInfo> getDrainNodeFaultInjectionCommand(ICommandExecutor executor, K8SFaultSpec k8sFaultSpec)
+            throws MangleException {
+        String command = KubernetesTemplates.DRAIN;
+        for (int i = 0; i < k8sFaultSpec.getResourcesList().size(); i++) {
+            command += k8sFaultSpec.getResourcesList().get(i) + " ";
+        }
+        command += KubernetesTemplates.IGNORE_TEMPLATE;
+        CommandInfo k8sCommandInfo = CommandInfo.builder(command).ignoreExitValueCheck(false).build();
+        List<CommandInfo> commandInfoList = new ArrayList<>();
+        commandInfoList.add(k8sCommandInfo);
+
+
+        return commandInfoList;
     }
 
     /**
@@ -186,8 +230,13 @@ public class K8sFaultHelper implements ICommandExecutionFaultHelper {
             String originalServiceSelectors =
                     executor.executeCommand(String.format(KubernetesTemplates.GET_SERVICE_SELECTORS, resourceName))
                             .getCommandOutput().trim();
+            if (StringUtils.contains(originalServiceSelectors, KubernetesTemplates.MANGLE_FAULT_LABEL)) {
+                commandInfoList.add(null);
+                return commandInfoList;
+            }
             if (StringUtils.startsWithIgnoreCase(originalServiceSelectors, KubernetesTemplates.SELECTORS_PREFIX)
-                    && originalServiceSelectors.split(KubernetesTemplates.SELECTORS_PREFIX).length > 0) {
+                    && originalServiceSelectors.split(KubernetesTemplates.SELECTORS_PREFIX).length > 0
+                    && !originalServiceSelectors.split(KubernetesTemplates.SELECTORS_PREFIX)[1].equals("{}")) {
                 originalServiceSelectors = originalServiceSelectors.split(KubernetesTemplates.SELECTORS_PREFIX)[1];
 
                 CommandInfo k8sServicePatchCommandInfo = K8sCommandInfoHelper
@@ -250,7 +299,8 @@ public class K8sFaultHelper implements ICommandExecutionFaultHelper {
                     executor.executeCommand(String.format(KubernetesTemplates.GET_SERVICE_SELECTORS_KEY, resourceName))
                             .getCommandOutput().trim();
             if (StringUtils.startsWithIgnoreCase(originalServiceKey, KubernetesTemplates.SERVICE_KEY_PREFIX)
-                    && originalServiceKey.split(KubernetesTemplates.SERVICE_KEY_PREFIX).length > 0) {
+                    && originalServiceKey.split(KubernetesTemplates.SERVICE_KEY_PREFIX).length > 0
+                    && !originalServiceKey.split(KubernetesTemplates.SERVICE_KEY_PREFIX)[1].equals("0")) {
                 originalServiceKey = originalServiceKey.split(KubernetesTemplates.SERVICE_KEY_PREFIX)[1];
                 CommandInfo k8sServicePatchCommandInfo =
                         K8sCommandInfoHelper.getK8sServicePatchWithSelectorsCommandInfo(resourceName, String

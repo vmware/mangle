@@ -15,7 +15,7 @@ package com.vmware.mangle.services.enums;
  * @author bkaranam
  */
 public enum K8SFaultName {
-    DELETE_RESOURCE, NOTREADY_RESOURCE, SERVICE_UNAVAILABLE;
+    DELETE_RESOURCE, NOTREADY_RESOURCE, SERVICE_UNAVAILABLE, DRAIN_NODE;
 
     public static boolean contains(String value) {
         for (K8SFaultName faultName : K8SFaultName.values()) {

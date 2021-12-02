@@ -9,12 +9,11 @@
 			clrDropdownItem>Wavefront</button>
 		<button type="button" (click)="populateDatadogForm(datadogDefaultValues);datadogModal=true;addEdit='Add';"
 			clrDropdownItem>Datadog</button>
+		<button type="button" (click)="populateDynatraceForm(dynatraceDefaultValues);dynatraceModal=true;addEdit='Add';"
+			clrDropdownItem>Dynatrace</button>
 	</clr-dropdown-menu>
 </clr-dropdown>&nbsp;&nbsp;
-<button class="btn btn-sm btn-link" [clrLoading]="collectionBtnState" (click)="updateMetricCollectionStatus();"
-	[disabled]="metricProviderList.length == 0">
-	<input type="checkbox" clrToggle name="metricColl" [checked]="metricCollectionStatus" /> Send Metrics
-</button>
+<input type="checkbox" clrToggle [clrLoading]="collectionBtnState" [disabled]="metricProviderList.length == 0" name="metricColl" id="metricColl" [checked]="metricCollectionStatus" [(ngModel)]="metricCollectionStatus" (change)="updateMetricCollectionStatus($event.target.checked);" /> SEND METRICS
 <clr-datagrid [clrDgLoading]="isLoading">
 	<clr-dg-column>Name</clr-dg-column>
 	<clr-dg-column>Type</clr-dg-column>
@@ -26,6 +25,8 @@
 				*ngIf="mp.metricProviderType == 'WAVEFRONT'">Edit</button>
 			<button class="action-item" (click)="populateDatadogForm(mp);datadogModal=true;addEdit='Edit';"
 				*ngIf="mp.metricProviderType == 'DATADOG'">Edit</button>
+			<button class="action-item" (click)="populateDynatraceForm(mp);dynatraceModal=true;addEdit='Edit';"
+				*ngIf="mp.metricProviderType == 'DYNATRACE'">Edit</button>
 			<button class="action-item" (click)="deleteMetricProvider(mp);"
 				[disabled]="mp.metricProviderType == 'PROMETHEUS'">Delete</button>
 		</clr-dg-action-overflow>
@@ -37,8 +38,8 @@
 		</clr-dg-cell>
 		<clr-dg-cell>
 			<span *ngIf="mp.metricProviderType == 'DATADOG'">https://app.datadoghq.com</span>
-			<span
-				*ngIf="mp.metricProviderType == 'WAVEFRONT'">{{mp.waveFrontConnectionProperties.wavefrontInstance}}</span>
+			<span *ngIf="mp.metricProviderType == 'WAVEFRONT'">{{mp.waveFrontConnectionProperties.wavefrontInstance}}</span>
+			<span *ngIf="mp.metricProviderType == 'DYNATRACE'">{{mp.dynatraceConnectionProperties.uri}}</span>
 		</clr-dg-cell>
 	</clr-dg-row>
 	<clr-dg-footer>
@@ -163,6 +164,67 @@
 				CONNECTION</button>
       <button type="button" class="btn btn-outline"
               (click)="datadogModal=false;datadogForm.reset();ngOnInit();">CANCEL</button>
+		</form>
+	</div>
+</clr-modal>
+<clr-modal [(clrModalOpen)]="dynatraceModal" [clrModalClosable]="false">
+	<h3 class="modal-title">{{addEdit}} Dynatrace</h3>
+	<div class="modal-body" *ngIf="dynatraceFormData">
+		<clr-alert *ngIf="testErrorFlag" [clrAlertType]="'danger'">
+			<div class="alert-item">{{testAlertMessage}}</div>
+		</clr-alert>
+		<clr-alert *ngIf="testSuccessFlag" [clrAlertType]="'success'">
+			<div class="alert-item">{{testAlertMessage}}</div>
+		</clr-alert>
+		<form #dynatraceForm="ngForm" #nativeDynatraceForm
+			(ngSubmit)="addOrUpdateMetricProviders(dynatraceForm.value);dynatraceModal=false;dynatraceForm.reset();"
+			ngNativeValidate>
+			<section class="form-block">
+				<div class="form-group">
+					<input type="text" name="id" [(ngModel)]="dynatraceFormData.id" [hidden]="true">
+				</div>
+				<div class="form-group">
+					<input type="text" name="metricProviderType" [(ngModel)]="dynatraceFormData.metricProviderType"
+						[hidden]="true">
+				</div>
+				<div class="form-group">
+					<label for="name">Name</label>
+					<input type="text" name="name" pattern="^[A-Za-z0-9-_.]+$"
+						title="alphanumeric and special characters (_ - .) are allowed"
+						[(ngModel)]="dynatraceFormData.name" [required]="addEdit == 'Add'" [readonly]="addEdit == 'Edit'">
+				</div>
+				<fieldset ngModelGroup="dynatraceConnectionProperties">
+					<div class="form-group">
+						<label for="uri">Dynatrace Instance URI</label>
+						<input type="text" placeholder="https://XXXXXXX.live.dynatrace.com" name="uri"
+							[(ngModel)]="dynatraceFormData.dynatraceConnectionProperties.uri" required>
+					</div>
+					<div class="form-group">
+						<label for="apiToken">Api Token</label>
+						<input type="text" name="apiToken"
+							[(ngModel)]="dynatraceFormData.dynatraceConnectionProperties.apiToken" required>
+					</div>
+					<div class="form-group">
+						<label for="deviceId">Device ID</label>
+						<input type="text" name="deviceId"
+							[(ngModel)]="dynatraceFormData.dynatraceConnectionProperties.deviceId" required>
+					</div>
+					<div class="form-group">
+						<label for="tags">Static Tags</label>
+						<span class="label label-info"
+							*ngFor="let item of tagsData | keyvalue">{{item.key}}={{item.value}}&nbsp;<clr-icon
+								shape="times" size="12" (click)="removeStaticTag(item.key);"></clr-icon></span>
+						<clr-icon shape="plus-circle" (click)="staticTagsModal=true;" style="width:21px;height:30px;">
+						</clr-icon>
+					</div>
+				</fieldset>
+			</section>
+      <button type="submit" class="btn btn-primary" [disabled]="!testSuccessFlag">SUBMIT</button>
+			<button type="button" class="btn btn-outline" [clrLoading]="testBtnState"
+				(click)="testConnection(nativeDynatraceForm.reportValidity(), dynatraceForm.value);">TEST
+				CONNECTION</button>
+      <button type="button" class="btn btn-outline"
+              (click)="dynatraceModal=false;dynatraceForm.reset();ngOnInit();">CANCEL</button>
 		</form>
 	</div>
 </clr-modal>

@@ -16,7 +16,7 @@ package com.vmware.mangle.utils.constants;
  * @author dbhat
  *
  *         Utility Class to hold all the constants specific to Metric Provider services like
- *         Wavefront, Datadog etc.
+ *         Wavefront, Datadog, Dynatrace etc.
  */
 
 public class MetricProviderConstants {
@@ -30,6 +30,7 @@ public class MetricProviderConstants {
     public static final String COLON = ":";
     public static final String HYPHEN = "-";
     public static final String NEW_LINE = "\n";
+    public static final String SPACE = " ";
     public static final String METRIC_PROVIDER_PROXY_TEST_CONNECTION_METRIC = "mangle.wavefront.test.connection";
 
     public static final String DATADOG_API_SEND_EVENT = "/api/v1/events";
@@ -41,6 +42,8 @@ public class MetricProviderConstants {
     public static final String WAVEFRONT_DELETE_EVENT = "/api/v2/event//%s";
     public static final String WAVEFRONT_ONGOING_STATE = "ONGOING";
     public static final String WAVEFRONT_ENDED_STATE = "ENDED";
+    public static final String DYNATRACE_API_GET_CLUSTER_VERSION = "/api/v1/config/clusterversion";
+    public static final String DYNATRACE_API_SEND_EVENT = "/api/v1/events";
 
     public static final String METRIC_PROVIDERS_FOUND = "Successfully got all available Metric Providers";
     public static final String METRIC_PROVIDERS_EMPTY = "Metric provider list is empty";
@@ -67,4 +70,13 @@ public class MetricProviderConstants {
     public static final String VM_NIC_ID_TEXT = "Nic ID: ";
     public static final String VM_DISK_ID_TEXT = "Disk ID: ";
     public static final String TARGET_CONTAINER_TEXT = "Target Container: ";
+
+    public static final String AUTHORIZATION = "Authorization";
+    public static final String API_TOKEN = "Api-Token";
+    public static final String EVENT_SOURCE = "mangle";
+    public static final String MANGLE_FAULT_EVENT_INFO = "Fault injection event from Mangle";
+
+    public static final String DYNATRACE_EVENT_TYPE = "CUSTOM_ANNOTATION";
+    public static final String DYNATRACE_ARTIFACT = "artifact";
+
 }

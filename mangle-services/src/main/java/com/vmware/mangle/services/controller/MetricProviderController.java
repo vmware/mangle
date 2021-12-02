@@ -130,6 +130,7 @@ public class MetricProviderController {
             @Validated @RequestBody MetricProviderSpec metricProviderSpec) throws MangleException {
         log.info("API to add a Metric Provider");
         if (this.metricProviderService.getMetricProviderByType(metricProviderSpec.getMetricProviderType()).isEmpty()) {
+            metricProviderSpec = this.metricProviderService.normalizeURI(metricProviderSpec);
             this.metricProviderService.testConnectionMetricProvider(metricProviderSpec);
             MetricProviderSpec metricSpec = this.metricProviderService.addMetricProvider(metricProviderSpec);
             HttpHeaders headers = new HttpHeaders();

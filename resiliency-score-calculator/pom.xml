@@ -1,4 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+   Copyright (c) 2016-2021 VMware, Inc. All Rights Reserved.
+
+   This product is licensed to you under the Apache License, Version 2.0 (the "License").
+   You may not use this product except in compliance with the License.
+
+   This product may include a number of subcomponents with separate copyright notices
+   and license terms. Your use of these subcomponents is subject to the terms and
+   conditions of the subcomponent's license, as noted in the LICENSE file.
+-->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -6,12 +16,12 @@
 
 	<groupId>com.vmware.mangle</groupId>
 	<artifactId>resiliency-score-calculator</artifactId>
-	<version>3.0.0</version>
+	<version>3.5.0</version>
 
 	<properties>
 		<checkstyle.version>3.0.0</checkstyle.version>
 		<maven-compiler.version>3.7.0</maven-compiler.version>
-		<spring.framework.version>5.0.8.RELEASE</spring.framework.version>
+		<spring.framework.version>5.3.9</spring.framework.version>
 		<lombok.version>1.18.2</lombok.version>
 		<log4j-api.version>2.1</log4j-api.version>
 		<log4j.version>1.2.17</log4j.version>
@@ -20,12 +30,14 @@
 		<snakeyaml.version>1.19</snakeyaml.version>
 		<joda-time.version>2.5</joda-time.version>
 		<wavefront-java-client-version>4.26</wavefront-java-client-version>
+		<avro-version>1.10.2</avro-version>
 		<xstream.version>1.4.8</xstream.version>
 		<org.mockito.version>1.10.19</org.mockito.version>
 		<org.mockito-core.version>2.21.0</org.mockito-core.version>
 		<org.powermock.version>1.7.4</org.powermock.version>
+		<netty-version>4.1.68.Final</netty-version>
+		<avro-version>1.10.2</avro-version>
 	</properties>
-
 	<build>
 		<plugins>
 			<plugin>
@@ -124,6 +136,40 @@
 			<groupId>com.wavefront</groupId>
 			<artifactId>java-client</artifactId>
 			<version>${wavefront-java-client-version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>io.netty</groupId>
+					<artifactId>netty-handler</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>io.netty</groupId>
+					<artifactId>
+						netty-transport-native-epoll
+					</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.apache.avro</groupId>
+					<artifactId>avro</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>io.netty</groupId>
+			<artifactId>netty-handler</artifactId>
+			<version>${netty-version}</version>
+		</dependency>
+		<dependency>
+			<groupId>io.netty</groupId>
+			<artifactId>
+						netty-transport-native-epoll
+					</artifactId>
+			<version>${netty-version}</version>
+			<classifier>linux-x86_64</classifier>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.avro</groupId>
+			<artifactId>avro</artifactId>
+			<version>${avro-version}</version>
 		</dependency>
 		<dependency>
 			<groupId>joda-time</groupId>

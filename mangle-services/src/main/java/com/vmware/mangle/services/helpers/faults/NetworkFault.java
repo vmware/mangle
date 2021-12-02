@@ -12,6 +12,7 @@
 package com.vmware.mangle.services.helpers.faults;
 
 import static com.vmware.mangle.services.constants.CommonConstants.FAULT_OPERATION_ARG;
+import static com.vmware.mangle.services.constants.CommonConstants.JITTER_ARG;
 import static com.vmware.mangle.services.constants.CommonConstants.LATENCY_ARG;
 import static com.vmware.mangle.services.constants.CommonConstants.NIC_NAME_ARG;
 import static com.vmware.mangle.services.constants.CommonConstants.PERCENTAGE_ARG;
@@ -50,6 +51,7 @@ public class NetworkFault extends AbstractFault {
         specificArgs.put(LATENCY_ARG, String.valueOf(networkFaultSpec.getLatency()));
         specificArgs.put(PERCENTAGE_ARG, String.valueOf(networkFaultSpec.getPercentage()));
         specificArgs.put(NIC_NAME_ARG, networkFaultSpec.getNicName());
+        specificArgs.put(JITTER_ARG, String.valueOf(networkFaultSpec.getJitter()));
         return specificArgs;
     }
 

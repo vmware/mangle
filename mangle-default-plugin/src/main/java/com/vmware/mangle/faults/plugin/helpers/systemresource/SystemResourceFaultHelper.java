@@ -22,6 +22,7 @@ import com.vmware.mangle.cassandra.model.tasks.SupportScriptInfo;
 import com.vmware.mangle.cassandra.model.tasks.commands.CommandInfo;
 import com.vmware.mangle.faults.plugin.helpers.FaultConstants;
 import com.vmware.mangle.faults.plugin.helpers.KnownFailuresHelper;
+import com.vmware.mangle.services.enums.FaultName;
 import com.vmware.mangle.utils.ICommandExecutor;
 import com.vmware.mangle.utils.exceptions.MangleException;
 
@@ -43,18 +44,33 @@ public abstract class SystemResourceFaultHelper {
     public List<CommandInfo> getInjectionCommandInfoList(CommandExecutionFaultSpec faultSpec) throws MangleException {
         String injectionCommand =
                 systemResourceFaultUtils.buildInjectionCommand(faultSpec.getArgs(), faultSpec.getInjectionHomeDir());
-        CommandInfo injectFaultCommandInfo = CommandInfo
-                .builder(String.format(FaultConstants.INFRA_AGENT_SUBMIT_COMMAND,
-                        faultSpec.getInjectionHomeDir() + FaultConstants.INFRA_AGENT_NAME_FOLDER, injectionCommand,
-                        faultSpec.getFaultName()))
-                .ignoreExitValueCheck(false)
-                .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfSystemResourceFaultInjectionRequest())
-                .expectedCommandOutputList(Collections.emptyList()).noOfRetries(3).retryInterval(2).build();
+        CommandInfo injectFaultCommandInfo = new CommandInfo();
+        if (faultSpec.getFaultName().equals(FaultName.NETWORKFAULT.getValue())) {
+            List<String> expectedCommandOutputList = new ArrayList<>();
+            expectedCommandOutputList.add("socket is not established");
+            expectedCommandOutputList.add("Injection output: Fault Injection Triggered");
+            injectFaultCommandInfo = CommandInfo
+                    .builder(String.format(FaultConstants.INFRA_AGENT_SUBMIT_COMMAND,
+                            faultSpec.getInjectionHomeDir() + FaultConstants.INFRA_AGENT_NAME_FOLDER, injectionCommand,
+                            faultSpec.getFaultName()))
+                    .ignoreExitValueCheck(true)
+                    .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfSystemResourceFaultInjectionRequest())
+                    .expectedCommandOutputList(expectedCommandOutputList).noOfRetries(3).retryInterval(2).build();
+        } else {
+            injectFaultCommandInfo = CommandInfo
+                    .builder(String.format(FaultConstants.INFRA_AGENT_SUBMIT_COMMAND,
+                            faultSpec.getInjectionHomeDir() + FaultConstants.INFRA_AGENT_NAME_FOLDER, injectionCommand,
+                            faultSpec.getFaultName()))
+                    .ignoreExitValueCheck(false)
+                    .knownFailureMap(KnownFailuresHelper.getKnownFailuresOfSystemResourceFaultInjectionRequest())
+                    .expectedCommandOutputList(Collections.emptyList()).noOfRetries(3).retryInterval(2).build();
+        }
         List<CommandInfo> commandInfoList = new ArrayList<>();
         commandInfoList.add(systemResourceFaultUtils.getLinuxPythonAgentExtractCommandInfo(faultSpec));
         commandInfoList.add(systemResourceFaultUtils.getPythonAgentInstallCommandInfo(faultSpec));
         commandInfoList.add(injectFaultCommandInfo);
         return commandInfoList;
+
     }
 
     public List<CommandInfo> getRemediationcommandInfoList(CommandExecutionFaultSpec faultSpec) throws MangleException {

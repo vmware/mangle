@@ -12,6 +12,7 @@
 package com.vmware.mangle.cassandra.model.metricprovider;
 
 import java.io.Serializable;
+
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
@@ -36,6 +37,7 @@ import com.vmware.mangle.model.enums.MetricProviderType;
  * Model Class for Metric Provider.
  *
  * @author ashrimali
+ * @author dbhat
  *
  */
 
@@ -71,6 +73,12 @@ public class MetricProviderSpec extends MangleDto implements Serializable {
     @CassandraType(type = Name.UDT, userTypeName = "datadogConnectionProperties")
     @Valid
     private DatadogConnectionProperties datadogConnectionProperties;
+
+    @JsonProperty(required = false)
+    @ApiModelProperty(position = 4)
+    @CassandraType(type = Name.UDT, userTypeName = "dynatraceConnectionProperties")
+    @Valid
+    private DynatraceConnectionProperties dynatraceConnectionProperties;
 
     /**
      * Setting this.id via calling generateId() of Super class.

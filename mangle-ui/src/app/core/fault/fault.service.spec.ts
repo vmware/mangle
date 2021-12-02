@@ -52,6 +52,10 @@ describe('FaultService', () => {
     faultService.executeCpuFault({});
     expect(http.post).toHaveBeenCalled();
   });
+  it('should execute K8S drain node fault', () => {
+    faultService.executeCpuFault({});
+    expect(http.post).toHaveBeenCalled();
+  });
 
   it('should execute K8S resource not ready fault', () => {
     faultService.executeK8SResourceNotReadyFault({});

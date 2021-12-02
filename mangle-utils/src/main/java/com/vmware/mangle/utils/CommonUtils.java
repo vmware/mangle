@@ -497,4 +497,17 @@ public class CommonUtils {
         }
         return false;
     }
+
+    /**
+     * Helper to remove forward slashes in the URL. The normalized URL will have all the forward slashes removed at the end
+     *
+     * @param uri : URI needs to be normalized to remove forward slashes.
+     * @return : Normalized URI after removing forward slashes
+     */
+    public static String normalizeUriToRemoveForwardSlash(String uri) {
+        if (uri.endsWith("/")) {
+            uri = uri.replaceAll("/*$", "");
+        }
+        return uri;
+    }
 }

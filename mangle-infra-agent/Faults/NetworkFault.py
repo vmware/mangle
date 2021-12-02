@@ -26,10 +26,18 @@ class NetworkFault(InfraFault.InfraFault):
         if res != 0:
             log.info("tc is required,")
             pre_check_msg=pre_check_msg + ",tc is required"
-        res = subprocess.call('sudo tc >/dev/null 2>&1', shell=True)
-        if res == 0:
-            self.sudo_command = "sudo "
-            log.info("sudo available")
+        run_command_get_result('sudo tc')
+        r_code,_ = run_command_get_result('sudo -v')
+        if r_code == 0:
+            log.info("sudo is available")
+            r_code_sudo_tc,r_output_sudo_tc = run_command_get_result('sudo tc')
+            if r_code_sudo_tc == 0:
+                self.sudo_command = "sudo "
+                log.info("user has permision to run sudo tc")
+            else:
+                if 'you must have a tty to run sudo' in r_output_sudo_tc:
+                    pre_check_msg=pre_check_msg + ",disable requiretty in etc/sudoers by setting Defaults !requiretty"
+
         _,res_tc_permission_out = run_command_get_result(self.sudo_command + 'tc qdisc add')
         if 'Operation not permitted' in res_tc_permission_out :
             pre_check_msg += "Sudo Permission for TC command is required,"
@@ -50,8 +58,12 @@ class NetworkFault(InfraFault.InfraFault):
             self.faultinfo.status = FaultStatus.FaultStatus.REMEDIATION_FAILED.name
 
     def run_packet_delay(self):
-        command = '{} tc qdisc add dev {} root netem delay {}ms'.\
+        if self.fault_args.get("--jitter") == "0":
+            command = '{} tc qdisc add dev {} root netem delay {}ms'.\
             format(self.sudo_command,self.fault_args.get("--nicName"),self.fault_args.get("--latency"))
+        else:
+            command = '{} tc qdisc add dev {} root netem delay {}ms {}ms distribution normal'.\
+            format(self.sudo_command,self.fault_args.get("--nicName"),self.fault_args.get("--latency"),self.fault_args.get("--jitter"))
         return run_command_get_result(command)
 
     def run_packet_corruption(self):

@@ -22,7 +22,7 @@ class NetworkFaultTest(TestCase):
     def setUp(cls):
         cls.fault_args = {'--operation': 'inject', '--faultname': "networkFault",
                           "--faultOperation": "NETWORK_DELAY_MILLISECONDS","--timeout": "3000", "--latency": "75",
-                          "--nicName": "eth0", "--faultId": "fileHandlerFault"}
+                          "--nicName": "eth0", "--faultId": "fileHandlerFault","jitter": "10"}
         cls.fault_args_duplicate = {'--operation': 'inject', '--faultname': "networkFault",
                                     "--faultOperation": "PACKET_DUPLICATE_PERCENTAGE","--timeout": "3000",
                                     "--percentage": "75", "--nicName": "eth0", "--faultId": "fileHandlerFault"}

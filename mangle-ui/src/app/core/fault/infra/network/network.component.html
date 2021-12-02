@@ -15,6 +15,10 @@
                 <input type="number" name="latency" id="latency" [(ngModel)]="faultFormData.latency" min="1"
                     [required]="latencyHidden">
             </div>
+            <div class="form-group" [hidden]="!latencyHidden">
+                <label for="jitter">Jitter Milliseconds (optional)</label>
+                <input type="number" name="jitter" id="jitter" [(ngModel)]="faultFormData.jitter" min="0">
+            </div>
             <div class="form-group" [hidden]="!percentageHidden">
                 <label for="percentage">Percentage (%)</label>
                 <input type="number" name="percentage" id="percentage" [(ngModel)]="faultFormData.percentage" min="1" max="100"

@@ -17,7 +17,7 @@ import glob
 import subprocess
 
 server_sock = ()
-
+INFRA_AGENT_TAR = "infra-agent.tar.gz"
 
 class ClientThread(threading.Thread):
 
@@ -28,7 +28,6 @@ class ClientThread(threading.Thread):
         logger.info("New connection added IP:{} :port {}".format(clientAdd[0], clientAdd[1]))
 
     def run(self):
-        logger.info("New connection added IP:{} :port {}".format(self.clientAddr[0], self.clientAddr[1]))
         command = ''
         data = self.sock.recv(2048)
         command = data.decode()
@@ -73,8 +72,12 @@ def check_agent_running():
     agent_process_count = 0
     for proc in psutil.process_iter():
         try:
+            if os.getpid() == proc.pid:
+                logger.info("current process found:{}".format(proc.name()))
             if "infra_agent" in proc.name().lower():
-                agent_process_count = agent_process_count + 1
+                logger.info("Process found with status: {}".format(proc.status().lower()))
+                if proc.status() not in "zombie" or proc.status() != psutil.STATUS_ZOMBIE:
+                    agent_process_count = agent_process_count + 1
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             pass
     if agent_process_count > 2:
@@ -82,6 +85,7 @@ def check_agent_running():
 
 
 def main():
+    logger.info("Checking agent is already running at the endpoint before agent start")
     if check_agent_running():
         logger.info("Agent is already running.")
         return
@@ -114,6 +118,22 @@ def main():
     logger.info("Trying to Terminate server");
 
 
+def is_tar_modified_recently():
+    file_modified = False
+    base_path = Path(__file__).parent
+    try:
+        agent_tar_path = (base_path / ".."/ INFRA_AGENT_TAR).resolve()
+        if os.path.isfile(str(agent_tar_path)):
+            logger.info("Checking for a recent update of agent tar")
+            last_modified_time = time.time() - os.path.getmtime(str(agent_tar_path))
+            logger.info("Modified {} seconds ago".format(last_modified_time))
+            if last_modified_time < 60:
+                logger.info("agent tar modfied recently")
+                file_modified = True
+    except FileNotFoundError:
+        logger.info("Tar file not found")
+    return file_modified
+
 def server_monitor_thread():
     global server_sock
     logger.info(
@@ -123,7 +143,8 @@ def server_monitor_thread():
     time.sleep(300)
     while True:
         if server_sock:
-            if not infraagent_helper.is_faults_running():
+            logger.info("Checks for stopping agent and removing agent files")
+            if not infraagent_helper.is_faults_running() and not check_agent_running() and not is_tar_modified_recently():
                 if not infraagent_helper.has_completed_faults() or status_check_timeout == 6:
                     logger.info("Stopping server as no faults running for a while")
                     try:
@@ -134,7 +155,7 @@ def server_monitor_thread():
                     base_path = Path(__file__).parent
                     print(base_path)
                     try:
-                        agent_tar_path = (base_path / "../infra-agent.tar.gz").resolve()
+                        agent_tar_path = (base_path / ".."/ INFRA_AGENT_TAR).resolve()
                         if os.path.isfile(str(agent_tar_path)):
                             logger.info("Removing agent tar")
                             print("Removing agent tar")
@@ -154,6 +175,7 @@ def server_monitor_thread():
                     break
                 else:
                     status_check_timeout = status_check_timeout + 1
+                    logger.info("Setting status check to {}".format(str(status_check_timeout)))
             else:
                 status_check_timeout = 0
                 logger.info("Resetting status check to 0")

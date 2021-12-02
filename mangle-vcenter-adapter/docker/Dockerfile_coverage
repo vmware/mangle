@@ -23,7 +23,7 @@ RUN mkdir -p $TOMCAT_DIR/logs/
 # Copy script and jar file
 COPY docker/start_with_javaagent.sh $TOMCAT_DIR
 COPY docker/generateCert.sh $OPT_DIR/vmware/mangle/cert/
-COPY target/mangle-vcenter-adapter-3.0.0.jar $TOMCAT_DIR/app.jar
+COPY target/mangle-vcenter-adapter-3.5.0.jar $TOMCAT_DIR/app.jar
 COPY docker/jacocoagent.jar $OPT_DIR/
 COPY docker/jacococli.jar $OPT_DIR/
 

@@ -1,5 +1,6 @@
 from Faults import InfraFault
 from Faults import FaultStatus
+from Faults.helper import FaultHelper
 from multiprocessing import  Process
 import time
 import psutil
@@ -22,28 +23,30 @@ class ClockSkewFault(InfraFault.InfraFault):
         self.status_cmd = ""
         self.time_before_injection=''
         self.option=""
+        self.sudo_command = ""
 
     def prereq_check(self):
+        self.sudo_command = FaultHelper.is_sudo_available();
         pre_req_error_msg = ''
         dist = distro.linux_distribution(full_distribution_name=False)[0]
         log.info("distro:{}".format(str(distro.linux_distribution(full_distribution_name=False))))
         log.info("distro:{}".format(str(dist)))
         if 'ubuntu' in dist:
-            self.stop_cmd = 'service ntp stop'
-            self.remediate_cmd = 'service ntp restart'
-            self.status_cmd = "service ntp status"
+            self.stop_cmd = self.sudo_command + "service ntp stop"
+            self.remediate_cmd = self.sudo_command + "service ntp restart"
+            self.status_cmd = self.sudo_command + "service ntp status"
         elif 'centos' in dist or 'rhel' in dist:
-            self.stop_cmd = "service ntpd stop"
-            self.remediate_cmd = "service ntpd restart"
-            self.status_cmd = "service ntpd status"
+            self.stop_cmd = self.sudo_command + "service ntpd stop"
+            self.remediate_cmd = self.sudo_command + "service ntpd restart"
+            self.status_cmd = self.sudo_command + "service ntpd status"
         elif 'fedora' in dist or 'sles' in dist:
-            self.stop_cmd = "systemctl stop ntpd"
-            self.remediate_cmd = "systemctl restart ntpd"
-            self.status_cmd = "systemctl status ntpd"
+            self.stop_cmd = self.sudo_command + "systemctl stop ntpd"
+            self.remediate_cmd = self.sudo_command + "systemctl restart ntpd"
+            self.status_cmd = self.sudo_command + "systemctl status ntpd"
         elif 'photon' in dist:
-            self.stop_cmd = "systemctl stop systemd-timesyncd"
-            self.remediate_cmd = "systemctl restart systemd-timesyncd"
-            self.status_cmd = "systemctl status systemd-timesyncd --no-pager"
+            self.stop_cmd = self.sudo_command + "systemctl stop systemd-timesyncd"
+            self.remediate_cmd = self.sudo_command + "systemctl restart systemd-timesyncd"
+            self.status_cmd = self.sudo_command + "systemctl status systemd-timesyncd --no-pager"
         else:
             log.info("Mangle doesn't support TimesSkew on the provided OS.")
             pre_req_error_msg = 'Mangle does not support TimesSkew on the provided OS.,'
@@ -100,19 +103,19 @@ class ClockSkewFault(InfraFault.InfraFault):
         h = "{}{} hours".format(self.option,self.fault_args.get("--hours"))
         m = "{}{} minutes".format(self.option, self.fault_args.get("--minutes"))
         s = "{}{} seconds".format(self.option, self.fault_args.get("--seconds"))
-        date_cmd='date -d "{} {} {} {}"'.format(d,h,m,s)
+        date_cmd = self.sudo_command + 'date -d "{} {} {} {}"'.format(d,h,m,s)
         self.time_before_injection = datetime.datetime.now()
         log.info("Creating process.")
         log.info("Date command : {}".format(date_cmd))
         log.info("stop_cmd command :".format(self.stop_cmd))
         log.info("remediate_cmd command.".format(self.remediate_cmd))
         p1 = Process(target=inject_clock_skew,args=(self.fault_args.get("--timeout"), date_cmd,
-                                                    self.stop_cmd))
+                                                    self.stop_cmd,self.sudo_command))
         self.processes.append(p1)
         p1.start()
 
 
-def inject_clock_skew(time_out,date_cmd,stop_cmd):
+def inject_clock_skew(time_out,date_cmd,stop_cmd,sudo_cmd):
     print(stop_cmd)
     stop_cmd_return = subprocess.run(stop_cmd,shell=True)
     log.info("Date will be changed according to input: {}".format(date_cmd))
@@ -124,7 +127,7 @@ def inject_clock_skew(time_out,date_cmd,stop_cmd):
         except subprocess.CalledProcessError as err:
             raise RuntimeError("Date creation failed.\n"
                                "\tGot exit code {err.returncode}. Msg: {err.output}") from err
-        date_cmd_return = subprocess.run('date -s "{}"'.format(date_value),shell=True )
+        date_cmd_return = subprocess.run(sudo_cmd + 'date -s "{}"'.format(date_value),shell=True )
         if date_cmd_return.returncode == 0:
             time.sleep(round(float(time_out)/1000))
 

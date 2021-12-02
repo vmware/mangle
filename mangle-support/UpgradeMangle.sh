@@ -1,8 +1,7 @@
 #!/bin/bash
-
 validate_input_prerequisites()
 {
-    if [ $# -eq 0 -o $# -gt 7 ]
+    if [ $# -eq 0 -o $# -gt 9 ]
     then
         help
     fi
@@ -28,6 +27,8 @@ help(){
     echo "--MANGLE_NODE_SSH_USER=<ssh user (should have admin rights) to connect mangle nodes> ]\\"
     echo "[--MANGLE_CONTAINER_NAME=<name of the mangle container>]  [--MANGLE_APP_PORT=<Mangle application port>] \\"
     echo "[--MANGLE_DOCKER_ARTIFACTORY=<artificatory server> ex: es-fault-injection-docker-local.artifactory.eng.vmware.com] \\"
+    echo "[--LOG_MAX_SIZE=<maximum size of log file in mb. ex: 10m>]"
+    echo "[--LOG_MAX_FILE=<maximum number of log file. ex: 1>]"
     echo "[--NIC_NAME=<nic name of machine's ipaddress assigned>]"
     exit $errorExitCode
 }
@@ -142,9 +143,9 @@ verify_mangle_containers()
 getAllNodeIpsInTheCluster(){
     echo "Getting all the node ips in the mangle cluster"
     nodesResponse=$(${GET_MANGLE_CLUSTER_MEMBERS_URI})
-    members=$(echo $nodesResponse | grep -o "\"members\":\[.*\]" |grep -o "\[.*\]"|sed -E "s/\"|\]|\[//g")
+    members=$(echo $nodesResponse | grep -oE "members: \[.*\],")
     i=0
-    for memberIp in $(echo $members | sed "s/,/ /g")
+    for memberIp in $(echo $members | grep -oE '((1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])\.){3}(1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])')
     do
         NODE_IPS[$i]=$memberIp
         i=$(($i + 1))
@@ -192,7 +193,6 @@ print_date_time()
    now=`date`
    echo "TimeStamp: ${now}"
 }
-
 
 print_debug_message()
 {
@@ -260,8 +260,15 @@ delete_container()
 
 create_mangle_web()
 {
+    #Finding log option
+    LOG_SIZE=$(echo $LOG_MAX_SIZE |sed "s/\.//g")
+    LOG_FILE=$(echo $LOG_MAX_FILE |sed "s/\.//g")
+    #Finding Ports
+    SERVER_PORT=$(echo $EXPOSED_PORTS | grep -oE "[0-9]*:[0-9]*" | head -n1)
+    MANGLE_PORT=$(echo $EXPOSED_PORTS | grep -oE "[0-9]*:[0-9]*" | tail -n1)
     echo "Creating the mangle container using the image: $1"
-    ${DOCKER} run --name ${MANGLE_CONTAINER_NAME} -d $VOLUMES_MOUNTED -e DB_OPTIONS="${DB_OPTIONS}" -e CLUSTER_OPTIONS="${CLUSTER_OPTIONS}"  $EXPOSED_PORTS $1
+    echo "${DOCKER} run --name ${MANGLE_CONTAINER_NAME} --log-opt max-size=${LOG_SIZE} --log-opt max-file=${LOG_FILE} -d $VOLUMES_MOUNTED -e DB_OPTIONS="${DB_OPTIONS}" -e CLUSTER_OPTIONS="${CLUSTER_OPTIONS}" -p $CurrentMangleNodeIP:$SERVER_PORT -p $CurrentMangleNodeIP:$MANGLE_PORT $1"
+    ${DOCKER} run --name ${MANGLE_CONTAINER_NAME} --log-opt max-size=${LOG_SIZE} --log-opt max-file=${LOG_FILE} -d $VOLUMES_MOUNTED -e DB_OPTIONS="${DB_OPTIONS}" -e CLUSTER_OPTIONS="${CLUSTER_OPTIONS}"  -p $CurrentMangleNodeIP:$SERVER_PORT -p $CurrentMangleNodeIP:$MANGLE_PORT $1
     if [ $? != 0 ]; then
         echo "Creating of Mangle container failed."
         return 1

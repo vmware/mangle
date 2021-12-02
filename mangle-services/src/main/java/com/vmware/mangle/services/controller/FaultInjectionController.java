@@ -48,6 +48,7 @@ import com.vmware.mangle.cassandra.model.faults.specs.FilehandlerLeakFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.JavaMethodLatencyFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.JavaThrowExceptionFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.K8SDeleteResourceFaultSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.K8SDrainNodeFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.K8SResourceNotReadyFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.K8SServiceUnavailableFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.KernelPanicSpec;
@@ -113,6 +114,7 @@ import com.vmware.mangle.services.helpers.faults.vcenter.VMDiskFault;
 import com.vmware.mangle.services.helpers.faults.vcenter.VMNicFault;
 import com.vmware.mangle.services.helpers.faults.vcenter.VMStateChangeFault;
 import com.vmware.mangle.services.helpers.k8s.faults.DeleteK8SResourceFault;
+import com.vmware.mangle.services.helpers.k8s.faults.DrainK8SNodeFault;
 import com.vmware.mangle.services.helpers.k8s.faults.K8SResourceNotReadyFault;
 import com.vmware.mangle.services.helpers.k8s.faults.K8SServiceUnavailableFault;
 import com.vmware.mangle.services.helpers.redis.faults.RedisDelayFault;
@@ -158,6 +160,18 @@ public class FaultInjectionController {
         taskResource.add(getSelfLink(), getHateoasRemediateCLBLink(), getHateoasRerunCLBLink());
         return new ResponseEntity<>(taskResource, HttpStatus.OK);
     }
+
+    @ApiOperation(value = "API to trigger injecting a K8S drain node fault", nickname = "drainK8SNodeFault")
+    @PostMapping(value = "/k8s/drain-node", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Resource<Task<TaskSpec>>> drainK8SNodeFault(
+            @Validated @RequestBody K8SDrainNodeFaultSpec faultSpec) throws MangleException {
+        faultInjectionHelper.validateScheduleForK8sSpecificFault(faultSpec);
+        Task<TaskSpec> task = new DrainK8SNodeFault(faultSpec).invokeFault(faultInjectionHelper);
+        Resource<Task<TaskSpec>> taskResource = new Resource<>(task);
+        taskResource.add(getSelfLink(), getHateoasRemediateCLBLink(), getHateoasRerunCLBLink());
+        return new ResponseEntity<>(taskResource, HttpStatus.OK);
+    }
+
 
     @ApiOperation(value = "API to inject a K8S NotReady State Fault", nickname = "K8SResourceNotReadyFault")
     @PostMapping(value = "/k8s/resource-not-ready", produces = MediaType.APPLICATION_JSON_VALUE)

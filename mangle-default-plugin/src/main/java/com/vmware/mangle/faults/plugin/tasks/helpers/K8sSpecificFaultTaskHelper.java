@@ -23,6 +23,7 @@ import com.vmware.mangle.cassandra.model.tasks.FaultTask;
 import com.vmware.mangle.cassandra.model.tasks.SupportScriptInfo;
 import com.vmware.mangle.cassandra.model.tasks.Task;
 import com.vmware.mangle.cassandra.model.tasks.TaskType;
+import com.vmware.mangle.cassandra.model.tasks.commands.CommandInfo;
 import com.vmware.mangle.faults.plugin.helpers.k8s.K8sFaultHelper;
 import com.vmware.mangle.task.framework.helpers.AbstractCommandExecutionTaskHelper;
 import com.vmware.mangle.task.framework.utils.TaskDescriptionUtils;
@@ -71,8 +72,11 @@ public class K8sSpecificFaultTaskHelper<T extends K8SFaultSpec> extends Abstract
             k8SFaultSpec.setResourcesList(k8sFaultHelper.getResouceList(getExecutor(task), k8SFaultSpec));
             task.getTaskData().setInjectionCommandInfoList(
                     k8sFaultHelper.getInjectionCommandInfoList(getExecutor(task), k8SFaultSpec));
-            task.getTaskData().setRemediationCommandInfoList(
-                    k8sFaultHelper.getRemediationCommandInfoList(getExecutor(task), k8SFaultSpec));
+            List<CommandInfo> remediationCommandInfoList =
+                    k8sFaultHelper.getRemediationCommandInfoList(getExecutor(task), k8SFaultSpec);
+            if (CollectionUtils.isEmpty(remediationCommandInfoList) || remediationCommandInfoList.get(0) != null) {
+                task.getTaskData().setRemediationCommandInfoList(remediationCommandInfoList);
+            }
         }
         super.executeTask(task);
     }

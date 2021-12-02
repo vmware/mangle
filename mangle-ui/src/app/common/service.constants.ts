@@ -26,7 +26,9 @@ export class ServiceConstants {
     public static readonly ENDPOINTS_CERTIFICATES_DOCKER = ServiceConstants.URL_PREFIX + "endpoints/certificates/docker";
     public static readonly TEST_ENDPOINTS = ServiceConstants.URL_PREFIX + "endpoints/testEndpoint";
     public static readonly ENDPOINTS_DOCKER_CONTAINER = ServiceConstants.ENDPOINTS + "/docker/containers"
+    public static readonly ENDPOINTS_K8S_RESOURCES = ServiceConstants.ENDPOINTS + "/k8s/resources";
     public static readonly ENDPOINTS_CREDENTIALS_DATABASE = ServiceConstants.URL_PREFIX + "endpoints/credentials/database";
+    public static readonly ENDPOINTS_K8S_READY_NODES = ServiceConstants.ENDPOINTS + "/k8s/nodes/ready";
 
     public static readonly USER_MANAGEMENT_USER = ServiceConstants.URL_PREFIX + "user-management/user";
     public static readonly USER_MANAGEMENT_PASSWORD = ServiceConstants.URL_PREFIX + "user-management/password";
@@ -50,6 +52,7 @@ export class ServiceConstants {
     public static readonly FAULTS_STOP_SERVICE = ServiceConstants.URL_PREFIX + "faults/stop-service";
     public static readonly FAULTS_DOCKER = ServiceConstants.URL_PREFIX + "faults/docker";
     public static readonly FAULTS_K8S_DELETE_RESOURCE = ServiceConstants.URL_PREFIX + "faults/k8s/delete-resource";
+    public static readonly FAULTS_DRAIN_K8S_NODE = ServiceConstants.URL_PREFIX + "faults/k8s/drain-node";
     public static readonly FAULTS_K8S_RESOURCE_NOT_READY = ServiceConstants.URL_PREFIX + "faults/k8s/resource-not-ready";
     public static readonly FAULTS_K8S_SERVICE_UNAVAILABLE = ServiceConstants.URL_PREFIX + "faults/k8s/service-unavailable";
     public static readonly FAULTS_VCENTER_VM_DISK = ServiceConstants.URL_PREFIX + "faults/vcenter/disk";

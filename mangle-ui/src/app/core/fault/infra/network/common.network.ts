@@ -34,6 +34,9 @@ export class CommonNetwork extends FaultCommons implements OnInit {
   }
 
   public executeNetworkFault(faultData) {
+    if(faultData.jitter == undefined || faultData.jitter == null){
+      delete faultData.jitter;
+    }
     faultData.faultOperation = this.faultOperation;
     this.runBtnState = ClrLoadingState.LOADING;
     if (this.tagsData !== {}) {
@@ -86,6 +89,9 @@ export class CommonNetwork extends FaultCommons implements OnInit {
     }
     if (dataService.sharedData.faultOperation === CommonConstants.NETWORK_DELAY_MILLISECONDS) {
       this.faultFormData.latency = dataService.sharedData.latency;
+      if(dataService.sharedData.jitter != 0){
+        this.faultFormData.jitter = dataService.sharedData.jitter;
+      }
     } else {
       this.faultFormData.percentage = dataService.sharedData.percentage;
     }

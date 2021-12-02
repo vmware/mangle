@@ -10,6 +10,8 @@ from infrautils import Infrafultfactory
 import threading
 import re
 import subprocess
+import psutil
+from Faults.CassandraConnectionLeakFault import log
 
 fault_map = {}
 completed_fault_map = {}
@@ -55,14 +57,9 @@ def injectfault(fault_args):
         if type(faultinstance) is type(infrafault) and \
                 faultinstance.faultinfo.status != FaultStatus.FaultStatus.COMPLETED.name and \
                 faultinstance.faultinfo.status != FaultStatus.FaultStatus.INJECTION_FAILED.name:
+            log.info("Found existing fault {} with status {}".format(faultinstance.faultinfo.fault_name,
+                                                            faultinstance.faultinfo.status))    
             raise Exception('Same fault is already running.Wait for completion')
-    pre_req_output = infrafault.prereq_check()
-    if pre_req_output is not None and pre_req_output != '':
-        log.info('Prerequisite error: {}'.format(pre_req_output))
-        raise Exception("Prerequisite failed:" + pre_req_output)
-    infrafault.start()
-    print("Fault Injection Triggered")
-    log.info("Fault Injection Triggered")
     lock.acquire()
     print("Lock aquired by", threading.current_thread().name)
     log.info("Lock aquired by {}".format(str(threading.current_thread().name)))
@@ -70,6 +67,16 @@ def injectfault(fault_args):
     if fault_args.get('--faultId') in completed_fault_map:
         del completed_fault_map[fault_args.get('--faultId')]
     lock.release()
+
+    pre_req_output = infrafault.prereq_check()
+    if pre_req_output is not None and pre_req_output != '':
+        log.info('Prerequisite error: {}'.format(pre_req_output))
+        infrafault.faultinfo.status = FaultStatus.FaultStatus.INJECTION_FAILED.name
+        completed_fault_map[fault_args.get('--faultId')] = infrafault
+        del fault_map[fault_args.get('--faultId')]
+        raise Exception("Prerequisite failed:" + pre_req_output)
+    infrafault.start()
+    log.info("Fault Injection Triggered")
     return "Fault Injection Triggered"
 
 
@@ -125,6 +132,7 @@ def is_faults_running():
             if fault.faultinfo.status == FaultStatus.FaultStatus.NOT_STARTED.name or \
                     fault.faultinfo.status == FaultStatus.FaultStatus.IN_PROGRESS.name or \
                     fault.faultinfo.status == FaultStatus.FaultStatus.INITIALIZING.name:
+                log.info("Found fault running:{}".format(fault.faultinfo.fault_name))
                 return True
     log.info("No Faults running currently")
     return False
@@ -137,6 +145,7 @@ def has_completed_faults():
             if fault.faultinfo.status == FaultStatus.FaultStatus.COMPLETED.name or \
                             fault.faultinfo.status == FaultStatus.FaultStatus.INJECTION_FAILED.name or \
                             fault.faultinfo.status == FaultStatus.FaultStatus.REMEDIATION_FAILED.name:
+                log.info("Found completed fault in faultmap:{}".format(fault.faultinfo.fault_name))
                 return True
         log.info("No completed faults in the faultMap")
     return False
@@ -165,3 +174,5 @@ def is_sudo_available():
         sudo_command = 'sudo '
         log.info("sudo available")
     return sudo_command
+
+   

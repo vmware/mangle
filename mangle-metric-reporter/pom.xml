@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!--
-   Copyright (c) 2016-2019 VMware, Inc. All Rights Reserved.
+   Copyright (c) 2016-2021 VMware, Inc. All Rights Reserved.
 
    This product is licensed to you under the Apache License, Version 2.0 (the "License").
    You may not use this product except in compliance with the License.
@@ -11,12 +11,13 @@
 -->
 <project
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
-	xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>com.vmware.mangle</groupId>
 		<artifactId>mangle-root</artifactId>
-		<version>3.0.0</version>
+		<version>3.5.0</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
@@ -33,6 +34,12 @@
 		<dependency>
 			<groupId>com.vmware.mangle</groupId>
 			<artifactId>mangle-models</artifactId>
+			<exclusions>
+				<exclusion>
+					<groupId>io.netty</groupId>
+					<artifactId>netty-handler</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.projectlombok</groupId>
@@ -42,6 +49,18 @@
 		<dependency>
 			<groupId>com.wavefront</groupId>
 			<artifactId>java-client</artifactId>
+			<exclusions>
+				<exclusion>
+					<groupId>io.netty</groupId>
+					<artifactId>netty-handler</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>io.netty</groupId>
+					<artifactId>
+						netty-transport-native-epoll
+					</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

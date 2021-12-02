@@ -1,5 +1,6 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, Inject } from '@angular/core';
 import { ControlContainer, NgForm } from '@angular/forms';
+import {DOCUMENT} from "@angular/common";
 
 @Component({
   selector: 'fault-schedule',
@@ -8,7 +9,7 @@ import { ControlContainer, NgForm } from '@angular/forms';
 })
 export class ScheduleComponent {
 
-  constructor() { }
+  constructor(@Inject(DOCUMENT) document) { }
 
   @Input() faultFormData: any;
   @Output() submitButtonChange = new EventEmitter<string>();
@@ -17,28 +18,40 @@ export class ScheduleComponent {
   public timeInMillisecondsHidden: boolean = true;
   public cronExpressionHidden: boolean = true;
   public descriptionHidden: boolean = true;
-  public selectedSchedulePrev: string = "";
 
-  public setScheduleVal(selectedSchedule) {
-    if (this.selectedSchedulePrev == selectedSchedule.value) {
-      selectedSchedule.checked = false;
-      this.timeInMillisecondsHidden = true;
-      this.cronExpressionHidden = true;
-      this.descriptionHidden = true;
-    } else {
-      this.timeInMillisecondsHidden = true;
-      this.cronExpressionHidden = true;
-      this.descriptionHidden = true;
-      if (selectedSchedule.value == "timeInMilliseconds") {
-        this.timeInMillisecondsHidden = false;
+  public clearSelected(){
+    this.timeInMillisecondsHidden = true;
+    this.cronExpressionHidden = true;
+    this.descriptionHidden = true;
+    this.faultFormData.schedule.timeInMilliseconds = undefined;
+    this.faultFormData.schedule.cronExpression = undefined;
+    this.faultFormData.schedule.description = undefined;
+    var radioElements = <NodeListOf<HTMLInputElement>>document.getElementsByName("scheduleBody");
+    radioElements.forEach(e => {
+      e.checked = false;
+    });
+    this.callSubmitButtonChange();
+  }
+
+  public setScheduleVal(selectedSchedule){
+      var timeInMillisecondsElement = <HTMLInputElement> document.getElementById("timeInMilliseconds");
+      var cronExpressionElement = <HTMLInputElement> document.getElementById("cronExpression");
+      if(timeInMillisecondsElement.checked || cronExpressionElement.checked){
+        if(timeInMillisecondsElement.checked) {
+          selectedSchedule.value = timeInMillisecondsElement.value;
+          this.timeInMillisecondsHidden = false;
+          this.cronExpressionHidden = true;
+        } else {
+          selectedSchedule.value = cronExpressionElement.value;
+          this.timeInMillisecondsHidden = true;
+          this.cronExpressionHidden = false;
+        }
         this.descriptionHidden = false;
+      } else {
+          this.timeInMillisecondsHidden = true;
+          this.cronExpressionHidden = true;
+          this.descriptionHidden = true;
       }
-      if (selectedSchedule.value == "cronExpression") {
-        this.cronExpressionHidden = false;
-        this.descriptionHidden = false;
-      }
-      this.selectedSchedulePrev = selectedSchedule.value;
-    }
   }
 
   public callSubmitButtonChange() {

@@ -57,12 +57,14 @@ import com.vmware.mangle.services.MappingService;
 import com.vmware.mangle.services.SchedulerService;
 import com.vmware.mangle.services.TaskService;
 import com.vmware.mangle.services.VCenterAdapterDetailsService;
+import com.vmware.mangle.services.enums.K8SResource;
 import com.vmware.mangle.services.mockdata.CredentialsSpecMockData;
 import com.vmware.mangle.services.mockdata.EndpointMockData;
 import com.vmware.mangle.services.repository.EndpointRepository;
 import com.vmware.mangle.task.framework.endpoint.EndpointClientFactory;
 import com.vmware.mangle.utils.clients.docker.CustomDockerClient;
 import com.vmware.mangle.utils.clients.endpoint.EndpointClient;
+import com.vmware.mangle.utils.clients.kubernetes.KubernetesCommandLineClient;
 import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 
@@ -96,10 +98,14 @@ public class EndpointServiceTest extends PowerMockTestCase {
     private EndpointMockData mockData = new EndpointMockData();
     private EndpointSpec endpointSpec;
     private EndpointSpec dockerEndpointSpec;
+    private EndpointSpec k8sEndpointSpec;
     private CredentialsSpecMockData credentialsSpecMockData = new CredentialsSpecMockData();
 
     @Mock
     private CustomDockerClient customDockerClient;
+
+    @Mock
+    private KubernetesCommandLineClient kubernetesCommandLineClient;
 
     /**
      * @throws java.lang.Exception
@@ -113,6 +119,7 @@ public class EndpointServiceTest extends PowerMockTestCase {
                 mappingService, vcaAdapterService);
         this.endpointSpec = mockData.rmEndpointMockData();
         this.dockerEndpointSpec = mockData.dockerEndpointMockData();
+        this.k8sEndpointSpec = mockData.k8sEndpointMockData();
     }
 
     /**
@@ -722,4 +729,108 @@ public class EndpointServiceTest extends PowerMockTestCase {
         assertEquals(endpointService.preProcessDatabaseEndpointSpec(endpointSpec), endpointSpec);
         verify(repository, times(1)).findByName(anyString());
     }
+
+    /**
+     * Test method for
+     * {@link EndpointService#getAllResourcesByEndpointName(java.lang.String,com.vmware.mangle.services.enums.K8SResource)}.
+     *
+     * Description: Positive test case which will take the K8sEndpointName and resource type and
+     * gives the list of resource present in K8s Cluster.
+     *
+     */
+    @Test
+    public void testGetAllResourcesByEndpointName() throws MangleException {
+        Optional<EndpointSpec> optional = Optional.of(k8sEndpointSpec);
+        K8SResource resourceType = K8SResource.DEPLOYMENT;
+        CredentialsSpec credentialsSpec = credentialsSpecMockData.getk8SCredentialsData();
+        List<String> allResources = new ArrayList<>();
+        allResources.add("mangle");
+
+        when(repository.findByName(anyString())).thenReturn(optional);
+        when(endpointClientFactory.getEndPointClient(any(), any())).thenReturn(kubernetesCommandLineClient);
+        when(kubernetesCommandLineClient.getResourcesByType(any())).thenReturn(allResources);
+        when(credentialService.getCredentialByName(anyString())).thenReturn(credentialsSpec);
+
+        List<String> actualResult =
+                endpointService.getAllResourcesByEndpointName(k8sEndpointSpec.getName(), resourceType);
+
+        verify(repository, times(1)).findByName(anyString());
+        Assert.assertEquals(actualResult.size(), 1,
+                "Test failed because the actual number of resources differs from the expected number of resource");
+        Assert.assertEquals(actualResult, allResources,
+                "Test failed because the elements in the actual Collection differ from the elements in the expected Collection");
+        Assert.assertEquals(actualResult.get(0), "mangle",
+                "Test failed because the first element in the actual list differs from expected result 'mangle'");
+    }
+
+    /**
+     * Test method for
+     * {@link EndpointService#getAllResourcesByEndpointName(java.lang.String,com.vmware.mangle.services.enums.K8SResource)}.
+     *
+     * Description: Test case to validate if the EndpointSpec returned is not the K8sEndpoint.
+     *
+     */
+    @Test
+    public void testGetAllResourcesByEndpointName_InvalidK8sEP() throws MangleException {
+        Optional<EndpointSpec> optional = Optional.of(endpointSpec);
+        K8SResource resourceType = K8SResource.DEPLOYMENT;
+        CredentialsSpec credentialsSpec = credentialsSpecMockData.getk8SCredentialsData();
+
+        when(repository.findByName(anyString())).thenReturn(optional);
+        when(endpointClientFactory.getEndPointClient(any(), any())).thenReturn(kubernetesCommandLineClient);
+        when(credentialService.getCredentialByName(anyString())).thenReturn(credentialsSpec);
+
+        when(repository.findByName(anyString())).thenReturn(optional);
+        try {
+            endpointService.getAllResourcesByEndpointName(k8sEndpointSpec.getName(), resourceType);
+        } catch (MangleException exception) {
+            verify(repository, times(1)).findByName(anyString());
+            Assert.assertEquals("Invalid K8sEndpoint", exception.getMessage(),
+                    "Test failed because getAllResourcesByEndpointName succeeded with invalid K8s endpoint");
+        }
+    }
+
+    /**
+     * Test method for
+     * {@link EndpointService#getAllResourcesByEndpointName(java.lang.String,com.vmware.mangle.services.enums.K8SResource)}.
+     *
+     * Description: Test case to validate the result when the EndpointName is Empty/Null.
+     *
+     */
+    @Test
+    public void testGetAllResourcesByEndpointName_EPNameEmpty() throws MangleException {
+        Optional<EndpointSpec> optional = Optional.of(endpointSpec);
+        K8SResource resourceType = K8SResource.DEPLOYMENT;
+        when(repository.findByName(anyString())).thenReturn(optional);
+
+        List<String> actualResult = endpointService.getAllResourcesByEndpointName("", resourceType);
+        verify(repository, times(0)).findByName(anyString());
+        Assert.assertEquals(actualResult, Collections.emptyList(),
+                "Test failed because the actual result is not an empty list");
+    }
+
+
+    /**
+     * Test method for
+     * {@link EndpointService#getAllResourcesByEndpointName(java.lang.String,com.vmware.mangle.services.enums.K8SResource)}.
+     *
+     * Description: Test case to validate the result when the EndpointSpec returned from Repository
+     * is Null/Empty.
+     *
+     */
+    @Test
+    public void testGetAllResourcesByEndpointName_NoRecordFound() throws MangleException {
+        Optional<EndpointSpec> optional = Optional.empty();
+        K8SResource resourceType = K8SResource.DEPLOYMENT;
+
+        when(repository.findByName(anyString())).thenReturn(optional);
+        try {
+            endpointService.getAllResourcesByEndpointName(k8sEndpointSpec.getName(), resourceType);
+        } catch (MangleException exception) {
+            verify(repository, times(1)).findByName(anyString());
+            Assert.assertEquals("Found No Search Results", exception.getMessage(),
+                    "Test failed because getAllResourcesByEndpointName succeeded when no record is found");
+        }
+    }
+
 }
