@@ -33,6 +33,7 @@ import static com.vmware.mangle.utils.constants.FaultConstants.FORWARD_SLASH;
 import static com.vmware.mangle.utils.constants.FaultConstants.HOSTS_ARG;
 import static com.vmware.mangle.utils.constants.FaultConstants.HOURS_ARG;
 import static com.vmware.mangle.utils.constants.FaultConstants.IO_SIZE_ARG;
+import static com.vmware.mangle.utils.constants.FaultConstants.JITTER_ARG;
 import static com.vmware.mangle.utils.constants.FaultConstants.KILL_PROCESS_REMEDIATION_COMMAND_ARG;
 import static com.vmware.mangle.utils.constants.FaultConstants.LATENCY_ARG;
 import static com.vmware.mangle.utils.constants.FaultConstants.LOAD_ARG;
@@ -159,11 +160,12 @@ public class SystemResourceFaultUtilsTest {
         args.put(LATENCY_ARG, "1000");
         args.put(NIC_NAME_ARG, "eth0");
         args.put(TIMEOUT_IN_MILLI_SEC_ARG, timeoutInMilliSec);
+        args.put(JITTER_ARG, "10");
         String command = systemResourceFaultUtils.buildInjectionCommand(args, scriptBasePath);
         Assert.assertEquals(command, String.format(
-                "infra_submit  --operation inject --faultname %s --faultOperation %s --latency %s --percentage null --nicName %s --timeout %s",
+                "infra_submit  --operation inject --faultname %s --faultOperation %s --latency %s --percentage null --nicName %s --timeout %s --jitter %s",
                 FaultName.NETWORKFAULT.getValue(), NetworkFaultType.NETWORK_DELAY_MILLISECONDS.networkFaultType(), 1000,
-                "eth0", timeoutInMilliSec));
+                "eth0", timeoutInMilliSec,10));
     }
 
     @Test

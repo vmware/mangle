@@ -16,6 +16,7 @@ import com.hazelcast.core.HazelcastInstanceAware;
 import com.hazelcast.core.ITopic;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import com.vmware.mangle.services.events.hazelcast.HazelcastSyncEvent;
@@ -28,6 +29,7 @@ import com.vmware.mangle.utils.constants.HazelcastConstants;
  */
 @Component
 @Log4j2
+@Lazy(false)
 public class HazelcastSyncTopicManager implements HazelcastInstanceAware {
 
     private ITopic<HazelcastSyncEvent> topic;

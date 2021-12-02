@@ -25,6 +25,7 @@ public class KubernetesTemplates {
     public static final String TEMPLATE_OUTPUT = "-o template  --template=";
     public static final String GET = " get ";
     public static final String DELETE = " delete ";
+    public static final String DRAIN = "drain ";
     public static final String PATCH = " patch ";
     public static final String CORDON = " cordon ";
     public static final String UNCORDON = " uncordon ";
@@ -36,6 +37,7 @@ public class KubernetesTemplates {
     public static final String NAMESPACE = "namespace ";
     public static final String SERVICES = "services ";
     public static final String ENDPOINTS = "endpoints ";
+    public static final String RESOURCE = "%s ";
     public static final String SELECTORS_PREFIX = "selectors#";
     public static final String SERVICE_KEY_PREFIX = "key#";
     public static final String OUTPUT_JSONPATH = "-o=jsonpath=";
@@ -61,7 +63,7 @@ public class KubernetesTemplates {
     public static final String GET_NODE_EXTERNAL_IP_MAP = GET + NODES + TEMPLATE_OUTPUT
             + "\"{{range.items}}{{.metadata.name}},{{range.status.addresses}}{{if eq .type \\\"ExternalIP\\\"}}{{.address}} {{end}}{{end}}{{end}}\"";
     public static final String CHECK_AVAILABILITY_NODE = GET + NODES + TEMPLATE_OUTPUT
-            + "\"{{range.items}}{{$nodeName := .}}{{range.status.conditions}}{{if (and (eq .type \\\"Ready\\\") (eq .status \\\"False\\\"))}}{{$nodeName.metadata.name}}{{end}}{{end}} {{end}}\"";
+            + "\"{{range.items}}{{\\$nodeName := .}}{{range.status.conditions}}{{if (and (eq .type \\\"Ready\\\") (eq .status \\\"True\\\"))}}{{\\$nodeName.metadata.name}}{{end}}{{end}} {{end}}\"";
     public static final String GET_SERVICE_APP_NAMES =
             GET + SERVICES + TEMPLATE_OUTPUT + "\"{{range.items}}{{.metadata.labels.app}} {{end}}\"";
 
@@ -92,10 +94,13 @@ public class KubernetesTemplates {
     public static final String IS_CONTAINER_READY = GET + POD + "%s " + TEMPLATE_OUTPUT
             + "\"{{range .status.containerStatuses}}{{if eq .name \\\"%s\\\"}}{{.ready}}{{end}}{{end}}\"";
     public static final String GET_SERVICE_ENDPOINTS = GET + ENDPOINTS + "%s " + TEMPLATE_OUTPUT + "\"{{.subsets}}\"";
-    public static final String DEFAULT_MANGLE_SERVICE_SELECTORS = "{\"%s\":\"mangle\"}";
+    public static final String MANGLE_FAULT_LABEL = "mangle-fault";
+    public static final String DEFAULT_MANGLE_SERVICE_SELECTORS = "{\"%s\":\"" + MANGLE_FAULT_LABEL + "\"}";
     public static final String GET_SERVICE_SELECTORS = GET + SERVICE + "%s " + TEMPLATE_OUTPUT + "\"" + SELECTORS_PREFIX
             + "{{\\\"{\\\"}}{{\\$i:=0}}{{range \\$k,\\$v := .spec.selector}}{{if eq \\$i 1}},{{end}}\\\"{{\\$k}}\\\":\\\"{{\\$v}}\\\"{{\\$i = 1}}{{end}}{{\\\"}\\\"}}\"";
     public static final String GET_SERVICE_SELECTORS_KEY = GET + SERVICE + "%s " + TEMPLATE_OUTPUT
             + "\"{{\\$key:=0}}{{range \\$k,\\$v := .spec.selector}}{{\\$key = \\$k}}{{end}}" + SERVICE_KEY_PREFIX
             + "{{\\$key}}\"";
+    public static final String GET_RESOURCES_JSONPATH = GET + RESOURCE + OUTPUT_JSONPATH;
+    public static final String IGNORE_TEMPLATE = "--ignore-daemonsets --delete-emptydir-data";
 }

@@ -39,7 +39,7 @@ public class SwaggerConfig extends WebMvcConfigurationSupport {
 
     private ApiInfo metaData() {
         return new ApiInfoBuilder().title("Mangle VCenter API EndPoints")
-                .description("Endpoints for triggering faults on VCenter").version("3.0.0")
+                .description("Endpoints for triggering faults on VCenter").version("3.5.0")
                 .license("Apache License Version 2.0").licenseUrl("https://www.apache"
                         + ".org/licenses/LICENSE-2.0\"")
                 .build();

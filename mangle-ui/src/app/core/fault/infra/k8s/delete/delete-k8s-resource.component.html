@@ -3,32 +3,67 @@
     <h3 class="modal-title">Execute K8S Delete Resource Fault</h3>
     <form #deleteK8SResourceForm="ngForm" (ngSubmit)="executeK8SDeleteResourceFault(deleteK8SResourceForm.value);" ngNativeValidate>
         <section class="form-block">
-            <fault-endpoint [faultFormData]="faultFormData" [supportedEpTypes]="supportedEpTypes" [endpoints]="endpoints" (displayEndpointFieldsEvent)="displayEndpointFields($event);"></fault-endpoint>
+            <fault-endpoint [faultFormData]="faultFormData" [supportedEpTypes]="supportedEpTypes" [endpoints]="endpoints" (displayEndpointFieldsEvent)="displayEndpointFields($event);" (resetK8sResourceTypeEvent)="resetResourceType();"></fault-endpoint>
             <div class="form-group">
-                <label for="resourceType">Resource Type</label>
-                <div class="select">
-                    <select name="resourceType" id="resourceType" [(ngModel)]="faultFormData.resourceType" required>
+                <label for="resourceType">Resource Type </label>
+                <clr-dropdown>
+                    <input autocomplete="off" clrDropdownTrigger type="text" name="resourceType" id="resourceType" [(ngModel)]="faultFormData.resourceType" required />
+                    <clr-icon shape="caret down" clrDropdownTrigger size="24">
+                    </clr-icon>
+                    <clr-dropdown-menu *clrIfOpen class="menu-height" clrPosition="bottom-left">
                         <ng-container *ngFor="let k8sResourceVal of k8sResourceTypes">
-                            <option [value]="k8sResourceVal">{{k8sResourceVal}}</option>
+                            <button type="button" clrDropdownItem class="option-height" (click)="setResourceType(k8sResourceVal);">{{k8sResourceVal}}</button>
                         </ng-container>
-                    </select>
-                </div>
+                    </clr-dropdown-menu>
+                </clr-dropdown>
             </div>
             <div class="form-group">
                 <label>Resource</label>
                 <div class="clr-control-container clr-control-inline">
+                    <div class="clr-radio-wrapper" [hidden]="resourceListAvailable">
+                        <input type="radio" id="resourceList" name="resource" value="resourceList" class="clr-radio" [(ngModel)]="inputType" (click)="setResourceVal($event.target['value']);">
+                        <label for="resourceList" class="clr-control-label">Select from List</label>
+                    </div>
                     <div class="clr-radio-wrapper">
-                        <input type="radio" id="resourceName" name="resource" value="resourceName" class="clr-radio" (click)="setResourceVal($event.target['value']);">
+                        <input type="radio" id="resourceName" name="resource" value="resourceName" class="clr-radio" [(ngModel)]="inputType" (click)="setResourceVal($event.target['value']);">
                         <label for="resourceName" class="clr-control-label">Resource Name</label>
                     </div>
                     <div class="clr-radio-wrapper">
-                        <input type="radio" id="resourceLabels" name="resource" value="resourceLabels" class="clr-radio" (click)="setResourceVal($event.target['value']);">
+                        <input type="radio" id="resourceLabels" name="resource" value="resourceLabels" class="clr-radio" [(ngModel)]="inputType" (click)="setResourceVal($event.target['value']);">
                         <label for="resourceLabels" class="clr-control-label">Resource Labels</label>
                     </div>
                 </div>
             </div>
+            <div class="form-group" [hidden]="resourceListHidden">
+                <clr-dropdown>
+                    <input autocomplete="off" clrDropdownTrigger type="text" name="resourceName" [required]="!resourceListHidden"
+                        (input)="searchResource($event.target['value']);"
+                        (focus)="searchResource('');" [(ngModel)]="faultFormData.resourceName" />
+                    <clr-icon shape="caret down" clrDropdownTrigger size="24" (click)="searchResource('');"></clr-icon>
+                    <clr-dropdown-menu *clrIfOpen class="menu-height" clrPosition="bottom-left">
+                        <ng-container *ngFor="let searchedResource of searchedResources">
+                            <button type="button" clrDropdownItem class="option-height"
+                                (click)="setK8sResourceVal(searchedResource);">{{searchedResource}}</button>
+                        </ng-container>
+                    </clr-dropdown-menu>
+                </clr-dropdown>
+                <div [hidden]="resourceListPopulated!='noResourceFound'" class="alert alert-warning alert-sm" role="alert">
+                    <div class="alert-items">
+                      <div class="alert-item static">
+                        <div class="alert-icon-wrapper">
+                            <clr-icon class="alert-icon" shape="exclamation-circle"></clr-icon>
+                        </div>
+                        <div class="alert-text">
+                          No Resources of this type found.
+                        </div>
+                      </div>
+                    </div>
+                </div>
+                <span [hidden]="resourceListPopulated!='loading'" class="spinner spinner-inline">
+                </span>
+            </div>
             <div class="form-group" [hidden]="resourceNameHidden">
-                <input type="text" name="resourceName" pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?" title="Resourcename must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character (e.g. 'my-name',  or '123-abc')" [(ngModel)]="faultFormData.resourceName" [required]="!resourceNameHidden">
+                <input type="text" name="resourceName" pattern="[a-z0-9]([-.a-z0-9]*[a-z0-9])?" title="Resourcename must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character (e.g. 'my-name',  or '123.abc')" [(ngModel)]="faultFormData.resourceName" [required]="!resourceNameHidden">
             </div>
             <div class="form-group" [hidden]="resourceLabelsHidden">
                 <label></label>

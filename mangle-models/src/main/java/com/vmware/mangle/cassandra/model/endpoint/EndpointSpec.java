@@ -59,6 +59,7 @@ public class EndpointSpec extends MangleDto implements Serializable {
     @NotEmpty
     @Pattern(regexp = "^[A-Za-z0-9-_.]+$", message = "consists only alphanumeric with special characters (_ - .)")
     private String name;
+
     @NotNull
     @ApiModelProperty(position = 1, value = "EndpointType is an enum. please use appropriate value")
     @Column

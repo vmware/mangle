@@ -50,10 +50,10 @@ public class AgentTestUtils {
         String userDir = new File(new File(".").getAbsolutePath()).getParentFile().getAbsolutePath();
         System.out.println(userDir);
         String bytemanHome = userDir.substring(0, userDir.lastIndexOf(File.separator) + 1) + "agent" + File.separator
-                + "target" + File.separator + "mangle-byteman-3.0.0.jar";
+                + "target" + File.separator + "mangle-byteman-3.5.0.jar";
         System.out.println(bytemanHome);
         System.setProperty("org.jboss.byteman.jar", userDir.substring(0, userDir.lastIndexOf(File.separator) + 1)
-                + "agent" + File.separator + "target" + File.separator + "mangle-byteman-3.0.0.jar");
+                + "agent" + File.separator + "target" + File.separator + "mangle-byteman-3.5.0.jar");
         System.out.println("Now the output is redirected to internal Stream");
         System.setProperty("org.jboss.test.execution", "true");
         PrintStream printStream = new PrintStream(baos);

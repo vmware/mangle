@@ -75,6 +75,7 @@ import com.vmware.mangle.services.constants.CommonConstants;
 import com.vmware.mangle.services.deletionutils.CredentialDeletionService;
 import com.vmware.mangle.services.deletionutils.EndpointCertificatesDeletionService;
 import com.vmware.mangle.services.deletionutils.EndpointDeletionService;
+import com.vmware.mangle.services.enums.K8SResource;
 import com.vmware.mangle.services.events.web.CustomEventPublisher;
 import com.vmware.mangle.services.updateutils.EndpointUpdateService;
 import com.vmware.mangle.utils.constants.ErrorConstants;
@@ -222,6 +223,29 @@ public class EndpointController {
         return new ResponseEntity<>(resources, headers, HttpStatus.OK);
     }
 
+    @ApiOperation(value = "API to get all the resources of kubernetes cluster based on K8sEndpointName and resourceType", nickname = "getAllK8sResourcesByEndpoint")
+    @GetMapping(value = "v1/endpoints/k8s/resources/", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public ResponseEntity<Resources<String>> getAllK8sResourcesByEndpointName(
+            @RequestParam("endpointName") String endpointName, @RequestParam("resourceType") K8SResource resourceType)
+            throws MangleException {
+        if (resourceType.equals(K8SResource.POD)) {
+            throw new MangleException(ErrorConstants.PODS_NOT_SUPPORTED, ErrorCode.PODS_NOT_SUPPORTED);
+        }
+        log.info("Retrieving all resources of type " + resourceType + " from K8s endpoint " + endpointName);
+        List<String> k8sResources = endpointService.getAllResourcesByEndpointName(endpointName, resourceType);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(CommonConstants.MESSAGE_HEADER, CommonConstants.RESOURCES_RESULT_FOUND + resourceType);
+
+        Resources<String> resources = new Resources<>(k8sResources);
+        resources.add(getSelfLink(), getHateoasLinkForAddEndpoint(), getHateoasLinkForEnableEndpoint(),
+                getHateoasLinkForUpdateEndpoint(), getHateoasLinkForGetEndpoints(),
+                getHateoasLinkForGetEndpointByName(), getHateoasLinkForGetEndpointByType(),
+                getHateoasLinkForDeleteEndpoints());
+
+        return new ResponseEntity<>(resources, headers, HttpStatus.OK);
+    }
+
+
     @ApiOperation(value = "API to update a existing endpoint", nickname = "updateEndPoint")
     @PutMapping(value = "v2/endpoints", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Resource<EndpointSpec>> updateEndpoint(@Validated @RequestBody EndpointSpec endpointSpec)
@@ -266,7 +290,7 @@ public class EndpointController {
         log.info("Start execution of addEndpoint() method");
 
         EndpointSpec endpointSpec = endpointService.getV1EndpointToEndpointSpec(endpointSpecV1);
-        ResponseEntity<Resource<EndpointSpec>> endpointSpecResource =  handleEndpointAddition(endpointSpec);
+        ResponseEntity<Resource<EndpointSpec>> endpointSpecResource = handleEndpointAddition(endpointSpec);
         Resource<EndpointSpecV1> resource = new Resource<>(endpointSpecV1);
         resource.add(Objects.requireNonNull(endpointSpecResource.getBody()).getLinks());
         return new ResponseEntity<>(resource, HttpStatus.OK);
@@ -824,5 +848,20 @@ public class EndpointController {
                 .withRel(HateoasOperations.DELETE.name());
     }
 
+    @ApiOperation(value = "API to get all the ready nodes of a kubernetes cluster based on the k8sclustername", nickname = "getallk8SNodesByEndpoint")
+    @GetMapping(value = "v1/endpoints/k8s/nodes/ready", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Resources<String>> getAllK8SReadyNodesByEndpoint(@RequestParam("endpointName") String endpointName)
+            throws MangleException {
+        log.info("Start execution of getting all ready k8s nodes");
+        List<String> nodes = endpointService.getAllK8SNodesByEndpointName(endpointName);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(CommonConstants.MESSAGE_HEADER, CommonConstants.READY_NODES_RESULT_FOUND);
+        Resources<String> resources = new Resources<>(nodes);
+        resources.add(getSelfLink(), getHateoasLinkForAddEndpoint(), getHateoasLinkForEnableEndpoint(),
+                getHateoasLinkForUpdateEndpoint(), getHateoasLinkForGetEndpointByName(),
+                getHateoasLinkForGetEndpointByType(), getHateoasLinkForDeleteEndpoints());
+        return new ResponseEntity<>(resources, headers, HttpStatus.OK);
+
+    }
 
 }

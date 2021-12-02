@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Inject, OnInit } from '@angular/core';
 import { MetricProviderService } from './metric-provider.service';
 import { ClrLoadingState } from '@clr/angular';
 import { MessageConstants } from 'src/app/common/message.constants';
@@ -19,6 +19,7 @@ export class IntegrationComponent implements OnInit {
     public staticTagsModal: boolean;
     public datadogModal: boolean;
     public wavefrontModal: boolean;
+    public dynatraceModal: boolean;
 
     public testAlertMessage: String;
     public testSuccessFlag: boolean;
@@ -28,6 +29,7 @@ export class IntegrationComponent implements OnInit {
 
     public wavefrontFormData: any;
     public datadogFormData: any;
+    public dynatraceFormData: any;
     public statusMessage: string;
 
     public metricCollectionStatus: boolean = false;
@@ -61,6 +63,19 @@ export class IntegrationComponent implements OnInit {
         "isActive": false
     }
 
+    public dynatraceDefaultValues: any = {
+        "id": null,
+        "name": null,
+        "metricProviderType": "DYNATRACE",
+        "dynatraceConnectionProperties": {
+            "uri": null,
+            "apiToken": null,
+            "deviceId": null,
+            "staticTags": null
+        },
+        "isActive": false
+    }
+
     constructor(private metricProviderService: MetricProviderService) { }
 
     ngOnInit() {
@@ -78,6 +93,18 @@ export class IntegrationComponent implements OnInit {
         }
         this.wavefrontFormData = wavefrontData;
         this.wavefrontFormData.metricProviderType = CommonConstants.WAVEFRONT;
+    }
+
+    public populateDynatraceForm(dynatraceData) {
+        this.testErrorFlag = false;
+        this.testSuccessFlag = false;
+        if (dynatraceData.dynatraceConnectionProperties.staticTags != null) {
+            this.tagsData = dynatraceData.dynatraceConnectionProperties.staticTags;
+        } else {
+            this.tagsData = {};
+        }
+        this.dynatraceFormData = dynatraceData;
+        this.dynatraceFormData.metricProviderType = CommonConstants.DYNATRACE;
     }
 
     public populateDatadogForm(datadogData) {
@@ -143,6 +170,10 @@ export class IntegrationComponent implements OnInit {
             metricProvider.datadogConnectionProperties.staticTags = this.tagsData;
             metricProvider.metricProviderType = "DATADOG";
         }
+        if (this.tagsData != {} && metricProvider.metricProviderType == CommonConstants.DYNATRACE) {
+            metricProvider.dynatraceConnectionProperties.staticTags = this.tagsData;
+            metricProvider.metricProviderType = CommonConstants.DYNATRACE;
+        }
         if (metricProvider.id == null) {
             this.addMetricProvider(metricProvider);
         } else {
@@ -186,19 +217,25 @@ export class IntegrationComponent implements OnInit {
     public deleteMetricProvider(metricProvider) {
         if (confirm(MessageConstants.DELETE_CONFIRM + metricProvider.name + MessageConstants.QUESTION_MARK)) {
             this.isLoading = true;
-            this.metricProviderService.deleteMetricProvider(metricProvider.name).subscribe(
-                res => {
-                    this.getMetricProviders();
-                    this.isErrorMessage = false;
-                    this.alertMessage = metricProvider.name + MessageConstants.METRIC_PROVIDER_DELETE;
-                    this.isLoading = false;
-                    this.getMetricCollectionStatus();
-                }, err => {
-                    this.getMetricProviders();
-                    this.isErrorMessage = true;
-                    this.alertMessage = err.error.description;
-                    this.isLoading = false;
-                });
+            if(this.metricCollectionStatus){
+                this.isErrorMessage = true;
+                this.alertMessage = MessageConstants.METRIC_PROVIDER_DELETE_ACTIVE;
+                this.isLoading = false;
+            } else {
+                this.metricProviderService.deleteMetricProvider(metricProvider.name).subscribe(
+                    res => {
+                        this.getMetricProviders();
+                        this.isErrorMessage = false;
+                        this.alertMessage = metricProvider.name + MessageConstants.METRIC_PROVIDER_DELETE;
+                        this.isLoading = false;
+                        this.getMetricCollectionStatus();
+                    }, err => {
+                        this.getMetricProviders();
+                        this.isErrorMessage = true;
+                        this.alertMessage = err.error.description;
+                        this.isLoading = false;
+                    });
+            }
         } else {
             // Do nothing!
         }
@@ -247,9 +284,9 @@ export class IntegrationComponent implements OnInit {
             });
     }
 
-    public updateMetricCollectionStatus() {
+    public updateMetricCollectionStatus(statusValue) {
         this.collectionBtnState = ClrLoadingState.LOADING;
-        this.metricProviderService.updateMetricCollectionStatus(!this.metricCollectionStatus).subscribe(
+        this.metricProviderService.updateMetricCollectionStatus(statusValue).subscribe(
             res => {
                 this.isErrorMessage = false;
                 this.alertMessage = MessageConstants.METRIC_PROVIDER_COLLECTION_UPDATE;

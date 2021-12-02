@@ -1,0 +1,105 @@
+<app-alert [(alertMessage)]="alertMessage" [isErrorMessage]="isErrorMessage"
+	(alertMessageChange)="alertMessage = $event"></app-alert>
+<div>
+	<h3 class="modal-title">Execute K8S Drain Node Fault</h3>
+	<form #drainK8SNodeForm="ngForm" (ngSubmit)="executeK8SDrainNodeFault(drainK8SNodeForm.value);" ngNativeValidate>
+		<section class="form-block">
+			<div class="form-group">
+				<label for="endpointName">Endpoint </label>
+				<clr-dropdown> <input autocomplete="off" clrDropdownTrigger type="text" name="endpointName" required
+						(input)="searchEndpoint($event.target['value']);displayEndpointFields($event.target['value']);"
+						(focus)="searchEndpoint('');" [(ngModel)]="faultFormData.endpointName" />
+					<clr-icon shape="caret down" clrDropdownTrigger size="24" (click)="searchEndpoint('');"></clr-icon>
+					<clr-dropdown-menu *clrIfOpen class="menu-height" clrPosition="bottom-left">
+						<ng-container *ngFor="let searchedEndpoint of searchedEndpoints">
+							<button type="button" clrDropdownItem class="option-height"
+								*ngIf="supportedEpTypes.indexOf(searchedEndpoint.endPointType) > -1 || supportedEpTypes.indexOf(searchedEndpoint.endpointGroupType) > -1"
+								(click)="setEndpointVal(searchedEndpoint.name);displayEndpointFields(searchedEndpoint.name)">{{searchedEndpoint.name}}</button>
+						</ng-container>
+					</clr-dropdown-menu>
+				</clr-dropdown>
+			</div>
+			<div class="form-group">
+				<label>Node</label>
+				<div class="clr-control-container clr-control-inline">
+					<div class="clr-radio-wrapper">
+						<input type="radio" id="resourceName" name="resource" value="resourceName" class="clr-radio"
+							(click)="setResourceVal($event.target.value);"> <label for="resourceName"
+							class="clr-control-label">Node Name</label>
+					</div>
+					<div class="clr-radio-wrapper">
+						<input type="radio" id="resourceLabels" name="resource" value="resourceLabels" class="clr-radio"
+							(click)="setResourceVal($event.target.value);"> <label for="resourceLabels"
+							class="clr-control-label">Node
+							Labels</label>
+					</div>
+				</div>
+			</div>
+			<div class="form-group" [hidden]="resourceNameHidden">
+				<clr-dropdown>
+					<input autocomplete="off" clrDropdownTrigger type="text" name="resourceName"
+						[required]="!resourceNameHidden" (input)="searchNodes($event.target['value']);"
+						(focus)="searchNodes('');" [(ngModel)]="faultFormData.resourceName" />
+					<clr-icon shape="caret down" clrDropdownTrigger size="24" (click)="searchNodes('');"></clr-icon>
+					<clr-dropdown-menu *clrIfOpen class="menu-height" clrPosition="bottom-left">
+						<ng-container *ngFor="let searchedNode of searchedNodes">
+							<button type="button" clrDropdownItem class="option-height"
+								(click)="setResourceNameVal(searchedNode);">{{searchedNode}}</button>
+						</ng-container>
+					</clr-dropdown-menu>
+				</clr-dropdown>
+				<span [hidden]="nodeListPopulated!='loading'" class="spinner spinner-inline"></span>
+				<a href="javascript://" role="tooltip" aria-haspopup="true"
+					class="tooltip tooltip-md tooltip-bottom-right">
+					<clr-icon shape="info-circle" size="24"></clr-icon> <span class="tooltip-content">Displaying Active
+						Nodes only</span>
+				</a>
+			</div>
+			<div class="form-group" [hidden]="resourceLabelsHidden">
+				<label></label> <span class="label label-info"
+					*ngFor="let item of resourceLabelsData | keyvalue">{{item.key}}={{item.value}}&nbsp;<clr-icon
+						shape="times" size="12" (click)="removeResourceLabels(item.key);"></clr-icon></span>
+				<clr-icon shape="plus-circle" (click)="resourceLabelsModal=true;" style="width:21px;height:30px;">
+				</clr-icon>
+			</div>
+			<div class="form-group" [hidden]="resourceLabelsHidden">
+				<label for="randomInjection">Random Injection</label>
+				<div class="select">
+					<select name="randomInjection" id="randomInjection" [(ngModel)]="faultFormData.randomInjection"
+						[required]="!resourceLabelsHidden">
+						<option [ngValue]="true">true</option>
+						<option [ngValue]="false">false</option>
+					</select>
+				</div>
+			</div>
+			<fault-tags [tagsData]="tagsData" (tagsModalEvent)="tagsModal=$event;"></fault-tags>
+			<fault-notifiers [notifiersData]="notifiersData" (notifiersModalEvent)="notifierModal=$event;">
+			</fault-notifiers>
+		</section>
+		<button type="submit" class="btn btn-primary" [clrLoading]="runBtnState">RUN
+			FAULT</button>
+	</form>
+</div>
+<clr-modal [(clrModalOpen)]="resourceLabelsModal">
+	<h3 class="modal-title">Add Resource Labels</h3>
+	<div class="modal-body">
+		<form #resourceLabelsForm="ngForm"
+			(ngSubmit)="updateResourceLabels(resourceLabelsForm.value);resourceLabelsModal=false;resourceLabelsForm.reset();">
+			<section class="form-block">
+				<div class="form-group">
+					<label for="resourceLabelsKey">Key</label> <input type="text" name="resourceLabelsKey"
+						id="resourceLabelsKey" ngModel>
+				</div>
+				<div class="form-group">
+					<label for="resourceLabelsValue">Value</label> <input type="text" name="resourceLabelsValue"
+						id="resourceLabelsValue" ngModel>
+				</div>
+			</section>
+			<button type="button" class="btn btn-outline" (click)="resourceLabelsModal=false;">CANCEL</button>
+			<button type="submit" class="btn btn-primary">ADD</button>
+		</form>
+	</div>
+</clr-modal>
+<app-tags [tagsModal]="tagsModal" [tagsData]="tagsData" (updateTagsModal)="tagsModal=$event;"></app-tags>
+<app-notifiers [notifierModal]="notifierModal" [notifiersData]="notifiersData"
+	(updateNotifiersModal)="notifierModal=$event;"></app-notifiers>

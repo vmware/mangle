@@ -23,7 +23,7 @@
 	<parent>
 		<groupId>com.vmware.mangle</groupId>
 		<artifactId>mangle-byteman-root</artifactId>
-		<version>3.0.0</version>
+		<version>3.5.0</version>
 	</parent>
 	<properties>
 		<debug.args>-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005</debug.args>

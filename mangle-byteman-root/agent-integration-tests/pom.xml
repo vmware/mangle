@@ -15,7 +15,7 @@
 	<parent>
 		<groupId>com.vmware.mangle</groupId>
 		<artifactId>mangle-byteman-root</artifactId>
-		<version>3.0.0</version>
+		<version>3.5.0</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 	<artifactId>agent-integration-tests</artifactId>

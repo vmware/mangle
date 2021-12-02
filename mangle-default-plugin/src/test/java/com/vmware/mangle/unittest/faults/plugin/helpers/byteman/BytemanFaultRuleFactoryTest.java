@@ -50,8 +50,12 @@ public class BytemanFaultRuleFactoryTest {
     @Test
     public void testGetExceptionRule() {
         CommandExecutionFaultSpec faultSpec = getCommandExecutionFaultSpec();
+        Map<String, String> args = new HashMap<>();
+        faultSpec.setArgs(args);
+        args.put("exceptionClass", "com.vmware.test.Exception");
+        args.put("exceptionMessage", "test exception");
         faultSpec.setFaultType(BytemanFaultType.EXCEPTION.name());
-        assertTrue(BytemanFaultRuleFactory.getExceptionRule(faultSpec).contains("throwException"));
+        assertTrue(BytemanFaultRuleFactory.getExceptionRule(faultSpec).contains("throw new"));
     }
 
     /**

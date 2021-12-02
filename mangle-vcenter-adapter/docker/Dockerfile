@@ -24,7 +24,7 @@ RUN echo $TOMCAT_DIR \
 # Copy script and jar file
 COPY docker/start.sh $TOMCAT_DIR
 COPY docker/generateCert.sh $OPT_DIR/vmware/mangle/cert/
-COPY target/mangle-vcenter-adapter-3.0.0.jar $TOMCAT_DIR/app.jar
+COPY target/mangle-vcenter-adapter-3.5.0.jar $TOMCAT_DIR/app.jar
 
 # Changing ownership of all files\directories of OPT_DIR
 RUN chown -R mangle:mangle $OPT_DIR

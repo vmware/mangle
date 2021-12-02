@@ -46,7 +46,7 @@ public class K8SFaultSpec extends CommandExecutionFaultSpec implements Serializa
     protected K8SResource resourceType;
     @ApiModelProperty(value = "Resource labels as a key:value pair ex: {\"app\":\"mangle\",\"build\":\"4.0.0.1\"}")
     protected Map<String, String> resourceLabels;
-    @Pattern(regexp = "[a-z0-9]([-a-z0-9]*[a-z0-9])?", message = "must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character (e.g. 'my-name',  or '123-abc')")
+    @Pattern(regexp = "[a-z0-9]([-.a-z0-9]*[a-z0-9])?", message = "must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character (e.g. 'my-name',  or '123-abc')")
     @ApiModelProperty(value = "Name Kubernetes resource , if specified it will have highest priority than  resource labels")
     protected String resourceName;
     @ApiModelProperty(value = "true or false , specify this option along with resourceLabels", example = "true")
@@ -71,4 +71,5 @@ public class K8SFaultSpec extends CommandExecutionFaultSpec implements Serializa
     public void setDockerArguments(DockerSpecificArguments dockerArguments) {
         super.setDockerArguments(dockerArguments);
     }
+
 }

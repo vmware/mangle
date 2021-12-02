@@ -111,6 +111,7 @@ public class KnownFailureConstants {
 
     //Command Outputs for Agent Copy
     public static final String K8S_INVALID_POD_CONTAINER_MAPPING_FAILURE_OUTPUT = "is not valid for pod";
+    public static final String K8S_INVALID_POD_CONTAINER_MAPPING_FAILURE_OUTPUT_MESSAGE = "Provided container name is not valid for the selected pod. Refer Task data.";
     public static final String K8S_POD_TAR_NOT_AVAILABLE_AGENT_COPY_FAILURE_OUTPUT =
             "\"exec: \\\"tar\\\": executable file not found in $PATH\": unknown";
     public static final String K8S_POD_TAR_NOT_AVAILABLE_AGENT_COPY_FAILURE_MESSAGE =

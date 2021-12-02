@@ -12,8 +12,13 @@
 package com.vmware.mangle.utils.clients.kubernetes;
 
 import static com.vmware.mangle.utils.clients.kubernetes.KubernetesTemplates.BUSYBOX_POD_NAME_TEMPLATE;
+import static com.vmware.mangle.utils.clients.kubernetes.KubernetesTemplates.GET_METADATA_NAME;
+import static com.vmware.mangle.utils.clients.kubernetes.KubernetesTemplates.GET_RESOURCES_JSONPATH;
 import static com.vmware.mangle.utils.clients.kubernetes.KubernetesTemplates.KUBECTL_RUN_BUSYBOX_CURL_TEMPLATE;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -21,6 +26,7 @@ import lombok.extern.log4j.Log4j2;
 import org.joda.time.DateTimeUtils;
 
 import com.vmware.mangle.cassandra.model.tasks.commands.CommandExecutionResult;
+import com.vmware.mangle.services.enums.K8SResource;
 import com.vmware.mangle.utils.CommandUtils;
 import com.vmware.mangle.utils.ICommandExecutor;
 import com.vmware.mangle.utils.clients.endpoint.EndpointClient;
@@ -175,6 +181,25 @@ public class KubernetesCommandLineClient implements ICommandExecutor, EndpointCl
         CommandExecutionResult output = CommandUtils.runCommand("kubectl --kubeconfig " + configFilePath + " version");
         if (output.getCommandOutput().contains(ErrorConstants.K8S_ERROR_LOADING_CONFIG_FILE)) {
             throw new MangleException(ErrorCode.K8S_INVALID_CONFIG_FILE);
+        }
+    }
+
+    public List<String> getResourcesByType(K8SResource resourceType) throws MangleException {
+        if (resourceType.equals(K8SResource.POD)) {
+            return Collections.emptyList();
+        }
+        log.info("Getting all kubernetes " + resourceType + " as list");
+        List<String> resources = Arrays.asList(CommandUtils
+                .runCommand(
+                        kubectl + String.format(GET_RESOURCES_JSONPATH, resourceType.getValue()) + GET_METADATA_NAME)
+                .getCommandOutput().split("\\s+"));
+        if ((resources.size() > 0) && (resources.get(0).equals("Error")) && ((String.join(" ", resources)).toLowerCase().contains("forbidden"))) {
+            throw new MangleException(ErrorConstants.ACCESS_FORBIDDEN_RESOURCE_TYPE + resourceType, ErrorCode.K8S_RESOURCE_ACCESS_FAILED);
+        }
+        if (resources.get(0).equals("")) {
+            return Collections.emptyList();
+        } else {
+            return resources;
         }
     }
 }

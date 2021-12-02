@@ -56,10 +56,10 @@ class InfraFault(threading.Thread,metaclass=abc.ABCMeta):
         log.info("Thread waiting to remediate for :{}".format(self.fault_args.get("--timeout")))
         time.sleep(int(self.fault_args.get("--timeout")) / 1000)
         if self.faultinfo.status != FaultStatus.FaultStatus.COMPLETED.name:
-            print("calling remediation from wait and remediate after timeout")
+            log.info("calling remediation from wait and remediate after timeout")
             self.remediate()
         else:
-            print("Fault is already remediated")
+            log.info("Fault is already remediated")
 
     def start(self):
         self.faultinfo.status = FaultStatus.FaultStatus.IN_PROGRESS.name

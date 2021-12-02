@@ -15,6 +15,7 @@ import java.util.List;
 
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.datadog.DatadogMeterRegistry;
+import io.micrometer.dynatrace.DynatraceMeterRegistry;
 import io.micrometer.wavefront.WavefrontMeterRegistry;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +34,7 @@ import com.vmware.mangle.utils.constants.MetricProviderConstants;
 
 /**
  * @author ashrimali
+ * @author dbhat
  *
  */
 
@@ -58,7 +60,11 @@ public class MetricProviderMeterRegistryCustomizer implements MeterRegistryCusto
         } else if (registry instanceof WavefrontMeterRegistry) {
             tags = getWavefrontTags(
                     this.metricProviderRepository.findByMetricProviderType(MetricProviderType.WAVEFRONT));
+        } else if (registry instanceof DynatraceMeterRegistry) {
+            tags = getDynatraceTags(
+                    this.metricProviderRepository.findByMetricProviderType(MetricProviderType.DYNATRACE));
         }
+
         if (!ObjectUtils.isEmpty(tags) && tags.length >= 1) {
             registry.config().commonTags(tags);
             registry.config().commonTags("host", hazelcastHostName, "cluster", clusterName);
@@ -96,6 +102,27 @@ public class MetricProviderMeterRegistryCustomizer implements MeterRegistryCusto
             try {
                 return CommonUtils.getStringArrayFromMap(
                         metricProviders.get(0).getWaveFrontConnectionProperties().getStaticTags());
+            } catch (NullPointerException nullPointerException) {
+                log.debug("No tags are associated with metric provider");
+                log.catching(nullPointerException);
+            }
+        } else {
+            log.debug("No Metric Provider Found");
+        }
+        return tags;
+    }
+
+    /**
+     * Method to retrieve Dynatrace tags
+     *
+     * @param metricProviders
+     */
+    private String[] getDynatraceTags(List<MetricProviderSpec> metricProviders) {
+        String[] tags = {};
+        if (!CollectionUtils.isEmpty(metricProviders) && metricProviders.size() == 1) {
+            try {
+                return CommonUtils.getStringArrayFromMap(
+                        metricProviders.get(0).getDynatraceConnectionProperties().getStaticTags());
             } catch (NullPointerException nullPointerException) {
                 log.debug("No tags are associated with metric provider");
                 log.catching(nullPointerException);

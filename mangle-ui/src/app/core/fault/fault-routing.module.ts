@@ -37,6 +37,7 @@ import { RedisDbDelayComponent } from './db/redis/delay/redis-delay.component';
 import { RedisDbReturnErrorComponent } from './db/redis/returnerror/redis-return-error.component';
 import { RedisDbReturnEmptyComponent } from './db/redis/returnempty/redis-return-empty.component';
 import { RedisDbDropConnectionComponent } from './db/redis/dropconnection/redis-drop-connection.component';
+import { DrainK8SNodeComponent } from './infra/k8s/drain/drain-k8s-nodes.component';
 
 const routes: Routes = [
   {
@@ -50,6 +51,7 @@ const routes: Routes = [
       { path: 'stopservice', component: StopServiceComponent },
       { path: 'docker-state-change', component: DockerStateChangeComponent },
       { path: 'delete-k8s-resource', component: DeleteK8SResourceComponent },
+      { path: 'drain-k8s-node', component: DrainK8SNodeComponent },
       { path: 'k8s-resource-not-ready', component: K8SResourceNotReadyComponent },
       { path: 'k8s-service-unavailable', component: K8SServiceUnavailableComponent },
       { path: 'custom-fault', component: CustomFaultComponent },

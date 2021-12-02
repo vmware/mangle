@@ -39,7 +39,7 @@
 # helper function to obtain java version
 print_java_version()
 {
-  java -version 2>&1 |  grep "version" | cut -d'"' -f2 | cut -b3
+  ${JAVA_HOME}/bin/java -version 2>&1 |  grep "version" | cut -d'"' -f2 | cut -b3
 }
 
 # use BYTEMAN_HOME to locate installed byteman release
@@ -122,4 +122,4 @@ fi
 # attach class will validate arguments
 CP=$CP:${BYTEMAN_HOME}/lib/mangle-byteman.jar:${BYTEMAN_HOME}/lib/mangle-byteman-submit.jar:${BYTEMAN_HOME}/lib/tools.jar
 echo java -Djava.library.path=${BYTEMAN_HOME}/bin ${BYTEMAN_JAVA_OPTS} -classpath $CP org.jboss.byteman.agent.install.Install $*
-java -Djava.library.path=${BYTEMAN_HOME}/bin ${BYTEMAN_JAVA_OPTS} -classpath $CP org.jboss.byteman.agent.install.Install $*
+${JAVA_HOME}/bin/java -Djava.library.path=${BYTEMAN_HOME}/bin ${BYTEMAN_JAVA_OPTS} -classpath $CP org.jboss.byteman.agent.install.Install $*

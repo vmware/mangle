@@ -74,6 +74,7 @@ import com.vmware.mangle.services.controller.EndpointController;
 import com.vmware.mangle.services.deletionutils.CredentialDeletionService;
 import com.vmware.mangle.services.deletionutils.EndpointCertificatesDeletionService;
 import com.vmware.mangle.services.deletionutils.EndpointDeletionService;
+import com.vmware.mangle.services.enums.K8SResource;
 import com.vmware.mangle.services.events.web.CustomEventPublisher;
 import com.vmware.mangle.services.mockdata.CertificatesSpecMockData;
 import com.vmware.mangle.services.mockdata.CredentialsSpecMockData;
@@ -870,5 +871,30 @@ public class EndpointControllerTest {
         ResponseEntity<ErrorDetails> responseEntity = controller.deleteEndpointsByNames(list);
         Assert.assertEquals(responseEntity.getStatusCode(), HttpStatus.PRECONDITION_FAILED);
         verify(endpointDeletionService, times(1)).deleteEndpointByNames(any());
+    }
+
+    /**
+     * Test method for {@link EndpointController#getAllServicesByEndpoint(String)}
+     */
+    @Test
+    public void testGetAllK8sResourcesByEndpointName() throws MangleException {
+        EndpointSpec spec = mockData.k8sEndpointMockData();
+        K8SResource resourceType = K8SResource.DEPLOYMENT;
+        String resourceName = "resource1";
+        List<String> list = new ArrayList<>();
+        list.add(resourceName);
+        when(endpointService.getAllResourcesByEndpointName(any(), any())).thenReturn(list);
+        ResponseEntity<Resources<String>> response =
+                controller.getAllK8sResourcesByEndpointName(spec.getName(), resourceType);
+        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK,
+                "Test failed because the Status code is not 200 OK");
+        Assert.assertNotNull(response.getBody(), "Test failed because the response body is NULL");
+        Collection<String> responseList = response.getBody().getContent();
+        Assert.assertEquals(responseList.size(), 1,
+                "Test failed because the actual number of resources differs from the expected number of resources");
+        Assert.assertEquals(responseList.iterator().next(), resourceName,
+                "Test failed because the first element in the actual result differs from the expected value 'resource1'");
+        verify(endpointService, atLeast(1)).getAllResourcesByEndpointName(any(), any());
+
     }
 }

@@ -14,10 +14,11 @@ package com.vmware.mangle.model.enums;
 /**
  * Enum Class for Metric Provider Type
  * @author ashrimali
+ * @author dbhat
  *
  */
 public enum MetricProviderType {
-    WAVEFRONT, DATADOG, PROMETHEUS;
+    WAVEFRONT, DATADOG, PROMETHEUS, DYNATRACE;
     @Override
     public String toString() {
         return this.name();

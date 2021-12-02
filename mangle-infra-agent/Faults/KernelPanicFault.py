@@ -1,5 +1,6 @@
 from Faults import InfraFault
 from Faults import FaultStatus
+from Faults.helper import FaultHelper
 from multiprocessing import  Process
 import time
 import threading
@@ -15,8 +16,10 @@ class KernelPanicFault(InfraFault.InfraFault):
     def __init__(self, fault_args):
         super().__init__(fault_args)
         self.threadList = []
+        self.sudo_command = ""
 
     def prereq_check(self):
+        self.sudo_command = FaultHelper.is_sudo_available();
         pre_req_error_msg = ''
         file_path = '/proc/sysrq-trigger'
         if os.path.isfile(file_path):
@@ -40,7 +43,7 @@ class KernelPanicFault(InfraFault.InfraFault):
 
     def trigger_injection(self):
         log.info("Injecting Kernel Panic")
-        code = subprocess.call('c>/proc/sysrq-trigger',shell=True)
+        code = subprocess.call(self.sudo_command + 'c>/proc/sysrq-trigger',shell=True)
         print(code)
         if code == 0:
             self.faultinfo.status = FaultStatus.FaultStatus.COMPLETED.name

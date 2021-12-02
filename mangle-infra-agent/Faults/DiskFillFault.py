@@ -1,12 +1,13 @@
 from Faults import InfraFault
 from Faults import FaultStatus
-from multiprocessing import  Process ,Queue
 import time
 import psutil
 import subprocess
 import os
 import logging
 import threading
+import math
+from Faults.helper import FaultHelper
 log = logging.getLogger("python_agent")
 
 
@@ -18,10 +19,7 @@ class DiskFillFault(InfraFault.InfraFault):
         self.sudo_command = ''
 
     def prereq_check(self):
-        res = subprocess.call('sudo -nv >/dev/null 2>&1', shell=True)
-        if res == 0:
-            self.sudo_command = 'sudo'
-            log.info("sudo available")
+        self.sudo_command = FaultHelper.is_sudo_available()
         pre_req_error_msg = ''
         dd_res = subprocess.call(self.sudo_command + ' dd --version >/dev/null 2>&1', shell=True)
         if dd_res != 0:
@@ -75,7 +73,7 @@ class DiskFillFault(InfraFault.InfraFault):
         print("Thread creation done")
 
     def fill_disk(self):
-        total, used, free, use_percentage = psutil.disk_usage(self.fault_args.get("--directoryPath"))
+        total, _, _, use_percentage = psutil.disk_usage(self.fault_args.get("--directoryPath"))
         if use_percentage < 100:
             disk_fill_percentage = float(self.fault_args.get("--diskFillSize"))
             of_cmd = 'of={}/mangleDumpFile.txt'.format(self.fault_args.get("--directoryPath"))
@@ -98,8 +96,12 @@ class DiskFillFault(InfraFault.InfraFault):
                 dd_command = "{} dd if=/dev/zero {} oflag=append bs=1GB conv=notrunc".format(self.sudo_command,of_cmd)
                 cmd_return = subprocess.call(dd_command, shell=True)
                 log.info(str(cmd_return))
+                _, _, _, use_percentage = psutil.disk_usage(self.fault_args.get("--directoryPath"))
+                log.info("Used:{}".format(str(use_percentage)))
                 if cmd_return != 0:
-                    self.faultinfo.status = FaultStatus.FaultStatus.INJECTION_FAILED.name
+                    if math.ceil(use_percentage) != 100 :
+                        self.faultinfo.status = FaultStatus.FaultStatus.INJECTION_FAILED.name
+                        return
                 time.sleep(round(float(self.fault_args.get("--timeout")) / 1000))
         else:
             log.info("Disk is already full")

@@ -17,8 +17,6 @@
 					<a clrVerticalNavLink [routerLink]="['disk-space']" routerLinkActive="active">Disk Space</a>
 					<a clrVerticalNavLink [routerLink]="['kernel-panic']" routerLinkActive="active">Kernel Panic</a>
 					<a clrVerticalNavLink [routerLink]="['clock-skew']" routerLinkActive="active">Clock Skew</a>
-					<a clrVerticalNavLink [routerLink]="['network-partition']" routerLinkActive="active">Network
-						Partition</a>
 					<clr-vertical-nav-group routerLinkActive="active">
 						<span>&emsp;<clr-icon shape="network-globe" clrVerticalNavIcon></clr-icon>Network</span>
 						<clr-vertical-nav-group-children *clrIfExpanded="networkExpand">
@@ -30,6 +28,7 @@
 								Loss</a>
 							<a clrVerticalNavLink [routerLink]="['packet-corruption']"
 								routerLinkActive="active">&emsp;Packet Corruption</a>
+								<a clrVerticalNavLink [routerLink]="['network-partition']" routerLinkActive="active">&emsp;Network Partition</a>
 						</clr-vertical-nav-group-children>
 					</clr-vertical-nav-group>
 					<clr-vertical-nav-group routerLinkActive="active">
@@ -44,6 +43,8 @@
 						<clr-vertical-nav-group-children *clrIfExpanded="k8sExpand">
 							<a clrVerticalNavLink [routerLink]="['delete-k8s-resource']"
 								routerLinkActive="active">&emsp;Delete Resource</a>
+							<a clrVerticalNavLink [routerLink]="['drain-k8s-node']"
+                                routerLinkActive="active">&emsp;Drain Node</a>
 							<a clrVerticalNavLink [routerLink]="['k8s-resource-not-ready']"
 								routerLinkActive="active">&emsp;Resource Not Ready</a>
 							<a clrVerticalNavLink [routerLink]="['k8s-service-unavailable']"

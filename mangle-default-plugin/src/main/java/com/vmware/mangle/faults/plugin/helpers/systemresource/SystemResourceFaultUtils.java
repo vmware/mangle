@@ -41,6 +41,8 @@ import static com.vmware.mangle.utils.constants.FaultConstants.HOURS_SCRIPT_ARG;
 import static com.vmware.mangle.utils.constants.FaultConstants.INFRA_AGENT_NAME;
 import static com.vmware.mangle.utils.constants.FaultConstants.INFRA_SUBMIT;
 import static com.vmware.mangle.utils.constants.FaultConstants.IO_SIZE;
+import static com.vmware.mangle.utils.constants.FaultConstants.JITTER;
+import static com.vmware.mangle.utils.constants.FaultConstants.JITTER_SCRIPT_ARG;
 import static com.vmware.mangle.utils.constants.FaultConstants.KERNELPANIC_INJECTION_COMMAND_WITH_ARGS;
 import static com.vmware.mangle.utils.constants.FaultConstants.KILL_ALL;
 import static com.vmware.mangle.utils.constants.FaultConstants.KILL_PROCESS_REMEDIATION_COMMAND;
@@ -261,7 +263,8 @@ public class SystemResourceFaultUtils {
         return new StringBuilder(String.format(NETWORK_FAULT_INJECTION_COMMAND_WITH_ARGS,
                 FaultName.NETWORKFAULT.getValue(), FAULT_OPERATION_SCRIPT_ARG, faultArgs.get(FAULT_OPERATION),
                 LATENCY_SCRIPT_ARG, faultArgs.get(LATENCY), PERCENTAGE_SCRIPT_ARG, faultArgs.get(PERCENTAGE),
-                NIC_NAME_SCRIPT_ARG, faultArgs.get(NIC_NAME), TIMEOUT_SCRIPT_ARG, faultArgs.get(TIMEOUT_IN_MILLI_SEC)))
+                NIC_NAME_SCRIPT_ARG, faultArgs.get(NIC_NAME), TIMEOUT_SCRIPT_ARG, faultArgs.get(TIMEOUT_IN_MILLI_SEC),
+                JITTER_SCRIPT_ARG,faultArgs.get(JITTER)))
                         .append(StringUtils.hasLength(faultArgs.get(AGENT_PORT))
                                 ? " " + PORT_SCRIPT_ARGUEMENT + " " + faultArgs.get(AGENT_PORT) : "")
                         .toString();

@@ -8,7 +8,6 @@ import { CommonConstants } from 'src/app/common/common.constants';
     providedIn: 'root'
 })
 export class EndpointService {
-
     constructor(private http: HttpClient) { }
 
     public getAllEndpoints(): Observable<any> {
@@ -179,5 +178,12 @@ export class EndpointService {
 
     public updateDatabaseCredential(credential: any) {
         return this.http.put(ServiceConstants.ENDPOINTS_CREDENTIALS_DATABASE, credential);
+    }
+
+    public getK8sResources(epName: any,resourceType: any) : Observable<any> {
+        return this.http.get(ServiceConstants.ENDPOINTS_K8S_RESOURCES + ServiceConstants.FILE_SEPARATOR + CommonConstants.QUESTION_MARK + CommonConstants.endpointName + CommonConstants.EQUALS_TO +  epName + CommonConstants.AND_OP + CommonConstants.resourceType + CommonConstants.EQUALS_TO + resourceType);
+    }
+    public getAllNodes(epName: any): Observable<any> {
+        return this.http.get(ServiceConstants.ENDPOINTS_K8S_READY_NODES + "?endpointName=" + epName);
     }
 }

@@ -19,6 +19,7 @@ import lombok.Getter;
 
 import com.vmware.mangle.cassandra.model.faults.specs.ClockSkewSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.K8SDeleteResourceFaultSpec;
+import com.vmware.mangle.cassandra.model.faults.specs.K8SDrainNodeFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.K8SResourceNotReadyFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.K8SServiceUnavailableFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.KernelPanicSpec;
@@ -62,6 +63,9 @@ public class CommonConstants {
     public static final String CERTIFICATES_CREATED = "Created certificates successfully";
     public static final String CERTIFICATES_DELETED = "Deleted certificates successfully";
     public static final String CONTAINERS_RESULT_FOUND = "Successfully retrieved all the containers";
+    public static final String RESOURCES_RESULT_FOUND = "Successfully retrieved all the K8s resources of type ";
+    public static final String READY_NODES_RESULT_FOUND = "Successfully retrieved all Ready nodes";
+
 
     public static final String ENDPOINTS_DELETED = "Endpoints deleted successfully";
     public static final String TASKS_DELETED = "Tasks deleted successfully";
@@ -96,6 +100,8 @@ public class CommonConstants {
     public static final String FAULT_OPERATION_ARG = ARGUEMENT_PREFIX + FAULT_OPERATION;
     public static final String LATENCY = "latency";
     public static final String LATENCY_ARG = ARGUEMENT_PREFIX + LATENCY;
+    public static final String JITTER = "jitter";
+    public static final String JITTER_ARG = ARGUEMENT_PREFIX + JITTER;
     public static final String PERCENTAGE = "percentage";
     public static final String PERCENTAGE_ARG = ARGUEMENT_PREFIX + PERCENTAGE;
     public static final String NIC_NAME = "nicName";
@@ -164,10 +170,11 @@ public class CommonConstants {
             "Provide valid db transaction error code, refer get api : faults/db-transaction-error-code";
 
     @Getter
-    private static final List<String> skipToValidateEndpointTypeClass =
-            new ArrayList<>(Arrays.asList(K8SServiceUnavailableFaultSpec.class.getName(),
+    private static final List<String> skipToValidateEndpointTypeClass = new ArrayList<>(
+            Arrays.asList(K8SServiceUnavailableFaultSpec.class.getName(), K8SDrainNodeFaultSpec.class.getName(),
                     K8SResourceNotReadyFaultSpec.class.getName(), K8SDeleteResourceFaultSpec.class.getName(),
                     KernelPanicSpec.class.getName(), ClockSkewSpec.class.getName(), RedisDelayFaultSpec.class.getName(),
                     RedisReturnErrorFaultSpec.class.getName(), RedisFaultSpec.class.getName(),
                     RedisDropConnectionFaultSpec.class.getName(), NetworkPartitionFaultSpec.class.getName()));
+
 }

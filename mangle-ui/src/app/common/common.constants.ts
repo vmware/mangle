@@ -13,6 +13,8 @@ export class CommonConstants {
     public static readonly password = "password";
     public static readonly privateKey = "privateKey";
     public static readonly credentialNames = "credentialNames";
+    public static readonly endpointName = "endpointName";
+    public static readonly resourceType = "resourceType";
     public static readonly endpointNames = "endpointNames";
     public static readonly jobIds = "jobIds";
     public static readonly delete_associated_tasks = "delete-associated-tasks";
@@ -47,6 +49,7 @@ export class CommonConstants {
     public static readonly STOP_SERVICE_FAULT_SPEC = "com.vmware.mangle.cassandra.model.faults.specs.StopServiceFaultSpec";
     public static readonly DOCKER_FAULT_SPEC = "com.vmware.mangle.cassandra.model.faults.specs.DockerFaultSpec";
     public static readonly K8S_DELETE_FAULT_SPEC = "com.vmware.mangle.cassandra.model.faults.specs.K8SDeleteResourceFaultSpec";
+    public static readonly K8S_DRAIN_NODE_FAULT_SPEC = "com.vmware.mangle.cassandra.model.faults.specs.K8SDrainNodeFaultSpec";
     public static readonly K8S_NOT_READY_FAULT_SPEC = "com.vmware.mangle.cassandra.model.faults.specs.K8SResourceNotReadyFaultSpec";
     public static readonly K8S_SERVICE_UNAVAILABLE_SPEC = "com.vmware.mangle.cassandra.model.faults.specs.K8SServiceUnavailableFaultSpec";
     public static readonly VCENTER_FAULT_SPEC = "com.vmware.mangle.cassandra.model.faults.specs.VCenterFaultTriggerSpec";
@@ -107,6 +110,7 @@ export class CommonConstants {
     public static readonly STOP_SERVICE_FAULT_URL = "core/fault/stopservice";
     public static readonly DOCKER_FAULT_URL = "core/fault/docker-state-change";
     public static readonly K8S_DELETE_FAULT_URL = "core/fault/delete-k8s-resource";
+    public static readonly K8S_DRAIN_NODE_FAULT_URL = "core/fault/drain-k8s-node";
     public static readonly K8S_NOT_READY_FAULT_URL = "core/fault/k8s-resource-not-ready";
     public static readonly K8S_SERVICE_UNAVAILABLE_URL = "core/fault/k8s-service-unavailable";
     public static readonly VCENTER_DISK_FAULT_URL = "core/fault/vcenter/vm-storage";
@@ -159,7 +163,9 @@ export class CommonConstants {
     public static readonly PAST = "PAST";
     public static readonly WAVEFRONT = "WAVEFRONT";
     public static readonly DATADOG = "DATADOG";
+    public static readonly DYNATRACE = "DYNATRACE"
     public static readonly DATABASE = "DATABASE";
+    public static readonly NODE = "NODE";
 
     public static readonly metricConfigName = "metricConfigName";
 
@@ -169,4 +175,6 @@ export class CommonConstants {
 
     public static readonly QUERY_NAME = "queryName";
     public static readonly SERVICE_NAME = "deleteByName";
+    public static readonly DYNATRACE_ARTIFACT = "artifact";
+    public static readonly HYPHEN = "-";
 }

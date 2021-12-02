@@ -12,6 +12,7 @@
 package com.vmware.mangle.cassandra.model.faults.specs;
 
 import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
@@ -45,7 +46,11 @@ public class NetworkFaultSpec extends CommandExecutionFaultSpec {
     private NetworkFaultType faultOperation;
 
     @ApiModelProperty(value = "Integer value which represents the latency in milliseconds.Required only for network Latency Fault", example = "1000")
+    @Min(value = 0, message = "Latency value must be an integer and greater than 0" )
     private int latency;
+    @ApiModelProperty(value = "Double value which represents the jitter in milliseconds.Required only for network Latency Fault", example = "100")
+    @Min(value = 0, message = "Jitter value is optional. It must be an integer and can have value greater than 0")
+    private int jitter;
     @Max(100)
     @ApiModelProperty(value = "Integer value between 1 to 100 representing % fault on packets.Required incase of duplication,corruption and loss", example = "80")
     private int percentage;

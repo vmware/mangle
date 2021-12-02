@@ -37,4 +37,16 @@ public class MockDataConstants {
     public static final String TASK_DESCRIPTION = "dummyTaskDescription";
     public static final String TASK_NAME1 = "dummy1TaskName";
     public static final String TASK_DESCRIPTION1 = "dummy1TaskDescription";
+
+    public static final String DYNATRACE_API_KEY =
+            "dt0c01.ST2EY72KQINMH574WMNVI7YN.G3DFPBEJYMODIDAEX454M7YWBUVEFOWKPRVMWFASS64NFH52PX6BNDVFFM572RZM";
+    public static final String DYNATRACE_DEVICE_ID = "sample";
+    public static final String DYNATRACE_URI = "https://mySampleEnv.live.dynatrace.com";
+    public static final String DYNATRACE_INSTANCE_NAME = "dynatrace_trail_instance";
+    public static final String DYNATRACE_ID = "abcd-efgh-23";
+
+    public static final String INVALID_URI_MULTIPLE_FORWARD_SLASHES = "https://my-metric-provider.eng.vmware.com////";
+    public static final String VALID_URI = "https://my-metric-provider.eng.vmware.com";
+    public static final String INVALID_URI_SINGLE_FORWARD_SLASH = "https://my-metric-provider.eng.vmware.com/";
+    public static final String DYNATRACE_METRIC_PROVIDER_NAME = "mangle-dynatrace-instance";
 }

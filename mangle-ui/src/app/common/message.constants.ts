@@ -56,6 +56,7 @@ export class MessageConstants {
     public static readonly METRIC_PROVIDER_ADD = " metric provider registered successfully.";
     public static readonly METRIC_PROVIDER_UPDATE = " metric provider updated successfully.";
     public static readonly METRIC_PROVIDER_DELETE = " metric provider deleted successfully.";
+    public static readonly METRIC_PROVIDER_DELETE_ACTIVE = "Failed to delete the active metric provider, please disable SEND METRICS and try again.";
     public static readonly METRIC_PROVIDER_STATUS_UPDATE = " metric provider updated as active.";
     public static readonly METRIC_PROVIDER_DiSABLED = " metric provider is disabled.";
     public static readonly METRIC_PROVIDER_COLLECTION_UPDATE = "Updated metric collection status successfully.";

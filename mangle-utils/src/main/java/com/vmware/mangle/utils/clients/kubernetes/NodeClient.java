@@ -47,8 +47,7 @@ public class NodeClient {
     @SuppressWarnings("deprecation")
     public String getPodCIDR(String nodeName) {
         log.info("Getting Pod CIDR of node " + nodeName);
-        return CommandUtils.runCommand(kubectl + String.format(GET_NODE_PODCIDR, nodeName))
-                .getCommandOutput().trim();
+        return CommandUtils.runCommand(kubectl + String.format(GET_NODE_PODCIDR, nodeName)).getCommandOutput().trim();
     }
 
     /**
@@ -58,8 +57,7 @@ public class NodeClient {
      */
     public Map<String, String> getNodeandExternalIPMap() {
         log.info("Creating map of Node and ExternalIP of kubernetes cluster");
-        String commandOutput =
-                CommandUtils.runCommand(kubectl + GET_NODE_EXTERNAL_IP_MAP).getCommandOutput();
+        String commandOutput = CommandUtils.runCommand(kubectl + GET_NODE_EXTERNAL_IP_MAP).getCommandOutput();
         List<String> commandOutputList = Arrays.asList(commandOutput.split("\\s+"));
         Map<String, String> nodeMap = new HashMap<>();
         commandOutputList.forEach(item -> nodeMap.put(item.replaceAll("^\\[|\\]$", "").split(",")[0],
@@ -73,9 +71,9 @@ public class NodeClient {
      * @return list of nodes
      */
     public List<String> checkAvailabilityNode() {
-        log.info("Get the Nodes which have the 'Ready' status as False");
-        return Arrays.asList(CommandUtils.runCommand(kubectl + CHECK_AVAILABILITY_NODE)
-                .getCommandOutput().split("\\s+"));
+        log.info("Get the Nodes which have the 'Ready' status as True");
+        return Arrays
+                .asList(CommandUtils.runCommand(kubectl + CHECK_AVAILABILITY_NODE).getCommandOutput().split("\\s+"));
     }
 
 }

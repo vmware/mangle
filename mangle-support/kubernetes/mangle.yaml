@@ -1,12 +1,9 @@
-apiVersion: apps/v1
+apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: mangle
 spec:
   replicas: 1
-  selector:
-    matchLabels:
-      app: mangle
   template:
     metadata:
       labels:
@@ -24,7 +21,7 @@ spec:
         emptyDir: {}
       containers:
       - name: mangle
-        image: mangleuser/mangle:3.0.0
+        image: mangleuser/mangle:2.0
         livenessProbe:
          httpGet:
            path: "/mangle-services/application/health"

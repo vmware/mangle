@@ -35,12 +35,14 @@ import com.vmware.mangle.task.framework.helpers.AbstractCommandExecutionTaskHelp
 import com.vmware.mangle.task.framework.metric.providers.MetricProviderClientFactory;
 import com.vmware.mangle.utils.PopulateFaultEventData;
 import com.vmware.mangle.utils.clients.metricprovider.DatadogClient;
+import com.vmware.mangle.utils.clients.metricprovider.DynatraceApiClient;
 import com.vmware.mangle.utils.clients.metricprovider.MetricProviderClient;
 import com.vmware.mangle.utils.clients.metricprovider.WaveFrontServerClient;
 import com.vmware.mangle.utils.constants.ErrorConstants;
 import com.vmware.mangle.utils.constants.MetricProviderConstants;
 import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.helpers.notifiers.DatadogEventNotifier;
+import com.vmware.mangle.utils.helpers.notifiers.DynatraceEventNotifier;
 import com.vmware.mangle.utils.helpers.notifiers.MetricProviderNotifier;
 import com.vmware.mangle.utils.helpers.notifiers.WavefrontNotifier;
 
@@ -83,6 +85,10 @@ public class MetricProviderHelper {
             if (client instanceof WaveFrontServerClient) {
                 WaveFrontServerClient wavefrontClient = (WaveFrontServerClient) client;
                 return new WavefrontNotifier(wavefrontClient);
+            }
+            if (client instanceof DynatraceApiClient) {
+                DynatraceApiClient dynatraceApiClient = (DynatraceApiClient) client;
+                return new DynatraceEventNotifier(dynatraceApiClient);
             }
             return null;
         } catch (MangleException e) {

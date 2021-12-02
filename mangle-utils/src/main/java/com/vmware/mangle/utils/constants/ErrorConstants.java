@@ -11,7 +11,6 @@
 
 package com.vmware.mangle.utils.constants;
 
-
 /**
  * Insert your comment for ErrorConstants here
  *
@@ -170,6 +169,10 @@ public class ErrorConstants {
     public static final String COMMAND_EXEC_EXIT_CODE_ERROR =
             "Execution of Command: %s failed. errorCode: %s output: %s";
     public static final String K8S_CONTAINER_NOT_FOUND = "Error from server (BadRequest)";
+    public static final String K8S_INVALID_ENDPOINT = "Invalid K8sEndpoint";
+    public static final String K8S_INVALID_RESOURCE_TYPE = "Invalid K8S Resource Type";
+    public static final String PODS_NOT_SUPPORTED = "Retrieval of Pods is not supported";
+    public static final String ACCESS_FORBIDDEN_RESOURCE_TYPE = "Forbidden, Error from Server. The credentials provided doesn't have privileges to access resources of type ";
 
     // Docker endpoint error constants
 
@@ -265,5 +268,6 @@ public class ErrorConstants {
     public static final String REFER_LOG_FOR_MORE_DETAILS = " Please refer the log for more details.";
     public static final String RETRYING_FAILED = " Multiple retying attempt wasn't even successful. ";
     public static final String RETRYING = " Retrying ";
+    public static final String NODE_NAME = "NodeName";
 
 }

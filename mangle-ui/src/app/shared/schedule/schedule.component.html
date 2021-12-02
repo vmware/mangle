@@ -1,5 +1,7 @@
 <div class="form-group">
-    <label><b>Schedule</b></label>
+    <label>
+        <b>Schedule</b>
+    </label>
 </div>
 <br />
 <fieldset ngModelGroup="schedule">
@@ -14,6 +16,7 @@
                 <input type="radio" id="cronExpression" name="scheduleBody" value="cronExpression" class="clr-radio" (click)="setScheduleVal($event.target);">
                 <label for="cronExpression" class="clr-control-label">Recurrence</label>
             </div>
+            <a href="javascript:void(0);" (click)="clearSelected();">Clear Selection</a>
         </div>
     </div>
     <div class="form-group" [hidden]="timeInMillisecondsHidden">

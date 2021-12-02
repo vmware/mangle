@@ -41,6 +41,11 @@ export class FaultService {
         return this.http.post(ServiceConstants.FAULTS_K8S_DELETE_RESOURCE, faultData);
     }
 
+    public executeK8SDrainNodeFault(faultData): Observable<any> {
+        this.removeExtraArgs(faultData);
+        return this.http.post(ServiceConstants.FAULTS_DRAIN_K8S_NODE, faultData);
+    }
+
     public executeK8SResourceNotReadyFault(faultData): Observable<any> {
         this.removeExtraArgs(faultData);
         return this.http.post(ServiceConstants.FAULTS_K8S_RESOURCE_NOT_READY, faultData);

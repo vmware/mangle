@@ -44,6 +44,7 @@ import { RedisDbDelayComponent } from "./db/redis/delay/redis-delay.component";
 import { RedisDbReturnErrorComponent } from "./db/redis/returnerror/redis-return-error.component";
 import { RedisDbReturnEmptyComponent } from "./db/redis/returnempty/redis-return-empty.component";
 import { RedisDbDropConnectionComponent } from "./db/redis/dropconnection/redis-drop-connection.component";
+import { DrainK8SNodeComponent } from './infra/k8s/drain/drain-k8s-nodes.component';
 
 @NgModule({
   declarations: [
@@ -57,6 +58,7 @@ import { RedisDbDropConnectionComponent } from "./db/redis/dropconnection/redis-
     StopServiceComponent,
     DockerStateChangeComponent,
     DeleteK8SResourceComponent,
+    DrainK8SNodeComponent,
     K8SResourceNotReadyComponent,
     K8SServiceUnavailableComponent,
     DbConnectionLeakComponent,

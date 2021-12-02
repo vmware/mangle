@@ -119,7 +119,7 @@ public class VCenterVMController {
      * @return: task id
      */
     @SuppressWarnings("unchecked")
-    @PostMapping(value = "/vm/{vmName}", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @PostMapping(value = "/vm/{vmName:.+}", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     @ApiOperation(value = "Get list of VMs matching the given filter")
     public ResponseEntity<List<VM>> getVMByName(@RequestBody VCenterSpec vCenterSpec,
             @PathVariable(value = "vmName", required = true) String vmName,
@@ -137,7 +137,7 @@ public class VCenterVMController {
     }
 
     @SuppressWarnings("unchecked")
-    @PostMapping(value = "/vm/{vmName}/poweroff", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @PostMapping(value = "/vm/{vmName:.+}/poweroff", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     @ApiOperation(value = "Power off the VM")
     public ResponseEntity<VCenterTaskTriggeredResponse> shutDownVMByName(@PathVariable String vmName,
             @RequestBody VCenterSpec vCenterSpec, @RequestParam(value = "dcName", required = false) String dcName,
@@ -175,7 +175,7 @@ public class VCenterVMController {
      *             : if authentication fails, vm doesn't exist, vm already turned on
      * @return: task id
      */
-    @PostMapping(value = "/vm/{vmName}/poweron", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @PostMapping(value = "/vm/{vmName:.+}/poweron", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     @ApiOperation(value = "Power on the VM")
     public ResponseEntity<VCenterTaskTriggeredResponse> turnOnVMByName(@PathVariable String vmName,
             @RequestBody VCenterSpec vCenterSpec, @RequestParam(value = "dcName", required = false) String dcName,
@@ -208,7 +208,7 @@ public class VCenterVMController {
      *             : if authentication fails, vm doesn't exist
      * @return: task id
      */
-    @PostMapping(value = "/vm/{vmName}/reset", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @PostMapping(value = "/vm/{vmName:.+}/reset", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     @ApiOperation(value = "Reset the VM")
     public ResponseEntity<VCenterTaskTriggeredResponse> resetVMByName(@PathVariable String vmName,
             @RequestBody VCenterSpec vCenterSpec, @RequestParam(value = "dcName", required = false) String dcName,
@@ -241,7 +241,7 @@ public class VCenterVMController {
      *             : if authentication fails, vm doesn't exist, VM is already powered off/suspended
      * @return: task id
      */
-    @PostMapping(value = "/vm/{vmName}/suspend", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @PostMapping(value = "/vm/{vmName:.+}/suspend", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     @ApiOperation(value = "Suspend the VM")
     public ResponseEntity<VCenterTaskTriggeredResponse> suspendVMByName(@PathVariable String vmName,
             @RequestBody VCenterSpec vCenterSpec, @RequestParam(value = "dcName", required = false) String dcName,
@@ -277,7 +277,7 @@ public class VCenterVMController {
      *             : if authentication fails, vm doesn't exist, VM is already powered off/suspended,
      *             disk doesn't exist
      */
-    @PostMapping(value = "/vm/{vmName}/disk/{diskId}/disconnect", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @PostMapping(value = "/vm/{vmName:.+}/disk/{diskId}/disconnect", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     @ApiOperation(value = "Disconnect disk from VM")
     public ResponseEntity<VCenterTaskTriggeredResponse> deleteDiskFromVM(@PathVariable String vmName,
             @PathVariable String diskId, @RequestBody VCenterSpec vCenterSpec,
@@ -311,7 +311,7 @@ public class VCenterVMController {
      * @throws MangleException
      *             : if authentication fails, VM doesn't exist, nic doesn't exist
      */
-    @PostMapping(value = "/vm/{vmName}/disk/{diskId}/connect", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @PostMapping(value = "/vm/{vmName:.+}/disk/{diskId}/connect", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     @ApiOperation(value = "Connect disk to VM")
     public ResponseEntity<VCenterTaskTriggeredResponse> connectDiskToVM(@PathVariable String vmName,
             @PathVariable String diskId, @RequestBody VMDiskRequestBody vmDiskRequestBody,
@@ -349,7 +349,7 @@ public class VCenterVMController {
      *             : if authentication fails, vm doesn't exist, VM is already powered off/suspended, nic
      *             doesn't exist
      */
-    @PostMapping(value = "/vm/{vmName}/nic/{nicId}/disconnect", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @PostMapping(value = "/vm/{vmName:.+}/nic/{nicId}/disconnect", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     @ApiOperation(value = "Disconnect NIC from VM")
     public ResponseEntity<VCenterTaskTriggeredResponse> disconnectNicFromVM(@PathVariable String vmName,
             @PathVariable String nicId, @RequestBody VCenterSpec vCenterSpec,
@@ -384,7 +384,7 @@ public class VCenterVMController {
      * @throws MangleException
      *             : if authentication fails, VM doesn't exist, nic doesn't exist
      */
-    @PostMapping(value = "/vm/{vmName}/nic/{nicId}/connect", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @PostMapping(value = "/vm/{vmName:.+}/nic/{nicId}/connect", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     @ApiOperation(value = "Connect NIC from VM")
     public ResponseEntity<VCenterTaskTriggeredResponse> connectNicToVM(@PathVariable String vmName,
             @PathVariable String nicId, @RequestBody VCenterSpec vCenterSpec,

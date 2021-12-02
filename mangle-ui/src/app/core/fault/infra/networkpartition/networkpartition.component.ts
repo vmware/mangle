@@ -119,7 +119,13 @@ export class NetworkPartitionComponent extends FaultCommons implements AfterView
 
   public updateHostList() {
     if (this.host.trim().length > 0 && this.hostList.indexOf(this.host) < 0) {
-      this.hostList.push(this.host);
+      var regEx = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+      if(this.host.match(regEx)){
+        this.hostList.push(this.host);
+      } else {
+        this.isErrorMessage = true;
+        this.alertMessage = "Invalid IP address";
+      }
     }
     this.host = "";
   }

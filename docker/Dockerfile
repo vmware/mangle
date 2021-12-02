@@ -32,7 +32,7 @@ RUN echo $TOMCAT_DIR \
 COPY docker/start.sh $TOMCAT_DIR
 COPY docker/generateCert.sh $OPT_DIR/vmware/mangle/cert/
 COPY mangle-services/target/mangle-services.jar $TOMCAT_DIR/mangle-services.jar
-COPY mangle-default-plugin/target/mangle-default-plugin-3.0.0.zip $TOMCAT_DIR/plugins/mangle-default-plugin-3.0.0.zip
+COPY mangle-default-plugin/target/mangle-default-plugin-3.5.0.zip $TOMCAT_DIR/plugins/mangle-default-plugin-3.5.0.zip
 
 # Changing ownership of all files\directories of OPT_DIR
 RUN chown -R mangle:mangle $OPT_DIR

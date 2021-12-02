@@ -34,9 +34,11 @@ import com.vmware.mangle.cassandra.model.endpoint.EndpointSpec;
 import com.vmware.mangle.cassandra.model.endpoint.EndpointSpecV1;
 import com.vmware.mangle.cassandra.model.endpoint.VCenterAdapterDetails;
 import com.vmware.mangle.model.enums.EndpointType;
+import com.vmware.mangle.services.enums.K8SResource;
 import com.vmware.mangle.services.repository.EndpointRepository;
 import com.vmware.mangle.task.framework.endpoint.EndpointClientFactory;
 import com.vmware.mangle.utils.clients.docker.CustomDockerClient;
+import com.vmware.mangle.utils.clients.kubernetes.KubernetesCommandLineClient;
 import com.vmware.mangle.utils.constants.ErrorConstants;
 import com.vmware.mangle.utils.exceptions.MangleException;
 import com.vmware.mangle.utils.exceptions.MangleRuntimeException;
@@ -358,4 +360,49 @@ public class EndpointService {
         return this.getEndpointByName(endpointSpec.getDatabaseConnectionProperties().getParentEndpointName());
     }
 
+    public List<String> getAllResourcesByEndpointName(String endPointName, K8SResource resourceType) throws MangleException {
+        log.info("Getting all K8s Resources by endPointName : " + endPointName);
+        if (endPointName != null && !endPointName.isEmpty() && resourceType != null) {
+            Optional<EndpointSpec> endpointSpec = endpointRepository.findByName(endPointName);
+            if (!endpointSpec.isPresent()) {
+                throw new MangleException(ErrorConstants.NO_RECORD_FOUND, ErrorCode.NO_RECORD_FOUND,
+                        ErrorConstants.ENDPOINT_NAME, endPointName);
+            }
+            if (endpointSpec.get().getEndPointType() != (EndpointType.K8S_CLUSTER)) {
+                throw new MangleException(ErrorConstants.K8S_INVALID_ENDPOINT, ErrorCode.K8S_INVALID_ENDPOINT,
+                        endPointName);
+            }
+            CredentialsSpec credentialSpec =
+                    credentialService.getCredentialByName(endpointSpec.get().getCredentialsName());
+            KubernetesCommandLineClient kubernetesClient = (KubernetesCommandLineClient) endpointClientFactory
+                    .getEndPointClient(credentialSpec, endpointSpec.get());
+            List<String> k8sResources =  kubernetesClient.getResourcesByType(resourceType);
+            log.info("Services retrieved from K8s endpoint : " + endPointName + ": " + k8sResources.toString());
+            return k8sResources;
+        }
+        return Collections.emptyList();
+    }
+
+    public List<String> getAllK8SNodesByEndpointName(String endPointName) throws MangleException {
+        log.info("Getting all K8s nodes by endPointName : " + endPointName);
+        if (endPointName != null && !endPointName.isEmpty()) {
+            Optional<EndpointSpec> endpointSpec = endpointRepository.findByName(endPointName);
+            if (!endpointSpec.isPresent()) {
+                throw new MangleException(ErrorConstants.NO_RECORD_FOUND, ErrorCode.NO_RECORD_FOUND,
+                        ErrorConstants.ENDPOINT_NAME, endPointName);
+            }
+            if (endpointSpec.get().getEndPointType() != (EndpointType.K8S_CLUSTER)) {
+                throw new MangleException(ErrorConstants.K8S_INVALID_ENDPOINT, ErrorCode.K8S_INVALID_ENDPOINT,
+                        endPointName);
+            }
+            CredentialsSpec credentialsSpec =
+                    credentialService.getCredentialByName(endpointSpec.get().getCredentialsName());
+            if (endpointSpec.get().getEndPointType().equals(EndpointType.K8S_CLUSTER)) {
+                KubernetesCommandLineClient kubernetesClient = (KubernetesCommandLineClient) endpointClientFactory
+                        .getEndPointClient(credentialsSpec, endpointSpec.get());
+                return kubernetesClient.getNodeClient().checkAvailabilityNode();
+            }
+        }
+        return Collections.emptyList();
+    }
 }

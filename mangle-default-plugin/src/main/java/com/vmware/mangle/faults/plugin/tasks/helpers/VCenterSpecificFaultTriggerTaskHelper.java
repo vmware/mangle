@@ -144,7 +144,7 @@ public class VCenterSpecificFaultTriggerTaskHelper<T extends VCenterFaultTrigger
         int childCounter = 1;
         for (String vmId : listOfVMs) {
             Task<S> childTask;
-            S childFaultSpec = createVCenterStateFaultSpec(task);
+            S childFaultSpec = createVCenterStateFaultSpec(task, vmId);
             childFaultSpec.setArgs(getVCenterVMStateFaultSpecificArgs(childFaultSpec, vmId));
             childTask = vCenterSpecificFaultTaskHelper.init(childFaultSpec);
             childTask.setTaskName(childTask.getTaskName() + "-" + childCounter++);
@@ -173,7 +173,7 @@ public class VCenterSpecificFaultTriggerTaskHelper<T extends VCenterFaultTrigger
         int childCounter = 1;
         for (String nicId : vmNics) {
             Task<S> childTask;
-            S childFaultSpec = createVCenterNicFaultSpec(task);
+            S childFaultSpec = createVCenterNicFaultSpec(task, vmId);
             childFaultSpec.setArgs(getVCenterVMNicFaultSpecificArgs(childFaultSpec, vmId, nicId));
             childTask = vCenterSpecificFaultTaskHelper.init(childFaultSpec);
             childTask.setTaskName(childTask.getTaskName() + "-" + childCounter++);
@@ -202,7 +202,7 @@ public class VCenterSpecificFaultTriggerTaskHelper<T extends VCenterFaultTrigger
         int childCounter = 1;
         for (String diskId : vmDisks) {
             Task<S> childTask;
-            S childFaultSpec = createVCenterDiskFaultSpec(task);
+            S childFaultSpec = createVCenterDiskFaultSpec(task, vmId);
             childFaultSpec.setArgs(getVCenterVMDiskFaultSpecificArgs(childFaultSpec, vmId, diskId));
             childTask = vCenterSpecificFaultTaskHelper.init(childFaultSpec);
             childTask.setTaskName(childTask.getTaskName() + "-" + childCounter++);
@@ -249,7 +249,7 @@ public class VCenterSpecificFaultTriggerTaskHelper<T extends VCenterFaultTrigger
         return (S) hostFaultSpec;
     }
 
-    private S createVCenterStateFaultSpec(Task<T> task) {
+    private S createVCenterStateFaultSpec(Task<T> task, String vmId) {
         VMStateFaultSpec VMStateFaultSpec = new VMStateFaultSpec();
         VMStateFaultSpec parentSpec = (VMStateFaultSpec) task.getTaskData().getFaultSpec();
         VMStateFaultSpec.setEnableRandomInjection(parentSpec.isEnableRandomInjection());
@@ -262,10 +262,11 @@ public class VCenterSpecificFaultTriggerTaskHelper<T extends VCenterFaultTrigger
         VMStateFaultSpec.setTags(parentSpec.getTags());
         VMStateFaultSpec.setFilters(parentSpec.getFilters());
         VMStateFaultSpec.setTaskName(parentSpec.getTaskName());
+        VMStateFaultSpec.setVmName(vmId);
         return (S) VMStateFaultSpec;
     }
 
-    private S createVCenterNicFaultSpec(Task<T> task) {
+    private S createVCenterNicFaultSpec(Task<T> task, String vmId) {
         VMNicFaultSpec VMNicFaultSpec = new VMNicFaultSpec();
         VMNicFaultSpec parentSpec = (VMNicFaultSpec) task.getTaskData().getFaultSpec();
         VMNicFaultSpec.setEnableRandomInjection(parentSpec.isEnableRandomInjection());
@@ -278,10 +279,11 @@ public class VCenterSpecificFaultTriggerTaskHelper<T extends VCenterFaultTrigger
         VMNicFaultSpec.setTags(parentSpec.getTags());
         VMNicFaultSpec.setFilters(parentSpec.getFilters());
         VMNicFaultSpec.setTaskName(parentSpec.getTaskName());
+        VMNicFaultSpec.setVmName(vmId);
         return (S) VMNicFaultSpec;
     }
 
-    private S createVCenterDiskFaultSpec(Task<T> task) {
+    private S createVCenterDiskFaultSpec(Task<T> task, String vmId) {
         VMDiskFaultSpec VMDiskFaultSpec = new VMDiskFaultSpec();
         VMDiskFaultSpec parentSpec = (VMDiskFaultSpec) task.getTaskData().getFaultSpec();
         VMDiskFaultSpec.setEnableRandomInjection(parentSpec.isEnableRandomInjection());
@@ -294,6 +296,7 @@ public class VCenterSpecificFaultTriggerTaskHelper<T extends VCenterFaultTrigger
         VMDiskFaultSpec.setTags(parentSpec.getTags());
         VMDiskFaultSpec.setFilters(parentSpec.getFilters());
         VMDiskFaultSpec.setTaskName(parentSpec.getTaskName());
+        VMDiskFaultSpec.setVmName(vmId);
         return (S) VMDiskFaultSpec;
     }
 

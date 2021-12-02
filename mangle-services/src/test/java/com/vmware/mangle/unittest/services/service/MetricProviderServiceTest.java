@@ -32,6 +32,7 @@ import java.util.Properties;
 import io.micrometer.core.instrument.MeterRegistry.Config;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.datadog.DatadogMeterRegistry;
+import io.micrometer.dynatrace.DynatraceMeterRegistry;
 import io.micrometer.wavefront.WavefrontMeterRegistry;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -53,9 +54,11 @@ import com.vmware.mangle.cassandra.model.metricprovider.MetricProviderSpec;
 import com.vmware.mangle.model.enums.MetricProviderType;
 import com.vmware.mangle.services.MetricProviderService;
 import com.vmware.mangle.services.config.MangleDatadogConfig;
+import com.vmware.mangle.services.config.MangleDynatraceConfig;
 import com.vmware.mangle.services.config.MangleMetricsConfiguration;
 import com.vmware.mangle.services.config.MangleWavefrontConfig;
 import com.vmware.mangle.services.mockdata.MetricProviderMockData;
+import com.vmware.mangle.services.mockdata.MockDataConstants;
 import com.vmware.mangle.services.repository.AdminConfigurationRepository;
 import com.vmware.mangle.services.repository.MetricProviderRepository;
 import com.vmware.mangle.task.framework.metric.providers.MetricProviderClientFactory;
@@ -71,6 +74,7 @@ import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
  * Unit Tests Case for MetricProviderService.
  *
  * @author ashrimali
+ * @author dbhat
  */
 
 @PrepareForTest({ MetricProviderClientFactory.class })
@@ -99,7 +103,13 @@ public class MetricProviderServiceTest extends PowerMockTestCase {
     private MangleWavefrontConfig mangelWavefrontConfig;
 
     @Mock
+    private MangleDynatraceConfig mangleDynatraceConfig;
+
+    @Mock
     private WavefrontMeterRegistry wavefrontMeterRegistry;
+
+    @Mock
+    private DynatraceMeterRegistry dynatraceMeterRegistry;
 
     @Mock
     private AdminConfigurationRepository adminConfigurationRepository;
@@ -116,11 +126,15 @@ public class MetricProviderServiceTest extends PowerMockTestCase {
 
     private MetricProviderSpec wavefrontSpec;
 
+    private MetricProviderSpec dynatraceSpec;
+
     private Properties properties;
 
     private String wavefrontName;
 
     private String datadogName;
+
+    private String dynatraceName;
 
     /**
      * @throws java.lang.Exception
@@ -131,8 +145,10 @@ public class MetricProviderServiceTest extends PowerMockTestCase {
         this.properties = ReadProperty.readProperty(Constants.MOCKDATA_FILE);
         datadogSpec = mockData.metricProviderDatadog();
         wavefrontSpec = mockData.metricProviderWavefront();
+        dynatraceSpec = mockData.getMetricProviderSpecForDynatrace();
         wavefrontName = properties.getProperty("wavefrontMetricReporterName");
         datadogName = properties.getProperty("datadogMetricReporterName");
+        dynatraceName = MockDataConstants.DYNATRACE_INSTANCE_NAME;
     }
 
     /**
@@ -143,6 +159,7 @@ public class MetricProviderServiceTest extends PowerMockTestCase {
         this.mockData = null;
         this.datadogSpec = null;
         this.wavefrontSpec = null;
+        this.dynatraceSpec = null;
     }
 
     /**
@@ -162,8 +179,9 @@ public class MetricProviderServiceTest extends PowerMockTestCase {
         List<MetricProviderSpec> metricProviderSpecList = new ArrayList<>();
         metricProviderSpecList.add(wavefrontSpec);
         metricProviderSpecList.add(datadogSpec);
+        metricProviderSpecList.add(dynatraceSpec);
         when(metricProviderRepository.findAll()).thenReturn(metricProviderSpecList);
-        Assert.assertEquals(metricProviderService.getAllMetricProviders().size(), 2);
+        Assert.assertEquals(metricProviderService.getAllMetricProviders().size(), 3);
         verify(metricProviderRepository, times(1)).findAll();
     }
 
@@ -214,6 +232,22 @@ public class MetricProviderServiceTest extends PowerMockTestCase {
                 .thenReturn(metricProviderSpecList);
         Assert.assertEquals(this.metricProviderService.getMetricProviderByType(MetricProviderType.DATADOG).size(), 1);
         verify(metricProviderRepository, times(1)).findByMetricProviderType(MetricProviderType.DATADOG);
+    }
+
+    /**
+     * Test method for
+     * {@link com.vmware.mangle.services.MetricProviderService#getMetricProviderByType(MetricProviderType)}.
+     *
+     * @throws MangleException
+     */
+    @Test
+    public void testGetMetricProviderByTypeDynatrace() throws MangleException {
+        List<MetricProviderSpec> metricProviderSpecList = new ArrayList<>();
+        metricProviderSpecList.add(dynatraceSpec);
+        when(this.metricProviderRepository.findByMetricProviderType(MetricProviderType.DYNATRACE))
+                .thenReturn(metricProviderSpecList);
+        Assert.assertEquals(this.metricProviderService.getMetricProviderByType(MetricProviderType.DYNATRACE).size(), 1);
+        verify(metricProviderRepository, times(1)).findByMetricProviderType(MetricProviderType.DYNATRACE);
     }
 
     /**
@@ -907,8 +941,10 @@ public class MetricProviderServiceTest extends PowerMockTestCase {
     public void testCloseAllConnection() throws Exception {
         PowerMockito.doNothing().when(this.wavefrontMeterRegistry).stop();
         PowerMockito.doNothing().when(this.datadogMeterRegistry).stop();
+        PowerMockito.doNothing().when(this.dynatraceMeterRegistry).stop();
         PowerMockito.doNothing().when(this.wavefrontMeterRegistry).close();
         PowerMockito.doNothing().when(this.datadogMeterRegistry).close();
+        PowerMockito.doNothing().when(this.dynatraceMeterRegistry).close();
 
         MangleAdminConfigurationSpec mangleAdminConfigurationSpec = new MangleAdminConfigurationSpec();
         Optional<MangleAdminConfigurationSpec> optional = Optional.of(mangleAdminConfigurationSpec);
@@ -922,6 +958,7 @@ public class MetricProviderServiceTest extends PowerMockTestCase {
         Assert.assertEquals(actualResult, true);
         verify(this.wavefrontMeterRegistry, times(1)).stop();
         verify(this.datadogMeterRegistry, times(1)).stop();
+        verify(this.dynatraceMeterRegistry, times(1)).stop();
     }
 
     /**
@@ -987,6 +1024,28 @@ public class MetricProviderServiceTest extends PowerMockTestCase {
     }
 
     /**
+     * * Test method for {@link com.vmware.mangle.services.MetricProviderService#sendMetrics()}.
+     *
+     * @throws MangleException
+     */
+    @Test
+    public void sendMetricStatusDynatrace() throws MangleException {
+        ReflectionTestUtils.setField(metricProviderService, "activeMetricProvider", dynatraceSpec);
+        MangleAdminConfigurationSpec sendMetricTrue = mockData.getAdminPropertyForSendingMetricStatusTrue();
+        Optional<MangleAdminConfigurationSpec> valueSendMetrics = Optional.of(sendMetricTrue);
+        when(this.adminConfigurationRepository.findByPropertyName(MetricProviderConstants.SENDING_MANGLE_METRICS))
+                .thenReturn(valueSendMetrics);
+        PowerMockito.doNothing().when(this.dynatraceMeterRegistry)
+                .start(new NamedThreadFactory("dynatrace-metrics-publisher"));
+
+        boolean actualResult = true;
+
+        actualResult = this.metricProviderService.sendMetrics();
+
+        Assert.assertEquals(actualResult, true);
+    }
+
+    /**
      * Test method for {@link com.vmware.mangle.services.MetricProviderService#sendMetrics()}.
      *
      * @throws MangleException
@@ -1000,6 +1059,27 @@ public class MetricProviderServiceTest extends PowerMockTestCase {
                 .thenReturn(valueSendMetrics);
         PowerMockito.doNothing().when(this.datadogMeterRegistry)
                 .start(new NamedThreadFactory("datadog-metrics-publisher"));
+        boolean actualResult = true;
+
+        actualResult = this.metricProviderService.sendMetrics();
+
+        Assert.assertEquals(actualResult, true);
+    }
+
+    /**
+     * Test method for {@link com.vmware.mangle.services.MetricProviderService#sendMetrics()}.
+     *
+     * @throws MangleException
+     */
+    @Test
+    public void sendMetricStatusDynatraceEmpty() throws MangleException {
+        ReflectionTestUtils.setField(metricProviderService, "activeMetricProvider", dynatraceSpec);
+        MangleAdminConfigurationSpec sendMetricTrue = new MangleAdminConfigurationSpec();
+        Optional<MangleAdminConfigurationSpec> valueSendMetrics = Optional.of(sendMetricTrue);
+        when(this.adminConfigurationRepository.findByPropertyName(MetricProviderConstants.SENDING_MANGLE_METRICS))
+                .thenReturn(valueSendMetrics);
+        PowerMockito.doNothing().when(this.dynatraceMeterRegistry)
+                .start(new NamedThreadFactory("dynatrace-metrics-publisher"));
         boolean actualResult = true;
 
         actualResult = this.metricProviderService.sendMetrics();
@@ -1269,4 +1349,37 @@ public class MetricProviderServiceTest extends PowerMockTestCase {
             verify(mangleMetricsConfiguration, times(1)).setMetricsEnabled(anyBoolean());
         }
     }
+
+    @Test(description = "Validate Normalizing of URI when input URI contains multiple forward slashes.")
+    public void testNormalizeURI_multipleForwardSlashes() {
+        MetricProviderSpec spec = mockData.metricProviderWavefront();
+        spec.getWaveFrontConnectionProperties()
+                .setWavefrontInstance(MockDataConstants.INVALID_URI_MULTIPLE_FORWARD_SLASHES);
+
+        MetricProviderSpec normalizedSpec = metricProviderService.normalizeURI(spec);
+
+        assertEquals(MockDataConstants.VALID_URI,
+                normalizedSpec.getWaveFrontConnectionProperties().getWavefrontInstance());
+    }
+
+    @Test(description = "Validate normalize URI when the input contains only single forward slash")
+    public void testNormalizeURI_singleForwardSlash() {
+        MetricProviderSpec spec = mockData.getDynatraceMetricConfig();
+        spec.getDynatraceConnectionProperties().setUri(MockDataConstants.INVALID_URI_SINGLE_FORWARD_SLASH);
+
+        MetricProviderSpec normalizedSpec = metricProviderService.normalizeURI(spec);
+
+        assertEquals(MockDataConstants.VALID_URI, normalizedSpec.getDynatraceConnectionProperties().getUri());
+    }
+
+    @Test(description = "Validate normalize URI when the input URI doesn't contain any forward slashes")
+    public void testNormalizeURI_validURI() {
+        MetricProviderSpec spec = mockData.getDynatraceMetricConfig();
+        spec.getDynatraceConnectionProperties().setUri(MockDataConstants.VALID_URI);
+
+        MetricProviderSpec normalizedSpec = metricProviderService.normalizeURI(spec);
+
+        assertEquals(MockDataConstants.VALID_URI, normalizedSpec.getDynatraceConnectionProperties().getUri());
+    }
+
 }

@@ -18,9 +18,11 @@ import javax.annotation.PostConstruct;
 
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.datadog.DatadogMeterRegistry;
+import io.micrometer.dynatrace.DynatraceMeterRegistry;
 import io.micrometer.wavefront.WavefrontMeterRegistry;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -31,6 +33,7 @@ import com.vmware.mangle.services.config.MangleMetricsConfiguration;
 import com.vmware.mangle.services.hazelcast.HazelcastClusterSyncAware;
 import com.vmware.mangle.services.repository.MetricProviderRepository;
 import com.vmware.mangle.task.framework.metric.providers.MetricProviderClientFactory;
+import com.vmware.mangle.utils.CommonUtils;
 import com.vmware.mangle.utils.constants.ErrorConstants;
 import com.vmware.mangle.utils.constants.MetricProviderConstants;
 import com.vmware.mangle.utils.exceptions.MangleException;
@@ -41,9 +44,11 @@ import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
  * Service Class for Metric Provider
  *
  * @author ashrimali
+ * @author dbhat
  */
 @Service
 @Log4j2
+@DependsOn("mangleMetricsConfiguration")
 public class MetricProviderService implements HazelcastClusterSyncAware {
 
     @Autowired
@@ -54,6 +59,9 @@ public class MetricProviderService implements HazelcastClusterSyncAware {
 
     @Autowired
     private DatadogMeterRegistry datadogMeterRegistry;
+
+    @Autowired
+    private DynatraceMeterRegistry dynatraceMeterRegistry;
 
     @Autowired
     private MetricProviderClientFactory mangleMetricProviderClientFactory;
@@ -72,6 +80,7 @@ public class MetricProviderService implements HazelcastClusterSyncAware {
     public void initializeMeterRegistryAtBoot() {
         try {
             if (mangleMetricsConfiguration.getMetricsEnabled()) {
+                this.getActiveMetricProvider();
                 this.sendMetrics();
             }
         } catch (MangleException mangleException) {
@@ -125,6 +134,7 @@ public class MetricProviderService implements HazelcastClusterSyncAware {
         changeMetricSendingStatus(false);
         this.wavefrontMeterRegistry.stop();
         this.datadogMeterRegistry.stop();
+        this.dynatraceMeterRegistry.stop();
         return true;
     }
 
@@ -259,11 +269,13 @@ public class MetricProviderService implements HazelcastClusterSyncAware {
     public MetricProviderSpec updateMetricProviderByName(String metricProviderName,
             MetricProviderSpec metricProviderSpec) throws MangleException {
         log.info("Updating Metric Provider by Name: " + metricProviderName);
+        metricProviderSpec = normalizeURI(metricProviderSpec);
         if (StringUtils.hasText(metricProviderName)) {
             Optional<MetricProviderSpec> metricProvider = this.metricProviderRepository.findByName(metricProviderName);
             MetricProviderSpec metricProviderSpecToUpdate;
             if (metricProvider.isPresent()) {
                 metricProviderSpecToUpdate = metricProvider.get();
+                log.info("Metric provider spec to update: ", metricProviderSpecToUpdate);
             } else {
                 throw new MangleRuntimeException(ErrorCode.NO_RECORD_FOUND, ErrorConstants.METRICPROVIDER_ID,
                         metricProviderName);
@@ -352,6 +364,8 @@ public class MetricProviderService implements HazelcastClusterSyncAware {
                 this.datadogMeterRegistry.stop();
             } else if (this.activeMetricProvider.getMetricProviderType().equals(MetricProviderType.WAVEFRONT)) {
                 this.wavefrontMeterRegistry.stop();
+            } else if (this.activeMetricProvider.getMetricProviderType().equals(MetricProviderType.DYNATRACE)) {
+                this.dynatraceMeterRegistry.stop();
             }
             if (StringUtils.hasText(mangleMetricsConfiguration.getActiveMetricProvider())) {
                 mangleMetricsConfiguration.setActiveMetricProvider(name);
@@ -375,6 +389,8 @@ public class MetricProviderService implements HazelcastClusterSyncAware {
                 this.datadogMeterRegistry.stop();
             } else if (this.activeMetricProvider.getMetricProviderType().equals(MetricProviderType.WAVEFRONT)) {
                 this.wavefrontMeterRegistry.stop();
+            } else if (this.activeMetricProvider.getMetricProviderType().equals(MetricProviderType.DYNATRACE)) {
+                this.dynatraceMeterRegistry.stop();
             }
             adminConfigSpec = changeActiveMetricProvider("");
             changeMetricSendingStatus(false);
@@ -389,6 +405,8 @@ public class MetricProviderService implements HazelcastClusterSyncAware {
         metricProviderSpecToUpdate.setMetricProviderType(metricProviderSpec.getMetricProviderType());
         metricProviderSpecToUpdate
                 .setWaveFrontConnectionProperties(metricProviderSpec.getWaveFrontConnectionProperties());
+        metricProviderSpecToUpdate
+                .setDynatraceConnectionProperties(metricProviderSpec.getDynatraceConnectionProperties());
         return metricProviderSpecToUpdate;
     }
 
@@ -412,6 +430,8 @@ public class MetricProviderService implements HazelcastClusterSyncAware {
             return enableDatadogMetrics();
         case WAVEFRONT:
             return enableWavefrontMetrics();
+        case DYNATRACE:
+            return enableDynatraceMetrics();
         case PROMETHEUS:
             changeMetricSendingStatus(true);
             return true;
@@ -427,6 +447,11 @@ public class MetricProviderService implements HazelcastClusterSyncAware {
 
     private boolean enableDatadogMetrics() {
         this.datadogMeterRegistry.start(new NamedThreadFactory("datadog-metrics-publisher"));
+        return true;
+    }
+
+    private boolean enableDynatraceMetrics() {
+        this.dynatraceMeterRegistry.start(new NamedThreadFactory("dynatrace-metrics-publisher"));
         return true;
     }
 
@@ -450,5 +475,31 @@ public class MetricProviderService implements HazelcastClusterSyncAware {
 
     public boolean isMangleMetricsEnabled() {
         return mangleMetricsConfiguration.getMetricsEnabled();
+    }
+
+    /**
+     * Normalize URI in the metric provider spec. All the trailing "/" in the URI will be removed.
+     *
+     * @param spec
+     *            : Metric provider spec
+     * @return : Metric provider spec with normalized URI
+     */
+    public MetricProviderSpec normalizeURI(MetricProviderSpec spec) {
+        if (spec != null) {
+            String normalizedUri = "";
+            log.debug("Normalizing the URI of Metric provider provided");
+            if (spec.getMetricProviderType() == MetricProviderType.WAVEFRONT) {
+                normalizedUri = CommonUtils.normalizeUriToRemoveForwardSlash(
+                        spec.getWaveFrontConnectionProperties().getWavefrontInstance());
+                spec.getWaveFrontConnectionProperties().setWavefrontInstance(normalizedUri);
+            } else if (spec.getMetricProviderType() == MetricProviderType.DYNATRACE) {
+                normalizedUri =
+                        CommonUtils.normalizeUriToRemoveForwardSlash(spec.getDynatraceConnectionProperties().getUri());
+                spec.getDynatraceConnectionProperties().setUri(normalizedUri);
+            }
+            log.debug("Normalized URI in the metric provider is: " + normalizedUri);
+        }
+        log.debug("Spec is : " + spec);
+        return spec;
     }
 }

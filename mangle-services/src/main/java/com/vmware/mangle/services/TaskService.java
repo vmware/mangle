@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -50,6 +51,7 @@ import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
  * @author kumargautam
  */
 @Component
+@DependsOn("cassandraConfig")
 @Log4j2
 public class TaskService {
 
