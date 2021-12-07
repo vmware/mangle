@@ -23,7 +23,7 @@
 		<maven-compiler.version>3.7.0</maven-compiler.version>
 		<spring.framework.version>5.3.9</spring.framework.version>
 		<lombok.version>1.18.2</lombok.version>
-		<log4j-api.version>2.1</log4j-api.version>
+		<apache-log4j-api.version>2.14.1</apache-log4j-api.version>
 		<log4j.version>1.2.17</log4j.version>
 		<javax.mail.version>1.4</javax.mail.version>
 		<gson.version>2.3.1</gson.version>
@@ -31,7 +31,7 @@
 		<joda-time.version>2.5</joda-time.version>
 		<wavefront-java-client-version>4.26</wavefront-java-client-version>
 		<avro-version>1.10.2</avro-version>
-		<xstream.version>1.4.8</xstream.version>
+		<xstream.version>1.4.18</xstream.version>
 		<org.mockito.version>1.10.19</org.mockito.version>
 		<org.mockito-core.version>2.21.0</org.mockito-core.version>
 		<org.powermock.version>1.7.4</org.powermock.version>
@@ -125,12 +125,12 @@
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-api</artifactId>
-			<version>${log4j-api.version}</version>
+			<version>${apache-log4j-api.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-core</artifactId>
-			<version>${log4j-api.version}</version>
+			<version>${apache-log4j-api.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.wavefront</groupId>
