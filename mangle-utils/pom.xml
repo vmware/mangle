@@ -29,6 +29,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<apache-log4j-api.version>2.17.0</apache-log4j-api.version>
 	</properties>
 
 	<dependencies>
@@ -196,7 +197,19 @@
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-core</artifactId>
+			<version>${apache-log4j-api.version}</version>
+		     <exclusions>
+			        <exclusion>
+					<groupId>org.apache.logging.log4j</groupId>
+					<artifactId>log4j-api</artifactId>
+				</exclusion>
+		     </exclusions>
 		</dependency>
+		<dependency>
+                    <groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-api</artifactId>
+			<version>${apache-log4j-api.version}</version>
+		    </dependency>
 		<dependency>
 			<groupId>com.amazonaws</groupId>
 			<artifactId>aws-java-sdk-ec2</artifactId>
