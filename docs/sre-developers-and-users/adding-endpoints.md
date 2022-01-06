@@ -95,7 +95,7 @@ Mangle supports any remote machine with ssh enabled as endpoints or targets for 
 | ----------------------------------------------- | ---------------- |
 | CentOS                                          | 7, 7.7, 7.8, 8.2 |
 | Debian                                          | 7.8, 8, 9        |
-| Photon OS                                       | 1, 2, 3          |
+| Photon OS                                       | 2, 3             |
 | RHEL                                            | 7.5, 8.2, 8.3    |
 | Suse                                            | 12, 15           |
 | Ubuntu                                          | 14, 16, 18       |
@@ -124,7 +124,7 @@ Mangle supports AWS as endpoint or target for injection. It needs the Region, cr
 6. A success message is displayed and the table for Endpoints will be updated with the new entry.
 7. Edit, Delete, Enable and Disable actions are available for all added Endpoints.
 
-### ![](https://firebasestorage.googleapis.com/v0/b/gitbook-28427.appspot.com/o/assets%2F-LcVKiIEQZ\_SDz8uqA0g%2F-MQqcKvmHtHATdUwd-sp%2F-MQr2ZghrRK5S4-Fm9\_T%2FNew\_Logo.png?alt=media\&token=afa1ae80-f950-4996-8f2c-7d87f3d520d3) Azure <a href="azure" id="azure"></a>
+### ![](https://firebasestorage.googleapis.com/v0/b/gitbook-28427.appspot.com/o/assets%2F-LcVKiIEQZ\_SDz8uqA0g%2F-MQqcKvmHtHATdUwd-sp%2F-MQr2ZghrRK5S4-Fm9\_T%2FNew\_Logo.png?alt=media\&token=afa1ae80-f950-4996-8f2c-7d87f3d520d3) Azure <a href="#azure" id="azure"></a>
 
 ‌Mangle supports Azure as endpoint or target for injection. It needs the Subscription ID, Tenant ID, credentials (Client application ID and Client application secret key) and tags to connect to Azure and run the supported faults. ‌
 
@@ -138,7 +138,7 @@ Mangle supports AWS as endpoint or target for injection. It needs the Region, cr
 6. A success message is displayed and the table for Endpoints will be updated with the new entry.
 7. Edit, Delete, Enable and Disable actions are available for all added Endpoints.
 
-### ![](https://firebasestorage.googleapis.com/v0/b/gitbook-28427.appspot.com/o/assets%2F-LcVKiIEQZ\_SDz8uqA0g%2F-MQqcKvmHtHATdUwd-sp%2F-MQr2ZghrRK5S4-Fm9\_T%2FNew\_Logo.png?alt=media\&token=afa1ae80-f950-4996-8f2c-7d87f3d520d3) Redis Proxy <a href="azure" id="azure"></a>
+### ![](https://firebasestorage.googleapis.com/v0/b/gitbook-28427.appspot.com/o/assets%2F-LcVKiIEQZ\_SDz8uqA0g%2F-MQqcKvmHtHATdUwd-sp%2F-MQr2ZghrRK5S4-Fm9\_T%2FNew\_Logo.png?alt=media\&token=afa1ae80-f950-4996-8f2c-7d87f3d520d3) Redis Proxy <a href="#azure" id="azure"></a>
 
 ‌With version 3.0, Mangle provides the ability to run faults against Redis by integrating with [RedFI (Redis Fault Injection Proxy)](https://openfip.github.io/redfi/) which is a separate open source project. To try out the Redis faults, it is mandatory that you have a Redis proxy up and running in your environment. To deploy the RedisFI proxy please refer to the instructions specified [here](https://github.com/openfip/redfi#usage). After the proxy is deployed and running, proceed to the steps below to add it as an endpoint in Mangle.
 
@@ -152,7 +152,7 @@ Mangle supports AWS as endpoint or target for injection. It needs the Region, cr
 6. A success message is displayed and the table for Endpoints will be updated with the new entry.
 7. Edit, Delete, Enable and Disable actions are available for all added Endpoints.
 
-### ![](https://firebasestorage.googleapis.com/v0/b/gitbook-28427.appspot.com/o/assets%2F-LcVKiIEQZ\_SDz8uqA0g%2F-MQqcKvmHtHATdUwd-sp%2F-MQr2ZghrRK5S4-Fm9\_T%2FNew\_Logo.png?alt=media\&token=afa1ae80-f950-4996-8f2c-7d87f3d520d3) Databases <a href="azure" id="azure"></a>
+### ![](https://firebasestorage.googleapis.com/v0/b/gitbook-28427.appspot.com/o/assets%2F-LcVKiIEQZ\_SDz8uqA0g%2F-MQqcKvmHtHATdUwd-sp%2F-MQr2ZghrRK5S4-Fm9\_T%2FNew\_Logo.png?alt=media\&token=afa1ae80-f950-4996-8f2c-7d87f3d520d3) Databases <a href="#azure" id="azure"></a>
 
 ‌With version 3.0, Mangle provides the ability to run faults against databases. The databases supported are Cassandra, Mongo and Postgres. The database endpoint has one key difference since they can reside on a virtual machine/instance as a service, on Docker as containers or on K8s as pods. Hence, when defining database endpoints in Mangle, you also need to specify the parent endpoint which could be a remote machine, Docker or a K8s cluster.
 
@@ -171,7 +171,7 @@ Mangle supports AWS as endpoint or target for injection. It needs the Region, cr
 {% hint style="info" %}
 **For access to Swagger documentation:**
 
-Please traverse to link _\*\*_![](../.gitbook/assets/help.png) -----> API Documentation from the Mangle UI or access [https://\<Mangle](https://\<mangle)_ IP or Hostname>/mangle-services/swagger-ui.html#_/_endpoint-controller_
+Please traverse to link _\*\*_![](../.gitbook/assets/help.png) -----> API Documentation from the Mangle UI or access [https://\<Mangle](https://\<mangle) _IP or Hostname>/mangle-services/swagger-ui.html#_/_endpoint-controller_
 
 ![](../.gitbook/assets/endpointcontroller.png)
 {% endhint %}

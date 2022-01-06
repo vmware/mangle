@@ -18,7 +18,7 @@ Mangle supports using Active Directory as an additional authentication source.&#
 {% hint style="info" %}
 **Relevant API List**
 
-**For access to Swagger documentation, please traverse to link **![](../.gitbook/assets/help.png) -----> API Documentation from the Mangle UI or access _https://\<Mangle IP or Hostname>/mangle-services/swagger-ui.html#/auth-provider-controller_&#x20;
+**For access to Swagger documentation, please traverse to link** ![](../.gitbook/assets/help.png) -----> API Documentation from the Mangle UI or access _https://\<Mangle IP or Hostname>/mangle-services/swagger-ui.html#/auth-provider-controller_&#x20;
 {% endhint %}
 
 #### Adding/Importing Users
@@ -37,7 +37,7 @@ Mangle supports adding new local user or importing users from Active Directory s
 {% hint style="info" %}
 **Relevant API List**
 
-**For access to Swagger documentation, please traverse to link **![](../.gitbook/assets/help.png) -----> API Documentation from the Mangle UI or access _https://\<Mangle IP or Hostname>/mangle-services/swagger-ui.html#/user-management-controller_&#x20;
+**For access to Swagger documentation, please traverse to link** ![](../.gitbook/assets/help.png) -----> API Documentation from the Mangle UI or access _https://\<Mangle IP or Hostname>/mangle-services/swagger-ui.html#/user-management-controller_&#x20;
 {% endhint %}
 
 #### Default and Custom Roles
@@ -64,7 +64,7 @@ Mangle supports creation of custom roles from the default privileges that are av
 {% hint style="info" %}
 **Relevant API List**
 
-**For access to Swagger documentation, please traverse to link **![](../.gitbook/assets/help.png) -----> API Documentation from the Mangle UI or access _https://\<Mangle IP or Hostname>/mangle-services/swagger-ui.html#/role-controller_&#x20;
+**For access to Swagger documentation, please traverse to link** ![](../.gitbook/assets/help.png) -----> API Documentation from the Mangle UI or access _https://\<Mangle IP or Hostname>/mangle-services/swagger-ui.html#/role-controller_&#x20;
 {% endhint %}
 
 ## Configuration
@@ -86,12 +86,12 @@ Mangle supports modifying log levels for the application.&#x20;
 
 ![](../.gitbook/assets/new\_logo.png) Clicking on ![](../.gitbook/assets/application\_log.png) will open up the log on the UI and will be auto refreshed periodically.
 
-![](../.gitbook/assets/new\_logo.png) Clicking on ![](../.gitbook/assets/download\_bundle.png) will allow you to download and save the support bundle from the mangle server to a local file directory. It pulls and aggregates the logs from multiple nodes into a single zip file in case of a clustered Mangle setup.
+![](../.gitbook/assets/new\_logo.png) Clicking on ![](../.gitbook/assets/download\_bundle.png) will allow you to download and save the support bundle from the mangle server to a local file directory. In case of a clustered Mangle setup, the action should be repeated for each node in the cluster to get the support bundle from all nodes.
 
 {% hint style="info" %}
 **Relevant API List**
 
-**For access to Swagger documentation, please traverse to link **![](../.gitbook/assets/help.png) -----> API Documentation from the Mangle UI or access _https://\<Mangle IP or Hostname>/mangle-services/swagger-ui.html#/operation-handler_
+**For access to Swagger documentation, please traverse to link** ![](../.gitbook/assets/help.png) -----> API Documentation from the Mangle UI or access _https://\<Mangle IP or Hostname>/mangle-services/swagger-ui.html#/operation-handler_
 {% endhint %}
 
 ### ![](../.gitbook/assets/new\_logo.png) Cluster Config
@@ -108,7 +108,7 @@ The page displays the cluster name, the validation token, members, quorum and de
 {% hint style="info" %}
 **Relevant API List**
 
-**For access to Swagger documentation, please traverse to link **![](../.gitbook/assets/help.png) -----> API Documentation from the Mangle UI or access _https://\<Mangle IP or Hostname>/mangle-services/swagger-ui.html#/cluster-config-controller_
+**For access to Swagger documentation, please traverse to link** ![](../.gitbook/assets/help.png) -----> API Documentation from the Mangle UI or access _https://\<Mangle IP or Hostname>/mangle-services/swagger-ui.html#/cluster-config-controller_
 {% endhint %}
 
 ### Fault Plugins
@@ -128,7 +128,7 @@ This section enables you to load custom faults that are already available on the
 {% hint style="info" %}
 **Relevant API List**
 
-**For access to Swagger documentation, please traverse to link **![](../.gitbook/assets/help.png) -----> API Documentation from the Mangle UI or access _https://\<Mangle IP or Hostname>/mangle-services/swagger-ui.html#/plugin-controller_
+**For access to Swagger documentation, please traverse to link** ![](../.gitbook/assets/help.png) -----> API Documentation from the Mangle UI or access _https://\<Mangle IP or Hostname>/mangle-services/swagger-ui.html#/plugin-controller_
 {% endhint %}
 
 ### ![](../.gitbook/assets/new\_logo.png) Resiliency Score Metric Configuration
@@ -158,36 +158,46 @@ The configuration required to enable resiliency score calculations has to be don
 
 _Only one configuration for the resiliency score calculation can be created._
 
-_This feature is still under evaluation and is supported only **VMware Wavefront**. If you need Mangle to provide support for other monitoring systems, please raise a feature request under _[_Mangle Github_](https://github.com/vmware/mangle/issues)_._
+_This feature is still under evaluation and is supported only **VMware Wavefront**. If you need Mangle to provide support for other monitoring systems, please raise a feature request under_ [_Mangle Github_](https://github.com/vmware/mangle/issues)_._
 {% endhint %}
 
 {% hint style="info" %}
 **Relevant API List**
 
-**For access to Swagger documentation, please traverse to link **![](../.gitbook/assets/help.png) -----> API Documentation from the Mangle UI or access _https://\<Mangle IP or Hostname>/mangle-services/swagger-ui.html#/resiliency-score-controller_
+**For access to Swagger documentation, please traverse to link** ![](../.gitbook/assets/help.png) -----> API Documentation from the Mangle UI or access _https://\<Mangle IP or Hostname>/mangle-services/swagger-ui.html#/resiliency-score-controller_
 {% endhint %}
 
 ## Integrations
 
 ### Metric Providers
 
-Mangle supports addition of either Wavefront or Datadog as metric providers. This enables the information about fault injection and remediation to be published to these tools as events thus making it easier to monitor them.&#x20;
+Mangle supports addition of Wavefront, Datadog or Dynatrace as metric providers. This enables the information about fault injection and remediation to be published to these tools as events thus making it easier to monitor them.&#x20;
 
 **Steps to follow:**&#x20;
 
 1. Login as an admin user to Mangle.
 2. Navigate to ![](../.gitbook/assets/settings.png) -----> Integrations  -----> Metric Providers .
 3. Click on ![](../.gitbook/assets/monitoringtoolbutton.png).
-4. Choose Wavefront or Datadog, provide credentials and click on **Submit**.
+4. Choose Wavefront, Datadog or Dynatrace, provide credentials and click on **Submit**.
 5. A success message is displayed and the table for Monitoring tools will be updated with the new entry.
 6. Click on ![](<../.gitbook/assets/supportedactionsbutton (3) (3).png>) against a table entry to see the supported operations.
 
 On adding a metric provider, Mangle will send events automatically to the enabled provider for every fault injected and remediated. If the requirement is to monitor Mangle as an application by looking at its metrics, then click on the ![](../.gitbook/assets/send\_metrics.png) button to enable sending of Mangle application metrics to the corresponding metric provider.
 
 {% hint style="info" %}
+**Notes about the Dynatrace Integration:**
+
+Device ID: The name of the custom device that will appear in the user interface of Dynatrace. The custom device will be created at Dynatrace only on enabling to "Send Metric" option at Mangle. Application metrics of Mangle will be visible under the specified device ID at Dynatrace on enabling "Send Metric" option at Mangle.
+
+Dynatrace expects same dimensions for the metrics reported by an application. Hence, if you have multiple Mangle instance deployments then , please include the same "key" under "tags" option (values can be different) while configuring the Mangle metric provider.
+
+
+{% endhint %}
+
+{% hint style="warning" %}
 **Relevant API List**
 
-**For access to Swagger documentation, please traverse to link **![](../.gitbook/assets/help.png) -----> API Documentation from the Mangle UI or access _https://\<Mangle IP or Hostname>/mangle-services/swagger-ui.html#_/_operation-handler_
+**For access to Swagger documentation, please traverse to link** ![](../.gitbook/assets/help.png) -----> API Documentation from the Mangle UI or access _https://\<Mangle IP or Hostname>/mangle-services/swagger-ui.html#_/_operation-handler_
 {% endhint %}
 
 ### __![](../.gitbook/assets/new\_logo.png) Notifier
@@ -211,5 +221,5 @@ After this configuration, you will be able to select an appropriate notifier at 
 {% hint style="info" %}
 **Relevant API List**
 
-**For access to Swagger documentation, please traverse to link **![](../.gitbook/assets/help.png) -----> API Documentation from the Mangle UI or access _https://\<Mangle IP or Hostname>/mangle-services/swagger-ui.html#/notifier-controller_
+**For access to Swagger documentation, please traverse to link** ![](../.gitbook/assets/help.png) -----> API Documentation from the Mangle UI or access _https://\<Mangle IP or Hostname>/mangle-services/swagger-ui.html#/notifier-controller_
 {% endhint %}

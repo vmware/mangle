@@ -13,13 +13,13 @@
 
 4.  Update fields present in _**plugin.properties**_ file available at location src/main/resources
 
-    `plugin.id=mangle-plugin-skeleton `
+    `plugin.id=mangle-plugin-skeleton`&#x20;
 
-    `plugin.class=com.vmware.mangle.plugin.ManglePlugin `
+    `plugin.class=com.vmware.mangle.plugin.ManglePlugin`&#x20;
 
-    `plugin.version=2.0.0 `
+    `plugin.version=2.0.0`&#x20;
 
-    `plugin.provider=VMware Inc. `
+    `plugin.provider=VMware Inc.`&#x20;
 
     `plugin.dependencies=,`
 
@@ -36,8 +36,8 @@
 8.  The user should develop three types of classes as pf4j extensions for implementing the custom fault.&#x20;
 
     1. Model-Extension: Model extension is the data object for the task corresponding to Custom Fault. It should also extend the `PluginFaultSpec`, the base class for all the mangle fault inputs from user.&#x20;
-    2. Task-Extension: Task extension is the logical implementation of the Fault. It must implement the `AbstractTaskHelper `interface defined by mangle-task -framework. ‘mangle-task-framework' also provide `AbstractRemoteCommandExecutionTaskHelper `extensive implemented version of `AbstractTaskHelper`. By using the `AbstractRemoteCommandExecutionTaskHelper`, the developer of plugin is required to only provide the Injection and Remediation Commands and should not be concerned with rest of the task management.&#x20;
-    3. Fault-Extension: Fault extension hold the transformation logic to convert the User inputs of the Fault to the Model-Extension corresponding to its Task-Extension. This help user of custom fault to provide a very simple input and the task to have elaborated data class supporting wider management options. The Fault-Extension should extend `AbstractCustomFault `of mangle.&#x20;
+    2. Task-Extension: Task extension is the logical implementation of the Fault. It must implement the `AbstractTaskHelper` interface defined by mangle-task -framework. ‘mangle-task-framework' also provide `AbstractRemoteCommandExecutionTaskHelper` extensive implemented version of `AbstractTaskHelper`. By using the `AbstractRemoteCommandExecutionTaskHelper`, the developer of plugin is required to only provide the Injection and Remediation Commands and should not be concerned with rest of the task management.&#x20;
+    3. Fault-Extension: Fault extension hold the transformation logic to convert the User inputs of the Fault to the Model-Extension corresponding to its Task-Extension. This help user of custom fault to provide a very simple input and the task to have elaborated data class supporting wider management options. The Fault-Extension should extend `AbstractCustomFault` of mangle.&#x20;
 
     More details provided for each of the above extensions in their own sections.&#x20;
 
@@ -50,43 +50,43 @@
         \
         `{`
 
-        `    "pluginId": "mangle-plugin-skeleton",`
+        &#x20;   `"pluginId": "mangle-plugin-skeleton",`
 
-        `    "faults": [`
+        &#x20;   `"faults": [`
 
-        `        {`
+        &#x20;       `{`
 
-        `            "faultParameters": {`
+        &#x20;           `"faultParameters": {`
 
-        `                "field1": "field1",`
+        &#x20;               `"field1": "field1",`
 
-        `                "field2": "field2"`
+        &#x20;               `"field2": "field2"`
 
-        `            },`
+        &#x20;           `},`
 
-        `            "extensionDetails": {`
+        &#x20;           `"extensionDetails": {`
 
-        `                "modelExtensionName": "com.vmware.mangle.plugin.model.faults.specs.HelloMangleFaultSpec",`
+        &#x20;               `"modelExtensionName": "com.vmware.mangle.plugin.model.faults.specs.HelloMangleFaultSpec",`
 
-        `                "taskExtensionName": "com.vmware.mangle.plugin.tasks.impl.HelloManglePluginTaskHelper",`
+        &#x20;               `"taskExtensionName": "com.vmware.mangle.plugin.tasks.impl.HelloManglePluginTaskHelper",`
 
-        `                "faultExtensionName": "com.vmware.mangle.plugin.helpers.faults.HelloMangleFault"`
+        &#x20;               `"faultExtensionName": "com.vmware.mangle.plugin.helpers.faults.HelloMangleFault"`
 
-        `            },`
+        &#x20;           `},`
 
-        `            "faultName": "mangle-plugin-skeleton-HelloMangleFault",`
+        &#x20;           `"faultName": "mangle-plugin-skeleton-HelloMangleFault",`
 
-        `            "supportedEndpoints": [`
+        &#x20;           `"supportedEndpoints": [`
 
-        `                "MACHINE"`
+        &#x20;               `"MACHINE"`
 
-        `            ],`
+        &#x20;           `],`
 
-        `            "pluginId": "mangle-plugin-skeleton"`
+        &#x20;           `"pluginId": "mangle-plugin-skeleton"`
 
-        `        }`
+        &#x20;       `}`
 
-        `    ]`
+        &#x20;   `]`
 
         `}`
 
@@ -101,40 +101,40 @@
 
     1.  Find all the registered Custom faults at&#x20;
 
-        `GET `[`https://localhost:8443/mangle-services/rest/api/v1/plugins/plugin-details?pluginId=mangle-plugin-skeleton`](https://localhost:8443/mangle-services/rest/api/v1/plugins/plugin-details?pluginId=mangle-plugin-skeleton)
+        `GET` [`https://localhost:8443/mangle-services/rest/api/v1/plugins/plugin-details?pluginId=mangle-plugin-skeleton`](https://localhost:8443/mangle-services/rest/api/v1/plugins/plugin-details?pluginId=mangle-plugin-skeleton)
     2.  Find the sample request data for any registered custom Fault at&#x20;
 
-        `GET `[`https://localhost:8443/mangle-services/rest/api/v1/plugins/request-json?faultName=`](https://localhost:8443/mangle-services/rest/api/v1/plugins/request-json?faultName=)`  mangle-plugin-skeleton-HelloMangleFault&pluginId=mangle-plugin-skeleton  `
+        `GET` [`https://localhost:8443/mangle-services/rest/api/v1/plugins/request-json?faultName=`](https://localhost:8443/mangle-services/rest/api/v1/plugins/request-json?faultName=) `mangle-plugin-skeleton-HelloMangleFault&pluginId=mangle-plugin-skeleton`&#x20;
     3.  Invoke Custom fault by providing the request as per the sample received in last step at&#x20;
 
-        `POST `[`https://localhost:8443/mangle-services/rest/api/v1/plugins/custom-fault`](https://localhost:8443/mangle-services/rest/api/v1/plugins/custom-fault)` `
+        `POST` [`https://localhost:8443/mangle-services/rest/api/v1/plugins/custom-fault`](https://localhost:8443/mangle-services/rest/api/v1/plugins/custom-fault) ``&#x20;
 
         Sample Request:&#x20;
 
         \
         `{`
 
-        `  "faultName": "mangle-plugin-skeleton-HelloMangleFault",`
+        &#x20; `"faultName": "mangle-plugin-skeleton-HelloMangleFault",`
 
-        `  "endpointName": "testEndpoint",`
+        &#x20; `"endpointName": "testEndpoint",`
 
-        `  "faultParameters": {`
+        &#x20; `"faultParameters": {`
 
-        `    "field1": "Hi",`
+        &#x20;   `"field1": "Hi",`
 
-        `    "field2": "Mangle"`
+        &#x20;   `"field2": "Mangle"`
 
-        `  },`
+        &#x20; `},`
 
-        `  "pluginId": "mangle-plugin-skeleton"`
+        &#x20; `"pluginId": "mangle-plugin-skeleton"`
 
         `}`
 
 
-13. Model-Extension: An example is available as `HelloMangleFaultSpec `at package com.vmware.mangle.plugin.model.faults.specs of mangle-plugin-skeleton. Plugin developer is expected to provide only the parameters he is expecting from the user of his fault while executing in his environment. The plugin developer can conveniently Ignore the fields that are inherited from the base class `CommandExecutionFaultSpec` which are designed for the Management of Faults as Asynchronous tasks in Mangle.&#x20;
+13. Model-Extension: An example is available as `HelloMangleFaultSpec` at package com.vmware.mangle.plugin.model.faults.specs of mangle-plugin-skeleton. Plugin developer is expected to provide only the parameters he is expecting from the user of his fault while executing in his environment. The plugin developer can conveniently Ignore the fields that are inherited from the base class `CommandExecutionFaultSpec` which are designed for the Management of Faults as Asynchronous tasks in Mangle.&#x20;
 
 
-14. Task-Extension: An example is available as `HelloManglePluginTaskHelper` at package com.vmware.mangle.test.plugin.helpers of mangle-plugin-skeleton. This task Helper is an implementation of `AbstractRemoteCommandExecutionTaskHelper`. The implementation of `AbstractRemoteCommandExecutionTaskHelper `is only expected to provide the implementation for below methods:
+14. Task-Extension: An example is available as `HelloManglePluginTaskHelper` at package com.vmware.mangle.test.plugin.helpers of mangle-plugin-skeleton. This task Helper is an implementation of `AbstractRemoteCommandExecutionTaskHelper`. The implementation of `AbstractRemoteCommandExecutionTaskHelper` is only expected to provide the implementation for below methods:
 
 
 
@@ -144,35 +144,35 @@
 
 
 
-    **`public Task init(T taskData, String injectedTaskId) throws MangleException; `**
+    **`public Task init(T taskData, String injectedTaskId) throws MangleException;`**&#x20;
 
     Should provide the Implementation to initialize the Task Helper for executing the Fault, if the existing Task id also provided. This method will be used for executing the Remediation on a Task if the Remediation is available. This initialization is not used for task rerun or the Re-trigger.&#x20;
 
 
 
-    **`public void executeTask(Task task) throws MangleException; `**
+    **`public void executeTask(Task task) throws MangleException;`**&#x20;
 
     Provide the Implementation for execution steps required in addition to Implementation available in `AbstractRemoteCommandExecutionTaskHelper`. Plugin developer can use this interface to invoke his own implementation of Helpers for supporting his Fault across multiple endpoints supported in mangle.&#x20;
 
 
 
-    **`protected ICommandExecutor getExecutor(Task task) throws MangleException; `**
+    **`protected ICommandExecutor getExecutor(Task task) throws MangleException;`**&#x20;
 
-    Provide the Implementation for defining the Executor required for the Fault Execution. Mangle provide a default implementation of a executor for each Supported Endpoint. The Plugin user is free to use his own executor as long as he is implementing the resource as per the interface `ICommandExecutor `available at package com.vmware.mangle.utils;&#x20;
+    Provide the Implementation for defining the Executor required for the Fault Execution. Mangle provide a default implementation of a executor for each Supported Endpoint. The Plugin user is free to use his own executor as long as he is implementing the resource as per the interface `ICommandExecutor` available at package com.vmware.mangle.utils;&#x20;
 
 
 
-    **`protected void checkTaskSpecificPrerequisites(Task task) throws MangleException; `**
+    **`protected void checkTaskSpecificPrerequisites(Task task) throws MangleException;`**&#x20;
 
     Provide the Implementation if the Fault being developed expect the test machine to be satisfying a condition for the execution. This step is separated from the Fault execution as Mangle wants to make sure the Fault execution or Remediation will not leave the user environment in a irrecoverable state due to execution of them in a non-perquisite satisfying machine.&#x20;
 
 
 
-    **`protected void prepareEndpoint(Task task, List listOfFaultInjectionScripts) throws MangleException; `**Provide the Implementation if the Fault execution needs certain changes to the Test Machine before execution. Examples are Copying a binary file required to execute a fault. This step is optional for user as the predefined implementation already copies the files returned by `listFaultInjectionScripts() `to the remote machine.&#x20;
+    **`protected void prepareEndpoint(Task task, List listOfFaultInjectionScripts) throws MangleException;`** Provide the Implementation if the Fault execution needs certain changes to the Test Machine before execution. Examples are Copying a binary file required to execute a fault. This step is optional for user as the predefined implementation already copies the files returned by `listFaultInjectionScripts()` to the remote machine.&#x20;
 
 
 
-    **`public String getDescription(Task task); `**
+    **`public String getDescription(Task task);`**&#x20;
 
     Provide Implementation to generate description for Fault based on user inputs to help him to identify the task in future through the description. A generic implementation is already available at TaskDescriptionUtils.getDescription(task).&#x20;
 
@@ -189,7 +189,7 @@
 16. Mangle does not support the inclusion of Custom Endpoints through Plugin. The requirement of addition of endpoint can be gone through the Mange contributions flow as defined in Mangle repository.&#x20;
 
 
-17. Task-Extension Deep Dive: An example is available as `HelloManglePluginTaskHelper `at package com.vmware.mangle.plugin.tasks.impl of mangle-plugin-skeleton. This task Helper is an implementation of `AbstractRemoteCommandExecutionTaskHelper`. The implementation of `AbstractRemoteCommandExecutionTaskHelper `is only expected to provide the implementation for below methods:&#x20;
+17. Task-Extension Deep Dive: An example is available as `HelloManglePluginTaskHelper` at package com.vmware.mangle.plugin.tasks.impl of mangle-plugin-skeleton. This task Helper is an implementation of `AbstractRemoteCommandExecutionTaskHelper`. The implementation of `AbstractRemoteCommandExecutionTaskHelper` is only expected to provide the implementation for below methods:&#x20;
 
 
 
@@ -205,13 +205,13 @@
 
 
 
-    **`public void executeTask(Task task) throws MangleException; `**
+    **`public void executeTask(Task task) throws MangleException;`**&#x20;
 
     Provide the Implementation for execution steps required in addition to Implementation available in `AbstractRemoteCommandExecutionTaskHelper`. Plugin developer can use this interface to invoke his own implementation of Helpers for supporting his Fault across multiple endpoints supported in mangle.&#x20;
 
 
 
-    **`protected ICommandExecutor getExecutor(Task task) throws MangleException; `**
+    **`protected ICommandExecutor getExecutor(Task task) throws MangleException;`**&#x20;
 
     Provide the Implementation for defining the Executor required for the Fault Execution. Mangle provide a default implementation of a executor for each Supported Endpoint. The Plugin user should use appropriate executor as per the endpoint provided as the target. Below is the Mapping of Executors to their Endpoint Types.&#x20;
 
@@ -227,29 +227,29 @@
 
 
 
-    **`protected void checkTaskSpecificPrerequisites(Task task) throws MangleException; `**
+    **`protected void checkTaskSpecificPrerequisites(Task task) throws MangleException;`**&#x20;
 
     Provide the Implementation if the Fault being developed expect the test machine to be satisfying a condition for the execution. This step is separated from the Fault execution as Mangle wants to make sure the Fault execution or Remediation will not leave the user environment in a irrecoverable state due to execution of them in a non-perquisite satisfying machine.&#x20;
 
 
 
-    **`protected void prepareEndpoint(Task task, List listOfFaultInjectionScripts) throws MangleException; `**Provide the Implementation if the Fault execution needs certain changes to the Test Machine before execution. Examples are Copying a binary file required to execute a fault. This step is optional for user as the predefined implementation already copies the files returned by `listFaultInjectionScripts()` to the remote machine.&#x20;
+    **`protected void prepareEndpoint(Task task, List listOfFaultInjectionScripts) throws MangleException;`** Provide the Implementation if the Fault execution needs certain changes to the Test Machine before execution. Examples are Copying a binary file required to execute a fault. This step is optional for user as the predefined implementation already copies the files returned by `listFaultInjectionScripts()` to the remote machine.&#x20;
 
 
 
-    **`public String getDescription(Task task); `**
+    **`public String getDescription(Task task);`**&#x20;
 
     Provide Implementation to generate description for Fault based on user inputs to help him to identify the task in future through the description. A generic implementation is already available at `TaskDescriptionUtils.getDescription(task)`.&#x20;
 
 
 
-    **`public List listFaultInjectionScripts(Task task); `**
+    **`public List listFaultInjectionScripts(Task task);`**&#x20;
 
     Provide an implementation that return details of the support scrips to be copied to test machine required for executing the fault getting implemented. The support files can be any file required to be placed in the target in order to execute the developed fault. All the out of the box executors is capable of copying files to the corresponding targeted endpoint and the process completes automatically by default implementation of the `AbstractRemoteCommandExecutionTaskHelper`, provide that the names of the files are returned through `listFaultInjectionScripts()` implementation.&#x20;
 
 
 
-    **`private List getInjectionCommandInfoList(T faultSpec) {} `**
+    **`private List getInjectionCommandInfoList(T faultSpec) {}`**&#x20;
 
     Provide the commands to be executed for the Fault to be Injected. The commands should be provided as List. The fields and descriptions for the CommandInfo Fields.&#x20;
 
@@ -264,30 +264,30 @@
 
 
 
-        `public class CommandOutputProcessingInfo `
+        `public class CommandOutputProcessingInfo`&#x20;
 
         Fields are&#x20;
 
         1.  `private String regExpression;`&#x20;
 
             Regular Expression Pattern to be used to collect an crucial information from current command’s execution to make it available throughout the Fault execution.&#x20;
-        2.  `private String extractedPropertyName; `
+        2.  `private String extractedPropertyName;`&#x20;
 
             Name should be given to the collected information using the pattern given as regExpression&#x20;
 
 
 
-        **Types of Variables and Their Usage: **
+        **Types of Variables and Their Usage:**&#x20;
 
         The information provided by the user or collected during the runtime of Fault are made available to command executor as below types of Variables.&#x20;
 
-        1. `TaskTroubleShootingInfo `of the Task holds the extracted information from the command execution Output.&#x20;
-        2. args field of `CommandExecutionFaultSpec `available as `taskData `in Task holds the data received from the user as args.&#x20;
-        3. `$FI_ADD_INFO_FieldName` can be used to refer to variables from `TaskTroubleShootingInfo `
+        1. `TaskTroubleShootingInfo` of the Task holds the extracted information from the command execution Output.&#x20;
+        2. args field of `CommandExecutionFaultSpec` available as `taskData` in Task holds the data received from the user as args.&#x20;
+        3. `$FI_ADD_INFO_FieldName` can be used to refer to variables from `TaskTroubleShootingInfo`&#x20;
         4. `$FI_ARG_Fieldname` can be used to refer to variables from args.&#x20;
         5. `$FI_STACK` can be used to refer to the output of the previous command.&#x20;
 
 
-    9.  `private List getRemediationCommandInfoList(T faultSpec) {} `
+    9.  `private List getRemediationCommandInfoList(T faultSpec) {}`&#x20;
 
-        Provide the commands to for remediating the fault already Injected. The semantics of `CommandInfo `is same as it described in the previous section. The args and `TaskTroubleShootingInfo `collected during the injection will be available during the execution of remediation as well. Hence the dependency data from injection task can be passed to remediation by using the References in the commands.
+        Provide the commands to for remediating the fault already Injected. The semantics of `CommandInfo` is same as it described in the previous section. The args and `TaskTroubleShootingInfo` collected during the injection will be available during the execution of remediation as well. Hence the dependency data from injection task can be passed to remediation by using the References in the commands.

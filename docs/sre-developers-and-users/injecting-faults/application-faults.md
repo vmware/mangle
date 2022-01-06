@@ -174,17 +174,17 @@ Java Method Latency Fault helps you simulate a condition where calls to a specif
 6. Provide "Class Name" as PluginController if the class of interest is defined as `public class PluginController {...}`.
 7.  Provide "Method Name" as getPlugins if the method to be tested is defined as follows:
 
-    `public ResponseEntity> getPlugins( `
+    `public ResponseEntity> getPlugins(`&#x20;
 
-    `@RequestParam(value = "pluginId", required = false) String pluginId, @RequestParam(value = "extensionType", required = false) ExtensionType extensionType) { `
+    `@RequestParam(value = "pluginId", required = false) String pluginId, @RequestParam(value = "extensionType", required = false) ExtensionType extensionType) {`&#x20;
 
-    `log.info("PluginController getPlugins() Start............."); `
+    `log.info("PluginController getPlugins() Start.............");`&#x20;
 
-    `if (StringUtils.hasLength(pluginId)) { `
+    `if (StringUtils.hasLength(pluginId)) {`&#x20;
 
-    `return new ResponseEntity<>(pluginService.getExtensions(pluginId, extensionType), HttpStatus.OK); `
+    `return new ResponseEntity<>(pluginService.getExtensions(pluginId, extensionType), HttpStatus.OK);`&#x20;
 
-    `} `
+    `}`&#x20;
 
     `return new ResponseEntity<>(pluginService.getExtensions(), HttpStatus.OK);`
 
@@ -299,17 +299,17 @@ Java Method Exception Fault helps you simulate a condition where calls to a spec
 6. Provide "Class Name" as PluginController if the class of interest is defined as `public class PluginController {...}`.
 7.  Provide "Method Name" as getPlugins if the method to be tested is defined as follows:
 
-    `public ResponseEntity> getPlugins( `
+    `public ResponseEntity> getPlugins(`&#x20;
 
-    `@RequestParam(value = "pluginId", required = false) String pluginId, @RequestParam(value = "extensionType", required = false) ExtensionType extensionType) { `
+    `@RequestParam(value = "pluginId", required = false) String pluginId, @RequestParam(value = "extensionType", required = false) ExtensionType extensionType) {`&#x20;
 
-    `log.info("PluginController getPlugins() Start............."); `
+    `log.info("PluginController getPlugins() Start.............");`&#x20;
 
-    `if (StringUtils.hasLength(pluginId)) { `
+    `if (StringUtils.hasLength(pluginId)) {`&#x20;
 
-    `return new ResponseEntity<>(pluginService.getExtensions(pluginId, extensionType), HttpStatus.OK); `
+    `return new ResponseEntity<>(pluginService.getExtensions(pluginId, extensionType), HttpStatus.OK);`&#x20;
 
-    `} `
+    `}`&#x20;
 
     `return new ResponseEntity<>(pluginService.getExtensions(), HttpStatus.OK);`
 
@@ -353,17 +353,17 @@ Kill JVM Fault helps you simulate a condition where JVM crashes with specific ex
 6. Provide "Class Name" as PluginController if the class of interest is defined as `public class PluginController {...}`.
 7.  Provide "Method Name" as getPlugins if the method to be tested is defined as follows:
 
-    `public ResponseEntity> getPlugins( `
+    `public ResponseEntity> getPlugins(`&#x20;
 
-    `@RequestParam(value = "pluginId", required = false) String pluginId, @RequestParam(value = "extensionType", required = false) ExtensionType extensionType) { `
+    `@RequestParam(value = "pluginId", required = false) String pluginId, @RequestParam(value = "extensionType", required = false) ExtensionType extensionType) {`&#x20;
 
-    `log.info("PluginController getPlugins() Start............."); `
+    `log.info("PluginController getPlugins() Start.............");`&#x20;
 
-    `if (StringUtils.hasLength(pluginId)) { `
+    `if (StringUtils.hasLength(pluginId)) {`&#x20;
 
-    `return new ResponseEntity<>(pluginService.getExtensions(pluginId, extensionType), HttpStatus.OK); `
+    `return new ResponseEntity<>(pluginService.getExtensions(pluginId, extensionType), HttpStatus.OK);`&#x20;
 
-    `} `
+    `}`&#x20;
 
     `return new ResponseEntity<>(pluginService.getExtensions(), HttpStatus.OK);`
 
@@ -389,7 +389,7 @@ Kill JVM Fault helps you simulate a condition where JVM crashes with specific ex
 {% hint style="info" %}
 **For access to relevant API Swagger documentation:**
 
-Please traverse to link** **![](../../.gitbook/assets/help.png) -----> API Documentation from the Mangle UI or access _https://\<Mangle IP or Hostname>/mangle-services/swagger-ui.html#_/_fault-injection-controller_
+Please traverse to link **** ![](../../.gitbook/assets/help.png) -----> API Documentation from the Mangle UI or access _https://\<Mangle IP or Hostname>/mangle-services/swagger-ui.html#_/_fault-injection-controller_
 
 &#x20;![](broken-reference) ![](../../.gitbook/assets/faultinjectioncontroller.png)&#x20;
 {% endhint %}

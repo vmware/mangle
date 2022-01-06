@@ -8,13 +8,13 @@ Open **/etc/cassandra/cassandra.yaml** and modify **authenticator**: from **Allo
 
 To execute the init-query.cql file on db startup, need to modify the **docker-entrypoint.sh** file, add the below content right before **exec "$@"**
 
-`for f in docker-entrypoint-initdb.d/*; do  `\
-`case "$f" in  `\
-`*.sh) echo "$0: running $f"; . "$f" ;;  `\
-`*.cql) echo "$0: running $f" && until cqlsh --ssl -u cassandra -p cassandra -f "$f"; do >&2 echo "Cassandra is unavailable - sleeping"; sleep 2; done & ;;  `\
-`*) echo "$0: ignoring $f" ;;  `\
-`esac  `\
-`echo  `\
+`for f in docker-entrypoint-initdb.d/*; do`  \
+`case "$f" in`  \
+`*.sh) echo "$0: running $f"; . "$f" ;;`  \
+`*.cql) echo "$0: running $f" && until cqlsh --ssl -u cassandra -p cassandra -f "$f"; do >&2 echo "Cassandra is unavailable - sleeping"; sleep 2; done & ;;`  \
+`*) echo "$0: ignoring $f" ;;`  \
+`esac`  \
+`echo`  \
 `done`
 
 Here, **cqlsh --ssl -u cassandra -p cassandra** used to run \*.cql file (if ssl is not enabled then remove --ssl option)
@@ -116,11 +116,11 @@ To download the Cassandra client as DevCenter from [DevCenter](https://academy.d
 Create seed Node :
 
 ```
-docker run --name mangle-cassandradb -v /cassandra/storage/:/var/lib/cassandra -p 9042:9042 -p 7000:7000 -p 7001:7001 -d -e CASSANDRA_BROADCAST_ADDRESS=<Node IP> -e CASSANDRA_SEEDS=<Node IP> -e CASSANDRA_CLUSTER_NAME="manglecassandracluster" -e CASSANDRA_DC="DC1" -e CASSANDRA_RACK="rack1" -e CASSANDRA_ENDPOINT_SNITCH="GossipingPropertyFileSnitch"  mangleuser/mangle_cassandradb:1.0
+docker run --name mangle-cassandradb -v /cassandra/storage/:/var/lib/cassandra -p <IP>:9042:9042 -p <IP>:7000:7000 -p <IP>:7001:7001 -d -e CASSANDRA_BROADCAST_ADDRESS=<Node IP> -e CASSANDRA_SEEDS=<Node IP> -e CASSANDRA_CLUSTER_NAME="manglecassandracluster" -e CASSANDRA_DC="DC1" -e CASSANDRA_RACK="rack1" -e CASSANDRA_ENDPOINT_SNITCH="GossipingPropertyFileSnitch"  mangleuser/mangle_cassandradb:1.0
 ```
 
 Join the Other Node to Seed Node :
 
 ```
-docker run --name mangle-cassandradb -v /cassandra/storage/:/var/lib/cassandra -p 9042:9042 -p 7000:7000 -p 7001:7001 -d -e CASSANDRA_BROADCAST_ADDRESS=<Node IP> -e CASSANDRA_SEEDS=<Seed Node IP> -e CASSANDRA_CLUSTER_NAME="manglecassandracluster" -e CASSANDRA_DC="DC1" -e CASSANDRA_RACK="rack1" -e CASSANDRA_ENDPOINT_SNITCH="GossipingPropertyFileSnitch"  mangleuser/mangle_cassandradb:1.0
+docker run --name mangle-cassandradb -v /cassandra/storage/:/var/lib/cassandra -p <IP>:9042:9042 -p <IP>:7000:7000 -p <IP>:7001:7001 -d -e CASSANDRA_BROADCAST_ADDRESS=<Node IP> -e CASSANDRA_SEEDS=<Seed Node IP> -e CASSANDRA_CLUSTER_NAME="manglecassandracluster" -e CASSANDRA_DC="DC1" -e CASSANDRA_RACK="rack1" -e CASSANDRA_ENDPOINT_SNITCH="GossipingPropertyFileSnitch"  mangleuser/mangle_cassandradb:1.0
 ```

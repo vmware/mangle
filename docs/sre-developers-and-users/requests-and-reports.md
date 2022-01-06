@@ -68,7 +68,7 @@ Click on the Logs link to open up a browser window displaying the current Mangle
 {% hint style="info" %}
 **For access to relevant API Swagger documentation:**
 
-Please traverse to link** **![](../.gitbook/assets/help.png) -----> API Documentation from the Mangle UI or access _https://\<Mangle IP or Hostname>/mangle-services/swagger-ui.html#_/_scheduler-controller_
+Please traverse to link **** ![](../.gitbook/assets/help.png) -----> API Documentation from the Mangle UI or access _https://\<Mangle IP or Hostname>/mangle-services/swagger-ui.html#_/_scheduler-controller_
 
 &#x20;![](broken-reference) ![](../.gitbook/assets/schedulercontroller.png)&#x20;
 {% endhint %}

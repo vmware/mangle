@@ -2,7 +2,7 @@
 
 ## Single Node Deployments
 
-For a quick POC we recommend deploying a single node instance of Mangle on VMware vSphere using the OVA file available for download [here](https://repo.vmware.com/mangle/v3.0.0/Mangle-3.0.0.0\_OVF10.ova).
+For a quick POC we recommend deploying a single node instance of Mangle on VMware vSphere using the OVA file available for download [here](https://repo.vmware.com/mangle/v3.5.0/Mangle-3.5.0.0-19106891\_OVF10.ova).
 
 ### System Requirements
 
@@ -19,7 +19,7 @@ Login to your vSphere environment and perform the following steps in vCenter:
 
 1. Start the Import Process
    * From the Actions pull-down menu for a datacenter, choose **Deploy OVF Template**. ![Create/Register VM](../../.gitbook/assets/ova3.x\_step1\_deployovf.png)
-   * Locate and select the downloaded OVA file (as the screenshot shows), or alternatively, for vCenter instances with connectivity to the internet, enter the OVA's URL to deploy from the web directly.
+   * Locate and select the downloaded OVA file (as the screenshot shows), or alternatively, for vCenter instances with connectivity to the internet, enter the OVA's [URL](https://repo.vmware.com/mangle/v3.5.0/Mangle-3.5.0.0-18963379\_OVF10.ova) to deploy from the web directly.
    * Choose **Next**.
 2. Specify the Name and Location of Virtual Machine
    * Enter a name for the virtual machine, and select the target location for it. ![OVA file](../../.gitbook/assets/ova3.x\_step2\_nameandfolder.png)
@@ -61,6 +61,7 @@ Login to your vSphere environment and perform the following steps in vCenter:
     * Password: `admin`
 15. Export the VM as a Template (Optional)
 16. Consider converting this imported VM into a template (from the Actions menu, choose **Export** ) so that you have a master Mangle instance that can be combined with vSphere Guest Customization to enable rapid provisioning of Mangle instances.
+17. Mangle container logs are mounted to location `/var/opt/mangle-tomcat-dir/logs` on the virtual machine.
 
 Now you can move on to the [Mangle Users Guide](../../sre-developers-and-users/).
 
@@ -68,20 +69,28 @@ Now you can move on to the [Mangle Users Guide](../../sre-developers-and-users/)
 
 #### Prerequisites
 
-Before creating the Mangle container a Cassandra DB container should be made available on a Docker host. You can choose to deploy the DB and the Application container on the same Docker host or on different Docker hosts. However, we recommend that you use a separate Docker host for each of these. You can setup a Docker host by following the instructions [here](https://docs.docker.com/install/).
+Before creating the Mangle container, a Cassandra DB container should be made available on a Docker host. You can choose to deploy the DB and the Application container on the same Docker host or on different Docker hosts. However, we recommend that you use a separate Docker host for each of these. You can setup a Docker host by following the instructions [here](https://docs.docker.com/install/).
 
 To deploy Cassandra, you can either use the authentication enabled image tested and verified with Mangle available on the Mangle Docker repo or use the default public Cassandra image hosted on Dockerhub.
+
+#### Create directories for mounting the Mangle container logs on the Docker host by, running the command below:
+
+`mkdir -p /var/opt/mangle-tomcat-dir/logs`
+
+#### Grant permission on the Host Dir for container volume mounting by, running the command below:
+
+`chown 1000:1000 /var/opt/mangle-tomcat-dir/logs`
 
 **If you chose to use the Cassandra image from Mangle Docker Repo:**
 
 ```
-docker run --name mangle-cassandradb -v /cassandra/storage/:/var/lib/cassandra -p 9042:9042 -d -e CASSANDRA_CLUSTER_NAME="manglecassandracluster" -e CASSANDRA_DC="DC1" -e CASSANDRA_RACK="rack1" -e CASSANDRA_ENDPOINT_SNITCH="GossipingPropertyFileSnitch"  mangleuser/mangle_cassandradb:<VERSION>
+docker run --name mangle-cassandradb -v /cassandra/storage/:/var/lib/cassandra -p <IP>:9042:9042 -d -e CASSANDRA_CLUSTER_NAME="manglecassandracluster" -e CASSANDRA_DC="DC1" -e CASSANDRA_RACK="rack1" -e CASSANDRA_ENDPOINT_SNITCH="GossipingPropertyFileSnitch"  mangleuser/mangle_cassandradb:<VERSION>
 ```
 
 **If you chose to use the Cassandra image from** [**Dockerhub**](https://hub.docker.com/\_/cassandra/)**:**
 
 ```
-docker run --name mangle-cassandradb -v /cassandra/storage/:/var/lib/cassandra -p 9042:9042 -d -e CASSANDRA_CLUSTER_NAME="manglecassandracluster" -e CASSANDRA_DC="DC1" -e CASSANDRA_RACK="rack1" -e CASSANDRA_ENDPOINT_SNITCH="GossipingPropertyFileSnitch" cassandra:3.11
+docker run --name mangle-cassandradb -v /cassandra/storage/:/var/lib/cassandra -p <IP>:9042:9042 -d -e CASSANDRA_CLUSTER_NAME="manglecassandracluster" -e CASSANDRA_DC="DC1" -e CASSANDRA_RACK="rack1" -e CASSANDRA_ENDPOINT_SNITCH="GossipingPropertyFileSnitch" cassandra:3.11
 ```
 
 {% hint style="info" %}
@@ -93,13 +102,13 @@ To enable authentication or clustering on Cassandra refer to the [Cassandra Adva
 To deploy the Mangle container using a Cassandra DB deployed using the image from Mangle Docker repo or with DB authentication and ssl enabled, run the docker command below on the docker host after substituting the values in angle braces <> with actual values.
 
 ```
-docker run --name mangle -d -e DB_OPTIONS="-DcassandraContactPoints=<IP of the docker host where Cassandra is deployed> -DcassandraSslEnabled=true -DcassandraUsername=cassandra -DcassandraPassword=cassandra" -e CLUSTER_OPTIONS="-DclusterValidationToken=mangle -DpublicAddress=<IP or Hostname>" -p 8080:8080 -p 8443:8443 mangleuser/mangle:<VERSION>
+docker run --name mangle --log-opt max-size=10m --log-opt max-file=1 -v  /var/opt/mangle-tomcat-dir/logs:/home/mangle/var/opt/mangle-tomcat/logs -d -e DB_OPTIONS="-DcassandraContactPoints=<IP of the docker host where Cassandra is deployed> -DcassandraSslEnabled=true -DcassandraUsername=cassandra -DcassandraPassword=cassandra" -e CLUSTER_OPTIONS="-DclusterValidationToken=mangle -DpublicAddress=<IP or Hostname>" -p <IP>:8080:8080 -p <IP>:8443:8443 mangleuser/mangle:<VERSION>
 ```
 
 To deploy the Mangle container using a Cassandra DB deployed using the image from Dockerhub or with DB authentication and ssl disabled, run the docker command below on the docker host after substituting the values in angle braces <> with actual values.
 
 ```
-docker run --name mangle -d -e DB_OPTIONS="-DcassandraContactPoints=<IP of the docker host where Cassandra is deployed> -DcassandraSslEnabled=false" -e CLUSTER_OPTIONS="-DclusterValidationToken=mangle -DpublicAddress=<IP or Hostname>" -p 8080:8080 -p 8443:8443 mangleuser/mangle:<VERSION>
+docker run --name mangle --log-opt max-size=10m --log-opt max-file=1 -v  /var/opt/mangle-tomcat-dir/logs:/home/mangle/var/opt/mangle-tomcat/logs -d -e DB_OPTIONS="-DcassandraContactPoints=<IP of the docker host where Cassandra is deployed> -DcassandraSslEnabled=false" -e CLUSTER_OPTIONS="-DclusterValidationToken=mangle -DpublicAddress=<IP or Hostname>" -p <IP>:8080:8080 -p <IP>:8443:8443 mangleuser/mangle:<VERSION>
 ```
 
 {% hint style="info" %}
@@ -142,16 +151,24 @@ Although the docker run commands above lists only a few DB\_OPTIONS and CLUSTER\
 
 Mangle vCenter Adapter is a fault injection adapter for injecting vCenter specific faults. All the vCenter operations from the Mangle application will be carried out through this adapter.
 
+_**Create directories for mounting the Mangle-vCenter container logs on the Docker host by running the command below:**_
+
+`mkdir -p /var/opt/mangle-vc-adapter-tomcat/logs`
+
+_**Grant permission on the Host Dir for container volume mounting by, running the command below:**_
+
+`chown 1000:1000 /var/opt/mangle-vc-adapter-tomcat/logs`
+
 To deploy the vCenter adapter container using the default credentials run the docker command below on the docker host. Here the port 8443 is the external facing port on which the container will be available. Please ensure that the 8443 port is not used by any other application before running the command below. Else, change the command to use a free port and then run it.
 
 ```
-docker run --name mangle-vc-adapter -v /var/opt/mangle-vc-adapter-tomcat/logs:/var/opt/mangle-vc-adapter-tomcat/logs -d -p 8080:8080 -p 8443:8443 mangleuser/mangle_vcenter_adapter:<VERSION>
+docker run --name mangle-vc-adapter --log-opt max-size=10m --log-opt max-file=1 -v /var/opt/mangle-vc-adapter-tomcat/logs:/var/opt/mangle-vc-adapter-tomcat/logs -d -p <IP>:8080:8080 -p <IP>:8443:8443 mangleuser/mangle_vcenter_adapter:<VERSION>
 ```
 
 To deploy the vCenter adapter container using custom credentials run the docker command below on the docker host. Substitute the new password in angular brackets with a password of your choice. Here the port 8443 is the external facing port on which the container will be available. Please ensure that the 8443 port is not used by any other application before running the command below. Else, change the command to use a free port and then run it.
 
 ```
-docker run --name mangle-vc-adapter -v /var/opt/mangle-vc-adapter-tomcat/logs:/var/opt/mangle-vc-adapter-tomcat/logs -d -p 8080:8080 -p 8443:8443 -e JAVA_OPTS="-DcustomAdminCred=<new password>" mangleuser/mangle_vcenter_adapter:<VERSION>
+docker run --name mangle-vc-adapter --log-opt max-size=10m --log-opt max-file=1 -v /var/opt/mangle-vc-adapter-tomcat/logs:/var/opt/mangle-vc-adapter-tomcat/logs -d -p <IP>:8080:8080 -p <IP>:8443:8443 -e JAVA_OPTS="-DcustomAdminCred=<new password>" mangleuser/mangle_vcenter_adapter:<VERSION>
 ```
 
 {% hint style="info" %}
@@ -241,17 +258,17 @@ Deploy the Mangle cluster by bringing up the mangle container in each docker hos
 **For the first node in the cluster:**
 
 ```
-docker run --name mangle -d -v /var/opt/mangle-tomcat/logs:/var/opt/mangle-tomcat/logs -e DB_OPTIONS="-DcassandraContactPoints=<Cassandra-IP>" -e CLUSTER_OPTIONS="-DclusterName=<CLUSTER-NAME> -DclusterValidationToken=<CLUSTER-VALIDATION-TOKEN> -DpublicAddress=<DOCKER-HOST-IP-1> -DdeploymentMode=CLUSTER" -p 8080:8080 -p 443:8443 -p 5701:5701 mangleuser/mangle:<VERSION>
+docker run --name mangle --log-opt max-size=10m --log-opt max-file=1 -d -v /var/opt/mangle-tomcat/logs:/var/opt/mangle-tomcat/logs -e DB_OPTIONS="-DcassandraContactPoints=<Cassandra-IP>" -e CLUSTER_OPTIONS="-DclusterName=<CLUSTER-NAME> -DclusterValidationToken=<CLUSTER-VALIDATION-TOKEN> -DpublicAddress=<DOCKER-HOST-IP-1> -DdeploymentMode=CLUSTER" -p <IP>:8080:8080 -p <IP>:443:8443 -p <IP>:5701:5701 mangleuser/mangle:<VERSION>
 ```
 
 **For the subsequent nodes in the cluster:**
 
 ```
-docker run --name mangle -d -v /var/opt/mangle-tomcat/logs:/var/opt/mangle-tomcat/logs -e DB_OPTIONS="-DcassandraContactPoints=<Cassandra-IP>" -e CLUSTER_OPTIONS="-DclusterName=<CLUSTER-NAME> -DclusterValidationToken=<CLUSTER-VALIDATION-TOKEN> -DpublicAddress=<DOCKER-HOST-IP-2> -DclusterMembers=<DOCKER-HOST-IP-1> -DdeploymentMode=CLUSTER" -p 8080:8080 -p 443:8443 -p 5701:5701 mangleuser/mangle:<VERSION>
+docker run --name mangle --log-opt max-size=10m --log-opt max-file=1 -d -v /var/opt/mangle-tomcat/logs:/var/opt/mangle-tomcat/logs -e DB_OPTIONS="-DcassandraContactPoints=<Cassandra-IP>" -e CLUSTER_OPTIONS="-DclusterName=<CLUSTER-NAME> -DclusterValidationToken=<CLUSTER-VALIDATION-TOKEN> -DpublicAddress=<DOCKER-HOST-IP-2> -DclusterMembers=<DOCKER-HOST-IP-1> -DdeploymentMode=CLUSTER" -p <IP>:8080:8080 -p <IP>:443:8443 -p <IP>:5701:5701 mangleuser/mangle:<VERSION>
 ```
 
 ```
-docker run --name mangle -d -v /var/opt/mangle-tomcat/logs:/var/opt/mangle-tomcat/logs -e DB_OPTIONS="-DcassandraContactPoints=<Cassandra-IP>" -e CLUSTER_OPTIONS="-DclusterName=<CLUSTER-NAME> -DclusterValidationToken=<CLUSTER-VALIDATION-TOKEN> -DpublicAddress=<DOCKER-HOST-IP-3> -DclusterMembers=<DOCKER-HOST-IP-1, DOCKER-HOST-IP-2> -DdeploymentMode=CLUSTER" -p 8080:8080 -p 443:8443 -p 5701:5701 mangleuser/mangle:<VERSION>
+docker run --name mangle --log-opt max-size=10m --log-opt max-file=1 -d -v /var/opt/mangle-tomcat/logs:/var/opt/mangle-tomcat/logs -e DB_OPTIONS="-DcassandraContactPoints=<Cassandra-IP>" -e CLUSTER_OPTIONS="-DclusterName=<CLUSTER-NAME> -DclusterValidationToken=<CLUSTER-VALIDATION-TOKEN> -DpublicAddress=<DOCKER-HOST-IP-3> -DclusterMembers=<DOCKER-HOST-IP-1, DOCKER-HOST-IP-2> -DdeploymentMode=CLUSTER" -p <IP>:8080:8080 -p <IP>:443:8443 -p <IP>:5701:5701 mangleuser/mangle:<VERSION>
 ```
 
 ## Deployment Mode and Quorum
@@ -320,7 +337,7 @@ Active members list of the active quorum will be maintained in DB under the tabl
 #### **(Applicable if you have deployed Mangle on a Docker Host/ OVA vm)**
 
 * You can make use of the upgrade script for upgrading the MangleWEB container running.
-* The upgrade script is available on the public Mangle Git hub repository at location: [mangle/mangle-support/](https://github.com/vmware/mangle/tree/master/mangle-support)`sh UpgradeMangle.sh --MANGLE_ADMIN_USERNAME=<admin@mangle.local> --MANGLE_ADMINPASSWORD=<mangleAdminpasswd>  --MANGLE_BUILD_NUMBER=<mangleBuildNo>  --MANGLE_CONTAINER_NAME=<mangleWEB> --MANGLE_APP_PORT=443 --MANGLE_DOCKER_ARTIFACTORY= <mangleDockerArtifactory>`
+* The upgrade script is available on the public Mangle Git hub repository at location: [mangle/mangle-support/](https://github.com/vmware/mangle/tree/master/mangle-support)`sh UpgradeMangle.sh --LOG_MAX_SIZE=<logFileSize eg:10m> --LOG_MAX_FILE=<maxFileCount eg: 1> --MANGLE_ADMIN_USERNAME=<admin@mangle.local> --MANGLE_ADMINPASSWORD=<mangleAdminpasswd>  --MANGLE_BUILD_NUMBER=<mangleBuildNumber>  --MANGLE_CONTAINER_NAME=<mangleWEB> --MANGLE_APP_PORT=443 --MANGLE_DOCKER_ARTIFACTORY= <mangleDockerArtifactory> --NIC_NAME=<networkInterfaceName>`
 * The script will prompt you to check if you have taken the DB snapshot using the link below: For reference to take DB snapshot: [https://docs.datastax.com/en/cassandra/3.0/cassandra/operations/opsBackupTakesSnapshot.html](https://docs.datastax.com/en/cassandra/3.0/cassandra/operations/opsBackupTakesSnapshot.html)
 * The upgrade script is tested out for Single Node upgrade.
 * The existing data in Cassandra will be intact while upgrading from Mangle version 2.0 to 3.0. There will be no changes to the existing DB tables. The db migration scripts takes care of adding new tables to the existing schema.

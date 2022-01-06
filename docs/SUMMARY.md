@@ -17,6 +17,7 @@
     * [Database Faults](sre-developers-and-users/injecting-faults/database-faults.md)
     * [Redis Faults](sre-developers-and-users/injecting-faults/redis-faults.md)
     * [Custom Faults](sre-developers-and-users/injecting-faults/custom-faults.md)
+    * [Fault Events in Dynatrace](sre-developers-and-users/injecting-faults/fault-events-in-dynatrace.md)
   * [Resiliency Score](sre-developers-and-users/resiliency-score.md)
   * [Requests and Reports](sre-developers-and-users/requests-and-reports.md)
 * [Mangle Troubleshooting Guide](troubleshooting-guide/README.md)
@@ -26,4 +27,3 @@
   * [Fault Injection Stage](troubleshooting-guide/fault-injection-stage.md)
 * [Mangle Developers' Guide](building-the-mangle-codebase.md)
 * [Contributing to Mangle](contributing-to-mangle.md)
-

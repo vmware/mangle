@@ -53,11 +53,11 @@ Before you can use this feature, please ensure that the configuration is in plac
 7. A task of type RESILIENCY\_SCORE will be created and the status will change to "Completed" as soon the score is generated and send to the monitoring system.
 
 {% hint style="info" %}
-**PLEASE NOTE: **_This feature is still under evaluation and is supported only **VMware Wavefront**. If you need Mangle to provide support for other monitoring systems, please raise a feature request under _[_Mangle Github_](https://github.com/vmware/mangle/issues)_._
+**PLEASE NOTE:** _This feature is still under evaluation and is supported only **VMware Wavefront**. If you need Mangle to provide support for other monitoring systems, please raise a feature request under_ [_Mangle Github_](https://github.com/vmware/mangle/issues)_._
 {% endhint %}
 
 {% hint style="info" %}
 **Relevant API List**
 
-**For access to Swagger documentation, please traverse to link **![](../.gitbook/assets/help.png) -----> API Documentation from the Mangle UI or access _https://\<Mangle IP or Hostname>/mangle-services/swagger-ui.html#/resiliency-score-controller_
+**For access to Swagger documentation, please traverse to link** ![](../.gitbook/assets/help.png) -----> API Documentation from the Mangle UI or access _https://\<Mangle IP or Hostname>/mangle-services/swagger-ui.html#/resiliency-score-controller_
 {% endhint %}

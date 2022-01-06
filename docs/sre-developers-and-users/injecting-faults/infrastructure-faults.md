@@ -50,7 +50,7 @@ CPU fault enables spiking cpu usage values for a selected endpoint by a percenta
 5. Provide "Injection Home Dir" only if you would like Mangle to push the script files needed to simulate the fault to a specific location on the endpoint. Else the default temp location will be used.
 6. Provide a "Timeout" value in milliseconds. For eg: if you need the CPU load of 80% to be sustained for a duration of 1 hour then you should provide the timeout value as 3600000 (1 hour = 3600000 ms). After this duration, Mangle will ensure remediation of the fault without any manual intervention.
 7. Schedule options are required only if the fault needs to be re-executed at regular intervals against an endpoint.
-8. Tags are key value pairs that will be send to the active monitoring tool under Mangle Admin settings ---> Integrations ---> Metric Providers at the time of publishing events for fault injection and remediation. They are optional and you can choose to exclude this while running faults.
+8. Tags are key value pairs that will be send to the active monitoring tool under Mangle Admin settings ---> Integrations ---> Metric Providers at the time of publishing events for fault injection and remediation. They are optional and you can choose to exclude this while running faults. If you are using Dynatrace as your preferred metric provider, please refer to the additional instructions provided [here](fault-events-in-dynatrace.md) on setting entity IDs and tags for the integration to work as expected.
 9. Supported notifiers include Slack channels that are configured under Mangle Admin settings ---> Integrations ---> Notifiers. This will enable Mangle to automatically publish status of fault injections to the appropriate Slack channels for monitoring purposes. They are optional and you can choose to exclude this while running faults.
 10. Click on Run Fault.
 11. The user will be re-directed to the Processed Requests section under Requests & Reports tab.
@@ -76,7 +76,7 @@ Memory fault enables spiking memory usage values for a selected endpoint by a pe
 5. Provide "Injection Home Dir" only if you would like Mangle to push the script files needed to simulate the fault to a specific location on the endpoint. Else the default temp location will be used.
 6. Provide a "Timeout" value in milliseconds. For eg: if you need the Memory load of 80% to be sustained for a duration of 1 hour then you should provide the timeout value as 3600000 (1 hour = 3600000 ms). After this duration, Mangle will ensure remediation of the fault without any manual intervention.
 7. Schedule options are required only if the fault needs to be re-executed at regular intervals against an endpoint.
-8. Tags are key value pairs that will be send to the active monitoring tool under Mangle Admin settings ---> Integrations ---> Metric Providers at the time of publishing events for fault injection and remediation. They are optional and you can choose to exclude this while running faults.
+8. Tags are key value pairs that will be send to the active monitoring tool under Mangle Admin settings ---> Integrations ---> Metric Providers at the time of publishing events for fault injection and remediation. They are optional and you can choose to exclude this while running faults. If you are using Dynatrace as your preferred metric provider, please refer to the additional instructions provided [here](fault-events-in-dynatrace.md) on setting entity IDs and tags for the integration to work as expected.
 9. Supported notifiers include Slack channels that are configured under Mangle Admin settings ---> Integrations ---> Notifiers. This will enable Mangle to automatically publish status of fault injections to the appropriate Slack channels for monitoring purposes. They are optional and you can choose to exclude this while running faults.
 10. Click on Run Fault.
 11. The user will be re-directed to the Processed Requests section under Requests & Reports tab.
@@ -102,7 +102,7 @@ Disk IO fault enables spiking disk IO operation for a selected endpoint by an IO
 5. Provide "Injection Home Dir" only if you would like Mangle to push the script files needed to simulate the fault to a specific location on the endpoint. Else the default temp location will be used.
 6. Provide a "Timeout" value in milliseconds. For eg: if you need the IO load of 8192000 to be sustained for a duration of 1 hour then you should provide the timeout value as 3600000 (1 hour = 3600000 ms). After this duration, Mangle will ensure remediation of the fault without any manual intervention.
 7. Schedule options are required only if the fault needs to be re-executed at regular intervals against an endpoint.
-8. Tags are key value pairs that will be send to the active monitoring tool under Mangle Admin settings ---> Integrations ---> Metric Providers at the time of publishing events for fault injection and remediation. They are optional and you can choose to exclude this while running faults.
+8. Tags are key value pairs that will be send to the active monitoring tool under Mangle Admin settings ---> Integrations ---> Metric Providers at the time of publishing events for fault injection and remediation. They are optional and you can choose to exclude this while running faults. If you are using Dynatrace as your preferred metric provider, please refer to the additional instructions provided [here](fault-events-in-dynatrace.md) on setting entity IDs and tags for the integration to work as expected.&#x20;
 9. Supported notifiers include Slack channels that are configured under Mangle Admin settings ---> Integrations ---> Notifiers. This will enable Mangle to automatically publish status of fault injections to the appropriate Slack channels for monitoring purposes. They are optional and you can choose to exclude this while running faults.
 10. Click on Run Fault.
 11. The user will be re-directed to the Processed Requests section under Requests & Reports tab.
@@ -129,7 +129,7 @@ Kill Process fault enables abrupt termination of any process that is running on 
 6. Provide a "Remediation Command". For eg: To start the sshd process that was killed on an Ubuntu 17 Server, specify the remediation command as _"sudo service ssh start" ._
 7. Provide "Injection Home Dir" only if you would like Mangle to push the script files needed to simulate the fault to a specific location on the endpoint. Else the default temp location will be used.
 8. Schedule options are required only if the fault needs to be re-executed at regular intervals against an endpoint.
-9. Tags are key value pairs that will be send to the active monitoring tool under Mangle Admin settings ---> Integrations ---> Metric Providers at the time of publishing events for fault injection and remediation. They are optional and you can choose to exclude this while running faults.
+9. Tags are key value pairs that will be send to the active monitoring tool under Mangle Admin settings ---> Integrations ---> Metric Providers at the time of publishing events for fault injection and remediation. They are optional and you can choose to exclude this while running faults. If you are using Dynatrace as your preferred metric provider, please refer to the additional instructions provided [here](fault-events-in-dynatrace.md) on setting entity IDs and tags for the integration to work as expected.
 10. Supported notifiers include Slack channels that are configured under Mangle Admin settings ---> Integrations ---> Notifiers. This will enable Mangle to automatically publish status of fault injections to the appropriate Slack channels for monitoring purposes. They are optional and you can choose to exclude this while running faults.
 11. Click on Run Fault.
 12. The user will be re-directed to the Processed Requests section under Requests & Reports tab.
@@ -155,7 +155,7 @@ Stop service fault enables graceful shutdown of any process that is running on t
 5. Provide "Injection Home Dir" only if you would like Mangle to push the script files needed to simulate the fault to a specific location on the endpoint. Else the default temp location will be used.
 6. Provide a "Timeout" value in milliseconds. For eg: if you need the Service to be stopped for a duration of 1 hour, then you should provide the timeout value as 3600000 (1 hour = 3600000 ms). After this duration, Mangle will ensure remediation of the fault without any manual intervention.
 7. Schedule options are required only if the fault needs to be re-executed at regular intervals against an endpoint.
-8. Tags are key value pairs that will be sent to the active monitoring tool under Mangle Admin settings ---> Integrations ---> Metric Providers at the time of publishing events for fault injection and remediation. They are optional and you can choose to exclude this while running faults.
+8. Tags are key value pairs that will be sent to the active monitoring tool under Mangle Admin settings ---> Integrations ---> Metric Providers at the time of publishing events for fault injection and remediation. They are optional and you can choose to exclude this while running faults. If you are using Dynatrace as your preferred metric provider, please refer to the additional instructions provided [here](fault-events-in-dynatrace.md) on setting entity IDs and tags for the integration to work as expected.
 9. Supported notifiers include Slack channels that are configured under Mangle Admin settings ---> Integrations ---> Notifiers. This will enable Mangle to automatically publish status of fault injections to the appropriate Slack channels for monitoring purposes. They are optional and you can choose to exclude this while running faults.
 10. Click on Run Fault.
 11. The user will be re-directed to the Processed Requests section under Requests & Reports tab.
@@ -180,7 +180,7 @@ File Handler Leak fault enables you to simulate conditions where a program reque
 4. Provide "Injection Home Dir" only if you would like Mangle to push the script files needed to simulate the fault to a specific location on the endpoint. Else the default temp location will be used.
 5. Provide a "Timeout" value in milliseconds. For eg: if you need the out of file handles error to be sustained for a duration of 1 hour then you should provide the timeout value as 3600000 (1 hour = 3600000 ms). After this duration, Mangle will ensure remediation of the fault without any manual intervention.
 6. Schedule options are required only if the fault needs to be re-executed at regular intervals against an endpoint.
-7. Tags are key value pairs that will be send to the active monitoring tool under Mangle Admin settings ---> Integrations ---> Metric Providers at the time of publishing events for fault injection and remediation. They are optional and you can choose to exclude this while running faults.
+7. Tags are key value pairs that will be send to the active monitoring tool under Mangle Admin settings ---> Integrations ---> Metric Providers at the time of publishing events for fault injection and remediation. They are optional and you can choose to exclude this while running faults. If you are using Dynatrace as your preferred metric provider, please refer to the additional instructions provided [here](fault-events-in-dynatrace.md) on setting entity IDs and tags for the integration to work as expected.&#x20;
 8. Supported notifiers include Slack channels that are configured under Mangle Admin settings ---> Integrations ---> Notifiers. This will enable Mangle to automatically publish status of fault injections to the appropriate Slack channels for monitoring purposes. They are optional and you can choose to exclude this while running faults.
 9. Click on Run Fault.
 10. The user will be re-directed to the Processed Requests section under Requests & Reports tab.
@@ -209,7 +209,7 @@ Disk Space Fault enables you to simulate out of disk or low disk space condition
 6. Provide "Injection Home Dir" only if you would like Mangle to push the script files needed to simulate the fault to a specific location on the endpoint. Else the default temp location will be used.
 7. Provide a "Timeout" value in milliseconds. For eg: if you need the low disk or out of disk condition to be sustained for a duration of 1 hour then you should provide the timeout value as 3600000 (1 hour = 3600000 ms). After this duration, Mangle will ensure remediation of the fault without any manual intervention.
 8. Schedule options are required only if the fault needs to be re-executed at regular intervals against an endpoint.
-9. Tags are key value pairs that will be send to the active monitoring tool under Mangle Admin settings ---> Integrations ---> Metric Providers at the time of publishing events for fault injection and remediation. They are optional and you can choose to exclude this while running faults.
+9. Tags are key value pairs that will be send to the active monitoring tool under Mangle Admin settings ---> Integrations ---> Metric Providers at the time of publishing events for fault injection and remediation. They are optional and you can choose to exclude this while running faults.  If you are using Dynatrace as your preferred metric provider, please refer to the additional instructions provided [here](fault-events-in-dynatrace.md) on setting entity IDs and tags for the integration to work as expected.
 10. Supported notifiers include Slack channels that are configured under Mangle Admin settings ---> Integrations ---> Notifiers. This will enable Mangle to automatically publish status of fault injections to the appropriate Slack channels for monitoring purposes. They are optional and you can choose to exclude this while running faults.
 11. Click on Run Fault.
 12. The user will be re-directed to the Processed Requests section under Requests & Reports tab.
@@ -276,37 +276,7 @@ Clock Skew Fault simulates conditions where the endpoint time is distorted and d
 6. Set the skew time by specifying the seconds, minutes, hours and days or a combination of these options.
 7. Provide a "Timeout" value in milliseconds. For eg: if you need the clock skew condition to be sustained for a duration of 1 hour then you should provide the timeout value as 3600000 (1 hour = 3600000 ms). After this duration, Mangle will ensure remediation of the fault without any manual intervention.
 8. Schedule options are required only if the fault needs to be re-executed at regular intervals against an endpoint.
-9. Tags are key value pairs that will be send to the active monitoring tool under Mangle Admin settings ---> Integrations ---> Metric Providers at the time of publishing events for fault injection and remediation. They are optional and you can choose to exclude this while running faults.
-10. Supported notifiers include Slack channels that are configured under Mangle Admin settings ---> Integrations ---> Notifiers. This will enable Mangle to automatically publish status of fault injections to the appropriate Slack channels for monitoring purposes. They are optional and you can choose to exclude this while running faults.
-11. Click on Run Fault.
-12. The user will be re-directed to the Processed Requests section under Requests & Reports tab.
-13. If Mangle was able to successfully trigger the fault, the status of the task will change to "INJECTED". The fault will continue to run at the endpoint until the timeout expires or a remediation request is triggered. The option to trigger a remediation request at anytime can be found on clicking the ![](../../.gitbook/assets/actions\_button.png) button against the task in the Processed Requests table. The task will be updated to "COMPLETED" once the task is auto remediated or manually remediated before the fault timeout.&#x20;
-14. For monitoring purposes, log into either Wavefront or Datadog once it is configured as an active Metric provider in Mangle and refer to the Events section. Events similar to the screenshots provided below will be available on the monitoring tool for tracking purposes.
-
-
-
-    &#x20;![](../../.gitbook/assets/datadogevents.png)&#x20;
-
-
-
-    &#x20; ![](../../.gitbook/assets/wavefrontevents.png)&#x20;
-
-## ![](../../.gitbook/assets/new\_logo.png) Network Partition Fault
-
-Network Partition Fault simulates conditions where endpoints lose connectivity due to a network split primarily due to failures in underlying network devices. This induces cases where clustered setups lose nodes with impact to high availability, data consistency and end up in split brain scenario in the worst cases.
-
-**Steps to follow:**&#x20;
-
-1. Login as a user with read and write privileges to Mangle.
-2. Navigate to Fault Execution tab ---> Infrastructure Faults ---> Network Partition. Only remote machine and remote machine clusters are supported for this fault.
-3. Select an Endpoint.
-4. Provide a host IP or a list of host IPs to which the endpoint should lose network connectivity due to network partition.
-5. If the single host IP provided is identical to the Endpoint host, it throws error at the injection of fault. Because, the Endpoint host and the host IP provided must be different.\
-   But if user provides host IPs list and if a host IP is identical to the one in Endpoint host/ Endpoint group hosts, the fault injection proceeds by selecting the Endpoint -Host IP pair of the remaining list.
-6. Provide "Injection Home Dir" only if you would like Mangle to push the script files needed to simulate the fault to a specific location on the endpoint. Else the default temp location will be used.
-7. Provide a "Timeout" value in milliseconds. For eg: if you need the partitioning to be sustained for a duration of 1 hour then you should provide the timeout value as 3600000 (1 hour = 3600000 ms). After this duration, Mangle will ensure remediation of the fault without any manual intervention.
-8. Schedule options are required only if the fault needs to be re-executed at regular intervals against an endpoint.
-9. Tags are key value pairs that will be send to the active monitoring tool under Mangle Admin settings ---> Integrations ---> Metric Providers at the time of publishing events for fault injection and remediation. They are optional and you can choose to exclude this while running faults.
+9. Tags are key value pairs that will be send to the active monitoring tool under Mangle Admin settings ---> Integrations ---> Metric Providers at the time of publishing events for fault injection and remediation. They are optional and you can choose to exclude this while running faults. If you are using Dynatrace as your preferred metric provider, please refer to the additional instructions provided [here](fault-events-in-dynatrace.md) on setting entity IDs and tags for the integration to work as expected.
 10. Supported notifiers include Slack channels that are configured under Mangle Admin settings ---> Integrations ---> Notifiers. This will enable Mangle to automatically publish status of fault injections to the appropriate Slack channels for monitoring purposes. They are optional and you can choose to exclude this while running faults.
 11. Click on Run Fault.
 12. The user will be re-directed to the Processed Requests section under Requests & Reports tab.
@@ -335,14 +305,15 @@ Network Faults enables you to simulate unfavorable conditions such as packet del
 4. Provide a "Nic Name".  For eg:  For a remote machine endpoint Nic name could be eth0, eth1 etc depending on what adapter you would want to target for the fault.
 5. Provide a "Latency" value in milliseconds. For eg: 1000 to simulate a packet delay of 1 second on a particular network interface of an Endpoint.
 6. Provide "Injection Home Dir" only if you would like Mangle to push the script files needed to simulate the fault to a specific location on the endpoint. Else the default temp location will be used.
-7. Provide a "Timeout" value in milliseconds. For eg: if you need the packet delay to be sustained for a duration of 1 hour then you should provide the timeout value as 3600000 (1 hour = 3600000 ms). After this duration, Mangle will ensure remediation of the fault without any manual intervention.
-8. Schedule options are required only if the fault needs to be re-executed at regular intervals against an endpoint.
-9. Tags are key value pairs that will be send to the active monitoring tool under Mangle Admin settings ---> Integrations ---> Metric Providers at the time of publishing events for fault injection and remediation. They are optional and you can choose to exclude this while running faults.
-10. Supported notifiers include Slack channels that are configured under Mangle Admin settings ---> Integrations ---> Notifiers. This will enable Mangle to automatically publish status of fault injections to the appropriate Slack channels for monitoring purposes. They are optional and you can choose to exclude this while running faults.
-11. Click on Run Fault.
-12. The user will be re-directed to the Processed Requests section under Requests & Reports tab.
-13. If Mangle was able to successfully trigger the fault, the status of the task will change to "INJECTED". The fault will continue to run at the endpoint until the timeout expires or a remediation request is triggered. The option to trigger a remediation request at anytime can be found on clicking the ![](../../.gitbook/assets/actions\_button.png) button against the task in the Processed Requests table. The task will be updated to "COMPLETED" once the task is auto remediated or manually remediated before the fault timeout.&#x20;
-14. For monitoring purposes, log into either Wavefront or Datadog once it is configured as an active Metric provider in Mangle and refer to the Events section. Events similar to the screenshots provided below will be available on the monitoring tool for tracking purposes.
+7. Provide a "Jitter" value in milliseconds only if you would like Mangle to generate a variable fault that would change between two thresholds ie: Latency +/- Jitter. For eg: If you want the fault of 1 minute to vary between 30 sec and 90 sec then you provide a Latency value of 60000ms and a Jitter value of 30000ms.
+8. Provide a "Timeout" value in milliseconds. For eg: if you need the packet delay to be sustained for a duration of 1 hour then you should provide the timeout value as 3600000 (1 hour = 3600000 ms). After this duration, Mangle will ensure remediation of the fault without any manual intervention.
+9. Schedule options are required only if the fault needs to be re-executed at regular intervals against an endpoint.
+10. Tags are key value pairs that will be send to the active monitoring tool under Mangle Admin settings ---> Integrations ---> Metric Providers at the time of publishing events for fault injection and remediation. They are optional and you can choose to exclude this while running faults.
+11. Supported notifiers include Slack channels that are configured under Mangle Admin settings ---> Integrations ---> Notifiers. This will enable Mangle to automatically publish status of fault injections to the appropriate Slack channels for monitoring purposes. They are optional and you can choose to exclude this while running faults.
+12. Click on Run Fault.
+13. The user will be re-directed to the Processed Requests section under Requests & Reports tab.
+14. If Mangle was able to successfully trigger the fault, the status of the task will change to "INJECTED". The fault will continue to run at the endpoint until the timeout expires or a remediation request is triggered. The option to trigger a remediation request at anytime can be found on clicking the ![](../../.gitbook/assets/actions\_button.png) button against the task in the Processed Requests table. The task will be updated to "COMPLETED" once the task is auto remediated or manually remediated before the fault timeout.&#x20;
+15. For monitoring purposes, log into either Wavefront or Datadog once it is configured as an active Metric provider in Mangle and refer to the Events section. Events similar to the screenshots provided below will be available on the monitoring tool for tracking purposes.
 
 
 
@@ -433,6 +404,36 @@ Network Faults enables you to simulate unfavorable conditions such as packet del
 
     &#x20; ![](../../.gitbook/assets/wavefrontevents.png)&#x20;
 
+### Network Partition Fault
+
+Network Partition Fault simulates conditions where endpoints lose connectivity due to a network split primarily due to failures in underlying network devices. This induces cases where clustered setups lose nodes with impact to high availability, data consistency and end up in split brain scenario in the worst cases.
+
+**Steps to follow:**&#x20;
+
+1. Login as a user with read and write privileges to Mangle.
+2. Navigate to Fault Execution tab ---> Infrastructure Faults ---> Network Partition. Only remote machine and remote machine clusters are supported for this fault.
+3. Select an Endpoint.
+4. Provide a host IP or a list of host IPs to which the endpoint should lose network connectivity due to network partition.
+5. If the single host IP provided is identical to the Endpoint host, it throws error at the injection of fault. Because, the Endpoint host and the host IP provided must be different.\
+   But if user provides host IPs list and if a host IP is identical to the one in Endpoint host/ Endpoint group hosts, the fault injection proceeds by selecting the Endpoint -Host IP pair of the remaining list.
+6. Provide "Injection Home Dir" only if you would like Mangle to push the script files needed to simulate the fault to a specific location on the endpoint. Else the default temp location will be used.
+7. Provide a "Timeout" value in milliseconds. For eg: if you need the partitioning to be sustained for a duration of 1 hour then you should provide the timeout value as 3600000 (1 hour = 3600000 ms). After this duration, Mangle will ensure remediation of the fault without any manual intervention.
+8. Schedule options are required only if the fault needs to be re-executed at regular intervals against an endpoint.
+9. Tags are key value pairs that will be send to the active monitoring tool under Mangle Admin settings ---> Integrations ---> Metric Providers at the time of publishing events for fault injection and remediation. They are optional and you can choose to exclude this while running faults.
+10. Supported notifiers include Slack channels that are configured under Mangle Admin settings ---> Integrations ---> Notifiers. This will enable Mangle to automatically publish status of fault injections to the appropriate Slack channels for monitoring purposes. They are optional and you can choose to exclude this while running faults.
+11. Click on Run Fault.
+12. The user will be re-directed to the Processed Requests section under Requests & Reports tab.
+13. If Mangle was able to successfully trigger the fault, the status of the task will change to "INJECTED". The fault will continue to run at the endpoint until the timeout expires or a remediation request is triggered. The option to trigger a remediation request at anytime can be found on clicking the ![](../../.gitbook/assets/actions\_button.png) button against the task in the Processed Requests table. The task will be updated to "COMPLETED" once the task is auto remediated or manually remediated before the fault timeout.&#x20;
+14. For monitoring purposes, log into either Wavefront or Datadog once it is configured as an active Metric provider in Mangle and refer to the Events section. Events similar to the screenshots provided below will be available on the monitoring tool for tracking purposes.
+
+
+
+    &#x20;![](../../.gitbook/assets/datadogevents.png)&#x20;
+
+
+
+    &#x20; ![](../../.gitbook/assets/wavefrontevents.png)&#x20;
+
 ## Docker State Change
 
 Docker State Change faults enable you to abruptly stop or pause containers running on a Docker host. Unlike other infrastructure faults like CPU, Memory and Disk IO this fault is specific to the Docker endpoint and does not have a timeout field because the fault completes very quickly. Some containers may be configured for auto-start and some might require a manual start command to be executed. For the first case, auto-remediation through Mangle is not needed. For the second case, a manual remediation can be triggered from the Requests and Reports tab after the fault completes.
@@ -476,8 +477,36 @@ Kubernetes (K8s) Delete Resource faults enable you to abruptly delete pods or no
 10. Supported notifiers include Slack channels that are configured under Mangle Admin settings ---> Integrations ---> Notifiers. This will enable Mangle to automatically publish status of fault injections to the appropriate Slack channels for monitoring purposes. They are optional and you can choose to exclude this while running faults.
 11. Click on Run Fault.
 12. The user will be re-directed to the Processed Requests section under Requests & Reports tab.
-13. If Mangle was able to successfully trigger the fault, the status of the task will change to "INJECTED". The fault will continue to run at the endpoint until the timeout expires or a remediation request is triggered. The option to trigger a remediation request at anytime can be found on clicking the ![](../../.gitbook/assets/actions\_button.png) button against the task in the Processed Requests table. The task will be updated to "COMPLETED" once the task is auto remediated or manually remediated before the fault timeout.&#x20;
+13. If Mangle was able to successfully trigger the fault, the status of the task will change to "IN\_PROGRESS". The fault will continue to run at the endpoint and the task will be updated to "COMPLETED" once the fault is done.&#x20;
 14. For monitoring purposes, log into either Wavefront or Datadog once it is configured as an active Metric provider in Mangle and refer to the Events section. Events similar to the screenshots provided below will be available on the monitoring tool for tracking purposes.
+
+    &#x20;![](../../.gitbook/assets/datadogevents.png)&#x20;
+
+
+
+    &#x20; ![](../../.gitbook/assets/wavefrontevents.png)&#x20;
+
+
+
+## ![](../../.gitbook/assets/new\_logo.png)Kubernetes Drain Node
+
+Kubernetes (K8s) Drain Node faults enable you to evict all the pods from a node. Unlike other infrastructure faults like CPU, Memory and Disk IO this fault is specific to the K8s endpoint and does not have a timeout field because the fault completes very quickly. In most cases, K8s will automatically replace the deleted resource. This fault allows you see how the applications hosted on these pods behave in case the pods are evicted from one node and move to another node.
+
+**Steps to follow:**&#x20;
+
+1. Login as a user with read and write privileges to Mangle.
+2. Navigate to Fault Execution tab ---> Infrastructure Faults ---> K8S ---> Drain Node.
+3. Select an Endpoint (Only K8S endpoints are listed).
+4. Select a Node identifier: Node Name or Node Labels.
+5. If you choose Node Name to identify a node, select from the drop down menu.
+6. If you choose Node Labels provide a key value pair for eg: app=mangle. Since multiple resources can have the same label, you also need to specify if you are interested in a Random Injection. If "Random Injection" is set to true, Mangle will randomly choose one resource in a list of resources identified using the label, for introducing the fault. If "Random Injection" is set to false, it will introduce fault into all resources identified using the resource label.
+7. Schedule options are not available for this fault.
+8. Tags are key value pairs that will be send to the active monitoring tool under Mangle Admin settings ---> Integrations ---> Metric Providers at the time of publishing events for fault injection and remediation. They are optional and you can choose to exclude this while running faults.
+9. Supported notifiers include Slack channels that are configured under Mangle Admin settings ---> Integrations ---> Notifiers. This will enable Mangle to automatically publish status of fault injections to the appropriate Slack channels for monitoring purposes. They are optional and you can choose to exclude this while running faults.
+10. Click on Run Fault.
+11. The user will be re-directed to the Processed Requests section under Requests & Reports tab.
+12. If Mangle was able to successfully trigger the fault, the status of the task will change to "IN\_PROGRESS". The fault will continue to run at the endpoint and the task will be updated to "COMPLETED" once the fault is done. mediated or manually remediated before the fault timeout.&#x20;
+13. For monitoring purposes, log into either Wavefront or Datadog once it is configured as an active Metric provider in Mangle and refer to the Events section. Events similar to the screenshots provided below will be available on the monitoring tool for tracking purposes.
 
     &#x20;![](../../.gitbook/assets/datadogevents.png)&#x20;
 
@@ -504,7 +533,7 @@ Kubernetes (K8s) Resource Not Ready faults enable you to abruptly put pods or no
 11. Supported notifiers include Slack channels that are configured under Mangle Admin settings ---> Integrations ---> Notifiers. This will enable Mangle to automatically publish status of fault injections to the appropriate Slack channels for monitoring purposes. They are optional and you can choose to exclude this while running faults.
 12. Click on Run Fault.
 13. The user will be re-directed to the Processed Requests section under Requests & Reports tab.
-14. If Mangle was able to successfully trigger the fault, the status of the task will change to "INJECTED". The fault will continue to run at the endpoint until the timeout expires or a remediation request is triggered. The option to trigger a remediation request at anytime can be found on clicking the  ![](../../.gitbook/assets/actions\_button.png) button against the task in the Processed Requests table.
+14. If Mangle was able to successfully trigger the fault, the status of the task will change to "IN\_PROGRESS". The fault will continue to run at the endpoint and the task will be updated to "COMPLETED" once the fault is done.&#x20;
 15. For monitoring purposes, log into either Wavefront or Datadog once it is configured as an active Metric provider in Mangle and refer to the Events section. Events similar to the screenshots provided below will be available on the monitoring tool for tracking purposes.
 
     &#x20;![](../../.gitbook/assets/datadogevents.png)&#x20;
@@ -530,7 +559,7 @@ Kubernetes (K8s) Service Not Available faults enable you to abruptly make a serv
 9. Supported notifiers include Slack channels that are configured under Mangle Admin settings ---> Integrations ---> Notifiers. This will enable Mangle to automatically publish status of fault injections to the appropriate Slack channels for monitoring purposes. They are optional and you can choose to exclude this while running faults.
 10. Click on Run Fault.
 11. The user will be re-directed to the Processed Requests section under Requests & Reports tab.
-12. If Mangle was able to successfully trigger the fault, the status of the task will change to "INJECTED". The fault will continue to run at the endpoint until the timeout expires or a remediation request is triggered. The option to trigger a remediation request at anytime can be found on clicking the ![](../../.gitbook/assets/actions\_button.png) button against the task in the Processed Requests table. The task will be updated to "COMPLETED" once the task is auto remediated or manually remediated before the fault timeout.&#x20;
+12. If Mangle was able to successfully trigger the fault, the status of the task will change to "IN\_PROGRESS". The fault will continue to run at the endpoint and the task will be updated to "COMPLETED" once the fault is done.&#x20;
 13. For monitoring purposes, log into either Wavefront or Datadog once it is configured as an active Metric provider in Mangle and refer to the Events section. Events similar to the screenshots provided below will be available on the monitoring tool for tracking purposes.
 
     &#x20;![](../../.gitbook/assets/datadogevents.png)&#x20;
@@ -737,7 +766,7 @@ AWS RDS Faults enables you to stop, reboot, failover and induce connection loss 
 1. Login as a user with read and write privileges to Mangle.
 2. Navigate to Fault Execution tab ---> Infrastructure Faults ---> AWS ---> RDS.
 3. Select an Endpoint (Only AWS end points are listed).
-4. Select one of the faults to run against the RDS instance: STOP\_INSTANCES, REBOOT\_INSTANCES, FAILOVER\_INSTANCES_ _or_ _CONNECTION\_LOSS.
+4. Select one of the faults to run against the RDS instance: STOP\_INSTANCES, REBOOT\_INSTANCES, FAILOVER\_INSTANCES __ or __ CONNECTION\_LOSS.
 5. Provide the appropriate DB identifiers.
 6. If "Random Injection" is set to true, Mangle will randomly choose one of the DB instances that is identified using the DB identifier. If "Random Injection" is set to false, it will introduce fault into all the instances.
 7. Schedule options are not available for this fault.
@@ -765,7 +794,7 @@ Azure Virtual Machine State Change fault enables you to abruptly delete, stop or
 1. Login as a user with read and write privileges to Mangle.
 2. Navigate to Fault Execution tab ---> Infrastructure Faults ---> Azure ---> Virtual Machine---> State.
 3. Select an Endpoint (Only Azure accounts are listed).
-4. Select one of the faults: Delete\_VMs, Stop\_VMs_, _Restart\_VMs.
+4. Select one of the faults: Delete\_VMs, Stop\_VMs_,_ Restart\_VMs.
 5. Provide the Azure tag (key value pair to uniquely identify the instance(s). Since multiple instances can have the same tag, you also need to specify if you are interested in a Random Injection. If "Random Injection" is set to true, Mangle will randomly choose one instance from a list of instances identified using the tag, for introducing the fault. If "Random Injection" is set to false, it will introduce the fault into all the instances identified using the tag.
 6. Schedule options are not available for this fault.
 7. Tags are key value pairs that will be send to the active monitoring tool under Mangle Admin settings ---> Integrations ---> Metric Providers at the time of publishing events for fault injection and remediation. They are optional and you can choose to exclude this while running faults.
@@ -831,12 +860,14 @@ Azure Virtual Machine Storage fault enables you to detach all or one random volu
 
     &#x20; ![](../../.gitbook/assets/wavefrontevents.png)
 
+## Additional  things to note about the Dynatrace Itegration
+
 ## Relevant API Reference
 
 {% hint style="info" %}
 **For access to relevant API Swagger documentation:**
 
-Please traverse to link** **![](../../.gitbook/assets/help.png) -----> API Documentation from the Mangle UI or access _https://\<Mangle IP or Hostname>/mangle-services/swagger-ui.html#_/_fault-injection-controller_
+Please traverse to link **** ![](../../.gitbook/assets/help.png) -----> API Documentation from the Mangle UI or access _https://\<Mangle IP or Hostname>/mangle-services/swagger-ui.html#_/_fault-injection-controller_
 
 &#x20;![](broken-reference) ![](../../.gitbook/assets/faultinjectioncontroller.png)&#x20;
 {% endhint %}
