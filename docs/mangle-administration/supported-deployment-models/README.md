@@ -2,7 +2,7 @@
 
 ## Single Node Deployments
 
-For a quick POC we recommend deploying a single node instance of Mangle on VMware vSphere using the OVA file available for download [here](https://repo.vmware.com/mangle/v3.5.0/Mangle-3.5.0.0-19106891\_OVF10.ova).
+For a quick POC we recommend deploying a single node instance of Mangle on VMware vSphere using the OVA file available for download [here](https://repo.vmware.com/mangle/v3.5.0/Mangle-3.5.0.0\_OVF10.ova).
 
 ### System Requirements
 
