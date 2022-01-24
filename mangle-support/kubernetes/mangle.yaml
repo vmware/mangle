@@ -21,7 +21,7 @@ spec:
         emptyDir: {}
       containers:
       - name: mangle
-        image: mangleuser/mangle:2.0
+        image: mangleuser/mangle:3.5.0
         livenessProbe:
          httpGet:
            path: "/mangle-services/application/health"
