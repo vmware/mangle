@@ -24,7 +24,7 @@ spec:
           emptyDir: {}
       containers:
         - name: mangle-vc-adapter
-          image: mangleuser/mangle_vcenter_adapter:1.0
+          image: mangleuser/mangle_vcenter_adapter:3.5
           livenessProbe:
             httpGet:
               path: "/mangle-vc-adapter/application/health"
