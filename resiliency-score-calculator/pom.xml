@@ -31,7 +31,7 @@
 		<joda-time.version>2.5</joda-time.version>
 		<wavefront-java-client-version>4.26</wavefront-java-client-version>
 		<avro-version>1.10.2</avro-version>
-		<xstream.version>1.4.18</xstream.version>
+		<xstream.version>1.4.19</xstream.version>
 		<org.mockito.version>1.10.19</org.mockito.version>
 		<org.mockito-core.version>2.21.0</org.mockito-core.version>
 		<org.powermock.version>1.7.4</org.powermock.version>
