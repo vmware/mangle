@@ -104,7 +104,7 @@
 		<aws-sdk.version>1.11.579</aws-sdk.version>
 		<azure-sdk.version>1.29.0</azure-sdk.version>
 		<jackson.databind.version>2.10.1</jackson.databind.version>
-		<allbegray.slack-api.version>1.7.0.RELEASE</allbegray.slack-api.version>
+		<slack.slack-api.version>1.20.0</slack.slack-api.version>
 		<cassandra.migration.tool.version>2.1.9.0</cassandra.migration.tool.version>
 		<com.wavefront.version>1.15</com.wavefront.version>
 		<micrometer-registry-dynatrace>1.3.1</micrometer-registry-dynatrace>
@@ -838,43 +838,13 @@
 			<version>${log4j.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>com.github.allbegray</groupId>
-				<artifactId>slack-api</artifactId>
-				<version>${allbegray.slack-api.version}</version>
+				<groupId>com.slack.api</groupId>
+				<artifactId>slack-api-client</artifactId>
+				<version>${slack.slack-api.version}</version>
 				<exclusions>
 					<exclusion>
-						<groupId>io.netty</groupId>
-						<artifactId>netty-codec-http</artifactId>
-					</exclusion>
-					<exclusion>
-						<groupId>io.netty</groupId>
-						<artifactId>netty-handler</artifactId>
-					</exclusion>
-					<exclusion>
-						<groupId>io.netty</groupId>
-						<artifactId>netty-handler-proxy</artifactId>
-					</exclusion>
-					<exclusion>
-						<groupId>io.netty</groupId>
-						<artifactId>
-						netty-transport-native-epoll
-					</artifactId>
-					</exclusion>
-					<exclusion>
-						<groupId>io.netty</groupId>
-						<artifactId>netty-buffer</artifactId>
-					</exclusion>
-					<exclusion>
-						<groupId>io.netty</groupId>
-						<artifactId>netty-codec-socks</artifactId>
-					</exclusion>
-					<exclusion>
-						<groupId>io.netty</groupId>
-						<artifactId>netty-resolver-dns</artifactId>
-					</exclusion>
-					<exclusion>
-						<groupId>com.typesafe.netty</groupId>
-						<artifactId>netty-reactive-streams</artifactId>
+						<groupId>com.squareup.okhttp3</groupId>
+						<artifactId>okhttp</artifactId>
 					</exclusion>
 				</exclusions>
 			</dependency>

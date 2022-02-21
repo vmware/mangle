@@ -11,21 +11,22 @@
 
 package com.vmware.mangle.unittest.utils.notification;
 
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
+import java.io.IOException;
 import java.util.Arrays;
 
-import allbegray.slack.SlackClientFactory;
-import allbegray.slack.type.Authentication;
-import allbegray.slack.webapi.SlackWebApiClient;
+import com.slack.api.Slack;
+import com.slack.api.methods.MethodsClient;
+import com.slack.api.methods.SlackApiException;
+import com.slack.api.methods.request.auth.AuthTestRequest;
+import com.slack.api.methods.response.auth.AuthTestResponse;
+import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.powermock.api.mockito.PowerMockito;
@@ -39,7 +40,6 @@ import com.vmware.mangle.cassandra.model.slack.Notifier;
 import com.vmware.mangle.cassandra.model.slack.NotifierType;
 import com.vmware.mangle.cassandra.model.slack.SlackInfo;
 import com.vmware.mangle.utils.exceptions.MangleException;
-import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 import com.vmware.mangle.utils.notification.SlackClient;
 
 /**
@@ -47,102 +47,115 @@ import com.vmware.mangle.utils.notification.SlackClient;
  *
  * @author kumargautam
  */
-@PrepareForTest(value = { SlackClientFactory.class })
-@PowerMockIgnore({ "com.sun.org.apache.xalan.internal.xsltc.trax.*" })
+@PrepareForTest(value = { Slack.class })
+@PowerMockIgnore({"javax.net.ssl.*", "com.sun.org.apache.xalan.internal.xsltc.trax.*"})
 public class SlackClientTest extends PowerMockTestCase {
-
     @Mock
-    private SlackWebApiClient slackWebApiClient;
+    private MethodsClient methodsClient;
     private SlackClient slackClient;
     private Notifier notification;
+    private Slack slack;
 
     @BeforeClass
     public void setUpBeforeClass() {
         MockitoAnnotations.initMocks(this);
-        PowerMockito.mockStatic(SlackClientFactory.class);
+        PowerMockito.mockStatic(Slack.class);
         notification = getSlackInfo();
         slackClient = new SlackClient(notification);
     }
 
     /**
      * Test method for
-     * {@link com.vmware.mangle.utils.notification.SlackClient#getClient(java.lang.String)}.
+     * {@link com.vmware.mangle.utils.notification.SlackClient#getClient()}.
      */
     @Test
     public void testGetClient() {
-        PowerMockito.mockStatic(SlackClientFactory.class);
-        when(SlackClientFactory.createWebApiClient(anyString())).thenReturn(slackWebApiClient);
+        PowerMockito.mockStatic(Slack.class);
+        slack = PowerMockito.mock(Slack.class);
+        when(Slack.getInstance()).thenReturn(slack);
+        when(slack.methods(anyString())).thenReturn(methodsClient);
         assertNotNull(slackClient.getClient());
-        PowerMockito.verifyStatic(SlackClientFactory.class, times(1));
-        SlackClientFactory.createWebApiClient(anyString());
+        PowerMockito.verifyStatic(Slack.class, times(1));
+        slack.methods(anyString());
     }
 
     /**
      * Test method for
-     * {@link com.vmware.mangle.utils.notification.SlackClient#testConnection(allbegray.slack.webapi.SlackWebApiClient)}.
+     * {@link com.vmware.mangle.utils.notification.SlackClient#testConnection()}.
      *
      * @throws MangleException
      */
     @Test
-    public void testTestConnection() throws MangleException {
-        PowerMockito.mockStatic(SlackClientFactory.class);
-        when(SlackClientFactory.createWebApiClient(anyString())).thenReturn(slackWebApiClient);
-        when(slackWebApiClient.auth()).thenReturn(new Authentication());
+    public void testTestConnection() throws Exception {
+        PowerMockito.mockStatic(Slack.class);
+        slack = PowerMockito.mock(Slack.class);
+        when(Slack.getInstance()).thenReturn(slack);
+        when(slack.methods(anyString())).thenReturn(methodsClient);
+        when(methodsClient.authTest(any(AuthTestRequest.class))).thenReturn(new AuthTestResponse());
         assertTrue(slackClient.testConnection());
-        PowerMockito.verifyStatic(SlackClientFactory.class, times(1));
-        SlackClientFactory.createWebApiClient(anyString());
-        verify(slackWebApiClient, times(1)).auth();
+        slack.methods(anyString());
+        verify(methodsClient, times(1)).authTest(any(AuthTestRequest.class));
+        PowerMockito.verifyStatic(Slack.class, times(1));
     }
 
     /**
      * Test method for
-     * {@link com.vmware.mangle.utils.notification.SlackClient#testConnection(allbegray.slack.webapi.SlackWebApiClient)}.
+     * {@link com.vmware.mangle.utils.notification.SlackClient#testConnection()}.
      *
      * @throws MangleException
      */
     @Test
-    public void testTestConnectionForMangleException() throws MangleException {
-        PowerMockito.mockStatic(SlackClientFactory.class);
-        when(SlackClientFactory.createWebApiClient(anyString())).thenReturn(slackWebApiClient);
-        doThrow(new IllegalArgumentException("testTestConnectionForMangleException")).when(slackWebApiClient).auth();
+    public void testTestConnectionForMangleException() throws MangleException, IOException, SlackApiException {
+        PowerMockito.mockStatic(Slack.class);
+        slack = PowerMockito.mock(Slack.class);
+        when(Slack.getInstance()).thenReturn(slack);
+        when(slack.methods(anyString())).thenReturn(methodsClient);
+        doThrow(new IllegalArgumentException("testTestConnectionForMangleException")).when(methodsClient)
+                .authTest(any(AuthTestRequest.class));
         try {
             slackClient.testConnection();
         } catch (MangleException e) {
             assertEquals(e.getErrorCode(), ErrorCode.NOTIFICATION_CONNECTION_FAILED);
-            PowerMockito.verifyStatic(SlackClientFactory.class, times(1));
-            SlackClientFactory.createWebApiClient(anyString());
-            verify(slackWebApiClient, times(1)).auth();
+            slack.methods(anyString());
+            verify(methodsClient, times(1)).authTest(any(AuthTestRequest.class));
+            PowerMockito.verifyStatic(Slack.class, times(1));
         }
     }
 
     /**
      * Test method for
-     * {@link com.vmware.mangle.utils.notification.SlackClient#shutdown(allbegray.slack.webapi.SlackWebApiClient)}.
+     * {@link com.vmware.mangle.utils.notification.SlackClient#shutdown()}.
      */
     @Test
-    public void testShutdown() {
-        PowerMockito.mockStatic(SlackClientFactory.class);
-        when(SlackClientFactory.createWebApiClient(anyString())).thenReturn(slackWebApiClient);
-        doNothing().when(slackWebApiClient).shutdown();
-        slackClient.shutdown(slackClient.getClient());
-        PowerMockito.verifyStatic(SlackClientFactory.class, times(1));
-        SlackClientFactory.createWebApiClient(anyString());
-        verify(slackWebApiClient, times(1)).shutdown();
+    public void testShutdown() throws Exception {
+        PowerMockito.mockStatic(Slack.class);
+        slack = PowerMockito.mock(Slack.class);
+        when(Slack.getInstance()).thenReturn(slack);
+        when(slack.methods(anyString())).thenReturn(methodsClient);
+        doNothing().when(slack).close();
+        slackClient.getClient();
+        slackClient.shutdown();
+        slack.methods(anyString());
+        verify(slack, times(1)).close();
+        PowerMockito.verifyStatic(Slack.class, times(1));
     }
 
     /**
      * Test method for
-     * {@link com.vmware.mangle.utils.notification.SlackClient#shutdown(allbegray.slack.webapi.SlackWebApiClient)}.
+     * {@link com.vmware.mangle.utils.notification.SlackClient#shutdown()}.
      */
     @Test
-    public void testShutdownForException() {
-        PowerMockito.mockStatic(SlackClientFactory.class);
-        when(SlackClientFactory.createWebApiClient(anyString())).thenReturn(slackWebApiClient);
-        doThrow(new IllegalArgumentException("testShutdownForException")).when(slackWebApiClient).shutdown();
-        slackClient.shutdown(slackClient.getClient());
-        PowerMockito.verifyStatic(SlackClientFactory.class, times(1));
-        SlackClientFactory.createWebApiClient(anyString());
-        verify(slackWebApiClient, times(1)).shutdown();
+    public void testShutdownForException() throws Exception {
+        PowerMockito.mockStatic(Slack.class);
+        slack = PowerMockito.mock(Slack.class);
+        when(Slack.getInstance()).thenReturn(slack);
+        when(slack.methods(anyString())).thenReturn(methodsClient);
+        doThrow(new IllegalArgumentException("testShutdownForException")).when(slack).close();
+        slackClient.getClient();
+        slackClient.shutdown();
+        slack.methods(anyString());
+        verify(slack, times(1)).close();
+        PowerMockito.verifyStatic(Slack.class, times(1));
     }
 
     private Notifier getSlackInfo() {

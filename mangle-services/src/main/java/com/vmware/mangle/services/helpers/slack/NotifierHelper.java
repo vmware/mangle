@@ -14,10 +14,9 @@ package com.vmware.mangle.services.helpers.slack;
 import java.util.ArrayList;
 import java.util.List;
 
-import allbegray.slack.type.Attachment;
-import allbegray.slack.type.Color;
-import allbegray.slack.type.Field;
-import allbegray.slack.webapi.method.chats.ChatPostMessageMethod;
+import com.slack.api.methods.request.chat.ChatPostMessageRequest;
+import com.slack.api.model.Field;
+import com.slack.api.model.Attachment;
 
 import com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec;
 import com.vmware.mangle.cassandra.model.faults.specs.JVMAgentFaultSpec;
@@ -49,14 +48,9 @@ public class NotifierHelper<T extends Task<TaskSpec>> {
         this.trigger = task.getTriggers().peek();
     }
 
-    public ChatPostMessageMethod populateSlackMessage() {
-        ChatPostMessageMethod method = new ChatPostMessageMethod(DEFAULT_CHANNEL_NAME,
-                CommonConstants.SLACK_HELLO_MSG + commandExecutionFaultSpec.getEndpointName() + "*");
-        method.setUsername(Constants.DEFAULT_SENDER_NAME);
-        method.setAs_user(false);
-        List<Attachment> attachments = method.getAttachments();
+    public ChatPostMessageRequest populateSlackMessage() {
+        List<Attachment> attachments = new ArrayList<>();
         Attachment attachment = new Attachment();
-        attachments.add(attachment);
         updateAttachment(attachment);
         List<Field> fields = new ArrayList<>();
         attachment.setFields(fields);
@@ -70,17 +64,25 @@ public class NotifierHelper<T extends Task<TaskSpec>> {
         updateFaultEndTime(fields);
         if (trigger.getTaskStatus().equals(TaskStatus.FAILED)) {
             addField(fields, CommonConstants.SLACK_MSG_FAULT_FAILURE_REASON, trigger.getTaskFailureReason());
-            fields.get(fields.size() - 1).set_short(false);
+            fields.get(fields.size() - 1).setValueShortEnough(false);
         }
         addField(fields, CommonConstants.SLACK_MSG_FAULT_DESCRIPTION, task.getTaskDescription());
-        fields.get(fields.size() - 1).set_short(false);
-        return method;
+        fields.get(fields.size() - 1).setValueShortEnough(false);
+
+        attachment.setFallback(CommonConstants.SLACK_HELLO_MSG + commandExecutionFaultSpec.getEndpointName() + "*");
+        attachments.add(attachment);
+        ChatPostMessageRequest chatPostMessageRequest = ChatPostMessageRequest.builder()
+                .username(Constants.DEFAULT_SENDER_NAME)
+                .text(CommonConstants.SLACK_HELLO_MSG + commandExecutionFaultSpec.getEndpointName() + "*")
+                .attachments(attachments).build();
+
+        return chatPostMessageRequest;
     }
 
     private void updateAttachment(Attachment attachment) {
         attachment.setTitle("Fault Summary");
         attachment.setFooter("Thanks,\n Mangle");
-        attachment.setColor(Color.WARNING);
+        attachment.setColor(Color.WARNING.hexValue);
     }
 
     private void addField(List<Field> fields, String title, String value) {

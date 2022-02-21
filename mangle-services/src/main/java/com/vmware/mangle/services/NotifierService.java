@@ -14,8 +14,9 @@ package com.vmware.mangle.services;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import allbegray.slack.webapi.SlackWebApiClient;
-import allbegray.slack.webapi.method.chats.ChatPostMessageMethod;
+import com.slack.api.methods.MethodsClient;
+import com.slack.api.methods.request.chat.ChatPostMessageRequest;
+import com.slack.api.methods.response.chat.ChatPostMessageResponse;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;
@@ -151,18 +152,18 @@ public class NotifierService {
     @SuppressWarnings("rawtypes")
     private void sendNotificationToChannel(Notifier notification, NotifierHelper helper) {
         SlackClient client = (SlackClient) clientFactory.getNotificationClient(notification);
-        SlackWebApiClient apiClient = client.getClient();
-        ChatPostMessageMethod method = helper.populateSlackMessage();
+        MethodsClient apiClient = client.getClient();
+        ChatPostMessageRequest method = helper.populateSlackMessage();
         method.setUsername(notification.getSlackInfo().getSenderName());
         for (String channel : notification.getSlackInfo().getChannels()) {
             try {
                 method.setChannel(channel);
-                apiClient.postMessage(method);
+                apiClient.chatPostMessage(method);
             } catch (Exception e) {
                 log.error("Not able to send notification to slack : {}, causes : {}", notification.getName(),
                         e.getMessage());
             }
         }
-        client.shutdown(apiClient);
+        client.shutdown();
     }
 }
