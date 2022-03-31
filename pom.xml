@@ -48,7 +48,7 @@
 		<maven-compiler.version>3.7.0</maven-compiler.version>
 		<spring.boot.version>2.2.13.RELEASE</spring.boot.version>
 		<spring.cloud.version>2.0.2.RELEASE</spring.cloud.version>
-		<springframework.version>5.1.20.RELEASE</springframework.version>
+		<springframework.version>5.3.18</springframework.version>
 		<springframework-plugin.version>1.2.0.RELEASE</springframework-plugin.version>
 		<swagger-version>2.9.2</swagger-version>
 		<spring.hateoas.version>0.25.1.RELEASE</spring.hateoas.version>
