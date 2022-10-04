@@ -34,8 +34,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
-import com.thoughtworks.xstream.XStream;
-import com.thoughtworks.xstream.io.xml.StaxDriver;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.FileSystemResource;
@@ -491,7 +489,7 @@ public class RestTemplateWrapper {
             setAnnoationClass(clz);
             response = restTemplate.exchange(getRequestUrl(), getHttpRequestMethod(), entity, clz);
             if (null != response.getBody()) {
-                log.info("Response body -" + objectToXml(response.getBody()));
+                log.info("Response body -" + objectToJson(response.getBody()));
             }
             return response;
 
@@ -536,7 +534,7 @@ public class RestTemplateWrapper {
             // setAnnoationClass(clz);
             response =
                     restTemplate.exchange(getRequestUrl(), getHttpRequestMethod(), entity, responseType, new Object[0]);
-            log.info("Response body -" + objectToXml(response.getBody()));
+            log.info("Response body -" + objectToJson(response.getBody()));
             return response;
 
         } catch (Exception e) {
@@ -592,13 +590,6 @@ public class RestTemplateWrapper {
     // */
     public void setHttpRequestMethod(HttpMethod method) {
         this.method = method;
-
-    }
-
-    public <T> String objectToXml(T obj) {
-        XStream xstream = new XStream(new StaxDriver());
-        xstream.processAnnotations(obj.getClass());
-        return xstream.toXML(obj);
 
     }
 
