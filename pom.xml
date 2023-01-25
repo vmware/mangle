@@ -138,10 +138,10 @@
 				<artifactId>spring-core</artifactId>
 				<version>${springframework.version}</version>
 				<exclusions>
-				   <exclusion>
-				      <groupId>org.jetbrains.kotlin</groupId>
-                                      <artifactId>kotlin-stdlib</artifactId>
-				   </exclusion>
+				    <exclusion>
+				       <groupId>org.jetbrains.kotlin</groupId>
+                                       <artifactId>kotlin-stdlib</artifactId>
+				    </exclusion>
 				</exclusions>
 			</dependency>
 			<dependency>
