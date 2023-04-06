@@ -104,7 +104,7 @@
 		<netty-reactive-streams-version>2.0.5</netty-reactive-streams-version>
 		<aws-sdk.version>1.11.579</aws-sdk.version>
 		<azure-sdk.version>1.29.0</azure-sdk.version>
-		<jackson.databind.version>2.10.1</jackson.databind.version>
+		<jackson.databind.version>2.11.4</jackson.databind.version>
 		<allbegray.slack-api.version>1.7.0.RELEASE</allbegray.slack-api.version>
 		<cassandra.migration.tool.version>2.1.9.0</cassandra.migration.tool.version>
 		<com.wavefront.version>1.15</com.wavefront.version>
