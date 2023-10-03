@@ -39,7 +39,7 @@ public class FaultConstants {
             "Failed to process request: java.net.ConnectException: Connection refused";
     public static final String EXPECTED_MESSAGE_FOR_KILL_OPERATION_NOT_PERMITTED = "Operation not permitted";
     public static final String MESSAGE_THROWN_FOR_KILL_OPERATION_NOT_PERMITTED = "Kill Service Operation not permitted";
-    public static final String FAULT_COMPLETION_STRING = "\"faultStatus\":\"COMPLETED\"";
+    public static final String FAULT_COMPLETION_STRING = "faultStatus:COMPLETED";
     public static final String PID_ATTACH_MXBEANS_COMMAND = BASH + " %s/" + AGENT_NAME + "/bin/bminstall.sh -s -b %s";
     public static final String PID_K8S_ATTACH_MXBEANS_COMMAND =
             "exec -it %s -c %s -- sh %s/" + AGENT_NAME + "/bin/bminstall.sh -s -b %s";
