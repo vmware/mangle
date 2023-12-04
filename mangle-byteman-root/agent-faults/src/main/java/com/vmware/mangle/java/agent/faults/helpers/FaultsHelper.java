@@ -154,7 +154,7 @@ public class FaultsHelper {
 
     public static String objectToJson(Object object) {
         Gson gson = new Gson();
-        return gson.toJson(object);
+        return gson.toJson(object.toString());
     }
 
     public static Object jsonToObject(String className, String jsonString) {

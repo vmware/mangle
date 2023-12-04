@@ -35,7 +35,7 @@ public class FaultConstants {
     public static final String REMEDIATION_SUCCESSFUL_STRING = "Received Remediation Request Successfully";
     public static final String EXPECTED_REMEDIATION_MESSAGE_FOR_FILE_NOT_FOUND = "No such file or directory";
     public static final String MESSAGE_THROWN_FOR_EXPECTED_REMEDIATION_FAILURE = "Fault has been remediated already";
-    public static final String FAULT_COMPLETION_STRING = "\"faultStatus\":\"COMPLETED\"";
+    public static final String FAULT_COMPLETION_STRING = "faultStatus:COMPLETED";
     public static final String PID_ATTACH_MXBEANS_COMMAND = BASH + " %s/" + AGENT_NAME + "/bin/bminstall.sh -s -b %s";
     public static final String PID_K8S_ATTACH_MXBEANS_COMMAND =
             "exec -it %s -c %s -- sh %s/" + AGENT_NAME + "/bin/bminstall.sh -s -b %s";

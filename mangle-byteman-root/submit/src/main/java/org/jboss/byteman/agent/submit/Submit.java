@@ -968,11 +968,11 @@ public class Submit {
         private Socket commSocket;
         private BufferedReader commInput;
         private PrintWriter commOutput;
+        InputStream is;
 
         public Comm(String address, int port) throws Exception {
             this.commSocket = new Socket(address, port);
 
-            InputStream is;
             try {
                 is = this.commSocket.getInputStream();
             } catch (Exception e) {
@@ -1033,11 +1033,13 @@ public class Submit {
             StringBuilder str = new StringBuilder();
             StringBuilder errorStr = null; // will be non-null if an error was
                                            // reported by the agent
-
-            String line = this.commInput.readLine();
+            String line = null;
+            int aChar = 'x';
+            while ((aChar = is.read()) != -1) {
+                line = line + (char)aChar;
+            }
             while (line != null && !line.trim().equals("OK")) {
                 line = line.trim();
-
                 if (line.startsWith("ERROR") || line.startsWith("EXCEPTION")) {
                     if (errorStr == null) {
                         errorStr = new StringBuilder();
@@ -1049,11 +1051,9 @@ public class Submit {
                 if (errorStr != null) {
                     errorStr.append(line).append('\n');
                 }
-
                 str.append(line).append('\n');
                 line = this.commInput.readLine();
             }
-
             if (errorStr != null) {
                 StringBuilder msg = new StringBuilder();
                 msg.append("The remote byteman agent reported an error:\n").append(errorStr);

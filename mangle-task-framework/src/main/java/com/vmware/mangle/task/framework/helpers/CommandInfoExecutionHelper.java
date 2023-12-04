@@ -111,7 +111,9 @@ public class CommandInfoExecutionHelper {
         boolean isOutputMatched = false;
         if (!CollectionUtils.isEmpty(commandInfo.getExpectedCommandOutputList())) {
             for (String expectedoutput : commandInfo.getExpectedCommandOutputList()) {
-                if (commandExecutionResult.getCommandOutput().contains(expectedoutput)) {
+                String output = commandExecutionResult.getCommandOutput().replace("null", "");
+                output = output.toString().replace("\\u003d", ":");
+                if (output.contains(expectedoutput)) {
                     isOutputMatched = true;
                     break;
                 }
