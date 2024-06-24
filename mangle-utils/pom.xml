@@ -223,48 +223,12 @@
 			<artifactId>azure</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>com.github.allbegray</groupId>
-			<artifactId>slack-api</artifactId>
+			<groupId>com.slack.api</groupId>
+			<artifactId>slack-api-client</artifactId>
 			<exclusions>
 				<exclusion>
-					<groupId>io.netty</groupId>
-					<artifactId>netty-codec-http</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>io.netty</groupId>
-					<artifactId>netty-handler</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>io.netty</groupId>
-					<artifactId>netty-handler-proxy</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>io.netty</groupId>
-					<artifactId>
-						netty-transport-native-epoll
-					</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>io.netty</groupId>
-					<artifactId>netty-buffer</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>io.netty</groupId>
-					<artifactId>netty-codec-socks</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>io.netty</groupId>
-					<artifactId>netty-resolver-dns</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>com.typesafe.netty</groupId>
-					<artifactId>netty-reactive-streams</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.asynchttpclient</groupId>
-					<artifactId>
-						async-http-client-netty-utils
-					</artifactId>
+					<groupId>com.squareup.okhttp3</groupId>
+					<artifactId>okhttp</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>

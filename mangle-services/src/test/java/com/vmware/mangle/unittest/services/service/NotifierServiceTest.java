@@ -24,13 +24,16 @@ import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 
-import allbegray.slack.webapi.SlackWebApiClient;
-import allbegray.slack.webapi.method.chats.ChatPostMessageMethod;
+import com.slack.api.methods.MethodsClient;
+import com.slack.api.methods.SlackApiException;
+import com.slack.api.methods.request.chat.ChatPostMessageRequest;
+import com.slack.api.methods.response.chat.ChatPostMessageResponse;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -66,17 +69,19 @@ public class NotifierServiceTest extends PowerMockTestCase {
     @Mock
     private NotifierRepository repository;
     @Mock
-    private SlackWebApiClient slackWebApiClient;
+    private MethodsClient methodsClient;
     @InjectMocks
     private NotifierService notificationService;
     private NotifierMockData slackMockData;
     private Notifier slackInfo;
+    private ChatPostMessageResponse chatPostMessageResponse;
 
     @BeforeClass
     public void setUpBeforeClass() {
         MockitoAnnotations.initMocks(this);
         this.slackMockData = new NotifierMockData();
         this.slackInfo = slackMockData.getSlackInfo("test");
+        this.chatPostMessageResponse = slackMockData.getSlackChatPostMessageResponse();
     }
 
     /**
@@ -89,9 +94,9 @@ public class NotifierServiceTest extends PowerMockTestCase {
     public void testTestConnection() throws MangleException {
         SlackClient client = spy(new SlackClient(slackInfo));
         when(clientFactory.getNotificationClient(any(Notifier.class))).thenReturn(client);
-        doReturn(slackWebApiClient).when(client).getClient();
+        doReturn(methodsClient).when(client).getClient();
         doReturn(true).when(client).testConnection();
-        doNothing().when(client).shutdown(any(SlackWebApiClient.class));
+        doNothing().when(client).shutdown();
         assertTrue(notificationService.testConnection(slackInfo));
     }
 
@@ -231,19 +236,19 @@ public class NotifierServiceTest extends PowerMockTestCase {
      */
     @SuppressWarnings("unchecked")
     @Test
-    public void testSendNotification() {
+    public void testSendNotification() throws SlackApiException, IOException {
         Task<CommandExecutionFaultSpec> task = slackMockData.getTask(TaskType.INJECTION, TaskStatus.COMPLETED);
         when(repository.findByNameIn(anyCollection())).thenReturn(Arrays.asList(slackInfo, slackInfo));
         SlackClient client = spy(new SlackClient(slackInfo));
         when(clientFactory.getNotificationClient(any(Notifier.class))).thenReturn(client);
-        doReturn(slackWebApiClient).when(client).getClient();
-        when(slackWebApiClient.postMessage(any(ChatPostMessageMethod.class))).thenReturn("123");
-        doNothing().when(client).shutdown(any(SlackWebApiClient.class));
+        doReturn(methodsClient).when(client).getClient();
+        when(methodsClient.chatPostMessage(any(ChatPostMessageRequest.class))).thenReturn(chatPostMessageResponse);
+        doNothing().when(client).shutdown();
         notificationService.sendNotification(task);
         verify(repository, times(1)).findByNameIn(anyCollection());
         verify(client, times(2)).getClient();
-        verify(slackWebApiClient, times(2)).postMessage(any(ChatPostMessageMethod.class));
-        verify(client, times(2)).shutdown(any(SlackWebApiClient.class));
+        verify(methodsClient, times(2)).chatPostMessage(any(ChatPostMessageRequest.class));
+        verify(client, times(2)).shutdown();
     }
 
     /**
@@ -252,21 +257,21 @@ public class NotifierServiceTest extends PowerMockTestCase {
      */
     @SuppressWarnings("unchecked")
     @Test
-    public void testSendNotificationForFailedTask() {
+    public void testSendNotificationForFailedTask() throws SlackApiException, IOException {
         Task<CommandExecutionFaultSpec> task = slackMockData.getTask(TaskType.INJECTION, TaskStatus.FAILED);
         task.setTaskData(slackMockData.getFaultsMockData().getK8sCpuJvmAgentFaultSpec());
         task.getTaskData().setNotifierNames(new HashSet<>(Arrays.asList("mangle1")));
         when(repository.findByNameIn(anyCollection())).thenReturn(Arrays.asList(slackInfo, slackInfo));
         SlackClient client = spy(new SlackClient(slackInfo));
         when(clientFactory.getNotificationClient(any(Notifier.class))).thenReturn(client);
-        doReturn(slackWebApiClient).when(client).getClient();
-        when(slackWebApiClient.postMessage(any(ChatPostMessageMethod.class))).thenReturn("123");
-        doNothing().when(client).shutdown(any(SlackWebApiClient.class));
+        doReturn(methodsClient).when(client).getClient();
+        when(methodsClient.chatPostMessage(any(ChatPostMessageRequest.class))).thenReturn(chatPostMessageResponse);
+        doNothing().when(client).shutdown();
         notificationService.sendNotification(task);
         verify(repository, times(1)).findByNameIn(anyCollection());
         verify(client, times(2)).getClient();
-        verify(slackWebApiClient, times(2)).postMessage(any(ChatPostMessageMethod.class));
-        verify(client, times(2)).shutdown(any(SlackWebApiClient.class));
+        verify(methodsClient, times(2)).chatPostMessage(any(ChatPostMessageRequest.class));
+        verify(client, times(2)).shutdown();
     }
 
     /**
@@ -275,21 +280,21 @@ public class NotifierServiceTest extends PowerMockTestCase {
      */
     @SuppressWarnings("unchecked")
     @Test
-    public void testSendNotificationForTimeoutNull() {
+    public void testSendNotificationForTimeoutNull() throws SlackApiException, IOException {
         Task<CommandExecutionFaultSpec> task = slackMockData.getTask(TaskType.INJECTION, TaskStatus.FAILED);
         task.setTaskData(slackMockData.getFaultsMockData().getDockerPauseFaultSpec());
         task.getTaskData().setNotifierNames(new HashSet<>(Arrays.asList("mangle")));
         when(repository.findByNameIn(anyCollection())).thenReturn(Arrays.asList(slackInfo, slackInfo));
         SlackClient client = spy(new SlackClient(slackInfo));
         when(clientFactory.getNotificationClient(any(Notifier.class))).thenReturn(client);
-        doReturn(slackWebApiClient).when(client).getClient();
-        when(slackWebApiClient.postMessage(any(ChatPostMessageMethod.class))).thenReturn("123");
-        doNothing().when(client).shutdown(any(SlackWebApiClient.class));
+        doReturn(methodsClient).when(client).getClient();
+        when(methodsClient.chatPostMessage(any(ChatPostMessageRequest.class))).thenReturn(chatPostMessageResponse);
+        doNothing().when(client).shutdown();
         notificationService.sendNotification(task);
         verify(repository, times(1)).findByNameIn(anyCollection());
         verify(client, times(2)).getClient();
-        verify(slackWebApiClient, times(2)).postMessage(any(ChatPostMessageMethod.class));
-        verify(client, times(2)).shutdown(any(SlackWebApiClient.class));
+        verify(methodsClient, times(2)).chatPostMessage(any(ChatPostMessageRequest.class));
+        verify(client, times(2)).shutdown();
     }
 
     /**
@@ -298,21 +303,21 @@ public class NotifierServiceTest extends PowerMockTestCase {
      */
     @SuppressWarnings("unchecked")
     @Test
-    public void testSendNotificationForRemediation() {
+    public void testSendNotificationForRemediation() throws SlackApiException, IOException {
         Task<CommandExecutionFaultSpec> task = slackMockData.getTask(TaskType.REMEDIATION, TaskStatus.FAILED);
         task.setTaskData(slackMockData.getFaultsMockData().getK8SCPUFaultSpec());
         task.getTaskData().setNotifierNames(new HashSet<>(Arrays.asList("mangle2")));
         when(repository.findByNameIn(anyCollection())).thenReturn(Arrays.asList(slackInfo, slackInfo));
         SlackClient client = spy(new SlackClient(slackInfo));
         when(clientFactory.getNotificationClient(any(Notifier.class))).thenReturn(client);
-        doReturn(slackWebApiClient).when(client).getClient();
-        when(slackWebApiClient.postMessage(any(ChatPostMessageMethod.class))).thenReturn("123");
-        doNothing().when(client).shutdown(any(SlackWebApiClient.class));
+        doReturn(methodsClient).when(client).getClient();
+        when(methodsClient.chatPostMessage(any(ChatPostMessageRequest.class))).thenReturn(chatPostMessageResponse);
+        doNothing().when(client).shutdown();
         notificationService.sendNotification(task);
         verify(repository, times(1)).findByNameIn(anyCollection());
         verify(client, times(2)).getClient();
-        verify(slackWebApiClient, times(2)).postMessage(any(ChatPostMessageMethod.class));
-        verify(client, times(2)).shutdown(any(SlackWebApiClient.class));
+        verify(methodsClient, times(2)).chatPostMessage(any(ChatPostMessageRequest.class));
+        verify(client, times(2)).shutdown();
     }
 
     /**
@@ -321,20 +326,20 @@ public class NotifierServiceTest extends PowerMockTestCase {
      */
     @SuppressWarnings("unchecked")
     @Test
-    public void testSendNotificationForK8SFaultTriggerSpec() {
+    public void testSendNotificationForK8SFaultTriggerSpec() throws SlackApiException, IOException {
         Task<K8SFaultTriggerSpec> task =
                 slackMockData.getTaskForK8SFaultTriggerSpec(TaskType.REMEDIATION, TaskStatus.FAILED);
         when(repository.findByNameIn(anyCollection())).thenReturn(Arrays.asList(slackInfo, slackInfo));
         SlackClient client = spy(new SlackClient(slackInfo));
         when(clientFactory.getNotificationClient(any(Notifier.class))).thenReturn(client);
-        doReturn(slackWebApiClient).when(client).getClient();
-        when(slackWebApiClient.postMessage(any(ChatPostMessageMethod.class))).thenReturn("xxx");
-        doNothing().when(client).shutdown(any(SlackWebApiClient.class));
+        doReturn(methodsClient).when(client).getClient();
+        when(methodsClient.chatPostMessage(any(ChatPostMessageRequest.class))).thenReturn(chatPostMessageResponse);
+        doNothing().when(client).shutdown();
         notificationService.sendNotification(task);
         verify(repository, times(1)).findByNameIn(anyCollection());
         verify(client, times(2)).getClient();
-        verify(slackWebApiClient, times(2)).postMessage(any(ChatPostMessageMethod.class));
-        verify(client, times(2)).shutdown(any(SlackWebApiClient.class));
+        verify(methodsClient, times(2)).chatPostMessage(any(ChatPostMessageRequest.class));
+        verify(client, times(2)).shutdown();
     }
 
     /**
@@ -343,7 +348,7 @@ public class NotifierServiceTest extends PowerMockTestCase {
      */
     @SuppressWarnings("unchecked")
     @Test
-    public void testSendNotificationForChildTasks() {
+    public void testSendNotificationForChildTasks() throws SlackApiException, IOException {
         Task<K8SFaultTriggerSpec> task =
                 slackMockData.getTaskForK8SFaultTriggerSpec(TaskType.REMEDIATION, TaskStatus.FAILED);
         TaskTrigger trigger = (TaskTrigger) task.getTriggers().peek();
@@ -351,9 +356,9 @@ public class NotifierServiceTest extends PowerMockTestCase {
         when(repository.findByNameIn(anyCollection())).thenReturn(Arrays.asList(slackInfo, slackInfo));
         SlackClient client = spy(new SlackClient(slackInfo));
         when(clientFactory.getNotificationClient(any(Notifier.class))).thenReturn(client);
-        doReturn(slackWebApiClient).when(client).getClient();
-        when(slackWebApiClient.postMessage(any(ChatPostMessageMethod.class))).thenReturn("77978");
-        doNothing().when(client).shutdown(any(SlackWebApiClient.class));
+        doReturn(methodsClient).when(client).getClient();
+        when(methodsClient.chatPostMessage(any(ChatPostMessageRequest.class))).thenReturn(chatPostMessageResponse);
+        doNothing().when(client).shutdown();
         notificationService.sendNotification(task);
     }
 
@@ -363,16 +368,16 @@ public class NotifierServiceTest extends PowerMockTestCase {
      */
     @SuppressWarnings("unchecked")
     @Test
-    public void testSendNotificationForNoNotifier() {
+    public void testSendNotificationForNoNotifier() throws SlackApiException, IOException {
         Task<K8SFaultTriggerSpec> task =
                 slackMockData.getTaskForK8SFaultTriggerSpec(TaskType.REMEDIATION, TaskStatus.FAILED);
         task.getTaskData().setNotifierNames(null);
         when(repository.findByNameIn(anyCollection())).thenReturn(Arrays.asList(slackInfo, slackInfo));
         SlackClient client = spy(new SlackClient(slackInfo));
         when(clientFactory.getNotificationClient(any(Notifier.class))).thenReturn(client);
-        doReturn(slackWebApiClient).when(client).getClient();
-        when(slackWebApiClient.postMessage(any(ChatPostMessageMethod.class))).thenReturn("xxx");
-        doNothing().when(client).shutdown(any(SlackWebApiClient.class));
+        doReturn(methodsClient).when(client).getClient();
+        when(methodsClient.chatPostMessage(any(ChatPostMessageRequest.class))).thenReturn(chatPostMessageResponse);
+        doNothing().when(client).shutdown();
         notificationService.sendNotification(task);
     }
 
@@ -382,16 +387,16 @@ public class NotifierServiceTest extends PowerMockTestCase {
      */
     @SuppressWarnings("unchecked")
     @Test
-    public void testSendNotificationForTaskDataNull() {
+    public void testSendNotificationForTaskDataNull() throws SlackApiException, IOException {
         Task<K8SFaultTriggerSpec> task =
                 slackMockData.getTaskForK8SFaultTriggerSpec(TaskType.REMEDIATION, TaskStatus.FAILED);
         task.setTaskData(null);
         when(repository.findByNameIn(anyCollection())).thenReturn(Arrays.asList(slackInfo, slackInfo));
         SlackClient client = spy(new SlackClient(slackInfo));
         when(clientFactory.getNotificationClient(any(Notifier.class))).thenReturn(client);
-        doReturn(slackWebApiClient).when(client).getClient();
-        when(slackWebApiClient.postMessage(any(ChatPostMessageMethod.class))).thenReturn("xxx");
-        doNothing().when(client).shutdown(any(SlackWebApiClient.class));
+        doReturn(methodsClient).when(client).getClient();
+        when(methodsClient.chatPostMessage(any(ChatPostMessageRequest.class))).thenReturn(chatPostMessageResponse);
+        doNothing().when(client).shutdown();
         notificationService.sendNotification(task);
     }
 }

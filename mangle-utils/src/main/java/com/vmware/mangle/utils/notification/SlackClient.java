@@ -11,8 +11,9 @@
 
 package com.vmware.mangle.utils.notification;
 
-import allbegray.slack.SlackClientFactory;
-import allbegray.slack.webapi.SlackWebApiClient;
+import com.slack.api.Slack;
+import com.slack.api.methods.MethodsClient;
+import com.slack.api.methods.request.auth.AuthTestRequest;
 import lombok.extern.log4j.Log4j2;
 
 import com.vmware.mangle.cassandra.model.slack.Notifier;
@@ -29,34 +30,37 @@ import com.vmware.mangle.utils.exceptions.handler.ErrorCode;
 public class SlackClient implements EndpointClient {
 
     private Notifier notification;
+    private Slack slack;
 
     public SlackClient(Notifier notifier) {
         this.notification = notifier;
     }
 
-    public SlackWebApiClient getClient() {
-        return SlackClientFactory.createWebApiClient(notification.getSlackInfo().getToken());
+    public MethodsClient getClient() {
+        this.slack = Slack.getInstance();
+        return slack.methods(notification.getSlackInfo().getToken());
     }
 
     @Override
     public boolean testConnection() throws MangleException {
-        SlackWebApiClient client = null;
+        MethodsClient client = null;
         try {
             client = getClient();
-            client.auth();
+            AuthTestRequest authtestRequest = AuthTestRequest.builder().build();
+            client.authTest(authtestRequest);
             return true;
         } catch (Exception e) {
             log.error(e.getMessage());
             throw new MangleException(ErrorCode.NOTIFICATION_CONNECTION_FAILED, e.getMessage());
         } finally {
-            shutdown(client);
+            shutdown();
         }
     }
 
-    public void shutdown(SlackWebApiClient client) {
+    public void shutdown() {
         try {
-            if (client != null) {
-                client.shutdown();
+            if (slack != null) {
+                slack.close();
             }
         } catch (Exception e) {
             log.error(e.getMessage());

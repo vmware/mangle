@@ -16,6 +16,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 
+import com.slack.api.methods.response.chat.ChatPostMessageResponse;
 import lombok.Getter;
 
 import com.vmware.mangle.cassandra.model.faults.specs.CommandExecutionFaultSpec;
@@ -76,5 +77,13 @@ public class NotifierMockData {
         task.getTriggers().peek().setTaskStatus(taskStatus);
         task.getTaskData().getFaultSpec().setNotifierNames(new HashSet<>(Arrays.asList("mangle")));
         return task;
+    }
+
+    public ChatPostMessageResponse getSlackChatPostMessageResponse(){
+        ChatPostMessageResponse chatPostMessageResponse = new ChatPostMessageResponse();
+        chatPostMessageResponse.setOk(true);
+        chatPostMessageResponse.setChannel("dev");
+        chatPostMessageResponse.setTs("1645427127.335539");
+        return chatPostMessageResponse;
     }
 }
